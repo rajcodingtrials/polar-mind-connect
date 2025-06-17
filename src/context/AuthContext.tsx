@@ -7,9 +7,12 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAuthenticated: boolean;
   signUp: (email: string, password: string, username: string, name: string, age: number) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  login: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
 }
 
@@ -68,9 +71,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
+  // Alias for compatibility
+  const login = signIn;
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
+
+  // Alias for compatibility
+  const logout = signOut;
 
   const resetPassword = async (email: string) => {
     const redirectUrl = `${window.location.origin}/reset-password`;
@@ -87,9 +96,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user,
       session,
       loading,
+      isAuthenticated: !!user,
       signUp,
       signIn,
+      login,
       signOut,
+      logout,
       resetPassword
     }}>
       {children}
