@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +13,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import MeetTheTeam from "./pages/MeetTheTeam";
 import OurStory from "./pages/OurStory";
+import OpenAITest from "./pages/OpenAITest";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +42,7 @@ function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/meet-the-team" element={<MeetTheTeam />} />
               <Route path="/our-story" element={<OurStory />} />
+              <Route path="/openai-test" element={<OpenAITest />} />
             </Routes>
           </TooltipProvider>
         </AuthProvider>
