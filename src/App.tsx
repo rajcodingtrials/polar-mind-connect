@@ -11,6 +11,8 @@ import Resources from "./pages/Resources";
 import About from "./pages/About";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import MeetTheTeam from "./pages/MeetTheTeam";
+import OurStory from "./pages/OurStory";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +38,8 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/meet-the-team" element={<MeetTheTeam />} />
+              <Route path="/our-story" element={<OurStory />} />
             </Routes>
           </TooltipProvider>
         </AuthProvider>
