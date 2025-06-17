@@ -1,46 +1,38 @@
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Shield, Heart, Brain, Users, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
-import Navigation from "@/components/Navigation";
-import Hero from "@/components/Hero";
-import Features from "@/components/Features";
-import Testimonials from "@/components/Testimonials";
-import Footer from "@/components/Footer";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import Header from "../components/Header";
+import AuthForm from "../components/AuthForm";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/home");
+    }
+  }, [isAuthenticated, navigate]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-therapy-50 via-white to-calm-50">
-      <Navigation />
-      <Hero />
-      <Features />
-      <Testimonials />
+    <div className="min-h-screen flex flex-col gradient-bg stars-bg">
+      <Header />
       
-      {/* Call to Action Section */}
-      <section className="py-20 bg-gradient-therapy">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl font-bold text-white mb-6 font-playfair">
-              Ready to Begin Your Journey?
-            </h2>
-            <p className="text-xl text-therapy-100 mb-8">
-              Take the first step towards better mental health with compassionate AI support.
+      <main className="flex-grow flex flex-col items-center justify-start px-4 pt-2">
+        <div className="text-center mb-4">
+          <div className="flex flex-col items-center justify-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
+              Polariz
+            </h1>
+            <p className="text-xl md:text-2xl text-white mb-6 max-w-2xl">
+              AI speech therapists shaping the future one word at a time.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="bg-white text-therapy-600 hover:bg-therapy-50">
-                <Link to="/chat">Start Free Session</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-therapy-600">
-                <Link to="/resources">Explore Resources</Link>
-              </Button>
-            </div>
           </div>
         </div>
-      </section>
-      
-      <Footer />
+
+        <AuthForm />
+      </main>
     </div>
   );
 };

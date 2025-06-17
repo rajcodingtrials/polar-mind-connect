@@ -1,8 +1,10 @@
-# Welcome to your Lovable project
+
+# Welcome to Polariz Therapy Web
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/05a47a05-17ab-4712-bec6-6ed9f6ca63c3
+**URL**: https://lovable.dev/projects/7976c02e-f033-435b-b976-645e6fc2c103
+This is a lovable prototype.
 
 ## How can I edit this code?
 
@@ -10,7 +12,7 @@ There are several ways of editing your application.
 
 **Use Lovable**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/05a47a05-17ab-4712-bec6-6ed9f6ca63c3) and start prompting.
+Simply visit the [Lovable Project](https://lovable.dev/projects/7976c02e-f033-435b-b976-645e6fc2c103) and start prompting.
 
 Changes made via Lovable will be committed automatically to this repo.
 
@@ -62,7 +64,7 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/05a47a05-17ab-4712-bec6-6ed9f6ca63c3) and click on Share -> Publish.
+Simply open [Lovable](https://lovable.dev/projects/7976c02e-f033-435b-b976-645e6fc2c103) and click on Share -> Publish.
 
 ## Can I connect a custom domain to my Lovable project?
 
