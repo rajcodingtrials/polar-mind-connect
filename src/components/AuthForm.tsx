@@ -23,7 +23,7 @@ const AuthForm = () => {
     try {
       const result = await login(username, password);
       
-      if (result.success) {
+      if (!result.error) {
         // Successfully logged in, navigate to home and scroll to top
         navigate("/home", { replace: true });
         window.scrollTo(0, 0);
@@ -31,7 +31,7 @@ const AuthForm = () => {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: result.message,
+          description: result.error?.message || "Invalid credentials. Please try again.",
         });
       }
     } catch (error) {

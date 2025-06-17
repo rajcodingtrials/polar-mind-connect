@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useUserProfile } from "../hooks/useUserProfile";
 import Header from "../components/Header";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +31,7 @@ const userData = {
 
 const Home = () => {
   const { user, isAuthenticated } = useAuth();
+  const { profile, loading: profileLoading } = useUserProfile();
   const navigate = useNavigate();
   const voiceflowContainerRef = useRef<HTMLDivElement>(null);
   const scriptLoaded = useRef(false);
@@ -50,11 +52,11 @@ const Home = () => {
   }, [isAuthenticated, navigate]);
 
   const getUserProgress = () => {
-    return userData[user?.username]?.progressMessage || "Welcome back to your learning journey.";
+    return userData[profile?.username]?.progressMessage || "Welcome back to your learning journey.";
   };
 
-  const BadgeDisplay = ({ userData, user }) => {
-    const username = user?.username || "";
+  const BadgeDisplay = ({ userData, profile }) => {
+    const username = profile?.username || "";
     const badgePaths = userData[username]?.badges
       ? userData[username].badges.split(',').map((path) => path.trim())
       : [];
@@ -117,7 +119,7 @@ const Home = () => {
           if (window.voiceflow?.chat?.interact) {
             window.voiceflow.chat.interact({
               type: 'text',
-              payload: `Hi, I'm ${user?.name || 'a student'} and I'm ready to continue my learning session.`
+              payload: `Hi, I'm ${profile?.name || 'a student'} and I'm ready to continue my learning session.`
             });
             
             toast({
@@ -155,7 +157,7 @@ const Home = () => {
           if (window.voiceflow?.chat?.interact) {
             window.voiceflow.chat.interact({
               type: 'text',
-              payload: `Hi, I'm ${user?.name || 'a student'} and I'm ready to continue my learning session.`
+              payload: `Hi, I'm ${profile?.name || 'a student'} and I'm ready to continue my learning session.`
             });
             
             toast({
@@ -236,11 +238,25 @@ const Home = () => {
 
   // Get therapists count for the current user
   const getTherapistsCount = () => {
-    const username = user?.username || "";
+    const username = profile?.username || "";
     const userInfo = userData[username];
     if (!userInfo?.therapistNames) return 0;
     return userInfo.therapistNames.split(",").length;
   };
+
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold mb-4">Loading...</h1>
+            <p className="text-gray-600">Please wait while we load your profile.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -249,7 +265,7 @@ const Home = () => {
       <main className="flex-grow px-4 py-8 max-w-6xl mx-auto w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-6">
-            Welcome, {user?.name || "User"}!
+            Welcome, {profile?.name || "User"}!
           </h1>
           
           {showSessionWarning && (
@@ -278,7 +294,7 @@ const Home = () => {
               <div className="bg-muted p-6 rounded-lg h-full">
                 <h2 className="text-2xl font-semibold mb-6 text-left">Your Therapists</h2>
                 <TherapistCarousel 
-                  user={user} 
+                  user={{ username: profile?.username }} 
                   userData={userData} 
                   onTherapistSelect={handleTherapistSelect}
                   therapistsCount={getTherapistsCount()}
@@ -287,7 +303,7 @@ const Home = () => {
             </div>
             
             {/* Badges section - 40% width */}
-            <BadgeDisplay userData={userData} user={user} />
+            <BadgeDisplay userData={userData} profile={profile} />
           </div>
           
           {/* Show the Voiceflow container only when a therapist is selected */}
