@@ -1,6 +1,5 @@
-
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 
 const Auth = () => {
+  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -20,6 +20,20 @@ const Auth = () => {
   const { signIn, signUp, resetPassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check URL parameters on component mount
+  useEffect(() => {
+    const signupParam = searchParams.get('signup');
+    const forgotParam = searchParams.get('forgot');
+    
+    if (signupParam === 'true') {
+      setIsLogin(false);
+      setShowForgotPassword(false);
+    } else if (forgotParam === 'true') {
+      setShowForgotPassword(true);
+      setIsLogin(true);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

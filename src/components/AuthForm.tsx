@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -80,7 +79,7 @@ const AuthForm = () => {
       </CardContent>
       <CardFooter className="flex flex-col space-y-2 pt-0">
         <Link 
-          to="/auth" 
+          to="/auth?forgot=true" 
           className="text-sm text-center text-blue-600 hover:text-blue-800 underline"
         >
           Forgot your password?
@@ -88,7 +87,7 @@ const AuthForm = () => {
         <div className="text-sm text-center text-gray-600">
           Don't have an account?{" "}
           <Link 
-            to="/auth" 
+            to="/auth?signup=true" 
             className="text-blue-600 hover:text-blue-800 underline"
           >
             Sign up here
