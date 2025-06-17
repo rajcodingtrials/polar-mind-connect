@@ -6,22 +6,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Index from "./pages/Index";
-import Home from "./pages/Home";
-import NotFound from "./pages/NotFound";
-import OurStory from "./pages/OurStory";
-import MeetTheTeam from "./pages/MeetTheTeam";
+import Chat from "./pages/Chat";
+import Resources from "./pages/Resources";
+import About from "./pages/About";
+import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
     },
   },
 });
 
-const App = () => {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -31,16 +31,17 @@ const App = () => {
             <Sonner />
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/our-story" element={<OurStory />} />
-              <Route path="/meet-the-team" element={<MeetTheTeam />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
             </Routes>
           </TooltipProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;

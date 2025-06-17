@@ -1,59 +1,97 @@
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
-type User = {
-  username: string;
-  name: string;
-};
-
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => Promise<{ success: boolean; message: string }>;
-  logout: () => void;
-  isAuthenticated: boolean;
-};
-
-const users = [
-  { username: "leo", password: "leospeaks", name: "Leo" },
-  { username: "maria", password: "maria_is_learning", name: "Maria" },
-];
+  session: Session | null;
+  loading: boolean;
+  signUp: (email: string, password: string, username: string, name: string, age: number) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem("polariz_user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = async (username: string, password: string) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
-    const foundUser = users.find(
-      (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
     );
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signUp = async (email: string, password: string, username: string, name: string, age: number) => {
+    const redirectUrl = `${window.location.origin}/`;
     
-    if (foundUser) {
-      const userInfo = { username: foundUser.username, name: foundUser.name };
-      setUser(userInfo);
-      localStorage.setItem("polariz_user", JSON.stringify(userInfo));
-      return { success: true, message: "Login successful" };
-    }
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          username,
+          name,
+          age: age.toString()
+        }
+      }
+    });
     
-    return { success: false, message: "Invalid credentials" };
+    return { error };
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("polariz_user");
-    navigate("/");
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    return { error };
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const resetPassword = async (email: string) => {
+    const redirectUrl = `${window.location.origin}/reset-password`;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+    
+    return { error };
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{
+      user,
+      session,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+      resetPassword
+    }}>
       {children}
     </AuthContext.Provider>
   );
