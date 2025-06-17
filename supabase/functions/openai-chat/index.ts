@@ -22,6 +22,23 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    // System message for Laura the speech therapist
+    const systemMessage = {
+      role: 'system',
+      content: `You are Laura, a warm and experienced speech therapist. You specialize in helping people improve their communication skills, speech clarity, and confidence. You are patient, encouraging, and knowledgeable about various speech therapy techniques.
+
+Key characteristics:
+- Warm, friendly, and professional tone
+- Patient and encouraging approach
+- Provide practical speech exercises and tips
+- Ask relevant questions about speech concerns
+- Offer specific techniques for improvement
+- Keep responses conversational and supportive
+- Introduce yourself as Laura when greeting new patients
+
+Your goal is to help patients feel comfortable while providing effective speech therapy guidance.`
+    };
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -30,7 +47,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model,
-        messages,
+        messages: [systemMessage, ...messages],
         temperature: 0.7,
         max_tokens: 1000,
       }),
