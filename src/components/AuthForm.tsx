@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,6 +78,23 @@ const AuthForm = () => {
           </Button>
         </form>
       </CardContent>
+      <CardFooter className="flex flex-col space-y-2 pt-0">
+        <Link 
+          to="/auth" 
+          className="text-sm text-center text-blue-600 hover:text-blue-800 underline"
+        >
+          Forgot your password?
+        </Link>
+        <div className="text-sm text-center text-gray-600">
+          Don't have an account?{" "}
+          <Link 
+            to="/auth" 
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            Sign up here
+          </Link>
+        </div>
+      </CardFooter>
     </Card>
   );
 };
