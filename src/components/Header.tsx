@@ -29,13 +29,16 @@ const Header = () => {
           <Link to="/our-story" className="text-white hover:text-white/80 transition-colors font-medium">Our Story</Link>
           <Link to="/meet-the-team" className="text-white hover:text-white/80 transition-colors font-medium">Meet the Team</Link>
           {isAuthenticated && (
-            <Button 
-              onClick={handleLogout} 
-              variant="link" 
-              className="text-white hover:text-white/80 transition-colors p-0 font-medium text-base"
-            >
-              Logout
-            </Button>
+            <>
+              <Link to="/admin" className="text-white hover:text-white/80 transition-colors font-medium">Admin</Link>
+              <Button 
+                onClick={handleLogout} 
+                variant="link" 
+                className="text-white hover:text-white/80 transition-colors p-0 font-medium text-base"
+              >
+                Logout
+              </Button>
+            </>
           )}
         </nav>
       </div>

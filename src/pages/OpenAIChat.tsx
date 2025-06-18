@@ -1,13 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import OpenAIChat from '../components/OpenAIChat';
-import QuestionUpload from '../components/QuestionUpload';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { Upload, MessageCircle } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -19,14 +16,26 @@ interface Question {
 const OpenAIChatPage = () => {
   const { profile } = useUserProfile();
   const [showChat, setShowChat] = useState(false);
-  const [showUpload, setShowUpload] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [useStructuredMode, setUseStructuredMode] = useState(false);
 
+  // Load questions and settings from localStorage on component mount
+  useEffect(() => {
+    const savedQuestions = localStorage.getItem('adminQuestions');
+    const defaultMode = localStorage.getItem('defaultChatMode');
+    
+    if (savedQuestions) {
+      setQuestions(JSON.parse(savedQuestions));
+    }
+    
+    if (defaultMode) {
+      setUseStructuredMode(defaultMode === 'structured');
+    }
+  }, []);
+
   const handleLauraClick = () => {
     setShowChat(true);
-    setShowUpload(false);
   };
 
   const handleLawrenceClick = () => {
@@ -36,18 +45,6 @@ const OpenAIChatPage = () => {
 
   const handleCloseChat = () => {
     setShowChat(false);
-  };
-
-  const handleShowUpload = () => {
-    setShowUpload(true);
-    setShowChat(false);
-  };
-
-  const handleQuestionsUploaded = (uploadedQuestions: Question[], uploadedImages: File[]) => {
-    setQuestions(uploadedQuestions);
-    setImages(uploadedImages);
-    setShowUpload(false);
-    console.log('Questions uploaded:', uploadedQuestions.length, 'Images uploaded:', uploadedImages.length);
   };
 
   const toggleChatMode = () => {
@@ -78,32 +75,6 @@ const OpenAIChatPage = () => {
               <p className="text-gray-700">
                 Hope your vacation went great. Let's start from where you left off last week. You have made a great job learning about making effective conversations.
               </p>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="mb-8 bg-green-50 border-green-200">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-gray-800">
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <Button 
-                  onClick={handleShowUpload} 
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload Questions
-                </Button>
-                {questions.length > 0 && (
-                  <div className="text-sm text-green-600 flex items-center">
-                    ✓ {questions.length} questions loaded
-                  </div>
-                )}
-              </div>
             </CardContent>
           </Card>
 
@@ -193,13 +164,6 @@ const OpenAIChatPage = () => {
               </CardContent>
             </Card>
           </div>
-
-          {/* Upload Interface */}
-          {showUpload && (
-            <div className="flex justify-center mb-8">
-              <QuestionUpload onQuestionsUploaded={handleQuestionsUploaded} />
-            </div>
-          )}
 
           {/* Chat Interface - only show when Laura is clicked */}
           {showChat && (

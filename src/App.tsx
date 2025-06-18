@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import MeetTheTeam from "./pages/MeetTheTeam";
 import OurStory from "./pages/OurStory";
 import OpenAIChatPage from "./pages/OpenAIChat";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +45,7 @@ function App() {
               <Route path="/meet-the-team" element={<MeetTheTeam />} />
               <Route path="/our-story" element={<OurStory />} />
               <Route path="/openai-chat" element={<OpenAIChatPage />} />
+              <Route path="/admin" element={<Admin />} />
             </Routes>
           </TooltipProvider>
         </AuthProvider>
