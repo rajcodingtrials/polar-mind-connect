@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -8,6 +8,16 @@ import { useUserProfile } from '../hooks/useUserProfile';
 
 const OpenAIChatPage = () => {
   const { profile } = useUserProfile();
+  const [showChat, setShowChat] = useState(false);
+
+  const handleLauraClick = () => {
+    setShowChat(true);
+  };
+
+  const handleLawrenceClick = () => {
+    // Placeholder for Lawrence functionality
+    console.log('Lawrence clicked - functionality to be implemented');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -45,20 +55,26 @@ const OpenAIChatPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex items-center space-x-4">
+                  <div 
+                    className="flex items-center space-x-4 cursor-pointer hover:bg-blue-100 p-3 rounded-lg transition-colors"
+                    onClick={handleLauraClick}
+                  >
                     <Avatar className="h-16 w-16">
                       <AvatarImage 
-                        src="/lovable-uploads/Amy.png" 
-                        alt="Amy" 
+                        src="/lovable-uploads/Laura.png" 
+                        alt="Laura" 
                       />
-                      <AvatarFallback className="bg-blue-500 text-white">A</AvatarFallback>
+                      <AvatarFallback className="bg-blue-500 text-white">L</AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-semibold text-gray-800">Amy</h3>
+                      <h3 className="font-semibold text-gray-800">Laura</h3>
                       <p className="text-gray-600 text-sm">Practiced conversations</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
+                  <div 
+                    className="flex items-center space-x-4 cursor-pointer hover:bg-blue-100 p-3 rounded-lg transition-colors"
+                    onClick={handleLawrenceClick}
+                  >
                     <Avatar className="h-16 w-16">
                       <AvatarImage 
                         src="/lovable-uploads/Lawrence.png" 
@@ -83,7 +99,7 @@ const OpenAIChatPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="flex justify-center gap-4">
                   <div className="text-center">
                     <img 
                       src="/lovable-uploads/Badge1.png" 
@@ -113,10 +129,12 @@ const OpenAIChatPage = () => {
             </Card>
           </div>
 
-          {/* Chat Interface */}
-          <div className="flex justify-center">
-            <OpenAIChat />
-          </div>
+          {/* Chat Interface - only show when Laura is clicked */}
+          {showChat && (
+            <div className="flex justify-center">
+              <OpenAIChat />
+            </div>
+          )}
         </div>
       </main>
     </div>

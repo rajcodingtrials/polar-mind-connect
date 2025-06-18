@@ -206,7 +206,7 @@ const OpenAIChat = () => {
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 border-2 border-white">
               <AvatarImage 
-                src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=400&fit=crop&crop=face" 
+                src="/lovable-uploads/Laura.png" 
                 alt="Laura - Speech Therapist" 
               />
               <AvatarFallback className="bg-blue-500 text-white text-lg">L</AvatarFallback>
@@ -251,7 +251,7 @@ const OpenAIChat = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Avatar className="h-6 w-6">
                       <AvatarImage 
-                        src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=400&fit=crop&crop=face" 
+                        src="/lovable-uploads/Laura.png" 
                         alt="Laura" 
                       />
                       <AvatarFallback className="bg-blue-500 text-white text-xs">L</AvatarFallback>
@@ -271,7 +271,7 @@ const OpenAIChat = () => {
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
                     <AvatarImage 
-                      src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=400&fit=crop&crop=face" 
+                      src="/lovable-uploads/Laura.png" 
                       alt="Laura" 
                     />
                     <AvatarFallback className="bg-blue-500 text-white text-xs">L</AvatarFallback>
