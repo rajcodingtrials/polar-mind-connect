@@ -16,8 +16,8 @@ const Home = () => {
       return;
     }
     
-    // Redirect authenticated users to the OpenAI test page
-    navigate("/openai-test");
+    // Redirect authenticated users to the OpenAI chat page
+    navigate("/openai-chat");
   }, [isAuthenticated, navigate]);
 
   if (profileLoading) {

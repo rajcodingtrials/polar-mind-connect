@@ -3,7 +3,7 @@ import React from 'react';
 import Header from '../components/Header';
 import OpenAIChat from '../components/OpenAIChat';
 
-const OpenAITest = () => {
+const OpenAIChatPage = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -22,4 +22,4 @@ const OpenAITest = () => {
   );
 };
 
-export default OpenAITest;
+export default OpenAIChatPage;
