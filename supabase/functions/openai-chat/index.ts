@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { speechTherapistPrompt } from "./prompts.ts";
@@ -16,16 +17,16 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, model = 'gpt-4o-mini' } = await req.json();
+    const { messages, model = 'gpt-4o-mini', systemPrompt } = await req.json();
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    // System message for speech therapist
+    // Use custom system prompt if provided, otherwise use default
     const systemMessage = {
       role: 'system',
-      content: speechTherapistPrompt
+      content: systemPrompt || speechTherapistPrompt
     };
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {

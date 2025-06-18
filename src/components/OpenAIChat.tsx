@@ -6,23 +6,38 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { Mic, MicOff, Volume2, VolumeX, X } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, X, MessageCircle, FileQuestion } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  imageUrl?: string;
+}
+
+interface Question {
+  id: string;
+  question: string;
+  answer: string;
+  imageName?: string;
 }
 
 interface OpenAIChatProps {
   onClose?: () => void;
+  questions?: Question[];
+  images?: File[];
+  useStructuredMode?: boolean;
+  onToggleMode?: () => void;
 }
 
-const OpenAIChat = ({ onClose }: OpenAIChatProps) => {
+const OpenAIChat = ({ onClose, questions = [], images = [], useStructuredMode = false, onToggleMode }: OpenAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questionImages, setQuestionImages] = useState<{[key: string]: string}>({});
   const { toast } = useToast();
   
   const {
@@ -35,34 +50,112 @@ const OpenAIChat = ({ onClose }: OpenAIChatProps) => {
   
   const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
 
-  // Start conversation when component mounts
+  // Create image URLs from uploaded files
   useEffect(() => {
-    if (!hasStarted) {
+    if (images.length > 0) {
+      const imageUrls: {[key: string]: string} = {};
+      images.forEach(file => {
+        imageUrls[file.name] = URL.createObjectURL(file);
+      });
+      setQuestionImages(imageUrls);
+
+      // Cleanup URLs when component unmounts
+      return () => {
+        Object.values(imageUrls).forEach(url => URL.revokeObjectURL(url));
+      };
+    }
+  }, [images]);
+
+  // Start conversation when component mounts or mode changes
+  useEffect(() => {
+    if (!hasStarted || (useStructuredMode && currentQuestions.length === 0)) {
       startConversation();
       setHasStarted(true);
     }
-  }, []);
+  }, [useStructuredMode]);
+
+  const selectRandomQuestions = () => {
+    if (questions.length === 0) return [];
+    const shuffled = [...questions].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(5, questions.length));
+  };
 
   const startConversation = async () => {
     setLoading(true);
+    setMessages([]);
 
     try {
-      const { data, error } = await supabase.functions.invoke('openai-chat', {
-        body: {
-          messages: [],
-          model: 'gpt-4o-mini'
-        }
-      });
+      let systemPrompt = '';
+      let assistantContent = '';
 
-      if (error) throw error;
+      if (useStructuredMode && questions.length > 0) {
+        const selectedQuestions = selectRandomQuestions();
+        setCurrentQuestions(selectedQuestions);
+        setCurrentQuestionIndex(0);
 
-      const assistantContent = data.choices[0].message.content;
-      console.log('Assistant response:', assistantContent);
+        systemPrompt = `You are Laura, a gentle speech therapist. You will ask the user specific questions with images. 
+        Ask one question at a time and wait for their response. Check if their answer matches the expected answer.
+        If correct, praise them warmly. If incorrect, gently correct them and encourage them.
+        After they answer, move to the next question.
+        
+        Here are the 5 questions you should ask:
+        ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
+        
+        Start with a warm greeting and then ask the first question.`;
+
+        assistantContent = `Hello! I'm so excited to work with you today! 🌟 
+
+I have some special questions with pictures for you. Let's start with the first one:
+
+${selectedQuestions[0]?.question}`;
+
+      } else {
+        systemPrompt = `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
+
+When the conversation starts:
+- Greet the child warmly and slowly.
+- Ask them their name in a calm, friendly tone.
+- Use pauses between sentences and speak at 60% of normal voice speed.
+- After the child shares their name, say it back gently and with kindness (e.g., "Hi Maya, I'm so happy to see you!").
+
+Then, begin one short and playful speech lesson:
+- Teach the names of 3 simple fruits: apple, banana, and orange.
+- For each fruit, say the fruit name clearly and slowly, breaking it into syllables. Example: "Aaa–pple"
+- Ask the child kindly to try saying it with you
+- Praise any response warmly, even if it's incomplete. Use phrases like: "That's amazing!", "Great trying!", or "I'm so proud of you!"
+- You can use fruit emojis to make the lesson more engaging: 🍎 for apple, 🍌 for banana, 🍊 for orange
+
+Keep your sentences short, joyful, and slow. Avoid complex words. Smile in your voice. Always stay calm and patient.
+
+At the end:
+- Praise the child by name
+- Remind them they did something special today
+- Say goodbye in a sweet and happy way`;
+
+        const { data, error } = await supabase.functions.invoke('openai-chat', {
+          body: {
+            messages: [],
+            model: 'gpt-4o-mini',
+            systemPrompt
+          }
+        });
+
+        if (error) throw error;
+        assistantContent = data.choices[0].message.content;
+      }
 
       const assistantMessage: Message = {
         role: 'assistant',
         content: assistantContent
       };
+
+      // Add image to first question if in structured mode
+      if (useStructuredMode && currentQuestions.length > 0) {
+        const firstQuestion = currentQuestions[0];
+        if (firstQuestion.imageName && questionImages[firstQuestion.imageName]) {
+          assistantMessage.imageUrl = questionImages[firstQuestion.imageName];
+        }
+      }
 
       setMessages([assistantMessage]);
 
@@ -102,22 +195,58 @@ const OpenAIChat = ({ onClose }: OpenAIChatProps) => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('openai-chat', {
-        body: {
-          messages: [...messages, userMessage],
-          model: 'gpt-4o-mini'
+      let systemPrompt = '';
+      let assistantContent = '';
+
+      if (useStructuredMode && currentQuestions.length > 0) {
+        const currentQ = currentQuestions[currentQuestionIndex];
+        const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
+        const nextIndex = currentQuestionIndex + 1;
+
+        if (isCorrect) {
+          if (nextIndex < currentQuestions.length) {
+            const nextQ = currentQuestions[nextIndex];
+            assistantContent = `Wonderful! That's exactly right! 🎉 
+
+Now let's look at the next picture. ${nextQ.question}`;
+            setCurrentQuestionIndex(nextIndex);
+          } else {
+            assistantContent = `Perfect! You got it right! 🌟 
+
+You did such an amazing job answering all the questions today! You should be very proud of yourself. Great work! 🎊`;
+          }
+        } else {
+          assistantContent = `That's a good try! The answer I was looking for is "${currentQ.answer}". Let's try saying it together: ${currentQ.answer}. You're doing great! 
+
+Now, can you tell me what you see in this picture again?`;
         }
-      });
+      } else {
+        systemPrompt = `You are Laura, a gentle speech therapist. Continue the conversation naturally, providing encouragement and speech therapy guidance.`;
 
-      if (error) throw error;
+        const { data, error } = await supabase.functions.invoke('openai-chat', {
+          body: {
+            messages: [...messages, userMessage],
+            model: 'gpt-4o-mini',
+            systemPrompt
+          }
+        });
 
-      const assistantContent = data.choices[0].message.content;
-      console.log('Assistant response:', assistantContent);
+        if (error) throw error;
+        assistantContent = data.choices[0].message.content;
+      }
 
       const assistantMessage: Message = {
         role: 'assistant',
         content: assistantContent
       };
+
+      // Add image for current question in structured mode
+      if (useStructuredMode && currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+        const currentQ = currentQuestions[currentQuestionIndex];
+        if (currentQ.imageName && questionImages[currentQ.imageName]) {
+          assistantMessage.imageUrl = questionImages[currentQ.imageName];
+        }
+      }
 
       setMessages(prev => [...prev, assistantMessage]);
 
@@ -220,9 +349,25 @@ const OpenAIChat = ({ onClose }: OpenAIChatProps) => {
               <p className="text-blue-100 text-sm font-normal">
                 Your AI Speech Therapy Assistant
               </p>
+              {useStructuredMode && (
+                <p className="text-blue-200 text-xs">
+                  Q&A Mode: {currentQuestionIndex + 1}/{currentQuestions.length}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {questions.length > 0 && onToggleMode && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={onToggleMode}
+                className="border-white text-white hover:bg-white hover:text-blue-600"
+                title={useStructuredMode ? "Switch to Free Chat" : "Switch to Q&A Mode"}
+              >
+                {useStructuredMode ? <MessageCircle className="w-4 h-4" /> : <FileQuestion className="w-4 h-4" />}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="icon"
@@ -273,6 +418,15 @@ const OpenAIChat = ({ onClose }: OpenAIChatProps) => {
                       <AvatarFallback className="bg-blue-500 text-white text-xs">L</AvatarFallback>
                     </Avatar>
                     <span className="text-xs font-semibold text-blue-600">Laura:</span>
+                  </div>
+                )}
+                {message.imageUrl && (
+                  <div className="mb-3">
+                    <img 
+                      src={message.imageUrl} 
+                      alt="Question image" 
+                      className="max-w-full h-32 object-contain rounded border"
+                    />
                   </div>
                 )}
                 <div className="leading-relaxed whitespace-pre-wrap">

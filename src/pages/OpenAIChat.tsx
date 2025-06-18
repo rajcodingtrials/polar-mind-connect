@@ -1,16 +1,32 @@
+
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import OpenAIChat from '../components/OpenAIChat';
+import QuestionUpload from '../components/QuestionUpload';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { Upload, MessageCircle } from 'lucide-react';
+
+interface Question {
+  id: string;
+  question: string;
+  answer: string;
+  imageName?: string;
+}
 
 const OpenAIChatPage = () => {
   const { profile } = useUserProfile();
   const [showChat, setShowChat] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+  const [useStructuredMode, setUseStructuredMode] = useState(false);
 
   const handleLauraClick = () => {
     setShowChat(true);
+    setShowUpload(false);
   };
 
   const handleLawrenceClick = () => {
@@ -20,6 +36,21 @@ const OpenAIChatPage = () => {
 
   const handleCloseChat = () => {
     setShowChat(false);
+  };
+
+  const handleShowUpload = () => {
+    setShowUpload(true);
+    setShowChat(false);
+  };
+
+  const handleQuestionsUploaded = (uploadedQuestions: Question[], uploadedImages: File[]) => {
+    setQuestions(uploadedQuestions);
+    setImages(uploadedImages);
+    setShowUpload(false);
+  };
+
+  const toggleChatMode = () => {
+    setUseStructuredMode(!useStructuredMode);
   };
 
   return (
@@ -48,6 +79,32 @@ const OpenAIChatPage = () => {
             </CardContent>
           </Card>
 
+          {/* Quick Actions */}
+          <Card className="mb-8 bg-green-50 border-green-200">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-gray-800">
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Button 
+                  onClick={handleShowUpload} 
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload Questions
+                </Button>
+                {questions.length > 0 && (
+                  <div className="text-sm text-green-600 flex items-center">
+                    ✓ {questions.length} questions loaded
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             {/* Your Therapists Section */}
             <Card className="lg:col-span-2 bg-blue-50 border-blue-200">
@@ -72,6 +129,9 @@ const OpenAIChatPage = () => {
                     <div>
                       <h3 className="font-semibold text-gray-800">Laura</h3>
                       <p className="text-gray-600 text-sm">Practiced conversations</p>
+                      {questions.length > 0 && (
+                        <p className="text-xs text-green-600">Custom questions available</p>
+                      )}
                     </div>
                   </div>
                   <div 
@@ -132,10 +192,23 @@ const OpenAIChatPage = () => {
             </Card>
           </div>
 
+          {/* Upload Interface */}
+          {showUpload && (
+            <div className="flex justify-center mb-8">
+              <QuestionUpload onQuestionsUploaded={handleQuestionsUploaded} />
+            </div>
+          )}
+
           {/* Chat Interface - only show when Laura is clicked */}
           {showChat && (
             <div className="flex justify-center">
-              <OpenAIChat onClose={handleCloseChat} />
+              <OpenAIChat 
+                onClose={handleCloseChat}
+                questions={questions}
+                images={images}
+                useStructuredMode={useStructuredMode}
+                onToggleMode={toggleChatMode}
+              />
             </div>
           )}
         </div>
