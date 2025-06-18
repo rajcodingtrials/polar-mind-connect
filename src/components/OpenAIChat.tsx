@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +19,7 @@ const OpenAIChat = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasIntroduced, setHasIntroduced] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
   const { toast } = useToast();
   
   const {
@@ -59,6 +59,49 @@ const OpenAIChat = () => {
     }
   };
 
+  const generateImage = async (prompt: string) => {
+    try {
+      setGeneratingImage(true);
+      const { data, error } = await supabase.functions.invoke('openai-image-gen', {
+        body: { prompt }
+      });
+
+      if (error) throw error;
+      return data.data[0].b64_json;
+    } catch (error) {
+      console.error('Error generating image:', error);
+      return null;
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  const processMessageContent = async (content: string) => {
+    const imageRegex = /\[GENERATE_IMAGE: ([^\]]+)\]/g;
+    let processedContent = content;
+    const imagePromises: Promise<void>[] = [];
+
+    let match;
+    while ((match = imageRegex.exec(content)) !== null) {
+      const imagePrompt = match[1];
+      const placeholder = match[0];
+      
+      imagePromises.push(
+        generateImage(imagePrompt).then(imageData => {
+          if (imageData) {
+            const imageHtml = `<img src="data:image/png;base64,${imageData}" alt="${imagePrompt}" style="max-width: 200px; border-radius: 8px; margin: 10px 0;" />`;
+            processedContent = processedContent.replace(placeholder, imageHtml);
+          } else {
+            processedContent = processedContent.replace(placeholder, '🍎'); // Fallback emoji
+          }
+        })
+      );
+    }
+
+    await Promise.all(imagePromises);
+    return processedContent;
+  };
+
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim()) return;
 
@@ -76,18 +119,24 @@ const OpenAIChat = () => {
 
       if (error) throw error;
 
+      let assistantContent = data.choices[0].message.content;
+      
+      // Process any image generation requests
+      assistantContent = await processMessageContent(assistantContent);
+
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.choices[0].message.content
+        content: assistantContent
       };
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Generate and play TTS for Laura's response
+      // Generate and play TTS for Laura's response (without image markup)
       try {
+        const textForTTS = assistantContent.replace(/\[GENERATE_IMAGE: [^\]]+\]/g, '').replace(/<img[^>]*>/g, '');
         const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
           body: { 
-            text: assistantMessage.content,
+            text: textForTTS,
             voice: 'nova'
           }
         });
@@ -225,11 +274,14 @@ const OpenAIChat = () => {
                     <span className="text-xs font-semibold text-blue-600">Laura:</span>
                   </div>
                 )}
-                <div className="leading-relaxed">{message.content}</div>
+                <div 
+                  className="leading-relaxed" 
+                  dangerouslySetInnerHTML={{ __html: message.content }}
+                />
               </div>
             </div>
           ))}
-          {loading && (
+          {(loading || generatingImage) && (
             <div className="flex justify-start">
               <div className="bg-white border border-blue-200 rounded-lg p-3 shadow-sm">
                 <div className="flex items-center gap-2">
@@ -246,6 +298,7 @@ const OpenAIChat = () => {
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
+                  {generatingImage && <span className="text-xs text-blue-600 ml-2">Creating pictures...</span>}
                 </div>
               </div>
             </div>
