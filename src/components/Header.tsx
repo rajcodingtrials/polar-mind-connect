@@ -10,6 +10,11 @@ const Header = () => {
   const location = useLocation();
   const isIndexPage = location.pathname === "/";
 
+  const handleLogout = async () => {
+    console.log('Header logout clicked');
+    await logout();
+  };
+
   return (
     <header>
       <div className="w-full py-4 px-6 flex justify-between items-center bg-black text-white">
@@ -25,7 +30,7 @@ const Header = () => {
           <Link to="/meet-the-team" className="text-white hover:text-white/80 transition-colors font-medium">Meet the Team</Link>
           {isAuthenticated && (
             <Button 
-              onClick={logout} 
+              onClick={handleLogout} 
               variant="link" 
               className="text-white hover:text-white/80 transition-colors p-0 font-medium text-base"
             >
