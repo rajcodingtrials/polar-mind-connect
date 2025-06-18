@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +18,7 @@ const OpenAIChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [hasIntroduced, setHasIntroduced] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const { toast } = useToast();
   
   const {
@@ -32,30 +31,62 @@ const OpenAIChat = () => {
   
   const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
 
-  // Laura's introduction when component mounts
+  // Start conversation when component mounts
   useEffect(() => {
-    if (!hasIntroduced) {
-      const introMessage = "Hello! I'm Laura, your speech therapist. I'm here to help you improve your communication skills and speech clarity. How can I assist you today?";
-      setMessages([{ role: 'assistant', content: introMessage }]);
-      
-      // Play Laura's introduction
-      playIntroAudio(introMessage);
-      setHasIntroduced(true);
+    if (!hasStarted) {
+      startConversation();
+      setHasStarted(true);
     }
   }, []);
 
-  const playIntroAudio = async (text: string) => {
+  const startConversation = async () => {
+    setLoading(true);
+
     try {
-      const { data, error } = await supabase.functions.invoke('openai-tts', {
-        body: { text, voice: 'nova' }
+      const { data, error } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          messages: [],
+          model: 'gpt-4o-mini'
+        }
       });
 
       if (error) throw error;
-      if (data.audioContent) {
-        await playAudio(data.audioContent);
+
+      const assistantContent = data.choices[0].message.content;
+      console.log('Assistant response:', assistantContent);
+
+      const assistantMessage: Message = {
+        role: 'assistant',
+        content: assistantContent
+      };
+
+      setMessages([assistantMessage]);
+
+      // Generate and play TTS for Laura's response
+      try {
+        const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
+          body: { 
+            text: assistantContent,
+            voice: 'nova'
+          }
+        });
+
+        if (!ttsError && ttsData.audioContent) {
+          await playAudio(ttsData.audioContent);
+        }
+      } catch (ttsError) {
+        console.error('TTS Error:', ttsError);
       }
+
     } catch (error) {
-      console.error('Error playing intro audio:', error);
+      console.error('Error starting conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation with Laura. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
