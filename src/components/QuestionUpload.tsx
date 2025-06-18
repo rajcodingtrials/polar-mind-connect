@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { Upload, FileText, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Upload, FileText, ImageIcon, Trash2 } from 'lucide-react';
 
 interface Question {
   id: string;
