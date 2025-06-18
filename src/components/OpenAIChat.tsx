@@ -20,7 +20,6 @@ const OpenAIChat = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasIntroduced, setHasIntroduced] = useState(false);
-  const [generatingImage, setGeneratingImage] = useState(false);
   const { toast } = useToast();
   
   const {
@@ -60,81 +59,6 @@ const OpenAIChat = () => {
     }
   };
 
-  const generateImage = async (prompt: string) => {
-    try {
-      setGeneratingImage(true);
-      console.log('Starting image generation for:', prompt);
-      
-      const { data, error } = await supabase.functions.invoke('openai-image-gen', {
-        body: { prompt }
-      });
-
-      if (error) {
-        console.error('Image generation error:', error);
-        throw error;
-      }
-      
-      console.log('Image generation response:', data);
-      
-      if (data && data.data && data.data[0] && data.data[0].b64_json) {
-        return data.data[0].b64_json;
-      } else {
-        console.error('Unexpected image response format:', data);
-        return null;
-      }
-    } catch (error) {
-      console.error('Error generating image:', error);
-      toast({
-        title: "Image Generation Error",
-        description: "Failed to generate image. Using text description instead.",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setGeneratingImage(false);
-    }
-  };
-
-  const processMessageContent = async (content: string) => {
-    const imageRegex = /\[GENERATE_IMAGE: ([^\]]+)\]/g;
-    let processedContent = content;
-    const matches = [];
-    
-    let match;
-    while ((match = imageRegex.exec(content)) !== null) {
-      matches.push({
-        fullMatch: match[0],
-        prompt: match[1]
-      });
-    }
-
-    for (const imageMatch of matches) {
-      const imageData = await generateImage(imageMatch.prompt);
-      if (imageData) {
-        const imageHtml = `<div style="margin: 15px 0; text-align: center;"><img src="data:image/png;base64,${imageData}" alt="${imageMatch.prompt}" style="max-width: 300px; max-height: 300px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" /></div>`;
-        processedContent = processedContent.replace(imageMatch.fullMatch, imageHtml);
-      } else {
-        // Fallback to fruit emoji if image generation fails
-        const fruitEmojis: { [key: string]: string } = {
-          'apple': '🍎',
-          'banana': '🍌',
-          'orange': '🍊'
-        };
-        const fruitType = imageMatch.prompt.toLowerCase();
-        let emoji = '🍎'; // default
-        for (const fruit in fruitEmojis) {
-          if (fruitType.includes(fruit)) {
-            emoji = fruitEmojis[fruit];
-            break;
-          }
-        }
-        processedContent = processedContent.replace(imageMatch.fullMatch, `<div style="font-size: 48px; text-align: center; margin: 15px 0;">${emoji}</div>`);
-      }
-    }
-
-    return processedContent;
-  };
-
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim()) return;
 
@@ -152,12 +76,8 @@ const OpenAIChat = () => {
 
       if (error) throw error;
 
-      let assistantContent = data.choices[0].message.content;
-      console.log('Raw assistant response:', assistantContent);
-      
-      // Process any image generation requests
-      assistantContent = await processMessageContent(assistantContent);
-      console.log('Processed assistant content:', assistantContent);
+      const assistantContent = data.choices[0].message.content;
+      console.log('Assistant response:', assistantContent);
 
       const assistantMessage: Message = {
         role: 'assistant',
@@ -166,12 +86,11 @@ const OpenAIChat = () => {
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Generate and play TTS for Laura's response (without image markup)
+      // Generate and play TTS for Laura's response
       try {
-        const textForTTS = assistantContent.replace(/\[GENERATE_IMAGE: [^\]]+\]/g, '').replace(/<[^>]*>/g, '');
         const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
           body: { 
-            text: textForTTS,
+            text: assistantContent,
             voice: 'nova'
           }
         });
@@ -309,14 +228,13 @@ const OpenAIChat = () => {
                     <span className="text-xs font-semibold text-blue-600">Laura:</span>
                   </div>
                 )}
-                <div 
-                  className="leading-relaxed" 
-                  dangerouslySetInnerHTML={{ __html: message.content }}
-                />
+                <div className="leading-relaxed whitespace-pre-wrap">
+                  {message.content}
+                </div>
               </div>
             </div>
           ))}
-          {(loading || generatingImage) && (
+          {loading && (
             <div className="flex justify-start">
               <div className="bg-white border border-blue-200 rounded-lg p-3 shadow-sm">
                 <div className="flex items-center gap-2">
@@ -333,7 +251,6 @@ const OpenAIChat = () => {
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
-                  {generatingImage && <span className="text-xs text-blue-600 ml-2">Creating pictures...</span>}
                 </div>
               </div>
             </div>
