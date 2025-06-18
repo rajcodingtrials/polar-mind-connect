@@ -25,6 +25,8 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    console.log('Generating speech for text:', text.substring(0, 50) + '...');
+
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -40,14 +42,28 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || 'Failed to generate speech');
+      const errorText = await response.text();
+      console.error('OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
-    );
+    // Get the audio data as array buffer
+    const audioBuffer = await response.arrayBuffer();
+    console.log('Audio buffer size:', audioBuffer.byteLength);
+
+    // Convert to base64 using a more efficient method
+    const uint8Array = new Uint8Array(audioBuffer);
+    let binaryString = '';
+    
+    // Process in smaller chunks to avoid stack overflow
+    const chunkSize = 8192;
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, i + chunkSize);
+      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    
+    const base64Audio = btoa(binaryString);
+    console.log('Base64 audio generated, length:', base64Audio.length);
 
     return new Response(
       JSON.stringify({ audioContent: base64Audio }),
