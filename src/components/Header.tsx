@@ -1,11 +1,12 @@
-
 import React from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useUserRole } from "../hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 
 const Header = () => {
   const { isAuthenticated, logout } = useAuth();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const isIndexPage = location.pathname === "/";
@@ -30,7 +31,9 @@ const Header = () => {
           <Link to="/meet-the-team" className="text-white hover:text-white/80 transition-colors font-medium">Meet the Team</Link>
           {isAuthenticated && (
             <>
-              <Link to="/admin" className="text-white hover:text-white/80 transition-colors font-medium">Admin</Link>
+              {isAdmin() && (
+                <Link to="/admin" className="text-white hover:text-white/80 transition-colors font-medium">Admin</Link>
+              )}
               <Button 
                 onClick={handleLogout} 
                 variant="link" 

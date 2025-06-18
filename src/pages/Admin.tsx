@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import QuestionUpload from '../components/QuestionUpload';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { Upload, Settings, MessageCircle, FileQuestion } from 'lucide-react';
+import { useUserRole } from '../hooks/useUserRole';
+import { Upload, Settings, MessageCircle, FileQuestion, AlertTriangle } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -16,14 +17,55 @@ interface Question {
 
 const Admin = () => {
   const { profile } = useUserProfile();
+  const { role, loading: roleLoading, isAdmin } = useUserRole();
   const [showUpload, setShowUpload] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [defaultChatMode, setDefaultChatMode] = useState<'structured' | 'free'>('free');
 
-  // TODO: Add proper admin role checking here
-  // For now, this is accessible to all authenticated users
-  // You should implement proper role-based access control
+  // Show loading while checking role
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Checking permissions...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Check if user has admin role
+  if (!isAdmin()) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <Card className="max-w-md mx-auto bg-red-50 border-red-200">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-red-800 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Access Denied
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-red-700">
+                You don't have permission to access this page. Admin privileges are required.
+              </p>
+              {role && (
+                <p className="text-sm text-red-600 mt-2">
+                  Current role: {role}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   const handleQuestionsUploaded = (uploadedQuestions: Question[], uploadedImages: File[]) => {
     setQuestions(uploadedQuestions);
@@ -55,6 +97,9 @@ const Admin = () => {
             </h1>
             <p className="text-center text-gray-600">
               Manage questions, images, and chat settings
+            </p>
+            <p className="text-center text-sm text-green-600 mt-1">
+              Welcome, {profile?.name} (Role: {role})
             </p>
           </div>
 
