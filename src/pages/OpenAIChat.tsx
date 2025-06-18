@@ -47,9 +47,11 @@ const OpenAIChatPage = () => {
     setQuestions(uploadedQuestions);
     setImages(uploadedImages);
     setShowUpload(false);
+    console.log('Questions uploaded:', uploadedQuestions.length, 'Images uploaded:', uploadedImages.length);
   };
 
   const toggleChatMode = () => {
+    console.log('Toggling chat mode from', useStructuredMode, 'to', !useStructuredMode);
     setUseStructuredMode(!useStructuredMode);
   };
 
