@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,14 +63,32 @@ const OpenAIChat = () => {
   const generateImage = async (prompt: string) => {
     try {
       setGeneratingImage(true);
+      console.log('Starting image generation for:', prompt);
+      
       const { data, error } = await supabase.functions.invoke('openai-image-gen', {
         body: { prompt }
       });
 
-      if (error) throw error;
-      return data.data[0].b64_json;
+      if (error) {
+        console.error('Image generation error:', error);
+        throw error;
+      }
+      
+      console.log('Image generation response:', data);
+      
+      if (data && data.data && data.data[0] && data.data[0].b64_json) {
+        return data.data[0].b64_json;
+      } else {
+        console.error('Unexpected image response format:', data);
+        return null;
+      }
     } catch (error) {
       console.error('Error generating image:', error);
+      toast({
+        title: "Image Generation Error",
+        description: "Failed to generate image. Using text description instead.",
+        variant: "destructive",
+      });
       return null;
     } finally {
       setGeneratingImage(false);
@@ -79,26 +98,40 @@ const OpenAIChat = () => {
   const processMessageContent = async (content: string) => {
     const imageRegex = /\[GENERATE_IMAGE: ([^\]]+)\]/g;
     let processedContent = content;
-    const imagePromises: Promise<void>[] = [];
-
+    const matches = [];
+    
     let match;
     while ((match = imageRegex.exec(content)) !== null) {
-      const imagePrompt = match[1];
-      const placeholder = match[0];
-      
-      imagePromises.push(
-        generateImage(imagePrompt).then(imageData => {
-          if (imageData) {
-            const imageHtml = `<img src="data:image/png;base64,${imageData}" alt="${imagePrompt}" style="max-width: 200px; border-radius: 8px; margin: 10px 0;" />`;
-            processedContent = processedContent.replace(placeholder, imageHtml);
-          } else {
-            processedContent = processedContent.replace(placeholder, '🍎'); // Fallback emoji
-          }
-        })
-      );
+      matches.push({
+        fullMatch: match[0],
+        prompt: match[1]
+      });
     }
 
-    await Promise.all(imagePromises);
+    for (const imageMatch of matches) {
+      const imageData = await generateImage(imageMatch.prompt);
+      if (imageData) {
+        const imageHtml = `<div style="margin: 15px 0; text-align: center;"><img src="data:image/png;base64,${imageData}" alt="${imageMatch.prompt}" style="max-width: 300px; max-height: 300px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" /></div>`;
+        processedContent = processedContent.replace(imageMatch.fullMatch, imageHtml);
+      } else {
+        // Fallback to fruit emoji if image generation fails
+        const fruitEmojis: { [key: string]: string } = {
+          'apple': '🍎',
+          'banana': '🍌',
+          'orange': '🍊'
+        };
+        const fruitType = imageMatch.prompt.toLowerCase();
+        let emoji = '🍎'; // default
+        for (const fruit in fruitEmojis) {
+          if (fruitType.includes(fruit)) {
+            emoji = fruitEmojis[fruit];
+            break;
+          }
+        }
+        processedContent = processedContent.replace(imageMatch.fullMatch, `<div style="font-size: 48px; text-align: center; margin: 15px 0;">${emoji}</div>`);
+      }
+    }
+
     return processedContent;
   };
 
@@ -120,9 +153,11 @@ const OpenAIChat = () => {
       if (error) throw error;
 
       let assistantContent = data.choices[0].message.content;
+      console.log('Raw assistant response:', assistantContent);
       
       // Process any image generation requests
       assistantContent = await processMessageContent(assistantContent);
+      console.log('Processed assistant content:', assistantContent);
 
       const assistantMessage: Message = {
         role: 'assistant',
@@ -133,7 +168,7 @@ const OpenAIChat = () => {
 
       // Generate and play TTS for Laura's response (without image markup)
       try {
-        const textForTTS = assistantContent.replace(/\[GENERATE_IMAGE: [^\]]+\]/g, '').replace(/<img[^>]*>/g, '');
+        const textForTTS = assistantContent.replace(/\[GENERATE_IMAGE: [^\]]+\]/g, '').replace(/<[^>]*>/g, '');
         const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
           body: { 
             text: textForTTS,

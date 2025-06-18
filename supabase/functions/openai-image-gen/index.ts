@@ -31,20 +31,23 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-image-1',
+        model: 'dall-e-3',
         prompt: prompt,
         n: 1,
         size: '1024x1024',
-        quality: 'high',
-        output_format: 'png'
+        quality: 'standard',
+        response_format: 'b64_json'
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI Image API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('OpenAI Image API error:', response.status, errorText);
+      throw new Error(`OpenAI Image API error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('Image generation successful');
     
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
