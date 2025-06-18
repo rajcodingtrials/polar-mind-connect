@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +16,10 @@ const OpenAIChatPage = () => {
   const handleLawrenceClick = () => {
     // Placeholder for Lawrence functionality
     console.log('Lawrence clicked - functionality to be implemented');
+  };
+
+  const handleCloseChat = () => {
+    setShowChat(false);
   };
 
   return (
@@ -132,7 +135,7 @@ const OpenAIChatPage = () => {
           {/* Chat Interface - only show when Laura is clicked */}
           {showChat && (
             <div className="flex justify-center">
-              <OpenAIChat />
+              <OpenAIChat onClose={handleCloseChat} />
             </div>
           )}
         </div>

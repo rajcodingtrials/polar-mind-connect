@@ -6,7 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, X } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface Message {
@@ -14,7 +14,11 @@ interface Message {
   content: string;
 }
 
-const OpenAIChat = () => {
+interface OpenAIChatProps {
+  onClose?: () => void;
+}
+
+const OpenAIChat = ({ onClose }: OpenAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -218,17 +222,29 @@ const OpenAIChat = () => {
               </p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleAudio}
-            disabled={!isPlaying}
-            className={`border-white text-white hover:bg-white hover:text-blue-600 ${
-              isPlaying ? "bg-white text-blue-600" : ""
-            }`}
-          >
-            {isPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleAudio}
+              disabled={!isPlaying}
+              className={`border-white text-white hover:bg-white hover:text-blue-600 ${
+                isPlaying ? "bg-white text-blue-600" : ""
+              }`}
+            >
+              {isPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </Button>
+            {onClose && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={onClose}
+                className="border-white text-white hover:bg-white hover:text-blue-600"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 p-6">
