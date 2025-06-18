@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { Upload, FileText, ImageIcon, Trash2 } from 'lucide-react';
+import { Upload, FileText, Image, Trash2 } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -105,13 +105,13 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
             className="cursor-pointer"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Format: [{"question": "What is this?", "answer": "apple", "imageName": "apple.jpg"}]
+            Format: {`[{"question": "What is this?", "answer": "apple", "imageName": "apple.jpg"}]`}
           </p>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            <ImageIcon className="w-4 h-4 inline mr-1" />
+            <Image className="w-4 h-4 inline mr-1" />
             Images
           </label>
           <Input
@@ -146,7 +146,7 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
               {images.map((img, index) => (
                 <div key={index} className="relative group">
                   <div className="bg-gray-100 p-2 rounded text-xs flex items-center gap-1">
-                    <ImageIcon className="w-3 h-3" />
+                    <Image className="w-3 h-3" />
                     {img.name}
                   </div>
                   <Button
