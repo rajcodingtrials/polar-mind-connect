@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +18,7 @@ const OpenAIChatPage = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [useStructuredMode, setUseStructuredMode] = useState(false);
+  const [chatKey, setChatKey] = useState(0); // Add key to force chat component re-render
 
   // Load questions and settings from localStorage on component mount
   useEffect(() => {
@@ -45,11 +45,13 @@ const OpenAIChatPage = () => {
 
   const handleCloseChat = () => {
     setShowChat(false);
+    setChatKey(prev => prev + 1); // Reset chat when closing
   };
 
   const toggleChatMode = () => {
     console.log('Toggling chat mode from', useStructuredMode, 'to', !useStructuredMode);
     setUseStructuredMode(!useStructuredMode);
+    setChatKey(prev => prev + 1); // Force chat component to re-render with new mode
   };
 
   return (
@@ -169,6 +171,7 @@ const OpenAIChatPage = () => {
           {showChat && (
             <div className="flex justify-center">
               <OpenAIChat 
+                key={chatKey}
                 onClose={handleCloseChat}
                 questions={questions}
                 images={images}
