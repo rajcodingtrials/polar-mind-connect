@@ -241,24 +241,27 @@ Now, can you tell me what you see in this picture again?`;
       // Add image for questions in structured mode
       if (useStructuredMode && currentQuestions.length > 0) {
         const currentQ = currentQuestions[currentQuestionIndex];
-        const isCorrect = messageText.toLowerCase().includes(currentQuestions[currentQuestionIndex]?.answer.toLowerCase() || '');
+        const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
         
-        // If user answered correctly and we moved to next question, show the next question's image
-        if (isCorrect && currentQuestionIndex < currentQuestions.length) {
-          const nextQ = currentQuestions[currentQuestionIndex];
-          console.log('Next question for image:', nextQ);
-          console.log('Looking for image:', nextQ.imageName);
-          
-          if (nextQ.imageName && imageUrls[nextQ.imageName]) {
-            assistantMessage.imageUrl = imageUrls[nextQ.imageName];
-            console.log('Added image URL to response:', assistantMessage.imageUrl);
+        if (isCorrect) {
+          // If correct and there's a next question, show next question's image
+          const nextIndex = currentQuestionIndex + 1;
+          if (nextIndex < currentQuestions.length) {
+            const nextQ = currentQuestions[nextIndex];
+            console.log('User answered correctly, showing next question image:', nextQ.imageName);
+            
+            if (nextQ.imageName && imageUrls[nextQ.imageName]) {
+              assistantMessage.imageUrl = imageUrls[nextQ.imageName];
+              console.log('Added next question image URL:', assistantMessage.imageUrl);
+            }
           }
-        }
-        // If user answered incorrectly, show the same question's image again
-        else if (!isCorrect) {
-          console.log('Incorrect answer, showing same question image:', currentQ.imageName);
+          // If it's the last question and user got it right, no image needed
+        } else {
+          // If incorrect, show the same question's image again
+          console.log('User answered incorrectly, showing same question image again:', currentQ.imageName);
           if (currentQ.imageName && imageUrls[currentQ.imageName]) {
             assistantMessage.imageUrl = imageUrls[currentQ.imageName];
+            console.log('Added same question image URL:', assistantMessage.imageUrl);
           }
         }
       }
