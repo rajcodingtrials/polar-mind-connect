@@ -50,21 +50,40 @@ const OpenAIChat = ({ onClose, questions = [], images = [], useStructuredMode = 
   
   const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
 
-  // Create image URLs from uploaded files
+  // Create image URLs from uploaded files and store them properly
   useEffect(() => {
+    console.log('Processing images:', images.length);
+    
     if (images.length > 0) {
       const imageUrls: {[key: string]: string} = {};
+      
       images.forEach(file => {
-        imageUrls[file.name] = URL.createObjectURL(file);
+        const url = URL.createObjectURL(file);
+        imageUrls[file.name] = url;
+        console.log(`Created URL for ${file.name}:`, url);
       });
+      
       setQuestionImages(imageUrls);
 
-      // Cleanup URLs when component unmounts
+      // Cleanup URLs when component unmounts or images change
       return () => {
-        Object.values(imageUrls).forEach(url => URL.revokeObjectURL(url));
+        Object.values(imageUrls).forEach(url => {
+          URL.revokeObjectURL(url);
+          console.log('Revoked URL:', url);
+        });
       };
+    } else {
+      // Clear images if no files provided
+      setQuestionImages({});
     }
   }, [images]);
+
+  // Debug log for questions and images
+  useEffect(() => {
+    console.log('Questions received:', questions.length);
+    console.log('Questions:', questions);
+    console.log('Available image URLs:', Object.keys(questionImages));
+  }, [questions, questionImages]);
 
   // Start conversation when component mounts or mode changes
   useEffect(() => {
@@ -92,6 +111,8 @@ const OpenAIChat = ({ onClose, questions = [], images = [], useStructuredMode = 
         const selectedQuestions = selectRandomQuestions();
         setCurrentQuestions(selectedQuestions);
         setCurrentQuestionIndex(0);
+
+        console.log('Selected questions for session:', selectedQuestions);
 
         systemPrompt = `You are Laura, a gentle speech therapist. You will ask the user specific questions with images. 
         Ask one question at a time and wait for their response. Check if their answer matches the expected answer.
@@ -152,8 +173,14 @@ At the end:
       // Add image to first question if in structured mode
       if (useStructuredMode && currentQuestions.length > 0) {
         const firstQuestion = currentQuestions[0];
+        console.log('First question:', firstQuestion);
+        console.log('Looking for image:', firstQuestion.imageName);
+        
         if (firstQuestion.imageName && questionImages[firstQuestion.imageName]) {
           assistantMessage.imageUrl = questionImages[firstQuestion.imageName];
+          console.log('Added image URL to message:', assistantMessage.imageUrl);
+        } else {
+          console.log('Image not found. Available:', Object.keys(questionImages));
         }
       }
 
@@ -243,8 +270,14 @@ Now, can you tell me what you see in this picture again?`;
       // Add image for current question in structured mode
       if (useStructuredMode && currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
         const currentQ = currentQuestions[currentQuestionIndex];
+        console.log('Current question for image:', currentQ);
+        console.log('Looking for image:', currentQ.imageName);
+        
         if (currentQ.imageName && questionImages[currentQ.imageName]) {
           assistantMessage.imageUrl = questionImages[currentQ.imageName];
+          console.log('Added image URL to response:', assistantMessage.imageUrl);
+        } else {
+          console.log('Image not found for current question. Available:', Object.keys(questionImages));
         }
       }
 
@@ -426,6 +459,8 @@ Now, can you tell me what you see in this picture again?`;
                       src={message.imageUrl} 
                       alt="Question image" 
                       className="max-w-full h-32 object-contain rounded border"
+                      onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
+                      onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
                     />
                   </div>
                 )}
