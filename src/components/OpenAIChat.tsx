@@ -149,9 +149,9 @@ At the end:
         
         if (firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
           assistantMessage.imageUrl = imageUrls[firstQuestion.imageName];
-          console.log('Added image URL to message:', assistantMessage.imageUrl);
+          console.log('Added image URL to first message:', assistantMessage.imageUrl);
         } else {
-          console.log('Image not found. Available:', Object.keys(imageUrls));
+          console.log('Image not found for first question. Available:', Object.keys(imageUrls));
         }
       }
 
@@ -238,7 +238,7 @@ Now, can you tell me what you see in this picture again?`;
         content: assistantContent
       };
 
-      // Add image for questions in structured mode
+      // Add image for structured mode questions
       if (useStructuredMode && currentQuestions.length > 0) {
         const currentQ = currentQuestions[currentQuestionIndex];
         const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
