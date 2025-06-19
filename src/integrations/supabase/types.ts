@@ -36,6 +36,36 @@ export type Database = {
         }
         Relationships: []
       }
+      questions: {
+        Row: {
+          answer: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          image_name: string | null
+          question: string
+          updated_at: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          image_name?: string | null
+          question: string
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          image_name?: string | null
+          question?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

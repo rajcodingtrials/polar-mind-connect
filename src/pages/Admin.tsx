@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import QuestionUpload from '../components/QuestionUpload';
@@ -7,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useUserRole } from '../hooks/useUserRole';
+import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Question {
   id: string;
@@ -19,6 +20,7 @@ interface Question {
 const Admin = () => {
   const { role, loading } = useUserRole();
   const [defaultChatMode, setDefaultChatMode] = useState('free');
+  const { toast } = useToast();
 
   useEffect(() => {
     const savedMode = localStorage.getItem('defaultChatMode');
@@ -28,31 +30,61 @@ const Admin = () => {
   }, []);
 
   const handleQuestionsUploaded = async (questions: Question[], images: File[]) => {
-    // Store questions in localStorage
-    localStorage.setItem('adminQuestions', JSON.stringify(questions));
-    
-    // Convert images to base64 and store in localStorage
-    const imagePromises = images.map(async (file) => {
-      return new Promise<{name: string, data: string, type: string}>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = (reader.result as string).split(',')[1]; // Remove data:image/...;base64, prefix
-          resolve({
-            name: file.name,
-            data: base64,
-            type: file.type
-          });
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
     try {
-      const imageData = await Promise.all(imagePromises);
-      localStorage.setItem('adminImages', JSON.stringify(imageData));
-      console.log('Admin uploaded questions:', questions.length, 'Images:', images.length);
+      // First, upload images to Supabase storage
+      const imageUploadPromises = images.map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('question-images')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          throw uploadError;
+        }
+
+        return { originalName: file.name, storageName: fileName };
+      });
+
+      const uploadedImages = await Promise.all(imageUploadPromises);
+      
+      // Create a mapping from original names to storage names
+      const imageNameMap = uploadedImages.reduce((acc, img) => {
+        acc[img.originalName] = img.storageName;
+        return acc;
+      }, {} as Record<string, string>);
+
+      // Then, save questions to database with updated image names
+      const questionsToInsert = questions.map(q => ({
+        question: q.question,
+        answer: q.answer,
+        image_name: q.imageName ? imageNameMap[q.imageName] : null
+      }));
+
+      const { error: dbError } = await supabase
+        .from('questions')
+        .insert(questionsToInsert);
+
+      if (dbError) {
+        console.error('Error saving questions:', dbError);
+        throw dbError;
+      }
+
+      toast({
+        title: "Success",
+        description: `Uploaded ${questions.length} questions and ${images.length} images to Supabase`,
+      });
+
+      console.log('Successfully uploaded to Supabase:', questions.length, 'questions,', images.length, 'images');
     } catch (error) {
-      console.error('Error storing images:', error);
+      console.error('Error uploading to Supabase:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload questions and images to Supabase",
+        variant: "destructive",
+      });
     }
   };
 
@@ -63,12 +95,54 @@ const Admin = () => {
     console.log('Default chat mode changed to:', mode);
   };
 
-  const clearStoredData = () => {
-    localStorage.removeItem('adminQuestions');
-    localStorage.removeItem('adminImages');
-    localStorage.removeItem('defaultChatMode');
-    setDefaultChatMode('free');
-    console.log('Cleared all stored admin data');
+  const clearStoredData = async () => {
+    try {
+      // Clear questions from database
+      const { error: dbError } = await supabase
+        .from('questions')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+
+      if (dbError) {
+        console.error('Error clearing questions:', dbError);
+      }
+
+      // Clear images from storage
+      const { data: files } = await supabase.storage
+        .from('question-images')
+        .list();
+
+      if (files && files.length > 0) {
+        const filePaths = files.map(file => file.name);
+        const { error: storageError } = await supabase.storage
+          .from('question-images')
+          .remove(filePaths);
+
+        if (storageError) {
+          console.error('Error clearing images:', storageError);
+        }
+      }
+
+      // Clear localStorage
+      localStorage.removeItem('adminQuestions');
+      localStorage.removeItem('adminImages');
+      localStorage.removeItem('defaultChatMode');
+      setDefaultChatMode('free');
+      
+      toast({
+        title: "Success",
+        description: "Cleared all stored data from Supabase and localStorage",
+      });
+
+      console.log('Cleared all stored data from Supabase and localStorage');
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear some data",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -151,7 +225,7 @@ const Admin = () => {
                   Clear All Stored Data
                 </Button>
                 <p className="text-xs text-gray-500 mt-1">
-                  This will remove all uploaded questions and images
+                  This will remove all uploaded questions and images from Supabase
                 </p>
               </div>
             </CardContent>

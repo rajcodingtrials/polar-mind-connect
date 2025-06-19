@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import OpenAIChat from '../components/OpenAIChat';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Question {
   id: string;
@@ -17,40 +17,64 @@ const OpenAIChatPage = () => {
   const { profile } = useUserProfile();
   const [showChat, setShowChat] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [images, setImages] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<{[key: string]: string}>({});
   const [useStructuredMode, setUseStructuredMode] = useState(false);
-  const [chatKey, setChatKey] = useState(0); // Add key to force chat component re-render
+  const [chatKey, setChatKey] = useState(0);
 
-  // Load questions, images and settings from localStorage on component mount
+  // Load questions and images from Supabase
   useEffect(() => {
-    const savedQuestions = localStorage.getItem('adminQuestions');
-    const savedImages = localStorage.getItem('adminImages');
-    const defaultMode = localStorage.getItem('defaultChatMode');
-    
-    if (savedQuestions) {
-      setQuestions(JSON.parse(savedQuestions));
-    }
-    
-    if (savedImages) {
+    const loadQuestionsAndImages = async () => {
       try {
-        const imageData = JSON.parse(savedImages);
-        // Convert base64 data back to File objects
-        const files = imageData.map((item: any) => {
-          const byteCharacters = atob(item.data);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        // Load questions from Supabase
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('questions')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (questionsError) {
+          console.error('Error loading questions:', questionsError);
+          return;
+        }
+
+        if (questionsData && questionsData.length > 0) {
+          const formattedQuestions = questionsData.map(q => ({
+            id: q.id,
+            question: q.question,
+            answer: q.answer,
+            imageName: q.image_name
+          }));
+          
+          setQuestions(formattedQuestions);
+          console.log('Loaded questions from Supabase:', formattedQuestions.length);
+
+          // Load image URLs for questions that have images
+          const imageUrlMap: {[key: string]: string} = {};
+          
+          for (const question of formattedQuestions) {
+            if (question.imageName) {
+              const { data } = supabase.storage
+                .from('question-images')
+                .getPublicUrl(question.imageName);
+              
+              if (data?.publicUrl) {
+                imageUrlMap[question.imageName] = data.publicUrl;
+                console.log(`Loaded image URL for ${question.imageName}:`, data.publicUrl);
+              }
+            }
           }
-          const byteArray = new Uint8Array(byteNumbers);
-          return new File([byteArray], item.name, { type: item.type });
-        });
-        setImages(files);
-        console.log('Loaded images from localStorage:', files.length);
+          
+          setImageUrls(imageUrlMap);
+          console.log('Loaded image URLs:', Object.keys(imageUrlMap).length);
+        }
       } catch (error) {
-        console.error('Error loading images from localStorage:', error);
+        console.error('Error loading data from Supabase:', error);
       }
-    }
-    
+    };
+
+    loadQuestionsAndImages();
+
+    // Also check localStorage for default mode
+    const defaultMode = localStorage.getItem('defaultChatMode');
     if (defaultMode) {
       setUseStructuredMode(defaultMode === 'structured');
     }
@@ -157,10 +181,10 @@ const OpenAIChatPage = () => {
                       <h3 className="font-semibold text-gray-800">Laura</h3>
                       <p className="text-gray-600 text-sm">Practiced conversations</p>
                       {questions.length > 0 && (
-                        <p className="text-xs text-green-600">Custom questions available</p>
+                        <p className="text-xs text-green-600">{questions.length} questions from Supabase</p>
                       )}
-                      {images.length > 0 && (
-                        <p className="text-xs text-blue-600">{images.length} images loaded</p>
+                      {Object.keys(imageUrls).length > 0 && (
+                        <p className="text-xs text-blue-600">{Object.keys(imageUrls).length} images loaded</p>
                       )}
                     </div>
                   </div>
@@ -229,7 +253,7 @@ const OpenAIChatPage = () => {
                 key={chatKey}
                 onClose={handleCloseChat}
                 questions={questions}
-                images={images}
+                imageUrls={imageUrls}
                 useStructuredMode={useStructuredMode}
                 onToggleMode={toggleChatMode}
               />

@@ -25,19 +25,18 @@ interface Question {
 interface OpenAIChatProps {
   onClose?: () => void;
   questions?: Question[];
-  images?: File[];
+  imageUrls?: {[key: string]: string};
   useStructuredMode?: boolean;
   onToggleMode?: () => void;
 }
 
-const OpenAIChat = ({ onClose, questions = [], images = [], useStructuredMode = false, onToggleMode }: OpenAIChatProps) => {
+const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode = false, onToggleMode }: OpenAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [questionImages, setQuestionImages] = useState<{[key: string]: string}>({});
   const { toast } = useToast();
   
   const {
@@ -50,40 +49,12 @@ const OpenAIChat = ({ onClose, questions = [], images = [], useStructuredMode = 
   
   const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
 
-  // Create image URLs from uploaded files and store them properly
-  useEffect(() => {
-    console.log('Processing images:', images.length);
-    
-    if (images.length > 0) {
-      const imageUrls: {[key: string]: string} = {};
-      
-      images.forEach(file => {
-        const url = URL.createObjectURL(file);
-        imageUrls[file.name] = url;
-        console.log(`Created URL for ${file.name}:`, url);
-      });
-      
-      setQuestionImages(imageUrls);
-
-      // Cleanup URLs when component unmounts or images change
-      return () => {
-        Object.values(imageUrls).forEach(url => {
-          URL.revokeObjectURL(url);
-          console.log('Revoked URL:', url);
-        });
-      };
-    } else {
-      // Clear images if no files provided
-      setQuestionImages({});
-    }
-  }, [images]);
-
   // Debug log for questions and images
   useEffect(() => {
-    console.log('Questions received:', questions.length);
+    console.log('OpenAIChat received questions:', questions.length);
     console.log('Questions:', questions);
-    console.log('Available image URLs:', Object.keys(questionImages));
-  }, [questions, questionImages]);
+    console.log('Available image URLs:', Object.keys(imageUrls));
+  }, [questions, imageUrls]);
 
   // Start conversation when component mounts or mode changes
   useEffect(() => {
@@ -176,11 +147,11 @@ At the end:
         console.log('First question:', firstQuestion);
         console.log('Looking for image:', firstQuestion.imageName);
         
-        if (firstQuestion.imageName && questionImages[firstQuestion.imageName]) {
-          assistantMessage.imageUrl = questionImages[firstQuestion.imageName];
+        if (firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
+          assistantMessage.imageUrl = imageUrls[firstQuestion.imageName];
           console.log('Added image URL to message:', assistantMessage.imageUrl);
         } else {
-          console.log('Image not found. Available:', Object.keys(questionImages));
+          console.log('Image not found. Available:', Object.keys(imageUrls));
         }
       }
 
@@ -273,11 +244,11 @@ Now, can you tell me what you see in this picture again?`;
         console.log('Current question for image:', currentQ);
         console.log('Looking for image:', currentQ.imageName);
         
-        if (currentQ.imageName && questionImages[currentQ.imageName]) {
-          assistantMessage.imageUrl = questionImages[currentQ.imageName];
+        if (currentQ.imageName && imageUrls[currentQ.imageName]) {
+          assistantMessage.imageUrl = imageUrls[currentQ.imageName];
           console.log('Added image URL to response:', assistantMessage.imageUrl);
         } else {
-          console.log('Image not found for current question. Available:', Object.keys(questionImages));
+          console.log('Image not found for current question. Available:', Object.keys(imageUrls));
         }
       }
 
