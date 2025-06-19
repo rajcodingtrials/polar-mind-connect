@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,17 +90,22 @@ const OpenAIChatPage = () => {
       if (e.key === 'adminImages' && e.newValue) {
         try {
           const imageData = JSON.parse(e.newValue);
-          const files = imageData.map((item: any) => {
+          const urlMap: {[key: string]: string} = {};
+          
+          imageData.forEach((item: any) => {
+            // Create object URL from base64 data
             const byteCharacters = atob(item.data);
             const byteNumbers = new Array(byteCharacters.length);
             for (let i = 0; i < byteCharacters.length; i++) {
               byteNumbers[i] = byteCharacters.charCodeAt(i);
             }
             const byteArray = new Uint8Array(byteNumbers);
-            return new File([byteArray], item.name, { type: item.type });
+            const blob = new Blob([byteArray], { type: item.type });
+            urlMap[item.name] = URL.createObjectURL(blob);
           });
-          setImages(files);
-          console.log('Updated images from storage event:', files.length);
+          
+          setImageUrls(urlMap);
+          console.log('Updated image URLs from storage event:', Object.keys(urlMap).length);
         } catch (error) {
           console.error('Error processing updated images:', error);
         }
