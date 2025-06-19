@@ -238,17 +238,27 @@ Now, can you tell me what you see in this picture again?`;
         content: assistantContent
       };
 
-      // Add image for current question in structured mode
-      if (useStructuredMode && currentQuestions.length > 0 && currentQuestionIndex < currentQuestions.length) {
+      // Add image for next question in structured mode (after user answered correctly and we moved to next question)
+      if (useStructuredMode && currentQuestions.length > 0) {
         const currentQ = currentQuestions[currentQuestionIndex];
-        console.log('Current question for image:', currentQ);
-        console.log('Looking for image:', currentQ.imageName);
+        const isCorrect = messageText.toLowerCase().includes(currentQuestions[currentQuestionIndex === 0 ? 0 : currentQuestionIndex - 1]?.answer.toLowerCase() || '');
         
-        if (currentQ.imageName && imageUrls[currentQ.imageName]) {
-          assistantMessage.imageUrl = imageUrls[currentQ.imageName];
-          console.log('Added image URL to response:', assistantMessage.imageUrl);
-        } else {
-          console.log('Image not found for current question. Available:', Object.keys(imageUrls));
+        // If user answered correctly and we moved to next question, show the next question's image
+        if (isCorrect && currentQuestionIndex < currentQuestions.length) {
+          console.log('Current question for image:', currentQ);
+          console.log('Looking for image:', currentQ.imageName);
+          
+          if (currentQ.imageName && imageUrls[currentQ.imageName]) {
+            assistantMessage.imageUrl = imageUrls[currentQ.imageName];
+            console.log('Added image URL to response:', assistantMessage.imageUrl);
+          }
+        }
+        // If user answered incorrectly, show the same question's image again
+        else if (!isCorrect) {
+          const incorrectQ = currentQuestions[currentQuestionIndex];
+          if (incorrectQ.imageName && imageUrls[incorrectQ.imageName]) {
+            assistantMessage.imageUrl = imageUrls[incorrectQ.imageName];
+          }
         }
       }
 
