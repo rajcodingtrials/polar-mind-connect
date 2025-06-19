@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,18 +21,69 @@ const OpenAIChatPage = () => {
   const [useStructuredMode, setUseStructuredMode] = useState(false);
   const [chatKey, setChatKey] = useState(0); // Add key to force chat component re-render
 
-  // Load questions and settings from localStorage on component mount
+  // Load questions, images and settings from localStorage on component mount
   useEffect(() => {
     const savedQuestions = localStorage.getItem('adminQuestions');
+    const savedImages = localStorage.getItem('adminImages');
     const defaultMode = localStorage.getItem('defaultChatMode');
     
     if (savedQuestions) {
       setQuestions(JSON.parse(savedQuestions));
     }
     
+    if (savedImages) {
+      try {
+        const imageData = JSON.parse(savedImages);
+        // Convert base64 data back to File objects
+        const files = imageData.map((item: any) => {
+          const byteCharacters = atob(item.data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          return new File([byteArray], item.name, { type: item.type });
+        });
+        setImages(files);
+        console.log('Loaded images from localStorage:', files.length);
+      } catch (error) {
+        console.error('Error loading images from localStorage:', error);
+      }
+    }
+    
     if (defaultMode) {
       setUseStructuredMode(defaultMode === 'structured');
     }
+  }, []);
+
+  // Listen for storage changes (when admin uploads new content)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'adminQuestions' && e.newValue) {
+        setQuestions(JSON.parse(e.newValue));
+      }
+      if (e.key === 'adminImages' && e.newValue) {
+        try {
+          const imageData = JSON.parse(e.newValue);
+          const files = imageData.map((item: any) => {
+            const byteCharacters = atob(item.data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new File([byteArray], item.name, { type: item.type });
+          });
+          setImages(files);
+          console.log('Updated images from storage event:', files.length);
+        } catch (error) {
+          console.error('Error processing updated images:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const handleLauraClick = () => {
@@ -106,6 +158,9 @@ const OpenAIChatPage = () => {
                       <p className="text-gray-600 text-sm">Practiced conversations</p>
                       {questions.length > 0 && (
                         <p className="text-xs text-green-600">Custom questions available</p>
+                      )}
+                      {images.length > 0 && (
+                        <p className="text-xs text-blue-600">{images.length} images loaded</p>
                       )}
                     </div>
                   </div>
