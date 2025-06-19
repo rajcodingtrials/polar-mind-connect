@@ -206,11 +206,70 @@ At the end:
 
         if (isCorrect) {
           if (nextIndex < currentQuestions.length) {
-            const nextQ = currentQuestions[nextIndex];
-            assistantContent = `Wonderful! That's exactly right! 🎉 
+            // First show congratulatory message without image
+            assistantContent = `Wonderful! That's exactly right! 🎉`;
+            
+            const congratulatoryMessage: Message = {
+              role: 'assistant',
+              content: assistantContent
+            };
 
-Now let's look at the next picture. ${nextQ.question}`;
-            setCurrentQuestionIndex(nextIndex);
+            setMessages(prev => [...prev, congratulatoryMessage]);
+
+            // Generate and play TTS for congratulatory message
+            try {
+              const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
+                body: { 
+                  text: assistantContent,
+                  voice: 'nova'
+                }
+              });
+
+              if (!ttsError && ttsData.audioContent) {
+                await playAudio(ttsData.audioContent);
+              }
+            } catch (ttsError) {
+              console.error('TTS Error:', ttsError);
+            }
+
+            // Wait a moment, then show next question with image
+            setTimeout(() => {
+              const nextQ = currentQuestions[nextIndex];
+              const nextQuestionContent = `Now let's look at the next picture. ${nextQ.question}`;
+              
+              const nextQuestionMessage: Message = {
+                role: 'assistant',
+                content: nextQuestionContent
+              };
+
+              // Add image to next question
+              if (nextQ.imageName && imageUrls[nextQ.imageName]) {
+                nextQuestionMessage.imageUrl = imageUrls[nextQ.imageName];
+                console.log('Adding next question image:', nextQ.imageName);
+              }
+
+              setMessages(prev => [...prev, nextQuestionMessage]);
+              setCurrentQuestionIndex(nextIndex);
+
+              // Generate and play TTS for next question
+              try {
+                supabase.functions.invoke('openai-tts', {
+                  body: { 
+                    text: nextQuestionContent,
+                    voice: 'nova'
+                  }
+                }).then(({ data: ttsData, error: ttsError }) => {
+                  if (!ttsError && ttsData.audioContent) {
+                    playAudio(ttsData.audioContent);
+                  }
+                });
+              } catch (ttsError) {
+                console.error('TTS Error:', ttsError);
+              }
+            }, 1500); // 1.5 second delay
+
+            setLoading(false);
+            return; // Exit early to avoid duplicate processing
           } else {
             assistantContent = `Perfect! You got it right! 🌟 
 
@@ -241,19 +300,12 @@ Now, can you tell me what you see in this picture again?`;
         content: assistantContent
       };
 
-      // Add image for structured mode questions
+      // Add image for structured mode questions (incorrect answers or final message)
       if (useStructuredMode && currentQuestions.length > 0) {
         const currentQ = currentQuestions[currentQuestionIndex];
         const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
         
-        if (isCorrect && currentQuestionIndex + 1 < currentQuestions.length) {
-          // User answered correctly and there's a next question - show next question's image
-          const nextQ = currentQuestions[currentQuestionIndex + 1];
-          if (nextQ.imageName && imageUrls[nextQ.imageName]) {
-            assistantMessage.imageUrl = imageUrls[nextQ.imageName];
-            console.log('Adding next question image:', nextQ.imageName);
-          }
-        } else if (!isCorrect) {
+        if (!isCorrect) {
           // User answered incorrectly - show current question's image again
           if (currentQ.imageName && imageUrls[currentQ.imageName]) {
             assistantMessage.imageUrl = imageUrls[currentQ.imageName];
@@ -430,7 +482,7 @@ Now, can you tell me what you see in this picture again?`;
                         src="/lovable-uploads/Laura.png" 
                         alt="Laura" 
                       />
-                      <AvatarFallback className="bg-blue-500 text-white text-xs">L</AvatarFallback>
+                      <AvatarFallback className="bg-blue-500 text-white text-lg">L</AvatarFallback>
                     </Avatar>
                     <span className="text-xs font-semibold text-blue-600">Laura:</span>
                   </div>
