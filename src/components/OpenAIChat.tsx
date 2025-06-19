@@ -101,6 +101,23 @@ I have some special questions with pictures for you. Let's start with the first 
 
 ${selectedQuestions[0]?.question}`;
 
+        // Create the assistant message
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: assistantContent
+        };
+
+        // Add image to the first question immediately
+        const firstQuestion = selectedQuestions[0];
+        if (firstQuestion && firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
+          assistantMessage.imageUrl = imageUrls[firstQuestion.imageName];
+          console.log('Adding image to first question:', firstQuestion.imageName, assistantMessage.imageUrl);
+        } else {
+          console.log('No image found for first question:', firstQuestion?.imageName, 'Available images:', Object.keys(imageUrls));
+        }
+
+        setMessages([assistantMessage]);
+
       } else {
         systemPrompt = `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
 
@@ -134,28 +151,14 @@ At the end:
 
         if (error) throw error;
         assistantContent = data.choices[0].message.content;
+
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: assistantContent
+        };
+
+        setMessages([assistantMessage]);
       }
-
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: assistantContent
-      };
-
-      // Add image to first question if in structured mode
-      if (useStructuredMode && currentQuestions.length > 0) {
-        const firstQuestion = currentQuestions[0];
-        console.log('First question:', firstQuestion);
-        console.log('Looking for image:', firstQuestion.imageName);
-        
-        if (firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
-          assistantMessage.imageUrl = imageUrls[firstQuestion.imageName];
-          console.log('Added image URL to first message:', assistantMessage.imageUrl);
-        } else {
-          console.log('Image not found for first question. Available:', Object.keys(imageUrls));
-        }
-      }
-
-      setMessages([assistantMessage]);
 
       // Generate and play TTS for Laura's response
       try {
@@ -243,27 +246,21 @@ Now, can you tell me what you see in this picture again?`;
         const currentQ = currentQuestions[currentQuestionIndex];
         const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
         
-        if (isCorrect) {
-          // If correct and there's a next question, show next question's image
-          const nextIndex = currentQuestionIndex + 1;
-          if (nextIndex < currentQuestions.length) {
-            const nextQ = currentQuestions[nextIndex];
-            console.log('User answered correctly, showing next question image:', nextQ.imageName);
-            
-            if (nextQ.imageName && imageUrls[nextQ.imageName]) {
-              assistantMessage.imageUrl = imageUrls[nextQ.imageName];
-              console.log('Added next question image URL:', assistantMessage.imageUrl);
-            }
+        if (isCorrect && currentQuestionIndex + 1 < currentQuestions.length) {
+          // User answered correctly and there's a next question - show next question's image
+          const nextQ = currentQuestions[currentQuestionIndex + 1];
+          if (nextQ.imageName && imageUrls[nextQ.imageName]) {
+            assistantMessage.imageUrl = imageUrls[nextQ.imageName];
+            console.log('Adding next question image:', nextQ.imageName);
           }
-          // If it's the last question and user got it right, no image needed
-        } else {
-          // If incorrect, show the same question's image again
-          console.log('User answered incorrectly, showing same question image again:', currentQ.imageName);
+        } else if (!isCorrect) {
+          // User answered incorrectly - show current question's image again
           if (currentQ.imageName && imageUrls[currentQ.imageName]) {
             assistantMessage.imageUrl = imageUrls[currentQ.imageName];
-            console.log('Added same question image URL:', assistantMessage.imageUrl);
+            console.log('Adding current question image again:', currentQ.imageName);
           }
         }
+        // If correct and last question, no image needed
       }
 
       setMessages(prev => [...prev, assistantMessage]);
