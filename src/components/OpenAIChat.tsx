@@ -95,28 +95,72 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
         
         Start with a warm greeting and then ask the first question.`;
 
-        assistantContent = `Hello! I'm so excited to work with you today! 🌟 
+        // Create introductory message first
+        const introMessage = `Hello! I'm so excited to work with you today! 🌟 
 
-I have some special questions with pictures for you. Let's start with the first one:
+I have some special questions with pictures for you.`;
 
-${selectedQuestions[0]?.question}`;
-
-        // Create the assistant message
-        const assistantMessage: Message = {
+        const assistantIntroMessage: Message = {
           role: 'assistant',
-          content: assistantContent
+          content: introMessage
         };
 
-        // Add image to the first question immediately
-        const firstQuestion = selectedQuestions[0];
-        if (firstQuestion && firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
-          assistantMessage.imageUrl = imageUrls[firstQuestion.imageName];
-          console.log('Adding image to first question:', firstQuestion.imageName, assistantMessage.imageUrl);
-        } else {
-          console.log('No image found for first question:', firstQuestion?.imageName, 'Available images:', Object.keys(imageUrls));
+        setMessages([assistantIntroMessage]);
+
+        // Generate and play TTS for intro
+        try {
+          const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
+            body: { 
+              text: introMessage,
+              voice: 'nova'
+            }
+          });
+
+          if (!ttsError && ttsData.audioContent) {
+            await playAudio(ttsData.audioContent);
+          }
+        } catch (ttsError) {
+          console.error('TTS Error:', ttsError);
         }
 
-        setMessages([assistantMessage]);
+        // Wait a moment, then show the image and first question
+        setTimeout(() => {
+          const firstQuestion = selectedQuestions[0];
+          const firstQuestionContent = `Let's start with the first one:
+
+${firstQuestion?.question}`;
+
+          const firstQuestionMessage: Message = {
+            role: 'assistant',
+            content: firstQuestionContent
+          };
+
+          // Add image to the first question
+          if (firstQuestion && firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
+            firstQuestionMessage.imageUrl = imageUrls[firstQuestion.imageName];
+            console.log('Adding image to first question:', firstQuestion.imageName, firstQuestionMessage.imageUrl);
+          } else {
+            console.log('No image found for first question:', firstQuestion?.imageName, 'Available images:', Object.keys(imageUrls));
+          }
+
+          setMessages(prev => [...prev, firstQuestionMessage]);
+
+          // Generate and play TTS for first question
+          try {
+            supabase.functions.invoke('openai-tts', {
+              body: { 
+                text: firstQuestionContent,
+                voice: 'nova'
+              }
+            }).then(({ data: ttsData, error: ttsError }) => {
+              if (!ttsError && ttsData.audioContent) {
+                playAudio(ttsData.audioContent);
+              }
+            });
+          } catch (ttsError) {
+            console.error('TTS Error:', ttsError);
+          }
+        }, 2000); // 2 second delay after intro
 
       } else {
         systemPrompt = `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
@@ -158,22 +202,22 @@ At the end:
         };
 
         setMessages([assistantMessage]);
-      }
 
-      // Generate and play TTS for Laura's response
-      try {
-        const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
-          body: { 
-            text: assistantContent,
-            voice: 'nova'
+        // Generate and play TTS for Laura's response
+        try {
+          const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
+            body: { 
+              text: assistantContent,
+              voice: 'nova'
+            }
+          });
+
+          if (!ttsError && ttsData.audioContent) {
+            await playAudio(ttsData.audioContent);
           }
-        });
-
-        if (!ttsError && ttsData.audioContent) {
-          await playAudio(ttsData.audioContent);
+        } catch (ttsError) {
+          console.error('TTS Error:', ttsError);
         }
-      } catch (ttsError) {
-        console.error('TTS Error:', ttsError);
       }
 
     } catch (error) {
