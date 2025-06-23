@@ -25,16 +25,55 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    const binaryString = atob(audio);
+    console.log('Processing audio data, length:', audio.length);
+
+    // Convert base64 to binary with better error handling
+    let binaryString: string;
+    try {
+      binaryString = atob(audio);
+      console.log('Successfully decoded base64, binary length:', binaryString.length);
+    } catch (decodeError) {
+      console.error('Failed to decode base64 audio:', decodeError);
+      throw new Error('Invalid base64 audio data');
+    }
+
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
     
+    console.log('Created audio buffer with', bytes.length, 'bytes');
+    
     const formData = new FormData();
-    const blob = new Blob([bytes], { type: 'audio/webm' });
-    formData.append('file', blob, 'audio.webm');
+    
+    // Detect audio format from the first few bytes
+    let mimeType = 'audio/webm';
+    const header = new Uint8Array(bytes.slice(0, 12));
+    
+    // Check for common audio file signatures
+    if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
+      // RIFF header (WAV)
+      mimeType = 'audio/wav';
+    } else if (header[4] === 0x66 && header[5] === 0x74 && header[6] === 0x79 && header[7] === 0x70) {
+      // MP4/M4A
+      mimeType = 'audio/mp4';
+    } else if (header[0] === 0x1A && header[1] === 0x45 && header[2] === 0xDF && header[3] === 0xA3) {
+      // WebM
+      mimeType = 'audio/webm';
+    }
+    
+    console.log('Detected audio format:', mimeType);
+    
+    const blob = new Blob([bytes], { type: mimeType });
+    const filename = mimeType === 'audio/wav' ? 'audio.wav' : 
+                    mimeType === 'audio/mp4' ? 'audio.mp4' : 'audio.webm';
+    
+    formData.append('file', blob, filename);
     formData.append('model', 'whisper-1');
+    formData.append('language', 'en'); // Specify language for better accuracy
+    formData.append('temperature', '0.2'); // Lower temperature for more consistent results
+
+    console.log('Sending to OpenAI Whisper API...');
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -45,13 +84,21 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${await response.text()}`);
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
+    console.log('Transcription result:', result);
 
     return new Response(
-      JSON.stringify({ text: result.text }),
+      JSON.stringify({ 
+        text: result.text,
+        // Include additional metadata if available
+        language: result.language,
+        duration: result.duration 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
