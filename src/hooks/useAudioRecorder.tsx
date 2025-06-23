@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 
 export const useAudioRecorder = () => {
@@ -16,9 +15,7 @@ export const useAudioRecorder = () => {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          // Additional constraints for better quality
-          latency: 0,
-          volume: 1.0,
+          // Removed invalid properties: latency and volume
         } 
       });
       
