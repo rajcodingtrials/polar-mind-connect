@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -198,12 +197,29 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
           default:
             selectedQuestions = selectRandomQuestions();
             activityDescription = 'practicing speech together';
-            systemPrompt = `You are Laura, a gentle speech therapist helping with speech practice.`;
-        }
+            systemPrompt = `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
 
-        if (selectedQuestionType !== 'lets_chat') {
-          setCurrentQuestions(selectedQuestions);
-        }
+When the conversation starts:
+- Greet the child warmly and slowly.
+- Ask them their name in a calm, friendly tone.
+- Use pauses between sentences and speak at 60% of normal voice speed.
+- After the child shares their name, say it back gently and with kindness (e.g., "Hi Maya, I'm so happy to see you!").
+
+Then, begin one short and playful speech lesson:
+- Teach the names of 3 simple fruits: apple, banana, and orange.
+- For each fruit, say the fruit name clearly and slowly, breaking it into syllables. Example: "Aaa–pple"
+- Ask the child kindly to try saying it with you
+- Praise any response warmly, even if it's incomplete. Use phrases like: "That's amazing!", "Great trying!", or "I'm so proud of you!"
+- You can use fruit emojis to make the lesson more engaging: 🍎 for apple, 🍌 for banana, 🍊 for orange
+
+Keep your sentences short, joyful, and slow. Avoid complex words. Smile in your voice. Always stay calm and patient.
+
+At the end:
+- Praise the child by name
+- Remind them they did something special today
+- Say goodbye in a sweet and happy way`;
+
+        setCurrentQuestions(selectedQuestions);
         setCurrentQuestionIndex(0);
 
         console.log('Selected questions for session:', selectedQuestions);
@@ -627,34 +643,34 @@ Now, can you tell me what you see in this picture again?`;
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-lg">
-      <CardHeader className="bg-blue-600 text-white p-6">
+    <Card className="w-full max-w-2xl mx-auto shadow-lg border-slate-200 bg-white">
+      <CardHeader className="bg-gradient-to-r from-blue-100 to-blue-200 border-b border-blue-200 p-6">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border-2 border-white">
+            <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
               <AvatarImage 
                 src="/lovable-uploads/Laura.png" 
                 alt="Laura - Speech Therapist" 
               />
-              <AvatarFallback className="bg-blue-500 text-white text-lg">L</AvatarFallback>
+              <AvatarFallback className="bg-blue-200 text-blue-800 text-lg font-semibold">L</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-2xl font-bold">Laura</h2>
-              <p className="text-blue-100 text-sm font-normal">
+              <h2 className="text-2xl font-bold text-blue-900">Laura</h2>
+              <p className="text-blue-700 text-sm font-normal">
                 Your AI Speech Therapy Assistant
               </p>
               {useStructuredMode && (
-                <p className="text-blue-200 text-xs">
+                <p className="text-blue-600 text-xs">
                   {selectedQuestionType === 'lets_chat' ? 'Conversation Mode' : 'Q&A Mode'}: {currentQuestionIndex + 1}/{currentQuestions.length}
                 </p>
               )}
               {autoRecordingEnabled && (
-                <p className="text-green-200 text-xs">
+                <p className="text-emerald-600 text-xs font-medium">
                   🎤 Auto-recording enabled
                 </p>
               )}
               {isRecording && (
-                <p className="text-red-200 text-xs animate-pulse">
+                <p className="text-rose-600 text-xs font-medium animate-pulse">
                   🔴 Recording... (will stop after processing)
                 </p>
               )}
@@ -666,7 +682,7 @@ Now, can you tell me what you see in this picture again?`;
                 variant="outline"
                 size="icon"
                 onClick={onToggleMode}
-                className="border-white text-white hover:bg-white hover:text-blue-600"
+                className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 shadow-sm"
                 title={useStructuredMode ? "Switch to Free Chat" : "Switch to Q&A Mode"}
               >
                 {useStructuredMode ? <MessageCircle className="w-4 h-4" /> : <FileQuestion className="w-4 h-4" />}
@@ -677,8 +693,8 @@ Now, can you tell me what you see in this picture again?`;
               size="icon"
               onClick={toggleAudio}
               disabled={!isPlaying}
-              className={`border-white text-white hover:bg-white hover:text-blue-600 ${
-                isPlaying ? "bg-white text-blue-600" : ""
+              className={`border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 shadow-sm ${
+                isPlaying ? "bg-blue-50 border-blue-400" : ""
               }`}
             >
               {isPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -688,7 +704,7 @@ Now, can you tell me what you see in this picture again?`;
                 variant="outline"
                 size="icon"
                 onClick={onClose}
-                className="border-white text-white hover:bg-white hover:text-blue-600"
+                className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 shadow-sm"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -696,8 +712,8 @@ Now, can you tell me what you see in this picture again?`;
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 p-6">
-        <div className="h-96 overflow-y-auto border rounded-lg p-4 space-y-4 bg-gray-50">
+      <CardContent className="space-y-4 p-6 bg-slate-50">
+        <div className="h-96 overflow-y-auto border border-slate-200 rounded-lg p-4 space-y-4 bg-gradient-to-b from-white to-slate-50 shadow-inner">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -706,22 +722,22 @@ Now, can you tell me what you see in this picture again?`;
               }`}
             >
               <div
-                className={`max-w-[80%] rounded-lg p-3 ${
+                className={`max-w-[80%] rounded-xl p-4 shadow-sm ${
                   message.role === 'user'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white border border-blue-200 text-gray-800 shadow-sm'
+                    ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                    : 'bg-white border border-slate-200 text-slate-800'
                 }`}
               >
                 {message.role === 'assistant' && (
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-3">
                     <Avatar className="h-6 w-6">
                       <AvatarImage 
                         src="/lovable-uploads/Laura.png" 
                         alt="Laura" 
                       />
-                      <AvatarFallback className="bg-blue-500 text-white text-lg">L</AvatarFallback>
+                      <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">L</AvatarFallback>
                     </Avatar>
-                    <span className="text-xs font-semibold text-blue-600">Laura:</span>
+                    <span className="text-xs font-semibold text-blue-700">Laura:</span>
                   </div>
                 )}
                 {message.imageUrl && (
@@ -729,7 +745,7 @@ Now, can you tell me what you see in this picture again?`;
                     <img 
                       src={message.imageUrl} 
                       alt="Question image" 
-                      className="max-w-full h-32 object-contain rounded border"
+                      className="max-w-full h-32 object-contain rounded-lg border border-slate-200 shadow-sm"
                       onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
                       onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
                     />
@@ -743,20 +759,20 @@ Now, can you tell me what you see in this picture again?`;
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-blue-200 rounded-lg p-3 shadow-sm">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
                     <AvatarImage 
                       src="/lovable-uploads/Laura.png" 
                       alt="Laura" 
                     />
-                    <AvatarFallback className="bg-blue-500 text-white text-xs">L</AvatarFallback>
+                    <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">L</AvatarFallback>
                   </Avatar>
-                  <span className="text-xs font-semibold text-blue-600">Laura:</span>
+                  <span className="text-xs font-semibold text-blue-700">Laura:</span>
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                 </div>
               </div>
@@ -770,14 +786,14 @@ Now, can you tell me what you see in this picture again?`;
             onKeyPress={handleKeyPress}
             placeholder="Type your message or use voice recording..."
             disabled={loading || isProcessing}
-            className="border-blue-200 focus:border-blue-500"
+            className="border-slate-300 focus:border-blue-400 focus:ring-blue-200 bg-white"
           />
           <Button
             variant={isRecording ? "destructive" : "outline"}
             size="icon"
             onClick={handleVoiceRecording}
             disabled={loading || isProcessing}
-            className={`border-blue-200 ${isRecording ? "animate-pulse" : ""}`}
+            className={`${isRecording ? "bg-rose-500 hover:bg-rose-600 border-rose-500" : "border-slate-300 text-slate-600 hover:bg-slate-50"} ${isRecording ? "animate-pulse" : ""} shadow-sm`}
             title={isRecording ? "Recording... (will auto-stop after processing)" : "Start recording"}
           >
             {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -788,13 +804,13 @@ Now, can you tell me what you see in this picture again?`;
               setInput('');
             }} 
             disabled={loading || !input.trim() || isProcessing}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
           >
             Send
           </Button>
         </div>
         {isProcessing && (
-          <div className="text-center text-sm text-blue-600">
+          <div className="text-center text-sm text-blue-600 bg-blue-50 p-2 rounded-lg border border-blue-200">
             Processing voice recording... Microphone will disable automatically.
           </div>
         )}
