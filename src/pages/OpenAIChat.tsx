@@ -49,14 +49,14 @@ const OpenAIChatPage = () => {
       value: 'build_sentence' as QuestionType, 
       label: 'Build a Sentence', 
       description: 'Learn to construct sentences', 
-      color: 'bg-purple-600',
+      color: 'bg-yellow-400',
       icon: Building
     },
     { 
       value: 'lets_chat' as QuestionType, 
       label: 'Lets Chat', 
       description: 'Free conversation practice', 
-      color: 'bg-red-500',
+      color: 'bg-orange-500',
       icon: Heart
     }
   ];
