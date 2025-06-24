@@ -267,7 +267,7 @@ const OpenAIChatPage = () => {
                           <div className="flex-1">
                             <h3 className="font-semibold text-gray-800">{type.label}</h3>
                             <p className="text-sm text-gray-600">{type.description}</p>
-                            {questionsOfType > 0 && (
+                            {questionsOfType > 0 && type.value !== 'first_words' && (
                               <Badge variant="success" className="mt-1 text-xs">
                                 {questionsOfType} questions available
                               </Badge>
