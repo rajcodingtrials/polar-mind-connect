@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -205,7 +206,7 @@ const OpenAIChatPage = () => {
     : questions;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header />
       <main className="flex-grow p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
@@ -213,48 +214,48 @@ const OpenAIChatPage = () => {
           {!showChat && !showQuestionTypes && (
             <>
               <div className="mb-8">
-                <h1 className="text-4xl font-bold text-center mb-6 text-gray-900">
+                <h1 className="text-4xl font-bold text-center mb-6 text-black">
                   Welcome, {profile?.name || 'User'}! 🌈
                 </h1>
               </div>
 
               {/* Learning Progress Section */}
-              <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+              <Card className="mb-8 bg-white border-gray-200 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <CardTitle className="text-xl font-semibold text-black flex items-center gap-2">
                     📚 Your Learning Progress
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-slate-700">
+                  <p className="text-gray-700">
                     Hope your vacation went great! Let's start from where you left off last week. You have made a great job learning about making effective conversations. 🎯
                   </p>
                 </CardContent>
               </Card>
 
               {/* Your Therapists Section */}
-              <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+              <Card className="mb-8 bg-white border-gray-200 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <CardTitle className="text-xl font-semibold text-black flex items-center gap-2">
                     👩‍⚕️ Your Therapists
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div 
-                      className="flex items-center space-x-4 cursor-pointer hover:bg-purple-100 p-4 rounded-xl transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md"
+                      className="flex items-center space-x-4 cursor-pointer hover:bg-gray-100 p-4 rounded-xl transition-all duration-300 border-2 border-gray-200 hover:border-gray-300 hover:shadow-md"
                       onClick={handleLauraClick}
                     >
-                      <Avatar className="h-16 w-16 border-4 border-pink-200">
+                      <Avatar className="h-16 w-16 border-4 border-gray-200">
                         <AvatarImage 
                           src="/lovable-uploads/Laura.png" 
                           alt="Laura" 
                         />
-                        <AvatarFallback className="bg-pink-200 text-pink-700">L</AvatarFallback>
+                        <AvatarFallback className="bg-gray-200 text-gray-700">L</AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold text-purple-800 text-lg">Laura 💫</h3>
-                        <p className="text-purple-600 text-sm">Practiced conversations</p>
+                        <h3 className="font-semibold text-black text-lg">Laura 💫</h3>
+                        <p className="text-gray-600 text-sm">Practiced conversations</p>
                         {questions.length > 0 && (
                           <p className="text-xs text-emerald-600">✅ {questions.length} questions ready</p>
                         )}
@@ -264,19 +265,19 @@ const OpenAIChatPage = () => {
                       </div>
                     </div>
                     <div 
-                      className="flex items-center space-x-4 cursor-pointer hover:bg-purple-100 p-4 rounded-xl transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md"
+                      className="flex items-center space-x-4 cursor-pointer hover:bg-gray-100 p-4 rounded-xl transition-all duration-300 border-2 border-gray-200 hover:border-gray-300 hover:shadow-md"
                       onClick={handleLawrenceClick}
                     >
-                      <Avatar className="h-16 w-16 border-4 border-blue-200">
+                      <Avatar className="h-16 w-16 border-4 border-gray-200">
                         <AvatarImage 
                           src="/lovable-uploads/Lawrence.png" 
                           alt="Lawrence" 
                         />
-                        <AvatarFallback className="bg-blue-200 text-blue-700">L</AvatarFallback>
+                        <AvatarFallback className="bg-gray-200 text-gray-700">L</AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold text-purple-800 text-lg">Lawrence 🌟</h3>
-                        <p className="text-purple-600 text-sm">Worked on questions</p>
+                        <h3 className="font-semibold text-black text-lg">Lawrence 🌟</h3>
+                        <p className="text-gray-600 text-sm">Worked on questions</p>
                       </div>
                     </div>
                   </div>
@@ -289,10 +290,10 @@ const OpenAIChatPage = () => {
           {showQuestionTypes && (
             <div className="mb-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+                <h2 className="text-3xl font-bold text-black mb-4">
                   🎨 Choose Your Learning Adventure with Laura! 🎨
                 </h2>
-                <p className="text-purple-600 text-lg">Select the type of questions you'd like to practice today</p>
+                <p className="text-gray-600 text-lg">Select the type of questions you'd like to practice today</p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
@@ -329,7 +330,7 @@ const OpenAIChatPage = () => {
               <div className="mt-8 text-center">
                 <button
                   onClick={() => setShowQuestionTypes(false)}
-                  className="text-purple-600 hover:text-purple-800 text-lg font-medium bg-white px-6 py-3 rounded-xl border-2 border-purple-200 hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="text-gray-600 hover:text-gray-800 text-lg font-medium bg-white px-6 py-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   ← Back to Therapists
                 </button>

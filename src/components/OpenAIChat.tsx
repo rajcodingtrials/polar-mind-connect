@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -756,7 +757,7 @@ Now, can you tell me what you see in this picture again?`;
                     />
                   </div>
                 )}
-                <div className="leading-relaxed whitespace-pre-wrap">
+                <div className="leading-relaxed whitespace-pre-wrap font-sans">
                   {message.content}
                 </div>
               </div>
@@ -791,7 +792,7 @@ Now, can you tell me what you see in this picture again?`;
             onKeyPress={handleKeyPress}
             placeholder="Type your message or use voice recording..."
             disabled={loading || isProcessing}
-            className="border-blue-300 focus:border-blue-400 focus:ring-blue-200 bg-white"
+            className="border-blue-300 focus:border-blue-400 focus:ring-blue-200 bg-white font-sans"
           />
           <Button
             variant={isRecording ? "destructive" : "outline"}
