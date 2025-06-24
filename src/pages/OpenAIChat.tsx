@@ -245,7 +245,7 @@ const OpenAIChatPage = () => {
 
           {/* Question Type Selection - shown after Laura is clicked */}
           {showQuestionTypes && (
-            <Card className="mb-8 bg-green-50 border-green-200">
+            <Card className="mb-8 bg-blue-50 border-blue-200">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold text-gray-800">
                   Choose Your Learning Activity with Laura
