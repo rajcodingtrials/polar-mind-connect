@@ -44,6 +44,7 @@ export type Database = {
           id: string
           image_name: string | null
           question: string
+          question_type: Database["public"]["Enums"]["question_type_enum"]
           updated_at: string | null
         }
         Insert: {
@@ -53,6 +54,7 @@ export type Database = {
           id?: string
           image_name?: string | null
           question: string
+          question_type?: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string | null
         }
         Update: {
@@ -62,6 +64,7 @@ export type Database = {
           id?: string
           image_name?: string | null
           question?: string
+          question_type?: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string | null
         }
         Relationships: []
@@ -102,6 +105,11 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      question_type_enum:
+        | "first_words"
+        | "question_time"
+        | "build_sentence"
+        | "lets_chat"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -218,6 +226,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      question_type_enum: [
+        "first_words",
+        "question_time",
+        "build_sentence",
+        "lets_chat",
+      ],
     },
   },
 } as const

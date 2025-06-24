@@ -15,6 +15,7 @@ interface Question {
   question: string;
   answer: string;
   imageName?: string;
+  questionType?: string;
 }
 
 const Admin = () => {
@@ -29,7 +30,7 @@ const Admin = () => {
     }
   }, []);
 
-  const handleQuestionsUploaded = async (questions: Question[], images: File[]) => {
+  const handleQuestionsUploaded = async (questions: Question[], images: File[], questionType: string) => {
     try {
       // First, upload images to Supabase storage
       const imageUploadPromises = images.map(async (file) => {
@@ -56,11 +57,12 @@ const Admin = () => {
         return acc;
       }, {} as Record<string, string>);
 
-      // Then, save questions to database with updated image names
+      // Then, save questions to database with updated image names and question type
       const questionsToInsert = questions.map(q => ({
         question: q.question,
         answer: q.answer,
-        image_name: q.imageName ? imageNameMap[q.imageName] : null
+        image_name: q.imageName ? imageNameMap[q.imageName] : null,
+        question_type: q.questionType || questionType
       }));
 
       const { error: dbError } = await supabase
