@@ -20,6 +20,7 @@ interface Question {
   question: string;
   answer: string;
   imageName?: string;
+  questionType?: string;
 }
 
 interface OpenAIChatProps {
@@ -116,7 +117,28 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
 
         console.log('Selected questions for session:', selectedQuestions);
 
-        systemPrompt = `You are Laura, a gentle speech therapist. You will ask the user specific questions with images. 
+        // Get the question type for context
+        const questionType = selectedQuestions[0]?.questionType || 'question_time';
+        let activityDescription = '';
+        
+        switch (questionType) {
+          case 'first_words':
+            activityDescription = 'practicing first words and basic sounds';
+            break;
+          case 'question_time':
+            activityDescription = 'answering questions about pictures';
+            break;
+          case 'build_sentence':
+            activityDescription = 'building sentences together';
+            break;
+          case 'lets_chat':
+            activityDescription = 'having a friendly chat';
+            break;
+          default:
+            activityDescription = 'practicing speech together';
+        }
+
+        systemPrompt = `You are Laura, a gentle speech therapist. You will ask the user specific questions with images for ${activityDescription}. 
         Ask one question at a time and wait for their response. Check if their answer matches the expected answer.
         If correct, praise them warmly. If incorrect, gently correct them and encourage them.
         After they answer, move to the next question.
@@ -124,12 +146,12 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
         Here are the 5 questions you should ask:
         ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
         
-        Start with a warm greeting and then ask the first question.`;
+        Start with a warm greeting mentioning the activity type and then ask the first question.`;
 
         // Create introductory message first
         const introMessage = `Hello! I'm so excited to work with you today! 🌟 
 
-I have some special questions with pictures for you.`;
+We're going to be ${activityDescription}. I have some special questions with pictures for you.`;
 
         const assistantIntroMessage: Message = {
           role: 'assistant',
