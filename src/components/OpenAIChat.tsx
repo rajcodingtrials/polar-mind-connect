@@ -76,6 +76,14 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
     }
   }, [isPlaying, autoRecordingEnabled, isRecording, isProcessing, loading]);
 
+  // Auto-stop recording when processing starts
+  useEffect(() => {
+    if (isProcessing && isRecording && autoRecordingEnabled) {
+      console.log('Auto-stopping recording due to processing');
+      setAutoRecordingEnabled(false);
+    }
+  }, [isProcessing, isRecording, autoRecordingEnabled]);
+
   const handleAutoRecording = async () => {
     try {
       await startRecording();
@@ -441,8 +449,10 @@ Now, can you tell me what you see in this picture again?`;
     if (isRecording) {
       try {
         setIsProcessing(true);
-        setAutoRecordingEnabled(false); // Disable auto-recording while processing
+        setAutoRecordingEnabled(false); // Disable auto-recording immediately when stopping
         const audioData = await stopRecording();
+        
+        console.log('Audio recording stopped, processing speech-to-text...');
         
         // Convert speech to text
         const { data, error } = await supabase.functions.invoke('openai-stt', {
@@ -452,6 +462,7 @@ Now, can you tell me what you see in this picture again?`;
         if (error) throw error;
         
         if (data.text) {
+          console.log('Speech-to-text completed, microphone now disabled');
           await sendMessage(data.text);
         }
       } catch (error) {
@@ -520,6 +531,11 @@ Now, can you tell me what you see in this picture again?`;
               {autoRecordingEnabled && (
                 <p className="text-green-200 text-xs">
                   🎤 Auto-recording enabled
+                </p>
+              )}
+              {isRecording && (
+                <p className="text-red-200 text-xs animate-pulse">
+                  🔴 Recording... (will stop after processing)
                 </p>
               )}
             </div>
@@ -642,6 +658,7 @@ Now, can you tell me what you see in this picture again?`;
             onClick={handleVoiceRecording}
             disabled={loading || isProcessing}
             className={`border-blue-200 ${isRecording ? "animate-pulse" : ""}`}
+            title={isRecording ? "Recording... (will auto-stop after processing)" : "Start recording"}
           >
             {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </Button>
@@ -658,7 +675,7 @@ Now, can you tell me what you see in this picture again?`;
         </div>
         {isProcessing && (
           <div className="text-center text-sm text-blue-600">
-            Processing voice recording...
+            Processing voice recording... Microphone will disable automatically.
           </div>
         )}
       </CardContent>
