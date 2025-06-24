@@ -213,7 +213,7 @@ const OpenAIChatPage = () => {
           {!showChat && !showQuestionTypes && (
             <>
               <div className="mb-8">
-                <h1 className="text-4xl font-bold text-center mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold text-center mb-6 text-gray-900">
                   Welcome, {profile?.name || 'User'}! 🌈
                 </h1>
               </div>
@@ -221,7 +221,7 @@ const OpenAIChatPage = () => {
               {/* Learning Progress Section */}
               <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
+                  <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                     📚 Your Learning Progress
                   </CardTitle>
                 </CardHeader>
@@ -235,7 +235,7 @@ const OpenAIChatPage = () => {
               {/* Your Therapists Section */}
               <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
+                  <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                     👩‍⚕️ Your Therapists
                   </CardTitle>
                 </CardHeader>
@@ -337,23 +337,21 @@ const OpenAIChatPage = () => {
             </div>
           )}
 
-          {/* Progress Character and Chat Interface */}
+          {/* Chat Interface with side-by-side layout */}
           {showChat && selectedQuestionType && (
             <div className="space-y-6">
-              {/* Progress Character positioned prominently above chat with better spacing */}
-              <div className="flex justify-center pt-4 pb-2">
-                <div className="w-full max-w-md">
+              <div className="flex flex-col lg:flex-row gap-6 items-start">
+                {/* Progress Character positioned on the left side */}
+                <div className="w-full lg:w-80 flex-shrink-0">
                   <ProgressCharacter 
                     correctAnswers={correctAnswers}
                     totalQuestions={filteredQuestions.length}
                     questionType={selectedQuestionType}
                   />
                 </div>
-              </div>
-              
-              {/* Chat Interface with contained width */}
-              <div className="flex justify-center px-4">
-                <div className="w-full max-w-4xl">
+                
+                {/* Chat Interface positioned on the right side */}
+                <div className="flex-1 w-full">
                   <OpenAIChat 
                     key={chatKey}
                     onClose={handleCloseChat}
