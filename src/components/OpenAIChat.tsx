@@ -37,6 +37,7 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
   const [hasStarted, setHasStarted] = useState(false);
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [autoRecordingEnabled, setAutoRecordingEnabled] = useState(false);
   const { toast } = useToast();
   
   const {
@@ -64,6 +65,27 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
     }
   }, [useStructuredMode]);
 
+  // Auto-start recording after TTS finishes playing
+  useEffect(() => {
+    if (!isPlaying && autoRecordingEnabled && !isRecording && !isProcessing && !loading) {
+      const timer = setTimeout(() => {
+        handleAutoRecording();
+      }, 1000); // Wait 1 second after TTS stops
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isPlaying, autoRecordingEnabled, isRecording, isProcessing, loading]);
+
+  const handleAutoRecording = async () => {
+    try {
+      await startRecording();
+      console.log('Auto-recording started');
+    } catch (error) {
+      console.error('Error starting auto-recording:', error);
+      setAutoRecordingEnabled(false);
+    }
+  };
+
   const selectRandomQuestions = () => {
     if (questions.length === 0) return [];
     const shuffled = [...questions].sort(() => Math.random() - 0.5);
@@ -73,6 +95,7 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
   const startConversation = async () => {
     setLoading(true);
     setMessages([]);
+    setAutoRecordingEnabled(false);
 
     try {
       let systemPrompt = '';
@@ -124,7 +147,7 @@ I have some special questions with pictures for you.`;
         }
 
         // Wait a moment, then show the image and first question
-        setTimeout(() => {
+        setTimeout(async () => {
           const firstQuestion = selectedQuestions[0];
           const firstQuestionContent = `Let's start with the first one:
 
@@ -147,22 +170,25 @@ ${firstQuestion?.question}`;
 
           // Generate and play TTS for first question
           try {
-            supabase.functions.invoke('openai-tts', {
+            const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
               body: { 
                 text: firstQuestionContent,
                 voice: 'nova'
               }
-            }).then(({ data: ttsData, error: ttsError }) => {
-              if (!ttsError && ttsData.audioContent) {
-                playAudio(ttsData.audioContent);
-              }
             });
+
+            if (!ttsError && ttsData.audioContent) {
+              await playAudio(ttsData.audioContent);
+              // Enable auto-recording after first question
+              setAutoRecordingEnabled(true);
+            }
           } catch (ttsError) {
             console.error('TTS Error:', ttsError);
           }
         }, 2000); // 2 second delay after intro
 
       } else {
+        // ... keep existing code (free chat mode initialization)
         systemPrompt = `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
 
 When the conversation starts:
@@ -214,6 +240,8 @@ At the end:
 
           if (!ttsError && ttsData.audioContent) {
             await playAudio(ttsData.audioContent);
+            // Enable auto-recording after initial message in free chat mode
+            setAutoRecordingEnabled(true);
           }
         } catch (ttsError) {
           console.error('TTS Error:', ttsError);
@@ -238,6 +266,7 @@ At the end:
     const userMessage: Message = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
+    setAutoRecordingEnabled(false); // Disable auto-recording while processing
 
     try {
       let systemPrompt = '';
@@ -277,7 +306,7 @@ At the end:
             }
 
             // Wait a moment, then show next question with image
-            setTimeout(() => {
+            setTimeout(async () => {
               const nextQ = currentQuestions[nextIndex];
               const nextQuestionContent = `Now let's look at the next picture. ${nextQ.question}`;
               
@@ -297,16 +326,18 @@ At the end:
 
               // Generate and play TTS for next question
               try {
-                supabase.functions.invoke('openai-tts', {
+                const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
                   body: { 
                     text: nextQuestionContent,
                     voice: 'nova'
                   }
-                }).then(({ data: ttsData, error: ttsError }) => {
-                  if (!ttsError && ttsData.audioContent) {
-                    playAudio(ttsData.audioContent);
-                  }
                 });
+
+                if (!ttsError && ttsData.audioContent) {
+                  await playAudio(ttsData.audioContent);
+                  // Re-enable auto-recording after next question
+                  setAutoRecordingEnabled(true);
+                }
               } catch (ttsError) {
                 console.error('TTS Error:', ttsError);
               }
@@ -372,6 +403,23 @@ Now, can you tell me what you see in this picture again?`;
 
         if (!ttsError && ttsData.audioContent) {
           await playAudio(ttsData.audioContent);
+          
+          // Re-enable auto-recording after response (except for final message)
+          if (useStructuredMode && currentQuestions.length > 0) {
+            const isLastQuestion = currentQuestionIndex >= currentQuestions.length - 1;
+            const isCorrectAnswer = messageText.toLowerCase().includes(currentQuestions[currentQuestionIndex].answer.toLowerCase());
+            
+            // Only enable auto-recording if not the final correct answer
+            if (!(isLastQuestion && isCorrectAnswer)) {
+              setAutoRecordingEnabled(true);
+            } else {
+              // Disable auto-recording for final message
+              setAutoRecordingEnabled(false);
+            }
+          } else {
+            // For free chat mode, always re-enable auto-recording
+            setAutoRecordingEnabled(true);
+          }
         }
       } catch (ttsError) {
         console.error('TTS Error:', ttsError);
@@ -393,6 +441,7 @@ Now, can you tell me what you see in this picture again?`;
     if (isRecording) {
       try {
         setIsProcessing(true);
+        setAutoRecordingEnabled(false); // Disable auto-recording while processing
         const audioData = await stopRecording();
         
         // Convert speech to text
@@ -412,12 +461,15 @@ Now, can you tell me what you see in this picture again?`;
           description: "Failed to process voice recording. Please try again.",
           variant: "destructive",
         });
+        // Re-enable auto-recording on error
+        setAutoRecordingEnabled(true);
       } finally {
         setIsProcessing(false);
       }
     } else {
       try {
         await startRecording();
+        setAutoRecordingEnabled(false); // Manual recording disables auto mode temporarily
       } catch (error) {
         console.error('Error starting recording:', error);
         toast({
@@ -463,6 +515,11 @@ Now, can you tell me what you see in this picture again?`;
               {useStructuredMode && (
                 <p className="text-blue-200 text-xs">
                   Q&A Mode: {currentQuestionIndex + 1}/{currentQuestions.length}
+                </p>
+              )}
+              {autoRecordingEnabled && (
+                <p className="text-green-200 text-xs">
+                  🎤 Auto-recording enabled
                 </p>
               )}
             </div>
