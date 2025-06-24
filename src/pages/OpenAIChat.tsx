@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
+import ProgressCharacter from '../components/ProgressCharacter';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -29,6 +29,7 @@ const OpenAIChatPage = () => {
   const [useStructuredMode, setUseStructuredMode] = useState(false);
   const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType | null>(null);
   const [chatKey, setChatKey] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
 
   const questionTypes = [
     { 
@@ -160,34 +161,37 @@ const OpenAIChatPage = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const handleLauraClick = () => {
-    setShowQuestionTypes(true);
-  };
-
   const handleQuestionTypeSelect = (questionType: QuestionType) => {
     setSelectedQuestionType(questionType);
     setUseStructuredMode(true);
     setShowQuestionTypes(false);
     setShowChat(true);
+    setCorrectAnswers(0); // Reset progress when starting new session
     setChatKey(prev => prev + 1); // Reset chat when starting new session
-  };
-
-  const handleLawrenceClick = () => {
-    // Placeholder for Lawrence functionality
-    console.log('Lawrence clicked - functionality to be implemented');
   };
 
   const handleCloseChat = () => {
     setShowChat(false);
     setShowQuestionTypes(false);
     setSelectedQuestionType(null);
+    setCorrectAnswers(0); // Reset progress when closing
     setChatKey(prev => prev + 1); // Reset chat when closing
   };
 
   const toggleChatMode = () => {
     console.log('Toggling chat mode from', useStructuredMode, 'to', !useStructuredMode);
     setUseStructuredMode(!useStructuredMode);
+    setCorrectAnswers(0); // Reset progress when changing modes
     setChatKey(prev => prev + 1); // Force chat component to re-render with new mode
+  };
+
+  const handleCorrectAnswer = () => {
+    setCorrectAnswers(prev => prev + 1);
+  };
+
+  const handleLawrenceClick = () => {
+    // Placeholder for Lawrence functionality
+    console.log('Lawrence clicked - functionality to be implemented');
   };
 
   // Filter questions by selected type
@@ -324,9 +328,16 @@ const OpenAIChatPage = () => {
             </div>
           )}
 
-          {/* Chat Interface - only show when question type is selected */}
+          {/* Chat Interface with Progress Character */}
           {showChat && selectedQuestionType && (
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-6">
+              <div className="flex-shrink-0">
+                <ProgressCharacter 
+                  correctAnswers={correctAnswers}
+                  totalQuestions={filteredQuestions.length}
+                  questionType={selectedQuestionType}
+                />
+              </div>
               <OpenAIChat 
                 key={chatKey}
                 onClose={handleCloseChat}
@@ -335,6 +346,7 @@ const OpenAIChatPage = () => {
                 useStructuredMode={useStructuredMode}
                 onToggleMode={toggleChatMode}
                 selectedQuestionType={selectedQuestionType}
+                onCorrectAnswer={handleCorrectAnswer}
               />
             </div>
           )}

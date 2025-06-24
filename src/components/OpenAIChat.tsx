@@ -30,9 +30,10 @@ interface OpenAIChatProps {
   useStructuredMode?: boolean;
   onToggleMode?: () => void;
   selectedQuestionType?: string;
+  onCorrectAnswer?: () => void;
 }
 
-const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode = false, onToggleMode, selectedQuestionType }: OpenAIChatProps) => {
+const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode = false, onToggleMode, selectedQuestionType, onCorrectAnswer }: OpenAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -415,6 +416,9 @@ At the end:
           const nextIndex = currentQuestionIndex + 1;
 
           if (isCorrect) {
+            // Trigger progress character update
+            onCorrectAnswer?.();
+            
             if (nextIndex < currentQuestions.length) {
               // First show congratulatory message without image
               assistantContent = `Wonderful! That's exactly right! 🎉`;
