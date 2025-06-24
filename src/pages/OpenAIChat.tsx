@@ -35,21 +35,21 @@ const OpenAIChatPage = () => {
       value: 'first_words' as QuestionType, 
       label: 'First Words', 
       description: 'Practice basic first words and sounds', 
-      color: 'bg-blue-400',
+      color: 'bg-blue-500',
       icon: BookOpen
     },
     { 
       value: 'question_time' as QuestionType, 
       label: 'Question Time', 
       description: 'Answer questions about pictures', 
-      color: 'bg-green-500',
+      color: 'bg-yellow-400',
       icon: MessageCircle
     },
     { 
       value: 'build_sentence' as QuestionType, 
       label: 'Build a Sentence', 
       description: 'Learn to construct sentences', 
-      color: 'bg-yellow-400',
+      color: 'bg-green-500',
       icon: Building
     },
     { 
