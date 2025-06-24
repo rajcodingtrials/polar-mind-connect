@@ -9,6 +9,9 @@ import { useUserRole } from '../hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import type { Database } from '@/integrations/supabase/types';
+
+type QuestionType = Database['public']['Enums']['question_type_enum'];
 
 interface Question {
   id: string;
@@ -62,7 +65,7 @@ const Admin = () => {
         question: q.question,
         answer: q.answer,
         image_name: q.imageName ? imageNameMap[q.imageName] : null,
-        question_type: q.questionType || questionType
+        question_type: (q.questionType || questionType) as QuestionType
       }));
 
       const { error: dbError } = await supabase
