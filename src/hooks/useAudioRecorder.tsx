@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback } from 'react';
 
 export const useAudioRecorder = () => {
@@ -15,7 +16,6 @@ export const useAudioRecorder = () => {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          // Removed invalid properties: latency and volume
         } 
       });
       
@@ -65,6 +65,20 @@ export const useAudioRecorder = () => {
     }
   }, []);
 
+  // Helper function to convert ArrayBuffer to base64 without stack overflow
+  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 32768; // Process in 32KB chunks
+    let binaryString = '';
+    
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.slice(i, i + chunkSize);
+      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    
+    return btoa(binaryString);
+  };
+
   const stopRecording = useCallback((): Promise<string> => {
     return new Promise((resolve, reject) => {
       if (!mediaRecorderRef.current || !isRecording) {
@@ -86,9 +100,7 @@ export const useAudioRecorder = () => {
           });
           
           const arrayBuffer = await audioBlob.arrayBuffer();
-          const base64Audio = btoa(
-            String.fromCharCode(...new Uint8Array(arrayBuffer))
-          );
+          const base64Audio = arrayBufferToBase64(arrayBuffer);
           
           console.log('Generated base64 audio, length:', base64Audio.length);
           
