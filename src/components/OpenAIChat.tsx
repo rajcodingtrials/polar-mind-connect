@@ -29,9 +29,10 @@ interface OpenAIChatProps {
   imageUrls?: {[key: string]: string};
   useStructuredMode?: boolean;
   onToggleMode?: () => void;
+  selectedQuestionType?: string;
 }
 
-const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode = false, onToggleMode }: OpenAIChatProps) => {
+const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode = false, onToggleMode, selectedQuestionType }: OpenAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -56,7 +57,8 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
     console.log('OpenAIChat received questions:', questions.length);
     console.log('Questions:', questions);
     console.log('Available image URLs:', Object.keys(imageUrls));
-  }, [questions, imageUrls]);
+    console.log('Selected question type:', selectedQuestionType);
+  }, [questions, imageUrls, selectedQuestionType]);
 
   // Start conversation when component mounts or mode changes
   useEffect(() => {
@@ -64,7 +66,7 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
       startConversation();
       setHasStarted(true);
     }
-  }, [useStructuredMode]);
+  }, [useStructuredMode, selectedQuestionType]);
 
   // Auto-start recording after TTS finishes playing
   useEffect(() => {
@@ -101,6 +103,18 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
     return shuffled.slice(0, Math.min(5, questions.length));
   };
 
+  const createConversationalLessonPlan = () => {
+    const conversationalQuestions = [
+      { id: '1', question: "What's your name?", answer: "", questionType: 'lets_chat' },
+      { id: '2', question: "How old are you?", answer: "", questionType: 'lets_chat' },
+      { id: '3', question: "What's your favorite color?", answer: "", questionType: 'lets_chat' },
+      { id: '4', question: "Do you have any pets?", answer: "", questionType: 'lets_chat' },
+      { id: '5', question: "What do you like to do for fun?", answer: "", questionType: 'lets_chat' },
+      { id: '6', question: "What's your favorite food?", answer: "", questionType: 'lets_chat' }
+    ];
+    return conversationalQuestions;
+  };
+
   const startConversation = async () => {
     setLoading(true);
     setMessages([]);
@@ -110,48 +124,86 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
       let systemPrompt = '';
       let assistantContent = '';
 
-      if (useStructuredMode && questions.length > 0) {
-        const selectedQuestions = selectRandomQuestions();
+      if (useStructuredMode && selectedQuestionType) {
+        let selectedQuestions: Question[] = [];
+        let activityDescription = '';
+        
+        // Handle different question types
+        switch (selectedQuestionType) {
+          case 'first_words':
+            selectedQuestions = questions.filter(q => q.questionType === 'first_words').slice(0, 5);
+            activityDescription = 'practicing first words and basic sounds';
+            systemPrompt = `You are Laura, a gentle speech therapist. You will help the child practice first words and basic sounds. 
+            Ask one question at a time and wait for their response. Encourage any attempt at pronunciation, even if it's not perfect.
+            Praise them warmly for trying and gently model the correct pronunciation.
+            
+            Here are the questions you should ask:
+            ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
+            
+            Start with a warm greeting and then ask the first question.`;
+            break;
+            
+          case 'question_time':
+            selectedQuestions = selectRandomQuestions().filter(q => q.questionType === 'question_time');
+            activityDescription = 'answering questions about pictures';
+            systemPrompt = `You are Laura, a gentle speech therapist. You will ask the child specific questions with images for ${activityDescription}. 
+            Ask one question at a time and wait for their response. Check if their answer matches the expected answer.
+            If correct, praise them warmly. If incorrect, gently correct them and encourage them.
+            After they answer, move to the next question.
+            
+            Here are the questions you should ask:
+            ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
+            
+            Start with a warm greeting and then ask the first question.`;
+            break;
+            
+          case 'build_sentence':
+            selectedQuestions = questions.filter(q => q.questionType === 'build_sentence').slice(0, 5);
+            activityDescription = 'building sentences together';
+            systemPrompt = `You are Laura, a gentle speech therapist. You will help the child build sentences together. 
+            Ask one question at a time and help them construct complete sentences from their responses.
+            Encourage them to use full sentences and provide gentle guidance.
+            
+            Here are the sentence-building exercises:
+            ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Target sentence: ${q.answer})`).join('\n')}
+            
+            Start with a warm greeting and then begin the first exercise.`;
+            break;
+            
+          case 'lets_chat':
+            selectedQuestions = createConversationalLessonPlan();
+            activityDescription = 'having a friendly conversation';
+            systemPrompt = `You are Laura, a gentle speech therapist. You will have a friendly conversation with the child to practice their communication skills.
+            Ask the following 6 questions one at a time in order. Listen to their responses and engage naturally.
+            Encourage them to speak in full sentences when possible, but be patient and supportive.
+            After each response, acknowledge what they said and ask the next question.
+            
+            Questions to ask in order:
+            1. What's your name?
+            2. How old are you?
+            3. What's your favorite color?
+            4. Do you have any pets?
+            5. What do you like to do for fun?
+            6. What's your favorite food?
+            
+            Start with a warm greeting and begin the conversation naturally.`;
+            break;
+            
+          default:
+            selectedQuestions = selectRandomQuestions();
+            activityDescription = 'practicing speech together';
+            systemPrompt = `You are Laura, a gentle speech therapist helping with speech practice.`;
+        }
+
         setCurrentQuestions(selectedQuestions);
         setCurrentQuestionIndex(0);
 
         console.log('Selected questions for session:', selectedQuestions);
 
-        // Get the question type for context
-        const questionType = selectedQuestions[0]?.questionType || 'question_time';
-        let activityDescription = '';
-        
-        switch (questionType) {
-          case 'first_words':
-            activityDescription = 'practicing first words and basic sounds';
-            break;
-          case 'question_time':
-            activityDescription = 'answering questions about pictures';
-            break;
-          case 'build_sentence':
-            activityDescription = 'building sentences together';
-            break;
-          case 'lets_chat':
-            activityDescription = 'having a friendly chat';
-            break;
-          default:
-            activityDescription = 'practicing speech together';
-        }
-
-        systemPrompt = `You are Laura, a gentle speech therapist. You will ask the user specific questions with images for ${activityDescription}. 
-        Ask one question at a time and wait for their response. Check if their answer matches the expected answer.
-        If correct, praise them warmly. If incorrect, gently correct them and encourage them.
-        After they answer, move to the next question.
-        
-        Here are the 5 questions you should ask:
-        ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
-        
-        Start with a warm greeting mentioning the activity type and then ask the first question.`;
-
         // Create introductory message first
         const introMessage = `Hello! I'm so excited to work with you today! 🌟 
 
-We're going to be ${activityDescription}. I have some special questions with pictures for you.`;
+We're going to be ${activityDescription}. Let's start!`;
 
         const assistantIntroMessage: Message = {
           role: 'assistant',
@@ -176,24 +228,32 @@ We're going to be ${activityDescription}. I have some special questions with pic
           console.error('TTS Error:', ttsError);
         }
 
-        // Wait a moment, then show the image and first question
+        // Wait a moment, then start with first question
         setTimeout(async () => {
-          const firstQuestion = selectedQuestions[0];
-          const firstQuestionContent = `Let's start with the first one:
+          let firstQuestionContent = '';
+          let firstQuestionMessage: Message;
+
+          if (selectedQuestionType === 'lets_chat') {
+            firstQuestionContent = selectedQuestions[0]?.question || "What's your name?";
+          } else {
+            const firstQuestion = selectedQuestions[0];
+            firstQuestionContent = `Let's start with the first one:
 
 ${firstQuestion?.question}`;
+          }
 
-          const firstQuestionMessage: Message = {
+          firstQuestionMessage = {
             role: 'assistant',
             content: firstQuestionContent
           };
 
-          // Add image to the first question
-          if (firstQuestion && firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
-            firstQuestionMessage.imageUrl = imageUrls[firstQuestion.imageName];
-            console.log('Adding image to first question:', firstQuestion.imageName, firstQuestionMessage.imageUrl);
-          } else {
-            console.log('No image found for first question:', firstQuestion?.imageName, 'Available images:', Object.keys(imageUrls));
+          // Add image for non-chat questions
+          if (selectedQuestionType !== 'lets_chat') {
+            const firstQuestion = selectedQuestions[0];
+            if (firstQuestion && firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
+              firstQuestionMessage.imageUrl = imageUrls[firstQuestion.imageName];
+              console.log('Adding image to first question:', firstQuestion.imageName, firstQuestionMessage.imageUrl);
+            }
           }
 
           setMessages(prev => [...prev, firstQuestionMessage]);
@@ -303,87 +363,107 @@ At the end:
       let assistantContent = '';
 
       if (useStructuredMode && currentQuestions.length > 0) {
-        const currentQ = currentQuestions[currentQuestionIndex];
-        const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
-        const nextIndex = currentQuestionIndex + 1;
-
-        if (isCorrect) {
+        if (selectedQuestionType === 'lets_chat') {
+          // Handle conversational mode
+          const nextIndex = currentQuestionIndex + 1;
+          
           if (nextIndex < currentQuestions.length) {
-            // First show congratulatory message without image
-            assistantContent = `Wonderful! That's exactly right! 🎉`;
-            
-            const congratulatoryMessage: Message = {
-              role: 'assistant',
-              content: assistantContent
-            };
+            // Acknowledge response and ask next question
+            const nextQuestion = currentQuestions[nextIndex];
+            assistantContent = `That's wonderful! Thank you for sharing that with me. 
 
-            setMessages(prev => [...prev, congratulatoryMessage]);
+${nextQuestion.question}`;
+            setCurrentQuestionIndex(nextIndex);
+          } else {
+            // End of conversation
+            assistantContent = `Thank you so much for having this lovely conversation with me! 🌟 
 
-            // Generate and play TTS for congratulatory message
-            try {
-              const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
-                body: { 
-                  text: assistantContent,
-                  voice: 'nova'
-                }
-              });
+You did such a great job answering all my questions. I really enjoyed getting to know you better! Keep practicing your speaking - you're doing amazingly well! 🎊`;
+          }
+        } else {
+          // Handle other question types with expected answers
+          const currentQ = currentQuestions[currentQuestionIndex];
+          const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
+          const nextIndex = currentQuestionIndex + 1;
 
-              if (!ttsError && ttsData.audioContent) {
-                await playAudio(ttsData.audioContent);
-              }
-            } catch (ttsError) {
-              console.error('TTS Error:', ttsError);
-            }
-
-            // Wait a moment, then show next question with image
-            setTimeout(async () => {
-              const nextQ = currentQuestions[nextIndex];
-              const nextQuestionContent = `Now let's look at the next picture. ${nextQ.question}`;
+          if (isCorrect) {
+            if (nextIndex < currentQuestions.length) {
+              // First show congratulatory message without image
+              assistantContent = `Wonderful! That's exactly right! 🎉`;
               
-              const nextQuestionMessage: Message = {
+              const congratulatoryMessage: Message = {
                 role: 'assistant',
-                content: nextQuestionContent
+                content: assistantContent
               };
 
-              // Add image to next question
-              if (nextQ.imageName && imageUrls[nextQ.imageName]) {
-                nextQuestionMessage.imageUrl = imageUrls[nextQ.imageName];
-                console.log('Adding next question image:', nextQ.imageName);
-              }
+              setMessages(prev => [...prev, congratulatoryMessage]);
 
-              setMessages(prev => [...prev, nextQuestionMessage]);
-              setCurrentQuestionIndex(nextIndex);
-
-              // Generate and play TTS for next question
+              // Generate and play TTS for congratulatory message
               try {
                 const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
                   body: { 
-                    text: nextQuestionContent,
+                    text: assistantContent,
                     voice: 'nova'
                   }
                 });
 
                 if (!ttsError && ttsData.audioContent) {
                   await playAudio(ttsData.audioContent);
-                  // Re-enable auto-recording after next question
-                  setAutoRecordingEnabled(true);
                 }
               } catch (ttsError) {
                 console.error('TTS Error:', ttsError);
               }
-            }, 1500); // 1.5 second delay
 
-            setLoading(false);
-            return; // Exit early to avoid duplicate processing
-          } else {
-            assistantContent = `Perfect! You got it right! 🌟 
+              // Wait a moment, then show next question with image
+              setTimeout(async () => {
+                const nextQ = currentQuestions[nextIndex];
+                const nextQuestionContent = `Now let's look at the next picture. ${nextQ.question}`;
+                
+                const nextQuestionMessage: Message = {
+                  role: 'assistant',
+                  content: nextQuestionContent
+                };
+
+                // Add image to next question
+                if (nextQ.imageName && imageUrls[nextQ.imageName]) {
+                  nextQuestionMessage.imageUrl = imageUrls[nextQ.imageName];
+                  console.log('Adding next question image:', nextQ.imageName);
+                }
+
+                setMessages(prev => [...prev, nextQuestionMessage]);
+                setCurrentQuestionIndex(nextIndex);
+
+                // Generate and play TTS for next question
+                try {
+                  const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
+                    body: { 
+                      text: nextQuestionContent,
+                      voice: 'nova'
+                    }
+                  });
+
+                  if (!ttsError && ttsData.audioContent) {
+                    await playAudio(ttsData.audioContent);
+                    // Re-enable auto-recording after next question
+                    setAutoRecordingEnabled(true);
+                  }
+                } catch (ttsError) {
+                  console.error('TTS Error:', ttsError);
+                }
+              }, 1500); // 1.5 second delay
+
+              setLoading(false);
+              return; // Exit early to avoid duplicate processing
+            } else {
+              assistantContent = `Perfect! You got it right! 🌟 
 
 You did such an amazing job answering all the questions today! You should be very proud of yourself. Great work! 🎊`;
-          }
-        } else {
-          assistantContent = `That's a good try! The answer I was looking for is "${currentQ.answer}". Let's try saying it together: ${currentQ.answer}. You're doing great! 
+            }
+          } else {
+            assistantContent = `That's a good try! The answer I was looking for is "${currentQ.answer}". Let's try saying it together: ${currentQ.answer}. You're doing great! 
 
 Now, can you tell me what you see in this picture again?`;
+          }
         }
       } else {
         systemPrompt = `You are Laura, a gentle speech therapist. Continue the conversation naturally, providing encouragement and speech therapy guidance.`;
@@ -406,7 +486,7 @@ Now, can you tell me what you see in this picture again?`;
       };
 
       // Add image for structured mode questions (incorrect answers or final message)
-      if (useStructuredMode && currentQuestions.length > 0) {
+      if (useStructuredMode && currentQuestions.length > 0 && selectedQuestionType !== 'lets_chat') {
         const currentQ = currentQuestions[currentQuestionIndex];
         const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
         
@@ -436,15 +516,22 @@ Now, can you tell me what you see in this picture again?`;
           
           // Re-enable auto-recording after response (except for final message)
           if (useStructuredMode && currentQuestions.length > 0) {
-            const isLastQuestion = currentQuestionIndex >= currentQuestions.length - 1;
-            const isCorrectAnswer = messageText.toLowerCase().includes(currentQuestions[currentQuestionIndex].answer.toLowerCase());
-            
-            // Only enable auto-recording if not the final correct answer
-            if (!(isLastQuestion && isCorrectAnswer)) {
-              setAutoRecordingEnabled(true);
+            if (selectedQuestionType === 'lets_chat') {
+              const isLastQuestion = currentQuestionIndex >= currentQuestions.length - 1;
+              if (!isLastQuestion) {
+                setAutoRecordingEnabled(true);
+              }
             } else {
-              // Disable auto-recording for final message
-              setAutoRecordingEnabled(false);
+              const isLastQuestion = currentQuestionIndex >= currentQuestions.length - 1;
+              const isCorrectAnswer = messageText.toLowerCase().includes(currentQuestions[currentQuestionIndex].answer.toLowerCase());
+              
+              // Only enable auto-recording if not the final correct answer
+              if (!(isLastQuestion && isCorrectAnswer)) {
+                setAutoRecordingEnabled(true);
+              } else {
+                // Disable auto-recording for final message
+                setAutoRecordingEnabled(false);
+              }
             }
           } else {
             // For free chat mode, always re-enable auto-recording
@@ -547,7 +634,7 @@ Now, can you tell me what you see in this picture again?`;
               </p>
               {useStructuredMode && (
                 <p className="text-blue-200 text-xs">
-                  Q&A Mode: {currentQuestionIndex + 1}/{currentQuestions.length}
+                  {selectedQuestionType === 'lets_chat' ? 'Conversation Mode' : 'Q&A Mode'}: {currentQuestionIndex + 1}/{currentQuestions.length}
                 </p>
               )}
               {autoRecordingEnabled && (

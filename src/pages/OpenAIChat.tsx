@@ -296,7 +296,7 @@ const OpenAIChatPage = () => {
                         <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
                       </div>
                       
-                      {questionsOfType > 0 && type.value !== 'first_words' && (
+                      {questionsOfType > 0 && type.value !== 'first_words' && type.value !== 'lets_chat' && (
                         <div className="mt-4 text-center">
                           <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-xs font-medium">
                             {questionsOfType} questions available
@@ -329,6 +329,7 @@ const OpenAIChatPage = () => {
                 imageUrls={imageUrls}
                 useStructuredMode={useStructuredMode}
                 onToggleMode={toggleChatMode}
+                selectedQuestionType={selectedQuestionType}
               />
             </div>
           )}
