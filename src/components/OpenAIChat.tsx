@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -218,6 +219,7 @@ At the end:
 - Praise the child by name
 - Remind them they did something special today
 - Say goodbye in a sweet and happy way`;
+        }
 
         setCurrentQuestions(selectedQuestions);
         setCurrentQuestionIndex(0);
@@ -303,7 +305,7 @@ ${firstQuestion?.question}`;
         }, 2000); // 2 second delay after intro
 
       } else {
-        // ... keep existing code (free chat mode initialization)
+        // Free chat mode initialization
         systemPrompt = `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
 
 When the conversation starts:
@@ -644,7 +646,7 @@ Now, can you tell me what you see in this picture again?`;
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-lg border-slate-200 bg-white">
-      <CardHeader className="bg-gradient-to-r from-blue-100 to-blue-200 border-b border-blue-200 p-6">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-slate-200 p-6">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
@@ -652,15 +654,15 @@ Now, can you tell me what you see in this picture again?`;
                 src="/lovable-uploads/Laura.png" 
                 alt="Laura - Speech Therapist" 
               />
-              <AvatarFallback className="bg-blue-200 text-blue-800 text-lg font-semibold">L</AvatarFallback>
+              <AvatarFallback className="bg-blue-100 text-blue-800 text-lg font-semibold">L</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-2xl font-bold text-blue-900">Laura</h2>
-              <p className="text-blue-700 text-sm font-normal">
+              <h2 className="text-2xl font-bold text-slate-800">Laura</h2>
+              <p className="text-slate-600 text-sm font-normal">
                 Your AI Speech Therapy Assistant
               </p>
               {useStructuredMode && (
-                <p className="text-blue-600 text-xs">
+                <p className="text-slate-500 text-xs">
                   {selectedQuestionType === 'lets_chat' ? 'Conversation Mode' : 'Q&A Mode'}: {currentQuestionIndex + 1}/{currentQuestions.length}
                 </p>
               )}
@@ -682,7 +684,7 @@ Now, can you tell me what you see in this picture again?`;
                 variant="outline"
                 size="icon"
                 onClick={onToggleMode}
-                className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 shadow-sm"
+                className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
                 title={useStructuredMode ? "Switch to Free Chat" : "Switch to Q&A Mode"}
               >
                 {useStructuredMode ? <MessageCircle className="w-4 h-4" /> : <FileQuestion className="w-4 h-4" />}
@@ -693,8 +695,8 @@ Now, can you tell me what you see in this picture again?`;
               size="icon"
               onClick={toggleAudio}
               disabled={!isPlaying}
-              className={`border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 shadow-sm ${
-                isPlaying ? "bg-blue-50 border-blue-400" : ""
+              className={`border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm ${
+                isPlaying ? "bg-slate-50 border-slate-300" : ""
               }`}
             >
               {isPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -704,7 +706,7 @@ Now, can you tell me what you see in this picture again?`;
                 variant="outline"
                 size="icon"
                 onClick={onClose}
-                className="border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400 shadow-sm"
+                className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -724,7 +726,7 @@ Now, can you tell me what you see in this picture again?`;
               <div
                 className={`max-w-[80%] rounded-xl p-4 shadow-sm ${
                   message.role === 'user'
-                    ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                    ? 'bg-gradient-to-br from-blue-100 to-blue-200 text-slate-800 border border-blue-200'
                     : 'bg-white border border-slate-200 text-slate-800'
                 }`}
               >
@@ -737,7 +739,7 @@ Now, can you tell me what you see in this picture again?`;
                       />
                       <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">L</AvatarFallback>
                     </Avatar>
-                    <span className="text-xs font-semibold text-blue-700">Laura:</span>
+                    <span className="text-xs font-semibold text-slate-600">Laura:</span>
                   </div>
                 )}
                 {message.imageUrl && (
@@ -768,7 +770,7 @@ Now, can you tell me what you see in this picture again?`;
                     />
                     <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">L</AvatarFallback>
                   </Avatar>
-                  <span className="text-xs font-semibold text-blue-700">Laura:</span>
+                  <span className="text-xs font-semibold text-slate-600">Laura:</span>
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
