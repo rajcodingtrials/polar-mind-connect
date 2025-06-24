@@ -161,6 +161,11 @@ const OpenAIChatPage = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  const handleLauraClick = () => {
+    console.log('Laura clicked - showing question types');
+    setShowQuestionTypes(true);
+  };
+
   const handleQuestionTypeSelect = (questionType: QuestionType) => {
     setSelectedQuestionType(questionType);
     setUseStructuredMode(true);
