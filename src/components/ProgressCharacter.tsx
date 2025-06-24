@@ -51,6 +51,20 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
         </div>
       )}
 
+      {/* CSS for confetti animation */}
+      <style>{`
+        @keyframes confetti-fall {
+          0% {
+            transform: translateY(-100vh) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
+
       <div className="text-center mb-4">
         <h3 className="text-xl font-bold text-purple-800 mb-2">🌟 Progress Buddy 🌟</h3>
         <p className="text-base text-purple-600 font-semibold">
@@ -114,20 +128,6 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
           </p>
         </div>
       )}
-
-      {/* CSS for confetti animation */}
-      <style jsx>{`
-        @keyframes confetti-fall {
-          0% {
-            transform: translateY(-100vh) rotate(0deg);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(100vh) rotate(720deg);
-            opacity: 0;
-          }
-        }
-      `}</style>
     </div>
   );
 };
