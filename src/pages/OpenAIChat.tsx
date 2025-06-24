@@ -258,13 +258,13 @@ const OpenAIChatPage = () => {
                     return (
                       <div
                         key={type.value}
-                        className="cursor-pointer p-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all"
+                        className="cursor-pointer p-4 rounded-lg border-2 border-gray-200 hover:border-blue-800 hover:bg-blue-800 hover:text-white transition-all"
                         onClick={() => handleQuestionTypeSelect(type.value)}
                       >
                         <div className="flex items-center space-x-3">
                           <div className="flex-1">
-                            <h3 className="font-semibold text-gray-800">{type.label}</h3>
-                            <p className="text-sm text-gray-600">{type.description}</p>
+                            <h3 className="font-semibold">{type.label}</h3>
+                            <p className="text-sm opacity-90">{type.description}</p>
                             {questionsOfType > 0 && type.value !== 'first_words' && (
                               <Badge variant="success" className="mt-1 text-xs">
                                 {questionsOfType} questions available
