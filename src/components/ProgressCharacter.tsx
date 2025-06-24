@@ -8,18 +8,20 @@ interface ProgressCharacterProps {
 }
 
 const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: ProgressCharacterProps) => {
-  // Calculate progress percentage
-  const progressPercentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+  // Calculate progress percentage based on 5 questions max
+  const maxQuestions = 5;
+  const displayCorrect = Math.min(correctAnswers, maxQuestions);
+  const progressPercentage = (displayCorrect / maxQuestions) * 100;
   
-  // Character is only revealed after 5 correct answers
-  const isCharacterRevealed = correctAnswers >= 5;
+  // Calculate opacity - starts at 0.2 and goes to 1.0 as progress increases
+  const opacity = Math.max(0.2, Math.min(1, (displayCorrect / maxQuestions) * 0.8 + 0.2));
   
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-6 shadow-xl border-4 border-purple-200 w-full mx-auto">
       <div className="text-center mb-4">
         <h3 className="text-xl font-bold text-purple-800 mb-2">🌟 Progress Buddy 🌟</h3>
         <p className="text-base text-purple-600 font-semibold">
-          {correctAnswers} of {totalQuestions} correct!
+          {displayCorrect} of {maxQuestions} correct!
         </p>
         <div className="w-full bg-purple-200 rounded-full h-3 mt-3 border-2 border-purple-300">
           <div 
@@ -36,48 +38,46 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
       
       <div className="flex justify-center">
         <div className="relative w-48 h-48 transition-all duration-1000">
-          {isCharacterRevealed ? (
-            <img 
-              src="/lovable-uploads/5197a6a0-9d6b-4c95-b80e-db71d2e8e099.png"
-              alt="Tiger Progress Buddy"
-              className="w-full h-full object-contain rounded-lg transition-all duration-1000"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-300 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-400">
-              <div className="text-center text-gray-600">
-                <div className="text-4xl mb-2">🔒</div>
-                <p className="text-sm font-medium">Mystery Character</p>
-                <p className="text-xs">Get {5 - correctAnswers} more correct!</p>
-              </div>
-            </div>
+          <img 
+            src="/lovable-uploads/5197a6a0-9d6b-4c95-b80e-db71d2e8e099.png"
+            alt="Tiger Progress Buddy"
+            className="w-full h-full object-contain rounded-lg transition-all duration-1000"
+            style={{ 
+              opacity: opacity,
+              filter: `brightness(${0.5 + (opacity * 0.5)}) saturate(${opacity})`
+            }}
+          />
+          {/* Overlay for grayscale effect when minimal progress */}
+          {correctAnswers < 2 && (
+            <div className="absolute inset-0 bg-gray-400 bg-opacity-30 rounded-lg transition-all duration-1000"></div>
           )}
         </div>
       </div>
       
-      {correctAnswers === totalQuestions && totalQuestions > 0 && isCharacterRevealed && (
+      {correctAnswers >= maxQuestions && (
         <div className="text-center mt-4 animate-bounce">
           <div className="text-3xl mb-2">🎉🎊🌟</div>
           <p className="text-lg font-bold text-emerald-600 mb-2">
             Fantastic Work!
           </p>
           <p className="text-xs text-emerald-500">
-            You've completed all questions and revealed your tiger buddy!
+            Your tiger buddy is bright and colorful now!
           </p>
         </div>
       )}
       
-      {isCharacterRevealed && correctAnswers < totalQuestions && (
+      {correctAnswers > 0 && correctAnswers < maxQuestions && (
         <div className="text-center mt-3">
-          <p className="text-xs text-emerald-500 animate-pulse font-medium">
-            🎉 Character revealed! Keep going for more achievements!
+          <p className="text-xs text-purple-500 animate-pulse font-medium">
+            🎨 Getting brighter! Keep going!
           </p>
         </div>
       )}
       
-      {!isCharacterRevealed && (
+      {correctAnswers === 0 && (
         <div className="text-center mt-3">
           <p className="text-xs text-purple-600 font-medium">
-            Answer {5 - correctAnswers} more questions correctly to reveal your mystery character! 🎯
+            Help your tiger buddy get colorful by answering questions! 🐅
           </p>
         </div>
       )}
