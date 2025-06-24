@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ProgressCharacterProps {
   correctAnswers: number;
@@ -16,8 +16,41 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
   // Calculate opacity - starts at 0.2 and goes to 1.0 as progress increases
   const opacity = Math.max(0.2, Math.min(1, (displayCorrect / maxQuestions) * 0.8 + 0.2));
   
+  // Confetti state
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [justReachedFive, setJustReachedFive] = useState(false);
+
+  // Trigger confetti when reaching 5 correct answers
+  useEffect(() => {
+    if (correctAnswers === maxQuestions && !justReachedFive) {
+      setJustReachedFive(true);
+      setShowConfetti(true);
+      // Hide confetti after animation
+      setTimeout(() => setShowConfetti(false), 3000);
+    }
+  }, [correctAnswers, maxQuestions, justReachedFive]);
+  
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-6 shadow-xl border-4 border-purple-200 w-full mx-auto">
+    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-6 shadow-xl border-4 border-purple-200 w-full mx-auto relative overflow-hidden">
+      {/* Confetti Animation */}
+      {showConfetti && (
+        <div className="absolute inset-0 pointer-events-none z-10">
+          {Array.from({ length: 50 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 opacity-80"
+              style={{
+                left: `${Math.random() * 100}%`,
+                backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f39c12', '#e74c3c', '#9b59b6'][Math.floor(Math.random() * 6)],
+                animation: `confetti-fall 3s linear forwards`,
+                animationDelay: `${Math.random() * 2}s`,
+                transform: `rotate(${Math.random() * 360}deg)`
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="text-center mb-4">
         <h3 className="text-xl font-bold text-purple-800 mb-2">🌟 Progress Buddy 🌟</h3>
         <p className="text-base text-purple-600 font-semibold">
@@ -81,6 +114,20 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
           </p>
         </div>
       )}
+
+      {/* CSS for confetti animation */}
+      <style jsx>{`
+        @keyframes confetti-fall {
+          0% {
+            transform: translateY(-100vh) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };
