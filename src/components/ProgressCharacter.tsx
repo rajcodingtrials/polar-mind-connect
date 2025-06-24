@@ -32,19 +32,20 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
   
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-6 shadow-xl border-4 border-purple-200 w-full mx-auto relative overflow-hidden">
-      {/* Confetti Animation */}
+      {/* Full Page Confetti Animation */}
       {showConfetti && (
-        <div className="absolute inset-0 pointer-events-none z-10">
-          {Array.from({ length: 50 }).map((_, i) => (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          {Array.from({ length: 100 }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-2 h-2 opacity-80"
+              className="absolute w-3 h-3 opacity-90"
               style={{
                 left: `${Math.random() * 100}%`,
-                backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f39c12', '#e74c3c', '#9b59b6'][Math.floor(Math.random() * 6)],
-                animation: `confetti-fall 3s linear forwards`,
-                animationDelay: `${Math.random() * 2}s`,
-                transform: `rotate(${Math.random() * 360}deg)`
+                backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f39c12', '#e74c3c', '#9b59b6', '#2ecc71', '#f1c40f'][Math.floor(Math.random() * 8)],
+                animation: `confetti-fall ${2 + Math.random() * 2}s linear forwards`,
+                animationDelay: `${Math.random() * 1}s`,
+                transform: `rotate(${Math.random() * 360}deg)`,
+                borderRadius: Math.random() > 0.5 ? '50%' : '0%'
               }}
             />
           ))}
@@ -55,11 +56,15 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
       <style>{`
         @keyframes confetti-fall {
           0% {
-            transform: translateY(-100vh) rotate(0deg);
+            transform: translateY(-100vh) rotate(0deg) scale(1);
             opacity: 1;
           }
+          50% {
+            opacity: 1;
+            transform: translateY(50vh) rotate(360deg) scale(1.2);
+          }
           100% {
-            transform: translateY(100vh) rotate(720deg);
+            transform: translateY(100vh) rotate(720deg) scale(0.5);
             opacity: 0;
           }
         }
