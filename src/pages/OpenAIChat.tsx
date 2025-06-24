@@ -205,76 +205,76 @@ const OpenAIChatPage = () => {
     : questions;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <Header />
       <main className="flex-grow p-6">
         <div className="max-w-7xl mx-auto">
           {/* Welcome Section */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-center mb-6 text-slate-800">
-              Welcome, {profile?.name || 'User'}!
+            <h1 className="text-4xl font-bold text-center mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Welcome, {profile?.name || 'User'}! 🌈
             </h1>
           </div>
 
           {/* Learning Progress Section */}
-          <Card className="mb-8 bg-slate-100 border-slate-200 shadow-sm">
+          <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold text-slate-800">
-                Your Learning Progress
+              <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
+                📚 Your Learning Progress
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-slate-700">
-                Hope your vacation went great. Let's start from where you left off last week. You have made a great job learning about making effective conversations.
+                Hope your vacation went great! Let's start from where you left off last week. You have made a great job learning about making effective conversations. 🎯
               </p>
             </CardContent>
           </Card>
 
           {/* Your Therapists Section */}
-          <Card className="mb-8 bg-slate-100 border-slate-200 shadow-sm">
+          <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold text-slate-800">
-                Your Therapists
+              <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
+                👩‍⚕️ Your Therapists
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div 
-                  className="flex items-center space-x-4 cursor-pointer hover:bg-slate-200 p-3 rounded-lg transition-colors border border-slate-200"
+                  className="flex items-center space-x-4 cursor-pointer hover:bg-purple-100 p-4 rounded-xl transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md"
                   onClick={handleLauraClick}
                 >
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-16 w-16 border-4 border-pink-200">
                     <AvatarImage 
                       src="/lovable-uploads/Laura.png" 
                       alt="Laura" 
                     />
-                    <AvatarFallback className="bg-slate-300 text-slate-700">L</AvatarFallback>
+                    <AvatarFallback className="bg-pink-200 text-pink-700">L</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold text-slate-800">Laura</h3>
-                    <p className="text-slate-600 text-sm">Practiced conversations</p>
+                    <h3 className="font-semibold text-purple-800 text-lg">Laura 💫</h3>
+                    <p className="text-purple-600 text-sm">Practiced conversations</p>
                     {questions.length > 0 && (
-                      <p className="text-xs text-emerald-600">{questions.length} questions from Supabase</p>
+                      <p className="text-xs text-emerald-600">✅ {questions.length} questions ready</p>
                     )}
                     {Object.keys(imageUrls).length > 0 && (
-                      <p className="text-xs text-blue-600">{Object.keys(imageUrls).length} images loaded</p>
+                      <p className="text-xs text-blue-600">🖼️ {Object.keys(imageUrls).length} images loaded</p>
                     )}
                   </div>
                 </div>
                 <div 
-                  className="flex items-center space-x-4 cursor-pointer hover:bg-slate-200 p-3 rounded-lg transition-colors border border-slate-200"
+                  className="flex items-center space-x-4 cursor-pointer hover:bg-purple-100 p-4 rounded-xl transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md"
                   onClick={handleLawrenceClick}
                 >
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-16 w-16 border-4 border-blue-200">
                     <AvatarImage 
                       src="/lovable-uploads/Lawrence.png" 
                       alt="Lawrence" 
                     />
-                    <AvatarFallback className="bg-slate-300 text-slate-700">L</AvatarFallback>
+                    <AvatarFallback className="bg-blue-200 text-blue-700">L</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold text-slate-800">Lawrence</h3>
-                    <p className="text-slate-600 text-sm">Worked on questions</p>
+                    <h3 className="font-semibold text-purple-800 text-lg">Lawrence 🌟</h3>
+                    <p className="text-purple-600 text-sm">Worked on questions</p>
                   </div>
                 </div>
               </div>
@@ -285,10 +285,10 @@ const OpenAIChatPage = () => {
           {showQuestionTypes && (
             <div className="mb-8">
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                  Choose Your Learning Activity with Laura
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+                  🎨 Choose Your Learning Adventure with Laura! 🎨
                 </h2>
-                <p className="text-slate-600">Select the type of questions you'd like to practice today</p>
+                <p className="text-purple-600 text-lg">Select the type of questions you'd like to practice today</p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
@@ -299,21 +299,21 @@ const OpenAIChatPage = () => {
                   return (
                     <div
                       key={type.value}
-                      className={`${type.color} ${type.textColor} rounded-2xl p-6 cursor-pointer hover:shadow-md hover:scale-105 transition-all duration-300 min-h-[180px] flex flex-col justify-between border-2`}
+                      className={`${type.color} ${type.textColor} rounded-3xl p-6 cursor-pointer hover:shadow-xl hover:scale-105 transition-all duration-300 min-h-[200px] flex flex-col justify-between border-3 hover:border-white`}
                       onClick={() => handleQuestionTypeSelect(type.value)}
                     >
                       <div className="flex flex-col items-center text-center">
-                        <div className="bg-white rounded-full p-3 mb-4 shadow-sm">
-                          <IconComponent className={`w-6 h-6 ${type.textColor}`} />
+                        <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
+                          <IconComponent className={`w-8 h-8 ${type.textColor}`} />
                         </div>
-                        <h3 className="font-bold text-lg mb-2">{type.label}</h3>
-                        <p className="text-sm opacity-80 leading-relaxed">{type.description}</p>
+                        <h3 className="font-bold text-xl mb-3">{type.label}</h3>
+                        <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
                       </div>
                       
                       {questionsOfType > 0 && type.value !== 'first_words' && type.value !== 'lets_chat' && (
                         <div className="mt-4 text-center">
-                          <span className="bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium">
-                            {questionsOfType} questions available
+                          <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm">
+                            🎯 {questionsOfType} questions ready!
                           </span>
                         </div>
                       )}
@@ -325,7 +325,7 @@ const OpenAIChatPage = () => {
               <div className="mt-8 text-center">
                 <button
                   onClick={() => setShowQuestionTypes(false)}
-                  className="text-slate-600 hover:text-slate-800 text-sm font-medium bg-white px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"
+                  className="text-purple-600 hover:text-purple-800 text-lg font-medium bg-white px-6 py-3 rounded-xl border-2 border-purple-200 hover:bg-purple-50 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   ← Back to Therapists
                 </button>
@@ -333,26 +333,31 @@ const OpenAIChatPage = () => {
             </div>
           )}
 
-          {/* Chat Interface with Progress Character */}
+          {/* Progress Character and Chat Interface */}
           {showChat && selectedQuestionType && (
-            <div className="flex justify-center gap-6">
-              <div className="flex-shrink-0">
+            <div className="space-y-8">
+              {/* Progress Character positioned above chat */}
+              <div className="flex justify-center">
                 <ProgressCharacter 
                   correctAnswers={correctAnswers}
                   totalQuestions={filteredQuestions.length}
                   questionType={selectedQuestionType}
                 />
               </div>
-              <OpenAIChat 
-                key={chatKey}
-                onClose={handleCloseChat}
-                questions={filteredQuestions}
-                imageUrls={imageUrls}
-                useStructuredMode={useStructuredMode}
-                onToggleMode={toggleChatMode}
-                selectedQuestionType={selectedQuestionType}
-                onCorrectAnswer={handleCorrectAnswer}
-              />
+              
+              {/* Chat Interface */}
+              <div className="flex justify-center">
+                <OpenAIChat 
+                  key={chatKey}
+                  onClose={handleCloseChat}
+                  questions={filteredQuestions}
+                  imageUrls={imageUrls}
+                  useStructuredMode={useStructuredMode}
+                  onToggleMode={toggleChatMode}
+                  selectedQuestionType={selectedQuestionType}
+                  onCorrectAnswer={handleCorrectAnswer}
+                />
+              </div>
             </div>
           )}
         </div>
