@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -263,7 +262,6 @@ const OpenAIChatPage = () => {
                         onClick={() => handleQuestionTypeSelect(type.value)}
                       >
                         <div className="flex items-center space-x-3">
-                          <div className={`w-4 h-4 rounded-full ${type.color}`}></div>
                           <div className="flex-1">
                             <h3 className="font-semibold text-gray-800">{type.label}</h3>
                             <p className="text-sm text-gray-600">{type.description}</p>
