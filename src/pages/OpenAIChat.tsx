@@ -285,7 +285,7 @@ const OpenAIChatPage = () => {
                   return (
                     <div
                       key={type.value}
-                      className={`${type.color} rounded-2xl p-6 text-white cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 min-h-[180px] flex flex-col justify-between`}
+                      className={`${type.color} rounded-2xl p-6 text-black cursor-pointer hover:bg-blue-900 hover:text-white hover:shadow-lg hover:scale-105 transition-all duration-300 min-h-[180px] flex flex-col justify-between`}
                       onClick={() => handleQuestionTypeSelect(type.value)}
                     >
                       <div className="flex flex-col items-center text-center">
