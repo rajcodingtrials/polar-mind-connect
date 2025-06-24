@@ -207,81 +207,85 @@ const OpenAIChatPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <Header />
-      <main className="flex-grow p-6">
+      <main className="flex-grow p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-center mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Welcome, {profile?.name || 'User'}! 🌈
-            </h1>
-          </div>
-
-          {/* Learning Progress Section */}
-          <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
-                📚 Your Learning Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-700">
-                Hope your vacation went great! Let's start from where you left off last week. You have made a great job learning about making effective conversations. 🎯
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Your Therapists Section */}
-          <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
-                👩‍⚕️ Your Therapists
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div 
-                  className="flex items-center space-x-4 cursor-pointer hover:bg-purple-100 p-4 rounded-xl transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md"
-                  onClick={handleLauraClick}
-                >
-                  <Avatar className="h-16 w-16 border-4 border-pink-200">
-                    <AvatarImage 
-                      src="/lovable-uploads/Laura.png" 
-                      alt="Laura" 
-                    />
-                    <AvatarFallback className="bg-pink-200 text-pink-700">L</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold text-purple-800 text-lg">Laura 💫</h3>
-                    <p className="text-purple-600 text-sm">Practiced conversations</p>
-                    {questions.length > 0 && (
-                      <p className="text-xs text-emerald-600">✅ {questions.length} questions ready</p>
-                    )}
-                    {Object.keys(imageUrls).length > 0 && (
-                      <p className="text-xs text-blue-600">🖼️ {Object.keys(imageUrls).length} images loaded</p>
-                    )}
-                  </div>
-                </div>
-                <div 
-                  className="flex items-center space-x-4 cursor-pointer hover:bg-purple-100 p-4 rounded-xl transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md"
-                  onClick={handleLawrenceClick}
-                >
-                  <Avatar className="h-16 w-16 border-4 border-blue-200">
-                    <AvatarImage 
-                      src="/lovable-uploads/Lawrence.png" 
-                      alt="Lawrence" 
-                    />
-                    <AvatarFallback className="bg-blue-200 text-blue-700">L</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold text-purple-800 text-lg">Lawrence 🌟</h3>
-                    <p className="text-purple-600 text-sm">Worked on questions</p>
-                  </div>
-                </div>
+          {/* Welcome Section - only show when not in chat */}
+          {!showChat && !showQuestionTypes && (
+            <>
+              <div className="mb-8">
+                <h1 className="text-4xl font-bold text-center mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Welcome, {profile?.name || 'User'}! 🌈
+                </h1>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Question Type Selection - redesigned with soft pastels */}
+              {/* Learning Progress Section */}
+              <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
+                    📚 Your Learning Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-700">
+                    Hope your vacation went great! Let's start from where you left off last week. You have made a great job learning about making effective conversations. 🎯
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Your Therapists Section */}
+              <Card className="mb-8 bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-purple-800 flex items-center gap-2">
+                    👩‍⚕️ Your Therapists
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div 
+                      className="flex items-center space-x-4 cursor-pointer hover:bg-purple-100 p-4 rounded-xl transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md"
+                      onClick={handleLauraClick}
+                    >
+                      <Avatar className="h-16 w-16 border-4 border-pink-200">
+                        <AvatarImage 
+                          src="/lovable-uploads/Laura.png" 
+                          alt="Laura" 
+                        />
+                        <AvatarFallback className="bg-pink-200 text-pink-700">L</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold text-purple-800 text-lg">Laura 💫</h3>
+                        <p className="text-purple-600 text-sm">Practiced conversations</p>
+                        {questions.length > 0 && (
+                          <p className="text-xs text-emerald-600">✅ {questions.length} questions ready</p>
+                        )}
+                        {Object.keys(imageUrls).length > 0 && (
+                          <p className="text-xs text-blue-600">🖼️ {Object.keys(imageUrls).length} images loaded</p>
+                        )}
+                      </div>
+                    </div>
+                    <div 
+                      className="flex items-center space-x-4 cursor-pointer hover:bg-purple-100 p-4 rounded-xl transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 hover:shadow-md"
+                      onClick={handleLawrenceClick}
+                    >
+                      <Avatar className="h-16 w-16 border-4 border-blue-200">
+                        <AvatarImage 
+                          src="/lovable-uploads/Lawrence.png" 
+                          alt="Lawrence" 
+                        />
+                        <AvatarFallback className="bg-blue-200 text-blue-700">L</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold text-purple-800 text-lg">Lawrence 🌟</h3>
+                        <p className="text-purple-600 text-sm">Worked on questions</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Question Type Selection */}
           {showQuestionTypes && (
             <div className="mb-8">
               <div className="text-center mb-8">
@@ -335,28 +339,32 @@ const OpenAIChatPage = () => {
 
           {/* Progress Character and Chat Interface */}
           {showChat && selectedQuestionType && (
-            <div className="space-y-8">
-              {/* Progress Character positioned above chat */}
-              <div className="flex justify-center">
-                <ProgressCharacter 
-                  correctAnswers={correctAnswers}
-                  totalQuestions={filteredQuestions.length}
-                  questionType={selectedQuestionType}
-                />
+            <div className="space-y-6">
+              {/* Progress Character positioned prominently above chat with better spacing */}
+              <div className="flex justify-center pt-4 pb-2">
+                <div className="w-full max-w-md">
+                  <ProgressCharacter 
+                    correctAnswers={correctAnswers}
+                    totalQuestions={filteredQuestions.length}
+                    questionType={selectedQuestionType}
+                  />
+                </div>
               </div>
               
-              {/* Chat Interface */}
-              <div className="flex justify-center">
-                <OpenAIChat 
-                  key={chatKey}
-                  onClose={handleCloseChat}
-                  questions={filteredQuestions}
-                  imageUrls={imageUrls}
-                  useStructuredMode={useStructuredMode}
-                  onToggleMode={toggleChatMode}
-                  selectedQuestionType={selectedQuestionType}
-                  onCorrectAnswer={handleCorrectAnswer}
-                />
+              {/* Chat Interface with contained width */}
+              <div className="flex justify-center px-4">
+                <div className="w-full max-w-4xl">
+                  <OpenAIChat 
+                    key={chatKey}
+                    onClose={handleCloseChat}
+                    questions={filteredQuestions}
+                    imageUrls={imageUrls}
+                    useStructuredMode={useStructuredMode}
+                    onToggleMode={toggleChatMode}
+                    selectedQuestionType={selectedQuestionType}
+                    onCorrectAnswer={handleCorrectAnswer}
+                  />
+                </div>
               </div>
             </div>
           )}

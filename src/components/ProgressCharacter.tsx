@@ -13,20 +13,20 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
   const partsToColor = Math.floor((correctAnswers / Math.max(totalQuestions, 1)) * 8); // 8 colorizable parts
   
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-8 shadow-xl border-4 border-purple-200 max-w-sm mx-auto">
-      <div className="text-center mb-6">
-        <h3 className="text-2xl font-bold text-purple-800 mb-2">🌟 Progress Buddy 🌟</h3>
-        <p className="text-lg text-purple-600 font-semibold">
+    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-6 lg:p-8 shadow-xl border-4 border-purple-200 w-full mx-auto">
+      <div className="text-center mb-4 lg:mb-6">
+        <h3 className="text-xl lg:text-2xl font-bold text-purple-800 mb-2">🌟 Progress Buddy 🌟</h3>
+        <p className="text-base lg:text-lg text-purple-600 font-semibold">
           {correctAnswers} of {totalQuestions} correct!
         </p>
-        <div className="w-full bg-purple-200 rounded-full h-4 mt-3 border-2 border-purple-300">
+        <div className="w-full bg-purple-200 rounded-full h-3 lg:h-4 mt-3 border-2 border-purple-300">
           <div 
             className="bg-gradient-to-r from-pink-400 via-purple-500 to-blue-500 h-full rounded-full transition-all duration-1000 shadow-inner"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
         {progressPercentage > 0 && (
-          <p className="text-sm text-purple-500 mt-2 animate-pulse">
+          <p className="text-xs lg:text-sm text-purple-500 mt-2 animate-pulse">
             ✨ You're doing amazing! ✨
           </p>
         )}
@@ -34,10 +34,10 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
       
       <div className="flex justify-center">
         <svg
-          width="160"
-          height="160"
+          width="140"
+          height="140"
           viewBox="0 0 160 160"
-          className="transition-all duration-500 drop-shadow-lg"
+          className="w-32 h-32 lg:w-40 lg:h-40 transition-all duration-500 drop-shadow-lg"
         >
           {/* Tiger Body */}
           <ellipse
@@ -212,28 +212,28 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
       </div>
       
       {correctAnswers === totalQuestions && totalQuestions > 0 && (
-        <div className="text-center mt-6 animate-bounce">
-          <div className="text-4xl mb-2">🎉🎊🌟</div>
-          <p className="text-xl font-bold text-emerald-600 mb-2">
+        <div className="text-center mt-4 lg:mt-6 animate-bounce">
+          <div className="text-3xl lg:text-4xl mb-2">🎉🎊🌟</div>
+          <p className="text-lg lg:text-xl font-bold text-emerald-600 mb-2">
             Fantastic Work!
           </p>
-          <p className="text-sm text-emerald-500">
+          <p className="text-xs lg:text-sm text-emerald-500">
             Your tiger buddy is complete and so proud of you!
           </p>
         </div>
       )}
       
       {correctAnswers > 0 && correctAnswers < totalQuestions && (
-        <div className="text-center mt-4">
-          <p className="text-sm text-purple-500 animate-pulse font-medium">
+        <div className="text-center mt-3 lg:mt-4">
+          <p className="text-xs lg:text-sm text-purple-500 animate-pulse font-medium">
             🎨 New colors unlocked! Keep going!
           </p>
         </div>
       )}
       
       {correctAnswers === 0 && totalQuestions > 0 && (
-        <div className="text-center mt-4">
-          <p className="text-sm text-purple-600 font-medium">
+        <div className="text-center mt-3 lg:mt-4">
+          <p className="text-xs lg:text-sm text-purple-600 font-medium">
             Help your tiger buddy get colorful by answering questions! 🐅
           </p>
         </div>
