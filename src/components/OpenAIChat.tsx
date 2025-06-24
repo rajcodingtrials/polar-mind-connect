@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -645,8 +644,8 @@ Now, can you tell me what you see in this picture again?`;
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-lg border-slate-200 bg-white">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-slate-200 p-6">
+    <Card className="w-full max-w-2xl mx-auto shadow-lg border-blue-200 bg-blue-50">
+      <CardHeader className="bg-gradient-to-r from-blue-100 to-blue-150 border-b border-blue-200 p-6">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
@@ -654,15 +653,15 @@ Now, can you tell me what you see in this picture again?`;
                 src="/lovable-uploads/Laura.png" 
                 alt="Laura - Speech Therapist" 
               />
-              <AvatarFallback className="bg-blue-100 text-blue-800 text-lg font-semibold">L</AvatarFallback>
+              <AvatarFallback className="bg-blue-200 text-blue-800 text-lg font-semibold">L</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-2xl font-bold text-slate-800">Laura</h2>
-              <p className="text-slate-600 text-sm font-normal">
+              <h2 className="text-2xl font-bold text-blue-900">Laura</h2>
+              <p className="text-blue-700 text-sm font-normal">
                 Your AI Speech Therapy Assistant
               </p>
               {useStructuredMode && (
-                <p className="text-slate-500 text-xs">
+                <p className="text-blue-600 text-xs">
                   {selectedQuestionType === 'lets_chat' ? 'Conversation Mode' : 'Q&A Mode'}: {currentQuestionIndex + 1}/{currentQuestions.length}
                 </p>
               )}
@@ -684,7 +683,7 @@ Now, can you tell me what you see in this picture again?`;
                 variant="outline"
                 size="icon"
                 onClick={onToggleMode}
-                className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
+                className="border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 shadow-sm"
                 title={useStructuredMode ? "Switch to Free Chat" : "Switch to Q&A Mode"}
               >
                 {useStructuredMode ? <MessageCircle className="w-4 h-4" /> : <FileQuestion className="w-4 h-4" />}
@@ -695,8 +694,8 @@ Now, can you tell me what you see in this picture again?`;
               size="icon"
               onClick={toggleAudio}
               disabled={!isPlaying}
-              className={`border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm ${
-                isPlaying ? "bg-slate-50 border-slate-300" : ""
+              className={`border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 shadow-sm ${
+                isPlaying ? "bg-blue-100 border-blue-300" : ""
               }`}
             >
               {isPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -706,7 +705,7 @@ Now, can you tell me what you see in this picture again?`;
                 variant="outline"
                 size="icon"
                 onClick={onClose}
-                className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm"
+                className="border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 shadow-sm"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -714,8 +713,8 @@ Now, can you tell me what you see in this picture again?`;
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 p-6 bg-slate-50">
-        <div className="h-96 overflow-y-auto border border-slate-200 rounded-lg p-4 space-y-4 bg-gradient-to-b from-white to-slate-50 shadow-inner">
+      <CardContent className="space-y-4 p-6 bg-blue-50">
+        <div className="h-96 overflow-y-auto border border-blue-200 rounded-lg p-4 space-y-4 bg-gradient-to-b from-white to-blue-50 shadow-inner">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -726,8 +725,8 @@ Now, can you tell me what you see in this picture again?`;
               <div
                 className={`max-w-[80%] rounded-xl p-4 shadow-sm ${
                   message.role === 'user'
-                    ? 'bg-gradient-to-br from-blue-100 to-blue-200 text-slate-800 border border-blue-200'
-                    : 'bg-white border border-slate-200 text-slate-800'
+                    ? 'bg-gradient-to-br from-blue-200 to-blue-300 text-blue-900 border border-blue-300'
+                    : 'bg-white border border-blue-200 text-blue-900'
                 }`}
               >
                 {message.role === 'assistant' && (
@@ -737,9 +736,9 @@ Now, can you tell me what you see in this picture again?`;
                         src="/lovable-uploads/Laura.png" 
                         alt="Laura" 
                       />
-                      <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">L</AvatarFallback>
+                      <AvatarFallback className="bg-blue-200 text-blue-800 text-xs font-semibold">L</AvatarFallback>
                     </Avatar>
-                    <span className="text-xs font-semibold text-slate-600">Laura:</span>
+                    <span className="text-xs font-semibold text-blue-700">Laura:</span>
                   </div>
                 )}
                 {message.imageUrl && (
@@ -747,7 +746,7 @@ Now, can you tell me what you see in this picture again?`;
                     <img 
                       src={message.imageUrl} 
                       alt="Question image" 
-                      className="max-w-full h-32 object-contain rounded-lg border border-slate-200 shadow-sm"
+                      className="max-w-full h-32 object-contain rounded-lg border border-blue-200 shadow-sm"
                       onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
                       onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
                     />
@@ -761,16 +760,16 @@ Now, can you tell me what you see in this picture again?`;
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+              <div className="bg-white border border-blue-200 rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
                     <AvatarImage 
                       src="/lovable-uploads/Laura.png" 
                       alt="Laura" 
                     />
-                    <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-semibold">L</AvatarFallback>
+                    <AvatarFallback className="bg-blue-200 text-blue-800 text-xs font-semibold">L</AvatarFallback>
                   </Avatar>
-                  <span className="text-xs font-semibold text-slate-600">Laura:</span>
+                  <span className="text-xs font-semibold text-blue-700">Laura:</span>
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -788,14 +787,14 @@ Now, can you tell me what you see in this picture again?`;
             onKeyPress={handleKeyPress}
             placeholder="Type your message or use voice recording..."
             disabled={loading || isProcessing}
-            className="border-slate-300 focus:border-blue-400 focus:ring-blue-200 bg-white"
+            className="border-blue-300 focus:border-blue-400 focus:ring-blue-200 bg-white"
           />
           <Button
             variant={isRecording ? "destructive" : "outline"}
             size="icon"
             onClick={handleVoiceRecording}
             disabled={loading || isProcessing}
-            className={`${isRecording ? "bg-rose-500 hover:bg-rose-600 border-rose-500" : "border-slate-300 text-slate-600 hover:bg-slate-50"} ${isRecording ? "animate-pulse" : ""} shadow-sm`}
+            className={`${isRecording ? "bg-rose-500 hover:bg-rose-600 border-rose-500" : "border-blue-300 text-blue-700 hover:bg-blue-100"} ${isRecording ? "animate-pulse" : ""} shadow-sm`}
             title={isRecording ? "Recording... (will auto-stop after processing)" : "Start recording"}
           >
             {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -812,7 +811,7 @@ Now, can you tell me what you see in this picture again?`;
           </Button>
         </div>
         {isProcessing && (
-          <div className="text-center text-sm text-blue-600 bg-blue-50 p-2 rounded-lg border border-blue-200">
+          <div className="text-center text-sm text-blue-700 bg-blue-100 p-2 rounded-lg border border-blue-200">
             Processing voice recording... Microphone will disable automatically.
           </div>
         )}
