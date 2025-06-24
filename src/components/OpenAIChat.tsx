@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,15 +105,18 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
   };
 
   const createConversationalLessonPlan = () => {
-    const conversationalQuestions = [
-      { id: '1', question: "What's your name?", answer: "", questionType: 'lets_chat' },
-      { id: '2', question: "How old are you?", answer: "", questionType: 'lets_chat' },
-      { id: '3', question: "What's your favorite color?", answer: "", questionType: 'lets_chat' },
-      { id: '4', question: "Do you have any pets?", answer: "", questionType: 'lets_chat' },
-      { id: '5', question: "What do you like to do for fun?", answer: "", questionType: 'lets_chat' },
-      { id: '6', question: "What's your favorite food?", answer: "", questionType: 'lets_chat' }
+    // Simple conversational topics for children
+    const topics = [
+      'pets and animals',
+      'favorite foods',
+      'family and friends',
+      'toys and games',
+      'colors and shapes',
+      'school and learning'
     ];
-    return conversationalQuestions;
+    
+    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+    return { topic: randomTopic };
   };
 
   const startConversation = async () => {
@@ -171,22 +175,24 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
             break;
             
           case 'lets_chat':
-            selectedQuestions = createConversationalLessonPlan();
-            activityDescription = 'having a friendly conversation';
-            systemPrompt = `You are Laura, a gentle speech therapist. You will have a friendly conversation with the child to practice their communication skills.
-            Ask the following 6 questions one at a time in order. Listen to their responses and engage naturally.
-            Encourage them to speak in full sentences when possible, but be patient and supportive.
-            After each response, acknowledge what they said and ask the next question.
+            const conversationPlan = createConversationalLessonPlan();
+            activityDescription = `having a friendly conversation about ${conversationPlan.topic}`;
+            systemPrompt = `You are Laura, a gentle speech therapist. You will have a natural, friendly conversation with the child about ${conversationPlan.topic}.
             
-            Questions to ask in order:
-            1. What's your name?
-            2. How old are you?
-            3. What's your favorite color?
-            4. Do you have any pets?
-            5. What do you like to do for fun?
-            6. What's your favorite food?
+            Your goal is to:
+            - Keep the conversation flowing naturally around the topic of ${conversationPlan.topic}
+            - Ask follow-up questions based on what the child says
+            - Encourage them to speak in full sentences when possible
+            - Be patient, supportive, and enthusiastic
+            - Keep questions simple and age-appropriate
+            - Show genuine interest in their responses
+            - Gently guide them back to the topic if they go off track
             
-            Start with a warm greeting and begin the conversation naturally.`;
+            Start with a warm greeting and naturally introduce the topic of ${conversationPlan.topic}. 
+            Let the conversation develop organically based on their responses.
+            Keep the session to about 5-6 exchanges to maintain their attention.`;
+            
+            setCurrentQuestions([{ id: '1', question: conversationPlan.topic, answer: '', questionType: 'lets_chat' }]);
             break;
             
           default:
@@ -195,7 +201,9 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
             systemPrompt = `You are Laura, a gentle speech therapist helping with speech practice.`;
         }
 
-        setCurrentQuestions(selectedQuestions);
+        if (selectedQuestionType !== 'lets_chat') {
+          setCurrentQuestions(selectedQuestions);
+        }
         setCurrentQuestionIndex(0);
 
         console.log('Selected questions for session:', selectedQuestions);
@@ -228,41 +236,42 @@ We're going to be ${activityDescription}. Let's start!`;
           console.error('TTS Error:', ttsError);
         }
 
-        // Wait a moment, then start with first question
+        // Wait a moment, then start with first question or conversation starter
         setTimeout(async () => {
-          let firstQuestionContent = '';
-          let firstQuestionMessage: Message;
+          let firstContent = '';
+          let firstMessage: Message;
 
           if (selectedQuestionType === 'lets_chat') {
-            firstQuestionContent = selectedQuestions[0]?.question || "What's your name?";
+            const conversationPlan = createConversationalLessonPlan();
+            firstContent = `I'd love to chat with you about ${conversationPlan.topic}! Tell me, what do you think about ${conversationPlan.topic}?`;
           } else {
             const firstQuestion = selectedQuestions[0];
-            firstQuestionContent = `Let's start with the first one:
+            firstContent = `Let's start with the first one:
 
 ${firstQuestion?.question}`;
           }
 
-          firstQuestionMessage = {
+          firstMessage = {
             role: 'assistant',
-            content: firstQuestionContent
+            content: firstContent
           };
 
           // Add image for non-chat questions
           if (selectedQuestionType !== 'lets_chat') {
             const firstQuestion = selectedQuestions[0];
             if (firstQuestion && firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
-              firstQuestionMessage.imageUrl = imageUrls[firstQuestion.imageName];
-              console.log('Adding image to first question:', firstQuestion.imageName, firstQuestionMessage.imageUrl);
+              firstMessage.imageUrl = imageUrls[firstQuestion.imageName];
+              console.log('Adding image to first question:', firstQuestion.imageName, firstMessage.imageUrl);
             }
           }
 
-          setMessages(prev => [...prev, firstQuestionMessage]);
+          setMessages(prev => [...prev, firstMessage]);
 
           // Generate and play TTS for first question
           try {
             const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
               body: { 
-                text: firstQuestionContent,
+                text: firstContent,
                 voice: 'nova'
               }
             });
@@ -364,22 +373,24 @@ At the end:
 
       if (useStructuredMode && currentQuestions.length > 0) {
         if (selectedQuestionType === 'lets_chat') {
-          // Handle conversational mode
-          const nextIndex = currentQuestionIndex + 1;
+          // Handle natural conversation mode
+          const conversationHistory = messages.map(m => ({ role: m.role, content: m.content }));
           
-          if (nextIndex < currentQuestions.length) {
-            // Acknowledge response and ask next question
-            const nextQuestion = currentQuestions[nextIndex];
-            assistantContent = `That's wonderful! Thank you for sharing that with me. 
+          systemPrompt = `You are Laura, a gentle speech therapist having a natural conversation with a child. 
+          Continue the conversation naturally based on what they just said. Ask follow-up questions, show interest, 
+          and keep the conversation flowing. Be encouraging and supportive. If the conversation has gone on for 
+          5-6 exchanges, gently wrap it up with praise for their participation.`;
 
-${nextQuestion.question}`;
-            setCurrentQuestionIndex(nextIndex);
-          } else {
-            // End of conversation
-            assistantContent = `Thank you so much for having this lovely conversation with me! 🌟 
+          const { data, error } = await supabase.functions.invoke('openai-chat', {
+            body: {
+              messages: [...conversationHistory, userMessage],
+              model: 'gpt-4o-mini',
+              systemPrompt
+            }
+          });
 
-You did such a great job answering all my questions. I really enjoyed getting to know you better! Keep practicing your speaking - you're doing amazingly well! 🎊`;
-          }
+          if (error) throw error;
+          assistantContent = data.choices[0].message.content;
         } else {
           // Handle other question types with expected answers
           const currentQ = currentQuestions[currentQuestionIndex];

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,28 +35,28 @@ const OpenAIChatPage = () => {
       value: 'first_words' as QuestionType, 
       label: 'First Words', 
       description: 'Practice basic first words and sounds', 
-      color: 'bg-yellow-400',
+      color: 'bg-blue-400',
       icon: BookOpen
     },
     { 
       value: 'question_time' as QuestionType, 
       label: 'Question Time', 
       description: 'Answer questions about pictures', 
-      color: 'bg-green-400',
+      color: 'bg-green-500',
       icon: MessageCircle
     },
     { 
       value: 'build_sentence' as QuestionType, 
       label: 'Build a Sentence', 
       description: 'Learn to construct sentences', 
-      color: 'bg-red-400',
+      color: 'bg-purple-600',
       icon: Building
     },
     { 
       value: 'lets_chat' as QuestionType, 
       label: 'Lets Chat', 
       description: 'Free conversation practice', 
-      color: 'bg-blue-400',
+      color: 'bg-red-500',
       icon: Heart
     }
   ];
