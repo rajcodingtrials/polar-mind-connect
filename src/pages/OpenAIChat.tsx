@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import OpenAIChat from '../components/OpenAIChat';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
+import { BookOpen, MessageCircle, Building, Heart } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
@@ -29,10 +30,34 @@ const OpenAIChatPage = () => {
   const [chatKey, setChatKey] = useState(0);
 
   const questionTypes = [
-    { value: 'first_words' as QuestionType, label: 'First Words', description: 'Practice basic first words and sounds', color: 'bg-blue-500' },
-    { value: 'question_time' as QuestionType, label: 'Question Time', description: 'Answer questions about pictures', color: 'bg-green-500' },
-    { value: 'build_sentence' as QuestionType, label: 'Build a Sentence', description: 'Learn to construct sentences', color: 'bg-purple-500' },
-    { value: 'lets_chat' as QuestionType, label: 'Lets Chat', description: 'Free conversation practice', color: 'bg-orange-500' }
+    { 
+      value: 'first_words' as QuestionType, 
+      label: 'First Words', 
+      description: 'Practice basic first words and sounds', 
+      color: 'bg-yellow-400',
+      icon: BookOpen
+    },
+    { 
+      value: 'question_time' as QuestionType, 
+      label: 'Question Time', 
+      description: 'Answer questions about pictures', 
+      color: 'bg-green-400',
+      icon: MessageCircle
+    },
+    { 
+      value: 'build_sentence' as QuestionType, 
+      label: 'Build a Sentence', 
+      description: 'Learn to construct sentences', 
+      color: 'bg-red-400',
+      icon: Building
+    },
+    { 
+      value: 'lets_chat' as QuestionType, 
+      label: 'Lets Chat', 
+      description: 'Free conversation practice', 
+      color: 'bg-blue-400',
+      icon: Heart
+    }
   ];
 
   // Load questions and images from Supabase
@@ -242,50 +267,56 @@ const OpenAIChatPage = () => {
             </CardContent>
           </Card>
 
-          {/* Question Type Selection - shown after Laura is clicked */}
+          {/* Question Type Selection - redesigned to match screenshot */}
           {showQuestionTypes && (
-            <Card className="mb-8 bg-blue-50 border-blue-200">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-800">
+            <div className="mb-8">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   Choose Your Learning Activity with Laura
-                </CardTitle>
-                <p className="text-gray-600">Select the type of questions you'd like to practice today:</p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {questionTypes.map((type) => {
-                    const questionsOfType = questions.filter(q => q.questionType === type.value).length;
-                    return (
-                      <div
-                        key={type.value}
-                        className="cursor-pointer p-4 rounded-lg border-2 border-gray-200 hover:border-blue-800 hover:bg-blue-800 hover:text-white transition-all"
-                        onClick={() => handleQuestionTypeSelect(type.value)}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{type.label}</h3>
-                            <p className="text-sm opacity-90">{type.description}</p>
-                            {questionsOfType > 0 && type.value !== 'first_words' && (
-                              <Badge variant="success" className="mt-1 text-xs">
-                                {questionsOfType} questions available
-                              </Badge>
-                            )}
-                          </div>
+                </h2>
+                <p className="text-gray-600">Select the type of questions you'd like to practice today</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                {questionTypes.map((type) => {
+                  const questionsOfType = questions.filter(q => q.questionType === type.value).length;
+                  const IconComponent = type.icon;
+                  
+                  return (
+                    <div
+                      key={type.value}
+                      className={`${type.color} rounded-2xl p-6 text-white cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 min-h-[180px] flex flex-col justify-between`}
+                      onClick={() => handleQuestionTypeSelect(type.value)}
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="bg-white rounded-full p-3 mb-4">
+                          <IconComponent className="w-6 h-6 text-gray-700" />
                         </div>
+                        <h3 className="font-bold text-lg mb-2">{type.label}</h3>
+                        <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
                       </div>
-                    );
-                  })}
-                </div>
-                <div className="mt-4 pt-4 border-t">
-                  <button
-                    onClick={() => setShowQuestionTypes(false)}
-                    className="text-gray-600 hover:text-gray-800 text-sm"
-                  >
-                    ← Back to Therapists
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
+                      
+                      {questionsOfType > 0 && type.value !== 'first_words' && (
+                        <div className="mt-4 text-center">
+                          <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-xs font-medium">
+                            {questionsOfType} questions available
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <div className="mt-8 text-center">
+                <button
+                  onClick={() => setShowQuestionTypes(false)}
+                  className="text-gray-600 hover:text-gray-800 text-sm font-medium"
+                >
+                  ← Back to Therapists
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Chat Interface - only show when question type is selected */}
