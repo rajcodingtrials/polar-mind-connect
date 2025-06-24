@@ -339,30 +339,28 @@ const OpenAIChatPage = () => {
 
           {/* Chat Interface with side-by-side layout */}
           {showChat && selectedQuestionType && (
-            <div className="space-y-6">
-              <div className="flex flex-col lg:flex-row gap-6 items-start">
-                {/* Progress Character positioned on the left side */}
-                <div className="w-full lg:w-80 flex-shrink-0">
-                  <ProgressCharacter 
-                    correctAnswers={correctAnswers}
-                    totalQuestions={filteredQuestions.length}
-                    questionType={selectedQuestionType}
-                  />
-                </div>
-                
-                {/* Chat Interface positioned on the right side */}
-                <div className="flex-1 w-full">
-                  <OpenAIChat 
-                    key={chatKey}
-                    onClose={handleCloseChat}
-                    questions={filteredQuestions}
-                    imageUrls={imageUrls}
-                    useStructuredMode={useStructuredMode}
-                    onToggleMode={toggleChatMode}
-                    selectedQuestionType={selectedQuestionType}
-                    onCorrectAnswer={handleCorrectAnswer}
-                  />
-                </div>
+            <div className="flex flex-col lg:flex-row gap-6 h-full">
+              {/* Chat Interface positioned on the left side */}
+              <div className="flex-1 w-full lg:w-auto">
+                <OpenAIChat 
+                  key={chatKey}
+                  onClose={handleCloseChat}
+                  questions={filteredQuestions}
+                  imageUrls={imageUrls}
+                  useStructuredMode={useStructuredMode}
+                  onToggleMode={toggleChatMode}
+                  selectedQuestionType={selectedQuestionType}
+                  onCorrectAnswer={handleCorrectAnswer}
+                />
+              </div>
+              
+              {/* Progress Character positioned on the right side */}
+              <div className="w-full lg:w-80 flex-shrink-0">
+                <ProgressCharacter 
+                  correctAnswers={correctAnswers}
+                  totalQuestions={filteredQuestions.length}
+                  questionType={selectedQuestionType}
+                />
               </div>
             </div>
           )}
