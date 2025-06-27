@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -120,6 +119,12 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
     return { topic: randomTopic };
   };
 
+  // Helper function to add pauses after question marks in text
+  const addPausesAfterQuestions = (text: string): string => {
+    // Add a pause (represented by a comma and space) after question marks
+    return text.replace(/\?/g, '?... ');
+  };
+
   const startConversation = async () => {
     setLoading(true);
     setMessages([]);
@@ -154,7 +159,7 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
             systemPrompt = `You are Laura, a gentle speech therapist. You will ask the child specific questions with images for ${activityDescription}. 
             Ask one question at a time and wait for their response. Check if their answer matches the expected answer.
             If correct, praise them warmly. If incorrect, gently correct them and encourage them.
-            After they answer, move to the next question.
+            After they answer, move to the next question. When asking questions, pause briefly after the question mark before continuing.
             
             Here are the questions you should ask:
             ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
@@ -239,11 +244,11 @@ We're going to be ${activityDescription}. Let's start!`;
 
         setMessages([assistantIntroMessage]);
 
-        // Generate and play TTS for intro
+        // Generate and play TTS for intro with pauses
         try {
           const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
             body: { 
-              text: introMessage,
+              text: addPausesAfterQuestions(introMessage),
               voice: 'nova'
             }
           });
@@ -286,11 +291,11 @@ ${firstQuestion?.question}`;
 
           setMessages(prev => [...prev, firstMessage]);
 
-          // Generate and play TTS for first question
+          // Generate and play TTS for first question with pauses
           try {
             const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
               body: { 
-                text: firstContent,
+                text: addPausesAfterQuestions(firstContent),
                 voice: 'nova'
               }
             });
@@ -431,11 +436,11 @@ At the end:
 
               setMessages(prev => [...prev, congratulatoryMessage]);
 
-              // Generate and play TTS for congratulatory message
+              // Generate and play TTS for congratulatory message with pauses
               try {
                 const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
                   body: { 
-                    text: assistantContent,
+                    text: addPausesAfterQuestions(assistantContent),
                     voice: 'nova'
                   }
                 });
@@ -466,11 +471,11 @@ At the end:
                 setMessages(prev => [...prev, nextQuestionMessage]);
                 setCurrentQuestionIndex(nextIndex);
 
-                // Generate and play TTS for next question
+                // Generate and play TTS for next question with pauses
                 try {
                   const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
                     body: { 
-                      text: nextQuestionContent,
+                      text: addPausesAfterQuestions(nextQuestionContent),
                       voice: 'nova'
                     }
                   });
@@ -535,11 +540,11 @@ Now, can you tell me what you see in this picture again?`;
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Generate and play TTS for Laura's response
+      // Generate and play TTS for Laura's response with pauses
       try {
         const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
           body: { 
-            text: assistantContent,
+            text: addPausesAfterQuestions(assistantContent),
             voice: 'nova'
           }
         });
@@ -751,7 +756,7 @@ Now, can you tell me what you see in this picture again?`;
                     <img 
                       src={message.imageUrl} 
                       alt="Question image" 
-                      className="max-w-full h-32 object-contain rounded-lg border border-blue-200 shadow-sm"
+                      className="max-w-full h-48 object-contain rounded-lg border border-blue-200 shadow-sm"
                       onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
                       onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
                     />
