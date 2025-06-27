@@ -756,7 +756,7 @@ Now, can you tell me what you see in this picture again?`;
                     <img 
                       src={message.imageUrl} 
                       alt="Question image" 
-                      className="w-full h-80 object-contain rounded-lg border border-blue-200 shadow-sm mx-auto bg-white"
+                      className="w-full max-w-lg h-96 object-contain rounded-lg border border-blue-200 shadow-sm mx-auto bg-white"
                       onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
                       onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
                     />
