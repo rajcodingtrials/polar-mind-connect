@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -586,14 +585,6 @@ Now, can you tell me what you see in this picture again?`;
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input);
-      setInput('');
-    }
-  };
-
   const toggleAudio = () => {
     if (isPlaying) {
       stopAudio();
@@ -712,40 +703,6 @@ Now, can you tell me what you see in this picture again?`;
                   </div>
                 </div>
               </div>
-              
-              {/* Show microphone button only after assistant messages that contain questions and when not loading */}
-              {message.role === 'assistant' && !loading && isQuestionMessage(message.content) && (
-                <div className="flex justify-center mt-6 mb-4">
-                  <div className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 shadow-xl border-2 border-blue-200">
-                    <div className="text-center mb-4">
-                      <p className="text-blue-800 font-semibold text-xl mb-2">Tap mic to answer:</p>
-                    </div>
-                    <div className="flex justify-center">
-                      <button
-                        onClick={handleVoiceRecording}
-                        disabled={loading || isProcessing}
-                        className={`w-32 h-32 rounded-full text-white shadow-2xl transition-all duration-300 border-4 flex items-center justify-center ${
-                          isRecording 
-                            ? "bg-red-500 hover:bg-red-600 animate-pulse scale-110 border-red-300" 
-                            : "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-300"
-                        }`}
-                        title={isRecording ? "Tap to stop recording" : "Tap to start recording"}
-                      >
-                        {isRecording ? (
-                          <MicOff className="w-12 h-12" />
-                        ) : (
-                          <Mic className="w-12 h-12" />
-                        )}
-                      </button>
-                    </div>
-                    {isProcessing && (
-                      <div className="text-center mt-3">
-                        <p className="text-blue-600 text-sm animate-pulse font-medium">Processing your voice...</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           ))}
           {loading && (
@@ -770,26 +727,28 @@ Now, can you tell me what you see in this picture again?`;
             </div>
           )}
         </div>
-        <div className="flex space-x-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your message or use the microphone above..."
+        
+        {/* New bottom bar with microphone */}
+        <div className="flex items-center justify-center space-x-4 bg-gradient-to-r from-blue-100 to-blue-150 border border-blue-200 rounded-lg p-4">
+          <span className="text-blue-800 font-semibold text-lg">Tap microphone to answer</span>
+          <button
+            onClick={handleVoiceRecording}
             disabled={loading || isProcessing}
-            className="border-blue-300 focus:border-blue-400 focus:ring-blue-200 bg-white font-sans text-lg"
-          />
-          <Button 
-            onClick={() => {
-              sendMessage(input);
-              setInput('');
-            }} 
-            disabled={loading || !input.trim() || isProcessing}
-            className="bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
+            className={`w-12 h-12 rounded-full text-white shadow-lg transition-all duration-300 border-2 flex items-center justify-center ${
+              isRecording 
+                ? "bg-red-500 hover:bg-red-600 animate-pulse scale-110 border-red-300" 
+                : "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-300"
+            }`}
+            title={isRecording ? "Tap to stop recording" : "Tap to start recording"}
           >
-            Send
-          </Button>
+            {isRecording ? (
+              <MicOff className="w-6 h-6" />
+            ) : (
+              <Mic className="w-6 h-6" />
+            )}
+          </button>
         </div>
+        
         {isProcessing && (
           <div className="text-center text-sm text-blue-700 bg-blue-100 p-2 rounded-lg border border-blue-200">
             Processing voice recording...
