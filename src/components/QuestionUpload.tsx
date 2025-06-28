@@ -105,16 +105,17 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Upload className="w-5 h-5" />
           Upload Questions & Images
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">
+      <CardContent className="space-y-6">
+        {/* JSON File Upload */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">
             <FileText className="w-4 h-4 inline mr-1" />
             Questions JSON File
           </label>
@@ -124,13 +125,14 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
             onChange={handleJsonUpload}
             className="cursor-pointer"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-600">
             Format: {`[{"question": "What is this?", "answer": "apple", "imageName": "apple.jpg"}]`}
           </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">
+        {/* Images Upload */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">
             <Image className="w-4 h-4 inline mr-1" />
             Images
           </label>
@@ -143,8 +145,9 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">
+        {/* Question Type Selection */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">
             <Tag className="w-4 h-4 inline mr-1" />
             Question Type
           </label>
@@ -162,58 +165,73 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
           </Select>
         </div>
 
+        {/* Loaded Questions Preview */}
         {questions.length > 0 && (
-          <div>
-            <h3 className="font-medium mb-2">Loaded Questions ({questions.length})</h3>
-            <div className="max-h-32 overflow-y-auto space-y-1">
+          <div className="space-y-3">
+            <h3 className="font-medium">Loaded Questions ({questions.length})</h3>
+            <div className="max-h-32 overflow-y-auto space-y-2 bg-gray-50 p-3 rounded-lg">
               {questions.slice(0, 5).map((q, index) => (
-                <div key={q.id} className="text-sm p-2 bg-gray-50 rounded">
-                  <strong>Q:</strong> {q.question} | <strong>A:</strong> {q.answer}
+                <div key={q.id} className="text-sm p-2 bg-white rounded border">
+                  <div className="font-medium">Q: {q.question}</div>
+                  <div className="text-gray-600">A: {q.answer}</div>
                   {q.questionType && (
-                    <span className="text-xs text-gray-600 ml-2">
-                      ({questionTypes.find(t => t.value === q.questionType)?.label})
-                    </span>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Type: {questionTypes.find(t => t.value === q.questionType)?.label}
+                    </div>
                   )}
                 </div>
               ))}
               {questions.length > 5 && (
-                <p className="text-xs text-gray-500">...and {questions.length - 5} more</p>
+                <p className="text-xs text-gray-500 text-center py-2">
+                  ...and {questions.length - 5} more questions
+                </p>
               )}
             </div>
           </div>
         )}
 
+        {/* Uploaded Images Preview */}
         {images.length > 0 && (
-          <div>
-            <h3 className="font-medium mb-2">Uploaded Images ({images.length})</h3>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-              {images.map((img, index) => (
-                <div key={index} className="relative group">
-                  <div className="bg-gray-100 p-2 rounded text-xs flex items-center gap-1">
-                    <Image className="w-3 h-3" />
-                    {img.name}
+          <div className="space-y-3">
+            <h3 className="font-medium">Uploaded Images ({images.length})</h3>
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                {images.map((img, index) => (
+                  <div key={index} className="relative group">
+                    <div className="bg-white border p-2 rounded text-xs flex items-center gap-2 min-w-0">
+                      <Image className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate max-w-24">{img.name}</span>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-1 -right-1 w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeImage(index)}
+                    >
+                      <Trash2 className="w-2 h-2" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-1 -right-1 w-4 h-4 opacity-0 group-hover:opacity-100"
-                    onClick={() => removeImage(index)}
-                  >
-                    <Trash2 className="w-2 h-2" />
-                  </Button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        <Button 
-          onClick={handleSubmit} 
-          className="w-full"
-          disabled={questions.length === 0 || !selectedQuestionType}
-        >
-          Upload Questions & Images
-        </Button>
+        {/* Submit Button */}
+        <div className="pt-4">
+          <Button 
+            onClick={handleSubmit} 
+            className="w-full"
+            disabled={questions.length === 0 || !selectedQuestionType}
+          >
+            Upload Questions & Images
+          </Button>
+        </div>
+
+        <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+          <strong>Note:</strong> Uploaded questions and images will be stored in Supabase and 
+          made available for all speech therapy sessions.
+        </div>
       </CardContent>
     </Card>
   );
