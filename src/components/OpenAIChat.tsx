@@ -734,9 +734,9 @@ Now, can you tell me what you see in this picture again?`;
                         title={isRecording ? "Tap to stop recording" : "Tap to start recording"}
                       >
                         {isRecording ? (
-                          <MicOff className="w-12 h-12" />
+                          <MicOff className="w-10 h-10" />
                         ) : (
-                          <Mic className="w-12 h-12" />
+                          <Mic className="w-10 h-10" />
                         )}
                       </Button>
                     </div>
