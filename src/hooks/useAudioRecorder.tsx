@@ -6,12 +6,14 @@ export const useAudioRecorder = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
-          sampleRate: 44100, // Higher sample rate for better quality
+          sampleRate: 44100,
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
@@ -33,7 +35,7 @@ export const useAudioRecorder = () => {
       
       const options = mimeType ? { 
         mimeType,
-        audioBitsPerSecond: 128000 // Higher bitrate for better quality
+        audioBitsPerSecond: 128000
       } : { audioBitsPerSecond: 128000 };
       
       mediaRecorderRef.current = new MediaRecorder(stream, options);
@@ -55,15 +57,24 @@ export const useAudioRecorder = () => {
         console.error('MediaRecorder error:', event);
       };
       
-      // Record in smaller chunks for better responsiveness
-      mediaRecorderRef.current.start(250); // 250ms chunks instead of 100ms
+      // Record in larger chunks for better audio quality
+      mediaRecorderRef.current.start(1000); // 1000ms chunks
       setIsRecording(true);
+      
+      // Set a maximum recording duration of 10 seconds
+      recordingTimeoutRef.current = setTimeout(() => {
+        if (isRecording) {
+          console.log('Auto-stopping recording after 10 seconds');
+          stopRecording();
+        }
+      }, 10000);
+      
       console.log('Audio recording started with enhanced settings');
     } catch (error) {
       console.error('Error starting recording:', error);
       throw error;
     }
-  }, []);
+  }, [isRecording]);
 
   // Helper function to convert ArrayBuffer to base64 without stack overflow
   const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
@@ -86,6 +97,17 @@ export const useAudioRecorder = () => {
         return;
       }
 
+      // Clear any existing timeouts
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+        recordingTimeoutRef.current = null;
+      }
+
       mediaRecorderRef.current.onstop = async () => {
         try {
           console.log('Processing', chunksRef.current.length, 'audio chunks');
@@ -98,6 +120,11 @@ export const useAudioRecorder = () => {
             size: audioBlob.size,
             type: audioBlob.type
           });
+          
+          // Ensure we have a minimum recording duration
+          if (audioBlob.size < 1000) {
+            console.warn('Audio recording too short, may not contain speech');
+          }
           
           const arrayBuffer = await audioBlob.arrayBuffer();
           const base64Audio = arrayBufferToBase64(arrayBuffer);

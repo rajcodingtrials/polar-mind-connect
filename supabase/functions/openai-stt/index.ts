@@ -70,8 +70,9 @@ serve(async (req) => {
     
     formData.append('file', blob, filename);
     formData.append('model', 'whisper-1');
-    formData.append('language', 'en'); // Specify language for better accuracy
-    formData.append('temperature', '0.2'); // Lower temperature for more consistent results
+    formData.append('language', 'en');
+    formData.append('temperature', '0.1'); // Lower temperature for more accurate transcription
+    formData.append('prompt', 'This is a child speaking. Please transcribe their speech accurately, including any partial words or sounds they make.');
 
     console.log('Sending to OpenAI Whisper API...');
 
@@ -95,7 +96,6 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         text: result.text,
-        // Include additional metadata if available
         language: result.language,
         duration: result.duration 
       }),
