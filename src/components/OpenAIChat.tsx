@@ -112,23 +112,19 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
     setMessages([]);
 
     try {
-      let systemPrompt = '';
+      let customInstructions = '';
       let assistantContent = '';
 
       if (useStructuredMode && selectedQuestionType) {
         let selectedQuestions: Question[] = [];
         let activityDescription = '';
         
-        // Handle different question types
+        // Handle different question types with custom instructions
         switch (selectedQuestionType) {
           case 'first_words':
             selectedQuestions = questions.filter(q => q.questionType === 'first_words').slice(0, 5);
             activityDescription = 'practicing first words and basic sounds';
-            systemPrompt = `You are Laura, a gentle speech therapist. You will help the child practice first words and basic sounds. 
-            Ask one question at a time and wait for their response. Encourage any attempt at pronunciation, even if it's not perfect.
-            Praise them warmly for trying and gently model the correct pronunciation.
-            
-            Here are the questions you should ask:
+            customInstructions = `Here are the questions you should ask:
             ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
             
             Start with a warm greeting and then ask the first question.`;
@@ -137,12 +133,7 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
           case 'question_time':
             selectedQuestions = selectRandomQuestions().filter(q => q.questionType === 'question_time');
             activityDescription = 'answering questions about pictures';
-            systemPrompt = `You are Laura, a gentle speech therapist. You will ask the child specific questions with images for ${activityDescription}. 
-            Ask one question at a time and wait for their response. Check if their answer matches the expected answer.
-            If correct, praise them warmly. If incorrect, gently correct them and encourage them.
-            After they answer, move to the next question. When asking questions, pause briefly after the question mark before continuing.
-            
-            Here are the questions you should ask:
+            customInstructions = `Here are the questions you should ask:
             ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
             
             Start with a warm greeting and then ask the first question.`;
@@ -151,11 +142,7 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
           case 'build_sentence':
             selectedQuestions = questions.filter(q => q.questionType === 'build_sentence').slice(0, 5);
             activityDescription = 'building sentences together';
-            systemPrompt = `You are Laura, a gentle speech therapist. You will help the child build sentences together. 
-            Ask one question at a time and help them construct complete sentences from their responses.
-            Encourage them to use full sentences and provide gentle guidance.
-            
-            Here are the sentence-building exercises:
+            customInstructions = `Here are the sentence-building exercises:
             ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Target sentence: ${q.answer})`).join('\n')}
             
             Start with a warm greeting and then begin the first exercise.`;
@@ -164,16 +151,7 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
           case 'lets_chat':
             const conversationPlan = createConversationalLessonPlan();
             activityDescription = `having a friendly conversation about ${conversationPlan.topic}`;
-            systemPrompt = `You are Laura, a gentle speech therapist. You will have a natural, friendly conversation with the child about ${conversationPlan.topic}.
-            
-            Your goal is to:
-            - Keep the conversation flowing naturally around the topic of ${conversationPlan.topic}
-            - Ask follow-up questions based on what the child says
-            - Encourage them to speak in full sentences when possible
-            - Be patient, supportive, and enthusiastic
-            - Keep questions simple and age-appropriate
-            - Show genuine interest in their responses
-            - Gently guide them back to the topic if they go off track
+            customInstructions = `The conversation topic is: ${conversationPlan.topic}
             
             Start with a warm greeting and naturally introduce the topic of ${conversationPlan.topic}. 
             Let the conversation develop organically based on their responses.
@@ -185,27 +163,6 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
           default:
             selectedQuestions = selectRandomQuestions();
             activityDescription = 'practicing speech together';
-            systemPrompt = `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
-
-When the conversation starts:
-- Greet the child warmly and slowly.
-- Ask them their name in a calm, friendly tone.
-- Use pauses between sentences and speak at 60% of normal voice speed.
-- After the child shares their name, say it back gently and with kindness (e.g., "Hi Maya, I'm so happy to see you!").
-
-Then, begin one short and playful speech lesson:
-- Teach the names of 3 simple fruits: apple, banana, and orange.
-- For each fruit, say the fruit name clearly and slowly, breaking it into syllables. Example: "Aaa–pple"
-- Ask the child kindly to try saying it with you
-- Praise any response warmly, even if it's incomplete. Use phrases like: "That's amazing!", "Great trying!", or "I'm so proud of you!"
-- You can use fruit emojis to make the lesson more engaging: 🍎 for apple, 🍌 for banana, 🍊 for orange
-
-Keep your sentences short, joyful, and slow. Avoid complex words. Smile in your voice. Always stay calm and patient.
-
-At the end:
-- Praise the child by name
-- Remind them they did something special today
-- Say goodbye in a sweet and happy way`;
         }
 
         setCurrentQuestions(selectedQuestions);
@@ -290,34 +247,12 @@ ${firstQuestion?.question}`;
         }, 2000); // 2 second delay after intro
 
       } else {
-        // Free chat mode initialization
-        systemPrompt = `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
-
-When the conversation starts:
-- Greet the child warmly and slowly.
-- Ask them their name in a calm, friendly tone.
-- Use pauses between sentences and speak at 60% of normal voice speed.
-- After the child shares their name, say it back gently and with kindness (e.g., "Hi Maya, I'm so happy to see you!").
-
-Then, begin one short and playful speech lesson:
-- Teach the names of 3 simple fruits: apple, banana, and orange.
-- For each fruit, say the fruit name clearly and slowly, breaking it into syllables. Example: "Aaa–pple"
-- Ask the child kindly to try saying it with you
-- Praise any response warmly, even if it's incomplete. Use phrases like: "That's amazing!", "Great trying!", or "I'm so proud of you!"
-- You can use fruit emojis to make the lesson more engaging: 🍎 for apple, 🍌 for banana, 🍊 for orange
-
-Keep your sentences short, joyful, and slow. Avoid complex words. Smile in your voice. Always stay calm and patient.
-
-At the end:
-- Praise the child by name
-- Remind them they did something special today
-- Say goodbye in a sweet and happy way`;
-
+        // Free chat mode - use default activity type
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [],
             model: 'gpt-4o-mini',
-            systemPrompt
+            activityType: 'default'
           }
         });
 
@@ -368,7 +303,6 @@ At the end:
     setLoading(true);
 
     try {
-      let systemPrompt = '';
       let assistantContent = '';
 
       if (useStructuredMode && currentQuestions.length > 0) {
@@ -376,16 +310,11 @@ At the end:
           // Handle natural conversation mode
           const conversationHistory = messages.map(m => ({ role: m.role, content: m.content }));
           
-          systemPrompt = `You are Laura, a gentle speech therapist having a natural conversation with a child. 
-          Continue the conversation naturally based on what they just said. Ask follow-up questions, show interest, 
-          and keep the conversation flowing. Be encouraging and supportive. If the conversation has gone on for 
-          5-6 exchanges, gently wrap it up with praise for their participation.`;
-
           const { data, error } = await supabase.functions.invoke('openai-chat', {
             body: {
               messages: [...conversationHistory, userMessage],
               model: 'gpt-4o-mini',
-              systemPrompt
+              activityType: 'lets_chat'
             }
           });
 
@@ -478,13 +407,12 @@ Now, can you tell me what you see in this picture again?`;
           }
         }
       } else {
-        systemPrompt = `You are Laura, a gentle speech therapist. Continue the conversation naturally, providing encouragement and speech therapy guidance.`;
-
+        // Free chat mode
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [...messages, userMessage],
             model: 'gpt-4o-mini',
-            systemPrompt
+            activityType: 'default'
           }
         });
 
