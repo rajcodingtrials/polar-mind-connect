@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +87,19 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
     
     const randomTopic = topics[Math.floor(Math.random() * topics.length)];
     return { topic: randomTopic };
+  };
+
+  // Helper function to determine if a message is a question
+  const isQuestionMessage = (content: string): boolean => {
+    // Check if the message contains a question mark or typical question patterns
+    return content.includes('?') || 
+           content.toLowerCase().includes('what') ||
+           content.toLowerCase().includes('how') ||
+           content.toLowerCase().includes('where') ||
+           content.toLowerCase().includes('when') ||
+           content.toLowerCase().includes('why') ||
+           content.toLowerCase().includes('can you') ||
+           content.toLowerCase().includes('tell me');
   };
 
   // Helper function to add pauses after question marks in text
@@ -682,14 +694,17 @@ Now, can you tell me what you see in this picture again?`;
                     </div>
                   )}
                   {message.imageUrl && (
-                    <div className="mb-4 flex justify-center items-center p-4 bg-gradient-to-br from-blue-50 to-white rounded-xl border-2 border-blue-100 shadow-inner">
-                      <img 
-                        src={message.imageUrl} 
-                        alt="Question image" 
-                        className="max-w-full max-h-[450px] object-contain rounded-lg shadow-lg border-2 border-white"
-                        onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
-                        onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
-                      />
+                    <div className="mb-4 flex justify-center items-center p-6 bg-gradient-to-br from-blue-50 to-white rounded-2xl border-2 border-blue-100 shadow-inner">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 to-purple-100/30 rounded-xl blur-sm"></div>
+                        <img 
+                          src={message.imageUrl} 
+                          alt="Question image" 
+                          className="relative max-w-4xl max-h-[500px] object-contain rounded-xl shadow-2xl border-4 border-white ring-2 ring-blue-200/50"
+                          onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
+                          onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
+                        />
+                      </div>
                     </div>
                   )}
                   <div className="leading-relaxed whitespace-pre-wrap font-sans text-lg">
@@ -698,34 +713,36 @@ Now, can you tell me what you see in this picture again?`;
                 </div>
               </div>
               
-              {/* Add microphone button after each assistant message */}
-              {message.role === 'assistant' && !loading && (
-                <div className="flex justify-center mt-4 mb-2">
-                  <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-blue-100">
-                    <div className="text-center mb-3">
-                      <p className="text-blue-800 font-medium text-lg">Tap mic to answer:</p>
+              {/* Show microphone button only after assistant messages that contain questions and when not loading */}
+              {message.role === 'assistant' && !loading && isQuestionMessage(message.content) && (
+                <div className="flex justify-center mt-6 mb-4">
+                  <div className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 shadow-xl border-2 border-blue-200">
+                    <div className="text-center mb-4">
+                      <p className="text-blue-800 font-semibold text-xl mb-2">Tap mic to answer:</p>
                     </div>
-                    <Button
-                      variant={isRecording ? "destructive" : "default"}
-                      size="lg"
-                      onClick={handleVoiceRecording}
-                      disabled={loading || isProcessing}
-                      className={`w-20 h-20 rounded-full text-white shadow-xl transition-all duration-300 ${
-                        isRecording 
-                          ? "bg-red-500 hover:bg-red-600 animate-pulse scale-110" 
-                          : "bg-blue-500 hover:bg-blue-600 hover:scale-105"
-                      }`}
-                      title={isRecording ? "Tap to stop recording" : "Tap to start recording"}
-                    >
-                      {isRecording ? (
-                        <MicOff className="w-8 h-8" />
-                      ) : (
-                        <Mic className="w-8 h-8" />
-                      )}
-                    </Button>
+                    <div className="flex justify-center">
+                      <Button
+                        variant={isRecording ? "destructive" : "default"}
+                        size="lg"
+                        onClick={handleVoiceRecording}
+                        disabled={loading || isProcessing}
+                        className={`w-24 h-24 rounded-full text-white shadow-2xl transition-all duration-300 border-4 ${
+                          isRecording 
+                            ? "bg-red-500 hover:bg-red-600 animate-pulse scale-110 border-red-300" 
+                            : "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-300"
+                        }`}
+                        title={isRecording ? "Tap to stop recording" : "Tap to start recording"}
+                      >
+                        {isRecording ? (
+                          <MicOff className="w-10 h-10" />
+                        ) : (
+                          <Mic className="w-10 h-10" />
+                        )}
+                      </Button>
+                    </div>
                     {isProcessing && (
-                      <div className="text-center mt-2">
-                        <p className="text-blue-600 text-sm animate-pulse">Processing your voice...</p>
+                      <div className="text-center mt-3">
+                        <p className="text-blue-600 text-sm animate-pulse font-medium">Processing your voice...</p>
                       </div>
                     )}
                   </div>
