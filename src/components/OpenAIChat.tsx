@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +41,6 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
   const [hasStarted, setHasStarted] = useState(false);
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [autoRecordingEnabled, setAutoRecordingEnabled] = useState(false);
   const { toast } = useToast();
   
   const {
@@ -68,35 +68,6 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
       setHasStarted(true);
     }
   }, [useStructuredMode, selectedQuestionType]);
-
-  // Auto-start recording after TTS finishes playing
-  useEffect(() => {
-    if (!isPlaying && autoRecordingEnabled && !isRecording && !isProcessing && !loading) {
-      const timer = setTimeout(() => {
-        handleAutoRecording();
-      }, 1000); // Wait 1 second after TTS stops
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isPlaying, autoRecordingEnabled, isRecording, isProcessing, loading]);
-
-  // Auto-stop recording when processing starts
-  useEffect(() => {
-    if (isProcessing && isRecording && autoRecordingEnabled) {
-      console.log('Auto-stopping recording due to processing');
-      setAutoRecordingEnabled(false);
-    }
-  }, [isProcessing, isRecording, autoRecordingEnabled]);
-
-  const handleAutoRecording = async () => {
-    try {
-      await startRecording();
-      console.log('Auto-recording started');
-    } catch (error) {
-      console.error('Error starting auto-recording:', error);
-      setAutoRecordingEnabled(false);
-    }
-  };
 
   const selectRandomQuestions = () => {
     if (questions.length === 0) return [];
@@ -128,7 +99,6 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
   const startConversation = async () => {
     setLoading(true);
     setMessages([]);
-    setAutoRecordingEnabled(false);
 
     try {
       let systemPrompt = '';
@@ -302,8 +272,6 @@ ${firstQuestion?.question}`;
 
             if (!ttsError && ttsData.audioContent) {
               await playAudio(ttsData.audioContent);
-              // Enable auto-recording after first question
-              setAutoRecordingEnabled(true);
             }
           } catch (ttsError) {
             console.error('TTS Error:', ttsError);
@@ -363,8 +331,6 @@ At the end:
 
           if (!ttsError && ttsData.audioContent) {
             await playAudio(ttsData.audioContent);
-            // Enable auto-recording after initial message in free chat mode
-            setAutoRecordingEnabled(true);
           }
         } catch (ttsError) {
           console.error('TTS Error:', ttsError);
@@ -389,7 +355,6 @@ At the end:
     const userMessage: Message = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
-    setAutoRecordingEnabled(false); // Disable auto-recording while processing
 
     try {
       let systemPrompt = '';
@@ -482,8 +447,6 @@ At the end:
 
                   if (!ttsError && ttsData.audioContent) {
                     await playAudio(ttsData.audioContent);
-                    // Re-enable auto-recording after next question
-                    setAutoRecordingEnabled(true);
                   }
                 } catch (ttsError) {
                   console.error('TTS Error:', ttsError);
@@ -551,30 +514,6 @@ Now, can you tell me what you see in this picture again?`;
 
         if (!ttsError && ttsData.audioContent) {
           await playAudio(ttsData.audioContent);
-          
-          // Re-enable auto-recording after response (except for final message)
-          if (useStructuredMode && currentQuestions.length > 0) {
-            if (selectedQuestionType === 'lets_chat') {
-              const isLastQuestion = currentQuestionIndex >= currentQuestions.length - 1;
-              if (!isLastQuestion) {
-                setAutoRecordingEnabled(true);
-              }
-            } else {
-              const isLastQuestion = currentQuestionIndex >= currentQuestions.length - 1;
-              const isCorrectAnswer = messageText.toLowerCase().includes(currentQuestions[currentQuestionIndex].answer.toLowerCase());
-              
-              // Only enable auto-recording if not the final correct answer
-              if (!(isLastQuestion && isCorrectAnswer)) {
-                setAutoRecordingEnabled(true);
-              } else {
-                // Disable auto-recording for final message
-                setAutoRecordingEnabled(false);
-              }
-            }
-          } else {
-            // For free chat mode, always re-enable auto-recording
-            setAutoRecordingEnabled(true);
-          }
         }
       } catch (ttsError) {
         console.error('TTS Error:', ttsError);
@@ -596,7 +535,6 @@ Now, can you tell me what you see in this picture again?`;
     if (isRecording) {
       try {
         setIsProcessing(true);
-        setAutoRecordingEnabled(false); // Disable auto-recording immediately when stopping
         const audioData = await stopRecording();
         
         console.log('Audio recording stopped, processing speech-to-text...');
@@ -609,7 +547,7 @@ Now, can you tell me what you see in this picture again?`;
         if (error) throw error;
         
         if (data.text) {
-          console.log('Speech-to-text completed, microphone now disabled');
+          console.log('Speech-to-text completed');
           await sendMessage(data.text);
         }
       } catch (error) {
@@ -619,15 +557,12 @@ Now, can you tell me what you see in this picture again?`;
           description: "Failed to process voice recording. Please try again.",
           variant: "destructive",
         });
-        // Re-enable auto-recording on error
-        setAutoRecordingEnabled(true);
       } finally {
         setIsProcessing(false);
       }
     } else {
       try {
         await startRecording();
-        setAutoRecordingEnabled(false); // Manual recording disables auto mode temporarily
       } catch (error) {
         console.error('Error starting recording:', error);
         toast({
@@ -675,14 +610,9 @@ Now, can you tell me what you see in this picture again?`;
                   {selectedQuestionType === 'lets_chat' ? 'Conversation Mode' : 'Q&A Mode'}: {currentQuestionIndex + 1}/{currentQuestions.length}
                 </p>
               )}
-              {autoRecordingEnabled && (
-                <p className="text-emerald-600 text-xs font-medium">
-                  🎤 Auto-recording enabled
-                </p>
-              )}
               {isRecording && (
                 <p className="text-rose-600 text-xs font-medium animate-pulse">
-                  🔴 Recording... (will stop after processing)
+                  🔴 Recording... Tap the mic again to stop
                 </p>
               )}
             </div>
@@ -726,46 +656,81 @@ Now, can you tell me what you see in this picture again?`;
       <CardContent className="space-y-4 p-6 bg-blue-50">
         <div className="h-[600px] overflow-y-auto border border-blue-200 rounded-lg p-4 space-y-4 bg-gradient-to-b from-white to-blue-50 shadow-inner">
           {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
+            <div key={index}>
               <div
-                className={`max-w-[85%] rounded-xl p-4 shadow-sm ${
-                  message.role === 'user'
-                    ? 'bg-gradient-to-br from-blue-200 to-blue-300 text-blue-900 border border-blue-300'
-                    : 'bg-white border border-blue-200 text-blue-900'
+                className={`flex ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
                 }`}
               >
-                {message.role === 'assistant' && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage 
-                        src="/lovable-uploads/Laura.png" 
-                        alt="Laura" 
+                <div
+                  className={`max-w-[85%] rounded-xl p-4 shadow-sm ${
+                    message.role === 'user'
+                      ? 'bg-gradient-to-br from-blue-200 to-blue-300 text-blue-900 border border-blue-300'
+                      : 'bg-white border border-blue-200 text-blue-900'
+                  }`}
+                >
+                  {message.role === 'assistant' && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage 
+                          src="/lovable-uploads/Laura.png" 
+                          alt="Laura" 
+                        />
+                        <AvatarFallback className="bg-blue-200 text-blue-800 text-xs font-semibold">L</AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs font-semibold text-blue-700">Laura:</span>
+                    </div>
+                  )}
+                  {message.imageUrl && (
+                    <div className="mb-4 flex justify-center items-center p-4 bg-gradient-to-br from-blue-50 to-white rounded-xl border-2 border-blue-100 shadow-inner">
+                      <img 
+                        src={message.imageUrl} 
+                        alt="Question image" 
+                        className="max-w-full max-h-[450px] object-contain rounded-lg shadow-lg border-2 border-white"
+                        onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
+                        onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
                       />
-                      <AvatarFallback className="bg-blue-200 text-blue-800 text-xs font-semibold">L</AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs font-semibold text-blue-700">Laura:</span>
+                    </div>
+                  )}
+                  <div className="leading-relaxed whitespace-pre-wrap font-sans text-lg">
+                    {message.content}
                   </div>
-                )}
-                {message.imageUrl && (
-                  <div className="mb-4 flex justify-center items-center p-4 bg-gradient-to-br from-blue-50 to-white rounded-xl border-2 border-blue-100 shadow-inner">
-                    <img 
-                      src={message.imageUrl} 
-                      alt="Question image" 
-                      className="max-w-full max-h-[450px] object-contain rounded-lg shadow-lg border-2 border-white"
-                      onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
-                      onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
-                    />
-                  </div>
-                )}
-                <div className="leading-relaxed whitespace-pre-wrap font-sans text-lg">
-                  {message.content}
                 </div>
               </div>
+              
+              {/* Add microphone button after each assistant message */}
+              {message.role === 'assistant' && !loading && (
+                <div className="flex justify-center mt-4 mb-2">
+                  <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-blue-100">
+                    <div className="text-center mb-3">
+                      <p className="text-blue-800 font-medium text-lg">Tap mic to answer:</p>
+                    </div>
+                    <Button
+                      variant={isRecording ? "destructive" : "default"}
+                      size="lg"
+                      onClick={handleVoiceRecording}
+                      disabled={loading || isProcessing}
+                      className={`w-20 h-20 rounded-full text-white shadow-xl transition-all duration-300 ${
+                        isRecording 
+                          ? "bg-red-500 hover:bg-red-600 animate-pulse scale-110" 
+                          : "bg-blue-500 hover:bg-blue-600 hover:scale-105"
+                      }`}
+                      title={isRecording ? "Tap to stop recording" : "Tap to start recording"}
+                    >
+                      {isRecording ? (
+                        <MicOff className="w-8 h-8" />
+                      ) : (
+                        <Mic className="w-8 h-8" />
+                      )}
+                    </Button>
+                    {isProcessing && (
+                      <div className="text-center mt-2">
+                        <p className="text-blue-600 text-sm animate-pulse">Processing your voice...</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           {loading && (
@@ -795,20 +760,10 @@ Now, can you tell me what you see in this picture again?`;
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type your message or use voice recording..."
+            placeholder="Type your message or use the microphone above..."
             disabled={loading || isProcessing}
             className="border-blue-300 focus:border-blue-400 focus:ring-blue-200 bg-white font-sans text-lg"
           />
-          <Button
-            variant={isRecording ? "destructive" : "outline"}
-            size="icon"
-            onClick={handleVoiceRecording}
-            disabled={loading || isProcessing}
-            className={`${isRecording ? "bg-rose-500 hover:bg-rose-600 border-rose-500" : "border-blue-300 text-blue-700 hover:bg-blue-100"} ${isRecording ? "animate-pulse" : ""} shadow-sm`}
-            title={isRecording ? "Recording... (will auto-stop after processing)" : "Start recording"}
-          >
-            {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-          </Button>
           <Button 
             onClick={() => {
               sendMessage(input);
@@ -822,7 +777,7 @@ Now, can you tell me what you see in this picture again?`;
         </div>
         {isProcessing && (
           <div className="text-center text-sm text-blue-700 bg-blue-100 p-2 rounded-lg border border-blue-200">
-            Processing voice recording... Microphone will disable automatically.
+            Processing voice recording...
           </div>
         )}
       </CardContent>
