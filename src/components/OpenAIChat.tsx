@@ -752,11 +752,11 @@ Now, can you tell me what you see in this picture again?`;
                   </div>
                 )}
                 {message.imageUrl && (
-                  <div className="mb-3 flex justify-center">
+                  <div className="mb-4 flex justify-center items-center p-4 bg-gradient-to-br from-blue-50 to-white rounded-xl border-2 border-blue-100 shadow-inner">
                     <img 
                       src={message.imageUrl} 
                       alt="Question image" 
-                      className="w-full max-w-4xl h-[500px] object-contain rounded-lg border border-blue-200 shadow-sm bg-white"
+                      className="max-w-full max-h-[450px] object-contain rounded-lg shadow-lg border-2 border-white"
                       onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
                       onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
                     />
