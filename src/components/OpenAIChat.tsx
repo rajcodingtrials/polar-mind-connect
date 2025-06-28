@@ -1,40 +1,31 @@
+
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { Mic, MicOff, Volume2, VolumeX, X, MessageCircle, FileQuestion } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import ChatHeader from './chat/ChatHeader';
+import ChatMessage from './chat/ChatMessage';
+import VoiceRecorder from './chat/VoiceRecorder';
+import { 
+  selectRandomQuestions, 
+  createConversationalLessonPlan, 
+  addPausesAfterQuestions 
+} from './chat/utils';
+import { Message, Question, OpenAIChatProps } from './chat/types';
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  imageUrl?: string;
-}
-
-interface Question {
-  id: string;
-  question: string;
-  answer: string;
-  imageName?: string;
-  questionType?: string;
-}
-
-interface OpenAIChatProps {
-  onClose?: () => void;
-  questions?: Question[];
-  imageUrls?: {[key: string]: string};
-  useStructuredMode?: boolean;
-  onToggleMode?: () => void;
-  selectedQuestionType?: string;
-  onCorrectAnswer?: () => void;
-}
-
-const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode = false, onToggleMode, selectedQuestionType, onCorrectAnswer }: OpenAIChatProps) => {
+const OpenAIChat = ({ 
+  onClose, 
+  questions = [], 
+  imageUrls = {}, 
+  useStructuredMode = false, 
+  onToggleMode, 
+  selectedQuestionType, 
+  onCorrectAnswer 
+}: OpenAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
@@ -67,52 +58,11 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
     }
   }, [useStructuredMode, selectedQuestionType]);
 
-  const selectRandomQuestions = () => {
-    if (questions.length === 0) return [];
-    const shuffled = [...questions].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, Math.min(5, questions.length));
-  };
-
-  const createConversationalLessonPlan = () => {
-    // Simple conversational topics for children
-    const topics = [
-      'pets and animals',
-      'favorite foods',
-      'family and friends',
-      'toys and games',
-      'colors and shapes',
-      'school and learning'
-    ];
-    
-    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
-    return { topic: randomTopic };
-  };
-
-  // Helper function to determine if a message is a question
-  const isQuestionMessage = (content: string): boolean => {
-    // Check if the message contains a question mark or typical question patterns
-    return content.includes('?') || 
-           content.toLowerCase().includes('what') ||
-           content.toLowerCase().includes('how') ||
-           content.toLowerCase().includes('where') ||
-           content.toLowerCase().includes('when') ||
-           content.toLowerCase().includes('why') ||
-           content.toLowerCase().includes('can you') ||
-           content.toLowerCase().includes('tell me');
-  };
-
-  // Helper function to add pauses after question marks in text
-  const addPausesAfterQuestions = (text: string): string => {
-    // Add a pause (represented by a comma and space) after question marks
-    return text.replace(/\?/g, '?... ');
-  };
-
   const startConversation = async () => {
     setLoading(true);
     setMessages([]);
 
     try {
-      let customInstructions = '';
       let assistantContent = '';
 
       if (useStructuredMode && selectedQuestionType) {
@@ -124,44 +74,27 @@ const OpenAIChat = ({ onClose, questions = [], imageUrls = {}, useStructuredMode
           case 'first_words':
             selectedQuestions = questions.filter(q => q.questionType === 'first_words').slice(0, 5);
             activityDescription = 'practicing first words and basic sounds';
-            customInstructions = `Here are the questions you should ask:
-            ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
-            
-            Start with a warm greeting and then ask the first question.`;
             break;
             
           case 'question_time':
-            selectedQuestions = selectRandomQuestions().filter(q => q.questionType === 'question_time');
+            selectedQuestions = selectRandomQuestions(questions).filter(q => q.questionType === 'question_time');
             activityDescription = 'answering questions about pictures';
-            customInstructions = `Here are the questions you should ask:
-            ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Expected answer: ${q.answer})`).join('\n')}
-            
-            Start with a warm greeting and then ask the first question.`;
             break;
             
           case 'build_sentence':
             selectedQuestions = questions.filter(q => q.questionType === 'build_sentence').slice(0, 5);
             activityDescription = 'building sentences together';
-            customInstructions = `Here are the sentence-building exercises:
-            ${selectedQuestions.map((q, i) => `${i + 1}. ${q.question} (Target sentence: ${q.answer})`).join('\n')}
-            
-            Start with a warm greeting and then begin the first exercise.`;
             break;
             
           case 'lets_chat':
             const conversationPlan = createConversationalLessonPlan();
             activityDescription = `having a friendly conversation about ${conversationPlan.topic}`;
-            customInstructions = `The conversation topic is: ${conversationPlan.topic}
-            
-            Start with a warm greeting and naturally introduce the topic of ${conversationPlan.topic}. 
-            Let the conversation develop organically based on their responses.
-            Keep the session to about 5-6 exchanges to maintain their attention.`;
             
             setCurrentQuestions([{ id: '1', question: conversationPlan.topic, answer: '', questionType: 'lets_chat' }]);
             break;
             
           default:
-            selectedQuestions = selectRandomQuestions();
+            selectedQuestions = selectRandomQuestions(questions);
             activityDescription = 'practicing speech together';
         }
 
@@ -522,116 +455,25 @@ Now, can you tell me what you see in this picture again?`;
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-lg border-blue-200 bg-blue-50">
       <CardHeader className="bg-gradient-to-r from-blue-100 to-blue-150 border-b border-blue-200 p-6">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
-              <AvatarImage 
-                src="/lovable-uploads/Laura.png" 
-                alt="Laura - Speech Therapist" 
-              />
-              <AvatarFallback className="bg-blue-200 text-blue-800 text-lg font-semibold">L</AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-2xl font-bold text-blue-900">Laura</h2>
-              <p className="text-blue-700 text-sm font-normal">
-                Your AI Speech Therapy Assistant
-              </p>
-              {useStructuredMode && (
-                <p className="text-blue-600 text-xs">
-                  {selectedQuestionType === 'lets_chat' ? 'Conversation Mode' : 'Q&A Mode'}: {currentQuestionIndex + 1}/{currentQuestions.length}
-                </p>
-              )}
-              {isRecording && (
-                <p className="text-rose-600 text-xs font-medium animate-pulse">
-                  🔴 Recording... Tap the mic again to stop
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {questions.length > 0 && onToggleMode && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onToggleMode}
-                className="border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 shadow-sm"
-                title={useStructuredMode ? "Switch to Free Chat" : "Switch to Q&A Mode"}
-              >
-                {useStructuredMode ? <MessageCircle className="w-4 h-4" /> : <FileQuestion className="w-4 h-4" />}
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleAudio}
-              disabled={!isPlaying}
-              className={`border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 shadow-sm ${
-                isPlaying ? "bg-blue-100 border-blue-300" : ""
-              }`}
-            >
-              {isPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </Button>
-            {onClose && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onClose}
-                className="border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 shadow-sm"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+        <CardTitle>
+          <ChatHeader
+            useStructuredMode={useStructuredMode}
+            selectedQuestionType={selectedQuestionType}
+            currentQuestionIndex={currentQuestionIndex}
+            totalQuestions={currentQuestions.length}
+            isRecording={isRecording}
+            isPlaying={isPlaying}
+            hasQuestions={questions.length > 0}
+            onToggleMode={onToggleMode}
+            onToggleAudio={toggleAudio}
+            onClose={onClose}
+          />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 p-6 bg-blue-50">
         <div className="h-[600px] overflow-y-auto border border-blue-200 rounded-lg p-4 space-y-4 bg-gradient-to-b from-white to-blue-50 shadow-inner">
           {messages.map((message, index) => (
-            <div key={index}>
-              <div
-                className={`flex ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`max-w-[85%] rounded-xl p-4 shadow-sm ${
-                    message.role === 'user'
-                      ? 'bg-gradient-to-br from-blue-200 to-blue-300 text-blue-900 border border-blue-300'
-                      : 'bg-white border border-blue-200 text-blue-900'
-                  }`}
-                >
-                  {message.role === 'assistant' && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage 
-                          src="/lovable-uploads/Laura.png" 
-                          alt="Laura" 
-                        />
-                        <AvatarFallback className="bg-blue-200 text-blue-800 text-xs font-semibold">L</AvatarFallback>
-                      </Avatar>
-                      <span className="text-xs font-semibold text-blue-700">Laura:</span>
-                    </div>
-                  )}
-                  {message.imageUrl && (
-                    <div className="mb-4 flex justify-center items-center p-6 bg-gradient-to-br from-blue-50 to-white rounded-2xl border-2 border-blue-100 shadow-inner">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 to-purple-100/30 rounded-xl blur-sm"></div>
-                        <img 
-                          src={message.imageUrl} 
-                          alt="Question image" 
-                          className="relative max-w-4xl max-h-[500px] object-contain rounded-xl shadow-2xl border-4 border-white ring-2 ring-blue-200/50"
-                          onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
-                          onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  <div className="leading-relaxed whitespace-pre-wrap font-sans text-lg">
-                    {message.content}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ChatMessage key={index} message={message} index={index} />
           ))}
           {loading && (
             <div className="flex justify-start">
@@ -656,32 +498,12 @@ Now, can you tell me what you see in this picture again?`;
           )}
         </div>
         
-        {/* New bottom bar with microphone */}
-        <div className="flex items-center justify-center space-x-4 bg-gradient-to-r from-blue-100 to-blue-150 border border-blue-200 rounded-lg p-4">
-          <span className="text-blue-800 font-semibold text-lg">Tap microphone to answer</span>
-          <button
-            onClick={handleVoiceRecording}
-            disabled={loading || isProcessing}
-            className={`w-12 h-12 rounded-full text-white shadow-lg transition-all duration-300 border-2 flex items-center justify-center ${
-              isRecording 
-                ? "bg-red-500 hover:bg-red-600 animate-pulse scale-110 border-red-300" 
-                : "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-300"
-            }`}
-            title={isRecording ? "Tap to stop recording" : "Tap to start recording"}
-          >
-            {isRecording ? (
-              <MicOff className="w-6 h-6" />
-            ) : (
-              <Mic className="w-6 h-6" />
-            )}
-          </button>
-        </div>
-        
-        {isProcessing && (
-          <div className="text-center text-sm text-blue-700 bg-blue-100 p-2 rounded-lg border border-blue-200">
-            Processing voice recording...
-          </div>
-        )}
+        <VoiceRecorder
+          isRecording={isRecording}
+          isProcessing={isProcessing}
+          loading={loading}
+          onVoiceRecording={handleVoiceRecording}
+        />
       </CardContent>
     </Card>
   );
