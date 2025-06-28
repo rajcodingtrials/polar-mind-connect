@@ -15,7 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voice = 'nova' } = await req.json();
+    const { text, voice = 'nova', speed = 1.0 } = await req.json();
 
     if (!text) {
       throw new Error('Text is required');
@@ -26,6 +26,7 @@ serve(async (req) => {
     }
 
     console.log('Generating speech for text:', text.substring(0, 50) + '...');
+    console.log('Using voice:', voice, 'at speed:', speed);
 
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -37,6 +38,7 @@ serve(async (req) => {
         model: 'tts-1',
         input: text,
         voice: voice,
+        speed: Math.max(0.25, Math.min(4.0, speed)), // Clamp speed between 0.25 and 4.0
         response_format: 'mp3',
       }),
     });

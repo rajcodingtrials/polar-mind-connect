@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -42,13 +41,45 @@ const OpenAIChat = ({
   
   const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
 
+  // Get TTS settings from localStorage (set by admin)
+  const getTTSSettings = () => {
+    return {
+      voice: localStorage.getItem('ttsVoice') || 'nova',
+      speed: parseFloat(localStorage.getItem('ttsSpeed') || '1.0'),
+      enableSSML: localStorage.getItem('ttsEnableSSML') === 'true'
+    };
+  };
+
   // Debug log for questions and images
   useEffect(() => {
     console.log('OpenAIChat received questions:', questions.length);
     console.log('Questions:', questions);
     console.log('Available image URLs:', Object.keys(imageUrls));
     console.log('Selected question type:', selectedQuestionType);
+    console.log('TTS Settings:', getTTSSettings());
   }, [questions, imageUrls, selectedQuestionType]);
+
+  // Helper function to generate TTS with admin settings
+  const generateTTS = async (text: string) => {
+    try {
+      const ttsSettings = getTTSSettings();
+      const processedText = ttsSettings.enableSSML ? text : addPausesAfterQuestions(text);
+      
+      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
+        body: { 
+          text: processedText,
+          voice: ttsSettings.voice,
+          speed: ttsSettings.speed
+        }
+      });
+
+      if (!ttsError && ttsData.audioContent) {
+        await playAudio(ttsData.audioContent);
+      }
+    } catch (ttsError) {
+      console.error('TTS Error:', ttsError);
+    }
+  };
 
   // Start conversation when component mounts or mode changes
   useEffect(() => {
@@ -115,21 +146,8 @@ We're going to be ${activityDescription}. Let's start!`;
 
         setMessages([assistantIntroMessage]);
 
-        // Generate and play TTS for intro with pauses
-        try {
-          const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
-            body: { 
-              text: addPausesAfterQuestions(introMessage),
-              voice: 'nova'
-            }
-          });
-
-          if (!ttsError && ttsData.audioContent) {
-            await playAudio(ttsData.audioContent);
-          }
-        } catch (ttsError) {
-          console.error('TTS Error:', ttsError);
-        }
+        // Generate and play TTS for intro with admin settings
+        await generateTTS(introMessage);
 
         // Wait a moment, then start with first question or conversation starter
         setTimeout(async () => {
@@ -162,21 +180,8 @@ ${firstQuestion?.question}`;
 
           setMessages(prev => [...prev, firstMessage]);
 
-          // Generate and play TTS for first question with pauses
-          try {
-            const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
-              body: { 
-                text: addPausesAfterQuestions(firstContent),
-                voice: 'nova'
-              }
-            });
-
-            if (!ttsError && ttsData.audioContent) {
-              await playAudio(ttsData.audioContent);
-            }
-          } catch (ttsError) {
-            console.error('TTS Error:', ttsError);
-          }
+          // Generate and play TTS for first question with admin settings
+          await generateTTS(firstContent);
         }, 2000); // 2 second delay after intro
 
       } else {
@@ -199,21 +204,8 @@ ${firstQuestion?.question}`;
 
         setMessages([assistantMessage]);
 
-        // Generate and play TTS for Laura's response
-        try {
-          const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
-            body: { 
-              text: assistantContent,
-              voice: 'nova'
-            }
-          });
-
-          if (!ttsError && ttsData.audioContent) {
-            await playAudio(ttsData.audioContent);
-          }
-        } catch (ttsError) {
-          console.error('TTS Error:', ttsError);
-        }
+        // Generate and play TTS for Laura's response with admin settings
+        await generateTTS(assistantContent);
       }
 
     } catch (error) {
@@ -274,21 +266,8 @@ ${firstQuestion?.question}`;
 
               setMessages(prev => [...prev, congratulatoryMessage]);
 
-              // Generate and play TTS for congratulatory message with pauses
-              try {
-                const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
-                  body: { 
-                    text: addPausesAfterQuestions(assistantContent),
-                    voice: 'nova'
-                  }
-                });
-
-                if (!ttsError && ttsData.audioContent) {
-                  await playAudio(ttsData.audioContent);
-                }
-              } catch (ttsError) {
-                console.error('TTS Error:', ttsError);
-              }
+              // Generate and play TTS for congratulatory message with admin settings
+              await generateTTS(assistantContent);
 
               // Wait a moment, then show next question with image
               setTimeout(async () => {
@@ -309,21 +288,8 @@ ${firstQuestion?.question}`;
                 setMessages(prev => [...prev, nextQuestionMessage]);
                 setCurrentQuestionIndex(nextIndex);
 
-                // Generate and play TTS for next question with pauses
-                try {
-                  const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
-                    body: { 
-                      text: addPausesAfterQuestions(nextQuestionContent),
-                      voice: 'nova'
-                    }
-                  });
-
-                  if (!ttsError && ttsData.audioContent) {
-                    await playAudio(ttsData.audioContent);
-                  }
-                } catch (ttsError) {
-                  console.error('TTS Error:', ttsError);
-                }
+                // Generate and play TTS for next question with admin settings
+                await generateTTS(nextQuestionContent);
               }, 1500); // 1.5 second delay
 
               setLoading(false);
@@ -375,21 +341,8 @@ Now, can you tell me what you see in this picture again?`;
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Generate and play TTS for Laura's response with pauses
-      try {
-        const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
-          body: { 
-            text: addPausesAfterQuestions(assistantContent),
-            voice: 'nova'
-          }
-        });
-
-        if (!ttsError && ttsData.audioContent) {
-          await playAudio(ttsData.audioContent);
-        }
-      } catch (ttsError) {
-        console.error('TTS Error:', ttsError);
-      }
+      // Generate and play TTS for Laura's response with admin settings
+      await generateTTS(assistantContent);
 
     } catch (error) {
       console.error('Error calling OpenAI:', error);

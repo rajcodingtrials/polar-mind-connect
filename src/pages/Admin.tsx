@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import QuestionUpload from '../components/QuestionUpload';
+import TTSConfiguration from '../components/TTSConfiguration';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -194,7 +196,7 @@ const Admin = () => {
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
-            <p className="text-gray-600">Manage questions, images, and chat settings</p>
+            <p className="text-gray-600">Manage questions, images, TTS settings, and chat configuration</p>
           </div>
 
           {/* Settings Card */}
@@ -235,6 +237,9 @@ const Admin = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* TTS Configuration */}
+          <TTSConfiguration />
 
           {/* Upload Section */}
           <QuestionUpload onQuestionsUploaded={handleQuestionsUploaded} />
