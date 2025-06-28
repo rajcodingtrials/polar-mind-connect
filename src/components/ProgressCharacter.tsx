@@ -1,5 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
+import { useCartoonCharacters } from '@/hooks/useCartoonCharacters';
+import { Button } from '@/components/ui/button';
 
 interface ProgressCharacterProps {
   correctAnswers: number;
@@ -8,6 +10,8 @@ interface ProgressCharacterProps {
 }
 
 const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: ProgressCharacterProps) => {
+  const { selectedCharacter, selectRandomCharacter, loading } = useCartoonCharacters();
+  
   // Calculate progress percentage based on 5 questions max
   const maxQuestions = 5;
   const displayCorrect = Math.min(correctAnswers, maxQuestions);
@@ -29,6 +33,13 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
       setTimeout(() => setShowConfetti(false), 3000);
     }
   }, [correctAnswers, maxQuestions, justReachedFive]);
+
+  // Select new character when component mounts or when user reaches 5 correct answers
+  useEffect(() => {
+    if (correctAnswers === maxQuestions) {
+      selectRandomCharacter();
+    }
+  }, [correctAnswers, maxQuestions, selectRandomCharacter]);
   
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-6 shadow-xl border-4 border-purple-200 w-full mx-auto relative overflow-hidden">
@@ -90,20 +101,71 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
       
       <div className="flex justify-center">
         <div className="relative w-48 h-48 transition-all duration-1000">
-          <img 
-            src="/lovable-uploads/5197a6a0-9d6b-4c95-b80e-db71d2e8e099.png"
-            alt="Tiger Progress Buddy"
-            className="w-full h-full object-contain rounded-lg transition-all duration-1000"
-            style={{ 
-              opacity: opacity,
-              filter: `brightness(${0.5 + (opacity * 0.5)}) saturate(${opacity})`
-            }}
-          />
-          {/* Overlay for grayscale effect when minimal progress */}
-          {correctAnswers < 2 && (
-            <div className="absolute inset-0 bg-gray-400 bg-opacity-30 rounded-lg transition-all duration-1000"></div>
+          {loading ? (
+            <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse flex items-center justify-center">
+              <span className="text-gray-500">Loading...</span>
+            </div>
+          ) : selectedCharacter?.image_url ? (
+            <>
+              <img 
+                src={selectedCharacter.image_url}
+                alt={selectedCharacter.name}
+                className="w-full h-full object-contain rounded-lg transition-all duration-1000"
+                style={{ 
+                  opacity: opacity,
+                  filter: `brightness(${0.5 + (opacity * 0.5)}) saturate(${opacity})`
+                }}
+                onError={(e) => {
+                  console.error('Error loading character image:', selectedCharacter.image_url);
+                  // Fallback to default tiger image
+                  e.currentTarget.src = "/lovable-uploads/5197a6a0-9d6b-4c95-b80e-db71d2e8e099.png";
+                }}
+              />
+              {/* Overlay for grayscale effect when minimal progress */}
+              {correctAnswers < 2 && (
+                <div className="absolute inset-0 bg-gray-400 bg-opacity-30 rounded-lg transition-all duration-1000"></div>
+              )}
+            </>
+          ) : (
+            // Fallback to original tiger image if no character is selected
+            <>
+              <img 
+                src="/lovable-uploads/5197a6a0-9d6b-4c95-b80e-db71d2e8e099.png"
+                alt="Progress Buddy"
+                className="w-full h-full object-contain rounded-lg transition-all duration-1000"
+                style={{ 
+                  opacity: opacity,
+                  filter: `brightness(${0.5 + (opacity * 0.5)}) saturate(${opacity})`
+                }}
+              />
+              {/* Overlay for grayscale effect when minimal progress */}
+              {correctAnswers < 2 && (
+                <div className="absolute inset-0 bg-gray-400 bg-opacity-30 rounded-lg transition-all duration-1000"></div>
+              )}
+            </>
           )}
         </div>
+      </div>
+
+      {/* Character name display */}
+      {selectedCharacter && (
+        <div className="text-center mt-2">
+          <p className="text-sm text-purple-600 font-medium">
+            {selectedCharacter.name}
+          </p>
+        </div>
+      )}
+
+      {/* Random character button */}
+      <div className="text-center mt-3">
+        <Button
+          onClick={selectRandomCharacter}
+          variant="outline"
+          size="sm"
+          className="text-xs border-purple-300 text-purple-700 hover:bg-purple-100"
+        >
+          🎲 New Friend
+        </Button>
       </div>
       
       {correctAnswers >= maxQuestions && (
@@ -113,7 +175,7 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
             Fantastic Work!
           </p>
           <p className="text-xs text-emerald-500">
-            Your tiger buddy is bright and colorful now!
+            Your {selectedCharacter?.animal_type || 'buddy'} is bright and colorful now!
           </p>
         </div>
       )}
@@ -129,7 +191,7 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
       {correctAnswers === 0 && (
         <div className="text-center mt-3">
           <p className="text-xs text-purple-600 font-medium">
-            Help your tiger buddy get colorful by answering questions! 🐅
+            Help your {selectedCharacter?.animal_type || 'buddy'} get colorful by answering questions! 🐅
           </p>
         </div>
       )}

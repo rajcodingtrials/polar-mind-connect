@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import ProgressCharacter from '../components/ProgressCharacter';
+import CartoonCharacterUploader from '../components/CartoonCharacterUploader';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -218,6 +218,9 @@ const OpenAIChatPage = () => {
                   Welcome, {profile?.name || 'User'}! 🌈
                 </h1>
               </div>
+
+              {/* Cartoon Character Uploader */}
+              <CartoonCharacterUploader />
 
               {/* Learning Progress Section */}
               <Card className="mb-8 bg-white border-gray-200 shadow-lg">
