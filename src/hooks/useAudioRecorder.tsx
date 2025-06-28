@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 
 export const useAudioRecorder = () => {
@@ -11,44 +10,23 @@ export const useAudioRecorder = () => {
 
   const startRecording = useCallback(async () => {
     try {
-      // Enhanced audio constraints optimized for children's voices
+      // Enhanced audio constraints optimized for children's voices using standard WebRTC properties
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           // High sample rate for better audio quality
           sampleRate: 48000,
           channelCount: 1,
           
-          // Enhanced settings for speech therapy
+          // Standard WebRTC settings for speech therapy
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
           
-          // Additional constraints for better quality
-          googEchoCancellation: true,
-          googAutoGainControl: true,
-          googNoiseSuppression: true,
-          googHighpassFilter: true,
-          googTypingNoiseDetection: true,
-          googBeamforming: true,
-          googArrayGeometry: true,
-          
-          // Latency settings for real-time processing
+          // Additional standard constraints for better quality
           latency: 0.01, // 10ms latency for real-time feel
           
           // Volume settings optimized for children
           volume: 1.0,
-          
-          // Additional audio processing
-          googAudioMirroring: false,
-          googDAEchoCancellation: true,
-          googNoiseReduction: true,
-          
-          // Enhanced for speech recognition
-          googVoiceActivityDetection: true,
-          googAgcStartupMinVolume: 12,
-          googAgc2Enabled: true,
-          googAecExtendedFilter: true,
-          googAecRefinedAdaptiveFilter: true,
         } 
       });
       
