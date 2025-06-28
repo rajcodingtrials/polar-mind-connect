@@ -721,9 +721,7 @@ Now, can you tell me what you see in this picture again?`;
                       <p className="text-blue-800 font-semibold text-xl mb-2">Tap mic to answer:</p>
                     </div>
                     <div className="flex justify-center">
-                      <Button
-                        variant={isRecording ? "destructive" : "default"}
-                        size="lg"
+                      <button
                         onClick={handleVoiceRecording}
                         disabled={loading || isProcessing}
                         className={`w-32 h-32 rounded-full text-white shadow-2xl transition-all duration-300 border-4 flex items-center justify-center ${
@@ -738,7 +736,7 @@ Now, can you tell me what you see in this picture again?`;
                         ) : (
                           <Mic className="w-12 h-12" />
                         )}
-                      </Button>
+                      </button>
                     </div>
                     {isProcessing && (
                       <div className="text-center mt-3">
