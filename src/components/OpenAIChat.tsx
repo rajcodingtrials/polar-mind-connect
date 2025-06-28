@@ -726,7 +726,7 @@ Now, can you tell me what you see in this picture again?`;
                         size="lg"
                         onClick={handleVoiceRecording}
                         disabled={loading || isProcessing}
-                        className={`w-32 h-32 rounded-full text-white shadow-2xl transition-all duration-300 border-4 ${
+                        className={`w-32 h-32 rounded-full text-white shadow-2xl transition-all duration-300 border-4 flex items-center justify-center ${
                           isRecording 
                             ? "bg-red-500 hover:bg-red-600 animate-pulse scale-110 border-red-300" 
                             : "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-300"
