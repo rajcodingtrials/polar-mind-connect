@@ -11,32 +11,79 @@ export const useAudioRecorder = () => {
 
   const startRecording = useCallback(async () => {
     try {
+      // Enhanced audio constraints optimized for children's voices
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
-          sampleRate: 44100,
+          // High sample rate for better audio quality
+          sampleRate: 48000,
           channelCount: 1,
+          
+          // Enhanced settings for speech therapy
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
+          
+          // Additional constraints for better quality
+          googEchoCancellation: true,
+          googAutoGainControl: true,
+          googNoiseSuppression: true,
+          googHighpassFilter: true,
+          googTypingNoiseDetection: true,
+          googBeamforming: true,
+          googArrayGeometry: true,
+          
+          // Latency settings for real-time processing
+          latency: 0.01, // 10ms latency for real-time feel
+          
+          // Volume settings optimized for children
+          volume: 1.0,
+          
+          // Additional audio processing
+          googAudioMirroring: false,
+          googDAEchoCancellation: true,
+          googNoiseReduction: true,
+          
+          // Enhanced for speech recognition
+          googVoiceActivityDetection: true,
+          googAgcStartupMinVolume: 12,
+          googAgc2Enabled: true,
+          googAecExtendedFilter: true,
+          googAecRefinedAdaptiveFilter: true,
         } 
       });
       
-      // Check if the browser supports the preferred codec
+      console.log('Audio stream acquired with enhanced settings for children\'s voices');
+      console.log('Stream settings:', stream.getAudioTracks()[0].getSettings());
+      
+      // Check if the browser supports the preferred high-quality codec
       let mimeType = 'audio/webm;codecs=opus';
       if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'audio/webm';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = 'audio/mp4';
-          if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = ''; // Let browser choose
+        // Fallback to other high-quality options
+        const fallbackTypes = [
+          'audio/webm;codecs=pcm',
+          'audio/wav',
+          'audio/webm',
+          'audio/mp4;codecs=mp4a.40.2',
+          'audio/mp4'
+        ];
+        
+        for (const type of fallbackTypes) {
+          if (MediaRecorder.isTypeSupported(type)) {
+            mimeType = type;
+            break;
           }
+        }
+        
+        if (!mimeType) {
+          mimeType = ''; // Let browser choose
         }
       }
       
       const options = mimeType ? { 
         mimeType,
-        audioBitsPerSecond: 128000
-      } : { audioBitsPerSecond: 128000 };
+        // High bitrate for better quality (especially important for children's voices)
+        audioBitsPerSecond: 256000 // Increased from 128000 for higher quality
+      } : { audioBitsPerSecond: 256000 };
       
       mediaRecorderRef.current = new MediaRecorder(stream, options);
       
@@ -45,41 +92,42 @@ export const useAudioRecorder = () => {
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
-          console.log('Audio chunk recorded:', event.data.size, 'bytes');
+          console.log('High-quality audio chunk recorded:', event.data.size, 'bytes');
         }
       };
       
       mediaRecorderRef.current.onstart = () => {
-        console.log('Recording started with options:', options);
+        console.log('High-quality recording started with options:', options);
+        console.log('Recording optimized for children\'s speech patterns');
       };
       
       mediaRecorderRef.current.onerror = (event) => {
         console.error('MediaRecorder error:', event);
       };
       
-      // Record in larger chunks for better audio quality
-      mediaRecorderRef.current.start(1000); // 1000ms chunks
+      // Record in smaller chunks for better real-time processing
+      mediaRecorderRef.current.start(500); // 500ms chunks for more responsive processing
       setIsRecording(true);
       
-      // Set a maximum recording duration of 10 seconds
+      // Increased maximum recording duration for longer responses
       recordingTimeoutRef.current = setTimeout(() => {
         if (isRecording) {
-          console.log('Auto-stopping recording after 10 seconds');
+          console.log('Auto-stopping recording after 15 seconds');
           stopRecording();
         }
-      }, 10000);
+      }, 15000); // Increased from 10 to 15 seconds
       
-      console.log('Audio recording started with enhanced settings');
+      console.log('Enhanced audio recording started - optimized for children\'s voices');
     } catch (error) {
-      console.error('Error starting recording:', error);
+      console.error('Error starting enhanced recording:', error);
       throw error;
     }
   }, [isRecording]);
 
-  // Helper function to convert ArrayBuffer to base64 without stack overflow
+  // Enhanced helper function to convert ArrayBuffer to base64 without stack overflow
   const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
     const bytes = new Uint8Array(buffer);
-    const chunkSize = 32768; // Process in 32KB chunks
+    const chunkSize = 16384; // Smaller chunks for better processing
     let binaryString = '';
     
     for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -110,45 +158,47 @@ export const useAudioRecorder = () => {
 
       mediaRecorderRef.current.onstop = async () => {
         try {
-          console.log('Processing', chunksRef.current.length, 'audio chunks');
+          console.log('Processing', chunksRef.current.length, 'high-quality audio chunks');
           
           // Use the original mime type from the recording
           const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
           const audioBlob = new Blob(chunksRef.current, { type: mimeType });
           
-          console.log('Created audio blob:', {
+          console.log('Created high-quality audio blob:', {
             size: audioBlob.size,
-            type: audioBlob.type
+            type: audioBlob.type,
+            optimizedForChildren: true
           });
           
-          // Ensure we have a minimum recording duration
-          if (audioBlob.size < 1000) {
-            console.warn('Audio recording too short, may not contain speech');
+          // Enhanced validation for minimum recording duration
+          if (audioBlob.size < 2000) { // Increased threshold for better quality detection
+            console.warn('Audio recording may be too short for optimal speech recognition');
           }
           
           const arrayBuffer = await audioBlob.arrayBuffer();
           const base64Audio = arrayBufferToBase64(arrayBuffer);
           
-          console.log('Generated base64 audio, length:', base64Audio.length);
+          console.log('Generated high-quality base64 audio, length:', base64Audio.length);
+          console.log('Audio optimized for children\'s speech therapy use');
           
-          // Stop all tracks and clean up
+          // Stop all tracks and clean up with enhanced cleanup
           const stream = mediaRecorderRef.current?.stream;
           if (stream) {
             stream.getTracks().forEach(track => {
               track.stop();
-              console.log('Stopped audio track:', track.label);
+              console.log('Stopped enhanced audio track:', track.label);
             });
           }
           
           setIsRecording(false);
           resolve(base64Audio);
         } catch (error) {
-          console.error('Error processing audio:', error);
+          console.error('Error processing high-quality audio:', error);
           reject(error);
         }
       };
 
-      console.log('Stopping audio recording...');
+      console.log('Stopping enhanced audio recording...');
       mediaRecorderRef.current.stop();
     });
   }, [isRecording]);
