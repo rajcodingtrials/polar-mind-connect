@@ -726,7 +726,7 @@ Now, can you tell me what you see in this picture again?`;
                         size="lg"
                         onClick={handleVoiceRecording}
                         disabled={loading || isProcessing}
-                        className={`w-24 h-24 rounded-full text-white shadow-2xl transition-all duration-300 border-4 ${
+                        className={`w-32 h-32 rounded-full text-white shadow-2xl transition-all duration-300 border-4 ${
                           isRecording 
                             ? "bg-red-500 hover:bg-red-600 animate-pulse scale-110 border-red-300" 
                             : "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-300"
@@ -734,9 +734,9 @@ Now, can you tell me what you see in this picture again?`;
                         title={isRecording ? "Tap to stop recording" : "Tap to start recording"}
                       >
                         {isRecording ? (
-                          <MicOff className="w-10 h-10" />
+                          <MicOff className="w-12 h-12" />
                         ) : (
-                          <Mic className="w-10 h-10" />
+                          <Mic className="w-12 h-12" />
                         )}
                       </Button>
                     </div>
