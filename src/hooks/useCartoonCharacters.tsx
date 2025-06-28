@@ -68,7 +68,7 @@ export const useCartoonCharacters = () => {
 
   const uploadCharacterImages = async (files: { name: string; file: File }[]) => {
     const uploadPromises = files.map(async ({ name, file }) => {
-      const fileName = `${name.toLowerCase().replace(/\s+/g, '-')}.png`;
+      const fileName = `${name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
       
       const { error } = await supabase.storage
         .from('cartoon-characters')
