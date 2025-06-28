@@ -21,12 +21,6 @@ export const useAudioRecorder = () => {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          
-          // Additional standard constraints for better quality
-          latency: 0.01, // 10ms latency for real-time feel
-          
-          // Volume settings optimized for children
-          volume: 1.0,
         } 
       });
       
