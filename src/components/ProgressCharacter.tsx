@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCartoonCharacters } from '@/hooks/useCartoonCharacters';
-import { Button } from '@/components/ui/button';
 
 interface ProgressCharacterProps {
   correctAnswers: number;
@@ -155,18 +154,6 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
           </p>
         </div>
       )}
-
-      {/* Random character button */}
-      <div className="text-center mt-3">
-        <Button
-          onClick={selectRandomCharacter}
-          variant="outline"
-          size="sm"
-          className="text-xs border-purple-300 text-purple-700 hover:bg-purple-100"
-        >
-          🎲 New Friend
-        </Button>
-      </div>
       
       {correctAnswers >= maxQuestions && (
         <div className="text-center mt-4 animate-bounce">
