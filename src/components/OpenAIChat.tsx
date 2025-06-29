@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import VoiceRecorder from './chat/VoiceRecorder';
 import ChatMessage from './chat/ChatMessage';
 import { calculateSimilarity } from './chat/fuzzyMatching';
-import type { Message, Question } from './chat/types';
+import type { Message, Question, ChatMessageProps, VoiceRecorderProps } from './chat/types';
 import type { Database } from '@/integrations/supabase/types';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
@@ -33,6 +34,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   selectedQuestionType,
   onCorrectAnswer
 }) => {
+  console.log('🎯 === OPENAI CHAT COMPONENT LOADED ===');
   console.log('OpenAIChat received questions:', questions.length);
   console.log('Questions:', questions);
   console.log('Available image URLs:', Object.keys(imageUrls));
@@ -96,12 +98,24 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   }, [selectedQuestionType, useStructuredMode]);
 
   const sendInitialMessage = async () => {
+    console.log('🚀 === SENDING INITIAL MESSAGE ===');
+    console.log('Component state:', {
+      selectedQuestionType,
+      useStructuredMode,
+      questionsLength: questions.length
+    });
+    
     setIsLoading(true);
     
     try {
-      console.log('=== SENDING INITIAL MESSAGE ===');
-      console.log('Activity type:', selectedQuestionType);
-      console.log('Structured mode:', useStructuredMode);
+      console.log('📡 Calling openai-chat edge function...');
+      console.log('Request payload:', {
+        messages: [],
+        activityType: selectedQuestionType,
+        customInstructions: useStructuredMode ? 
+          `You have ${questions.length} questions available for the ${selectedQuestionType} activity.` : 
+          undefined
+      });
       
       const { data, error } = await supabase.functions.invoke('openai-chat', {
         body: {
@@ -113,12 +127,12 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
         }
       });
 
-      console.log('=== EDGE FUNCTION RESPONSE ===');
+      console.log('📥 Edge function response received:');
       console.log('Data:', data);
       console.log('Error:', error);
 
       if (error) {
-        console.error('Error calling OpenAI chat function:', error);
+        console.error('❌ Error calling OpenAI chat function:', error);
         toast({
           title: "Connection Error",
           description: "Failed to connect to Laura. Please try again.",
@@ -128,6 +142,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
       }
 
       if (data?.choices?.[0]?.message?.content) {
+        console.log('✅ Creating AI message from response');
         const aiMessage: Message = {
           id: Date.now().toString(),
           role: 'assistant',
@@ -135,14 +150,17 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
           timestamp: new Date()
         };
 
+        console.log('💬 AI Message created:', aiMessage);
         setMessages([aiMessage]);
         
         if (useStructuredMode && questions.length > 0) {
           setIsWaitingForAnswer(true);
         }
+      } else {
+        console.log('⚠️ No content received from AI');
       }
     } catch (error) {
-      console.error('Error in sendInitialMessage:', error);
+      console.error('💥 Error in sendInitialMessage:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
@@ -156,6 +174,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const sendMessage = async (messageContent: string) => {
     if (!messageContent.trim()) return;
     
+    console.log('📤 Sending user message:', messageContent);
     setIsLoading(true);
     
     const userMessage: Message = {
@@ -170,7 +189,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
     setInputValue('');
     
     try {
-      console.log('=== SENDING MESSAGE TO EDGE FUNCTION ===');
+      console.log('📡 Calling openai-chat edge function with conversation...');
       console.log('Messages to send:', updatedMessages.map(m => ({ role: m.role, content: m.content })));
       console.log('Activity type:', selectedQuestionType);
       
@@ -181,12 +200,12 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
         }
       });
 
-      console.log('=== EDGE FUNCTION RESPONSE ===');
+      console.log('📥 Edge function response:');
       console.log('Response data:', data);
       console.log('Response error:', error);
 
       if (error) {
-        console.error('Error calling OpenAI chat function:', error);
+        console.error('❌ Error calling OpenAI chat function:', error);
         toast({
           title: "Error",
           description: "Failed to get response from Laura. Please try again.",
@@ -223,7 +242,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('💥 Error sending message:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

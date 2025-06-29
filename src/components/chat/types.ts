@@ -1,8 +1,9 @@
 
 export interface Message {
-  role: 'user' | 'assistant';
+  id: string;
+  role: 'user' | 'assistant';  
   content: string;
-  imageUrl?: string;
+  timestamp: Date;
 }
 
 export interface Question {
@@ -13,12 +14,17 @@ export interface Question {
   questionType?: string;
 }
 
-export interface OpenAIChatProps {
-  onClose?: () => void;
-  questions?: Question[];
-  imageUrls?: {[key: string]: string};
-  useStructuredMode?: boolean;
-  onToggleMode?: () => void;
-  selectedQuestionType?: string;
-  onCorrectAnswer?: () => void;
+export interface ChatMessageProps {
+  message: Message;
+  ttsSettings: {
+    voice: string;
+    speed: number;
+    enableSSML: boolean;
+  };
+}
+
+export interface VoiceRecorderProps {
+  onTranscription: (text: string) => void;
+  isRecording: boolean;
+  setIsRecording: (recording: boolean) => void;
 }
