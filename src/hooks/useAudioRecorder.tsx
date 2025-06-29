@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback } from 'react';
 
 export const useAudioRecorder = () => {
@@ -7,107 +8,237 @@ export const useAudioRecorder = () => {
   const chunksRef = useRef<Blob[]>([]);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const processedChunksRef = useRef<Float32Array[]>([]);
+
+  // Audio preprocessing settings optimized for children's speech
+  const audioSettings = {
+    // Noise gate settings
+    noiseGateThreshold: 0.01, // Reduce background noise
+    noiseGateRatio: 0.1,
+    
+    // Compressor settings for dynamic range
+    compressorThreshold: -24, // dB
+    compressorRatio: 4,
+    compressorAttack: 0.003, // 3ms
+    compressorRelease: 0.25, // 250ms
+    
+    // Gain settings
+    preGain: 2.0, // Boost input signal
+    postGain: 1.5, // Final output gain
+    
+    // EQ settings for speech clarity
+    highPassFreq: 100, // Remove low-frequency noise
+    speechBoostFreq: 2000, // Boost speech frequencies
+    speechBoostGain: 3 // dB boost for speech clarity
+  };
+
+  // Noise gate processing
+  const applyNoiseGate = (sample: number): number => {
+    const absSample = Math.abs(sample);
+    if (absSample < audioSettings.noiseGateThreshold) {
+      return sample * audioSettings.noiseGateRatio;
+    }
+    return sample;
+  };
+
+  // Simple compressor for dynamic range control
+  const applyCompressor = (sample: number): number => {
+    const absSample = Math.abs(sample);
+    const thresholdLinear = Math.pow(10, audioSettings.compressorThreshold / 20);
+    
+    if (absSample > thresholdLinear) {
+      const excess = absSample - thresholdLinear;
+      const compressedExcess = excess / audioSettings.compressorRatio;
+      const compressedSample = (thresholdLinear + compressedExcess) * Math.sign(sample);
+      return compressedSample;
+    }
+    return sample;
+  };
+
+  // High-pass filter to remove low-frequency noise
+  let highPassPrevInput = 0;
+  let highPassPrevOutput = 0;
+  const applyHighPassFilter = (sample: number): number => {
+    const RC = 1.0 / (2 * Math.PI * audioSettings.highPassFreq);
+    const dt = 1.0 / 48000; // Sample rate
+    const alpha = RC / (RC + dt);
+    
+    const output = alpha * (highPassPrevOutput + sample - highPassPrevInput);
+    highPassPrevInput = sample;
+    highPassPrevOutput = output;
+    
+    return output;
+  };
+
+  // Process audio chunk with all enhancements
+  const processAudioChunk = (inputData: Float32Array): Float32Array => {
+    const processedData = new Float32Array(inputData.length);
+    
+    for (let i = 0; i < inputData.length; i++) {
+      let sample = inputData[i];
+      
+      // Apply pre-gain to boost weak signals
+      sample *= audioSettings.preGain;
+      
+      // Apply high-pass filter to remove low-frequency noise
+      sample = applyHighPassFilter(sample);
+      
+      // Apply noise gate to reduce background noise
+      sample = applyNoiseGate(sample);
+      
+      // Apply compressor to control dynamic range
+      sample = applyCompressor(sample);
+      
+      // Apply post-gain and ensure we don't clip
+      sample *= audioSettings.postGain;
+      sample = Math.max(-1, Math.min(1, sample));
+      
+      processedData[i] = sample;
+    }
+    
+    return processedData;
+  };
 
   const startRecording = useCallback(async () => {
     try {
-      // Enhanced audio constraints optimized for children's voices using standard WebRTC properties
+      // Enhanced audio constraints with preprocessing-friendly settings
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
-          // High sample rate for better audio quality
           sampleRate: 48000,
           channelCount: 1,
-          
-          // Standard WebRTC settings for speech therapy
           echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
+          noiseSuppression: false, // We'll handle this with our custom processing
+          autoGainControl: false, // We'll handle gain manually
+          latency: 0.01 // Low latency for real-time processing
         } 
       });
       
-      console.log('Audio stream acquired with enhanced settings for children\'s voices');
+      console.log('Audio stream acquired with preprocessing-friendly settings');
       console.log('Stream settings:', stream.getAudioTracks()[0].getSettings());
       
-      // Check if the browser supports the preferred high-quality codec
-      let mimeType = 'audio/webm;codecs=opus';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        // Fallback to other high-quality options
-        const fallbackTypes = [
-          'audio/webm;codecs=pcm',
-          'audio/wav',
-          'audio/webm',
-          'audio/mp4;codecs=mp4a.40.2',
-          'audio/mp4'
-        ];
-        
-        for (const type of fallbackTypes) {
-          if (MediaRecorder.isTypeSupported(type)) {
-            mimeType = type;
-            break;
-          }
-        }
-        
-        if (!mimeType) {
-          mimeType = ''; // Let browser choose
-        }
-      }
+      // Create audio context for real-time processing
+      audioContextRef.current = new AudioContext({ sampleRate: 48000 });
+      sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
       
-      const options = mimeType ? { 
-        mimeType,
-        // High bitrate for better quality (especially important for children's voices)
-        audioBitsPerSecond: 256000 // Increased from 128000 for higher quality
-      } : { audioBitsPerSecond: 256000 };
+      // Create script processor for real-time audio processing
+      processorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
+      processedChunksRef.current = [];
+      
+      // Process audio in real-time
+      processorRef.current.onaudioprocess = (event) => {
+        const inputData = event.inputBuffer.getChannelData(0);
+        const processedData = processAudioChunk(inputData);
+        processedChunksRef.current.push(new Float32Array(processedData));
+        
+        // Also pass processed audio to output for monitoring (optional)
+        const outputData = event.outputBuffer.getChannelData(0);
+        outputData.set(processedData);
+      };
+      
+      // Connect audio processing chain
+      sourceRef.current.connect(processorRef.current);
+      processorRef.current.connect(audioContextRef.current.destination);
+      
+      // Set up MediaRecorder with the processed stream
+      const options = { 
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 256000 // High bitrate for quality
+      };
       
       mediaRecorderRef.current = new MediaRecorder(stream, options);
-      
       chunksRef.current = [];
       
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
-          console.log('High-quality audio chunk recorded:', event.data.size, 'bytes');
+          console.log('Enhanced audio chunk recorded:', event.data.size, 'bytes');
         }
       };
       
       mediaRecorderRef.current.onstart = () => {
-        console.log('High-quality recording started with options:', options);
-        console.log('Recording optimized for children\'s speech patterns');
+        console.log('Enhanced recording started with audio preprocessing');
+        console.log('Preprocessing settings:', audioSettings);
       };
       
       mediaRecorderRef.current.onerror = (event) => {
         console.error('MediaRecorder error:', event);
       };
       
-      // Record in smaller chunks for better real-time processing
-      mediaRecorderRef.current.start(500); // 500ms chunks for more responsive processing
+      mediaRecorderRef.current.start(500); // 500ms chunks
       setIsRecording(true);
       
-      // Increased maximum recording duration for longer responses
+      // Extended recording time for processed audio
       recordingTimeoutRef.current = setTimeout(() => {
         if (isRecording) {
-          console.log('Auto-stopping recording after 15 seconds');
+          console.log('Auto-stopping enhanced recording after 20 seconds');
           stopRecording();
         }
-      }, 15000); // Increased from 10 to 15 seconds
+      }, 20000); // Extended to 20 seconds for better speech capture
       
-      console.log('Enhanced audio recording started - optimized for children\'s voices');
+      console.log('Enhanced audio recording started with preprocessing pipeline');
     } catch (error) {
       console.error('Error starting enhanced recording:', error);
       throw error;
     }
   }, [isRecording]);
 
-  // Enhanced helper function to convert ArrayBuffer to base64 without stack overflow
-  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-    const bytes = new Uint8Array(buffer);
-    const chunkSize = 16384; // Smaller chunks for better processing
-    let binaryString = '';
-    
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.slice(i, i + chunkSize);
-      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+  // Enhanced helper function to convert processed audio
+  const combineProcessedAudio = (): Float32Array => {
+    if (processedChunksRef.current.length === 0) {
+      return new Float32Array(0);
     }
     
-    return btoa(binaryString);
+    const totalLength = processedChunksRef.current.reduce((sum, chunk) => sum + chunk.length, 0);
+    const combinedAudio = new Float32Array(totalLength);
+    
+    let offset = 0;
+    for (const chunk of processedChunksRef.current) {
+      combinedAudio.set(chunk, offset);
+      offset += chunk.length;
+    }
+    
+    console.log('Combined processed audio chunks:', processedChunksRef.current.length, 'total samples:', totalLength);
+    return combinedAudio;
+  };
+
+  // Convert Float32 processed audio to base64
+  const processedAudioToBase64 = (processedAudio: Float32Array): string => {
+    // Convert to 16-bit PCM at 24kHz (Whisper's preferred format)
+    const targetSampleRate = 24000;
+    const sourceSampleRate = 48000;
+    const ratio = sourceSampleRate / targetSampleRate;
+    
+    // Downsample to 24kHz
+    const downsampledLength = Math.floor(processedAudio.length / ratio);
+    const downsampled = new Float32Array(downsampledLength);
+    
+    for (let i = 0; i < downsampledLength; i++) {
+      const sourceIndex = Math.floor(i * ratio);
+      downsampled[i] = processedAudio[sourceIndex];
+    }
+    
+    // Convert to 16-bit PCM
+    const int16Array = new Int16Array(downsampled.length);
+    for (let i = 0; i < downsampled.length; i++) {
+      const s = Math.max(-1, Math.min(1, downsampled[i]));
+      int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    
+    // Convert to base64 in chunks to avoid memory issues
+    const uint8Array = new Uint8Array(int16Array.buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+    
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    
+    console.log('Processed audio converted to base64, size:', binary.length);
+    return btoa(binary);
   };
 
   const stopRecording = useCallback((): Promise<string> => {
@@ -117,7 +248,7 @@ export const useAudioRecorder = () => {
         return;
       }
 
-      // Clear any existing timeouts
+      // Clear timeouts
       if (silenceTimeoutRef.current) {
         clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = null;
@@ -130,30 +261,45 @@ export const useAudioRecorder = () => {
 
       mediaRecorderRef.current.onstop = async () => {
         try {
-          console.log('Processing', chunksRef.current.length, 'high-quality audio chunks');
+          console.log('Processing enhanced audio with', processedChunksRef.current.length, 'processed chunks');
           
-          // Use the original mime type from the recording
-          const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
-          const audioBlob = new Blob(chunksRef.current, { type: mimeType });
+          // Use the processed audio data instead of the raw MediaRecorder chunks
+          const processedAudio = combineProcessedAudio();
           
-          console.log('Created high-quality audio blob:', {
-            size: audioBlob.size,
-            type: audioBlob.type,
-            optimizedForChildren: true
-          });
-          
-          // Enhanced validation for minimum recording duration
-          if (audioBlob.size < 2000) { // Increased threshold for better quality detection
-            console.warn('Audio recording may be too short for optimal speech recognition');
+          if (processedAudio.length === 0) {
+            console.warn('No processed audio data available');
+            reject(new Error('No audio data recorded'));
+            return;
           }
           
-          const arrayBuffer = await audioBlob.arrayBuffer();
-          const base64Audio = arrayBufferToBase64(arrayBuffer);
+          console.log('Enhanced audio processing completed:', {
+            processedSamples: processedAudio.length,
+            duration: processedAudio.length / 48000,
+            enhancementsApplied: ['noise_gate', 'compressor', 'high_pass', 'gain_boost']
+          });
           
-          console.log('Generated high-quality base64 audio, length:', base64Audio.length);
-          console.log('Audio optimized for children\'s speech therapy use');
+          // Convert processed audio to base64
+          const base64Audio = processedAudioToBase64(processedAudio);
           
-          // Stop all tracks and clean up with enhanced cleanup
+          console.log('Enhanced audio ready for Whisper, base64 length:', base64Audio.length);
+          
+          // Clean up audio processing resources
+          if (processorRef.current) {
+            processorRef.current.disconnect();
+            processorRef.current = null;
+          }
+          
+          if (sourceRef.current) {
+            sourceRef.current.disconnect();
+            sourceRef.current = null;
+          }
+          
+          if (audioContextRef.current) {
+            await audioContextRef.current.close();
+            audioContextRef.current = null;
+          }
+          
+          // Stop all tracks
           const stream = mediaRecorderRef.current?.stream;
           if (stream) {
             stream.getTracks().forEach(track => {
@@ -165,12 +311,12 @@ export const useAudioRecorder = () => {
           setIsRecording(false);
           resolve(base64Audio);
         } catch (error) {
-          console.error('Error processing high-quality audio:', error);
+          console.error('Error processing enhanced audio:', error);
           reject(error);
         }
       };
 
-      console.log('Stopping enhanced audio recording...');
+      console.log('Stopping enhanced audio recording with preprocessing...');
       mediaRecorderRef.current.stop();
     });
   }, [isRecording]);
