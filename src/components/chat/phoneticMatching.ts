@@ -82,19 +82,22 @@ export const generateSpeechDelayVariants = (word: string): string[] => {
 };
 
 export const calculatePhoneticSimilarity = (word1: string, word2: string): number => {
-  // Create instances of the phonetic algorithms
-  const metaphone = new natural.Metaphone();
-  const soundex = new natural.SoundEx();
-  
-  const metaphone1 = metaphone.process(word1);
-  const metaphone2 = metaphone.process(word2);
-  const soundex1 = soundex.process(word1);
-  const soundex2 = soundex.process(word2);
-  
-  // Check if phonetic codes match
-  const metaphoneMatch = metaphone1 === metaphone2 ? 1 : 0;
-  const soundexMatch = soundex1 === soundex2 ? 1 : 0;
-  
-  // Return highest phonetic similarity
-  return Math.max(metaphoneMatch, soundexMatch);
+  try {
+    // Use the natural library's direct methods
+    const metaphone1 = natural.Metaphone.process(word1);
+    const metaphone2 = natural.Metaphone.process(word2);
+    const soundex1 = natural.SoundEx.process(word1);
+    const soundex2 = natural.SoundEx.process(word2);
+    
+    // Check if phonetic codes match
+    const metaphoneMatch = metaphone1 === metaphone2 ? 1 : 0;
+    const soundexMatch = soundex1 === soundex2 ? 1 : 0;
+    
+    // Return highest phonetic similarity
+    return Math.max(metaphoneMatch, soundexMatch);
+  } catch (error) {
+    console.error('Error in calculatePhoneticSimilarity:', error);
+    // Fallback to simple string comparison
+    return word1.toLowerCase() === word2.toLowerCase() ? 1 : 0;
+  }
 };
