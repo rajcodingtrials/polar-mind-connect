@@ -69,6 +69,7 @@ export type Database = {
           is_active: boolean
           prompt_type: string
           updated_at: string
+          version: number
         }
         Insert: {
           content: string
@@ -78,6 +79,7 @@ export type Database = {
           is_active?: boolean
           prompt_type: string
           updated_at?: string
+          version?: number
         }
         Update: {
           content?: string
@@ -85,6 +87,43 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean
+          prompt_type?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      prompt_history: {
+        Row: {
+          archived_at: string
+          archived_by: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          original_prompt_id: string
+          prompt_type: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string
+          archived_by?: string | null
+          content: string
+          created_at: string
+          created_by?: string | null
+          id?: string
+          original_prompt_id: string
+          prompt_type: string
+          updated_at: string
+        }
+        Update: {
+          archived_at?: string
+          archived_by?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          original_prompt_id?: string
           prompt_type?: string
           updated_at?: string
         }

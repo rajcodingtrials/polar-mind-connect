@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { MessageSquare, RotateCcw, Save, Eye, Loader2 } from 'lucide-react';
+import { MessageSquare, RotateCcw, Save, Eye, Loader2, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PromptSettings {
@@ -20,11 +20,19 @@ interface PromptSettings {
   };
 }
 
+interface StoredPrompt {
+  id: string;
+  prompt_type: string;
+  content: string;
+  version: number;
+}
+
 const PromptConfiguration = () => {
   const { toast } = useToast();
   const [isSaving, setSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [originalPrompts, setOriginalPrompts] = useState<StoredPrompt[]>([]);
   const [settings, setSettings] = useState<PromptSettings>({
     basePrompt: '',
     activityPrompts: {
@@ -55,7 +63,7 @@ const PromptConfiguration = () => {
       // Fetch all active prompt configurations from Supabase
       const { data: prompts, error } = await supabase
         .from('prompt_configurations')
-        .select('prompt_type, content')
+        .select('id, prompt_type, content, version')
         .eq('is_active', true);
 
       if (error) {
@@ -69,6 +77,9 @@ const PromptConfiguration = () => {
       }
 
       if (prompts && prompts.length > 0) {
+        // Store original prompts for comparison
+        setOriginalPrompts(prompts);
+
         const newSettings: PromptSettings = {
           basePrompt: '',
           activityPrompts: {
@@ -102,43 +113,99 @@ const PromptConfiguration = () => {
     }
   };
 
+  const getChangedPrompts = () => {
+    const currentPrompts = [
+      { prompt_type: 'base_prompt', content: settings.basePrompt },
+      ...Object.entries(settings.activityPrompts).map(([type, content]) => ({
+        prompt_type: type,
+        content
+      }))
+    ];
+
+    const changedPrompts = currentPrompts.filter(current => {
+      const original = originalPrompts.find(orig => orig.prompt_type === current.prompt_type);
+      return !original || original.content !== current.content;
+    });
+
+    return changedPrompts;
+  };
+
   const saveSettings = async () => {
     setSaving(true);
     try {
-      // Prepare all prompts for upsert
-      const promptsToSave = [
-        { prompt_type: 'base_prompt', content: settings.basePrompt },
-        ...Object.entries(settings.activityPrompts).map(([type, content]) => ({
-          prompt_type: type,
-          content
-        }))
-      ];
-
-      // First, deactivate existing prompts
-      const { error: deactivateError } = await supabase
-        .from('prompt_configurations')
-        .update({ is_active: false })
-        .eq('is_active', true);
-
-      if (deactivateError) {
-        throw deactivateError;
+      const changedPrompts = getChangedPrompts();
+      
+      if (changedPrompts.length === 0) {
+        toast({
+          title: "No Changes",
+          description: "No prompt changes detected.",
+        });
+        setSaving(false);
+        return;
       }
 
-      // Insert new active prompts
-      const { error: insertError } = await supabase
-        .from('prompt_configurations')
-        .insert(promptsToSave.map(prompt => ({
-          ...prompt,
-          is_active: true
-        })));
+      console.log(`Updating ${changedPrompts.length} changed prompts:`, changedPrompts.map(p => p.prompt_type));
 
-      if (insertError) {
-        throw insertError;
+      // Process each changed prompt
+      for (const changedPrompt of changedPrompts) {
+        const originalPrompt = originalPrompts.find(orig => orig.prompt_type === changedPrompt.prompt_type);
+        
+        if (originalPrompt) {
+          // Move existing prompt to history
+          const { error: historyError } = await supabase
+            .from('prompt_history')
+            .insert({
+              original_prompt_id: originalPrompt.id,
+              prompt_type: originalPrompt.prompt_type,
+              content: originalPrompt.content,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              archived_by: (await supabase.auth.getUser()).data.user?.id
+            });
+
+          if (historyError) {
+            console.error('Error archiving prompt:', historyError);
+            throw historyError;
+          }
+
+          // Update existing prompt with new content and increment version
+          const { error: updateError } = await supabase
+            .from('prompt_configurations')
+            .update({
+              content: changedPrompt.content,
+              version: originalPrompt.version + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', originalPrompt.id);
+
+          if (updateError) {
+            console.error('Error updating prompt:', updateError);
+            throw updateError;
+          }
+        } else {
+          // Insert new prompt if it doesn't exist
+          const { error: insertError } = await supabase
+            .from('prompt_configurations')
+            .insert({
+              prompt_type: changedPrompt.prompt_type,
+              content: changedPrompt.content,
+              is_active: true,
+              version: 1
+            });
+
+          if (insertError) {
+            console.error('Error inserting new prompt:', insertError);
+            throw insertError;
+          }
+        }
       }
+
+      // Reload settings to get updated data
+      await loadSettings();
 
       toast({
-        title: "Prompts Saved",
-        description: "Custom prompts have been saved to the database and will be used in all chat sessions.",
+        title: "Prompts Updated",
+        description: `Successfully updated ${changedPrompts.length} prompt(s). Previous versions archived to history.`,
       });
     } catch (error) {
       console.error('Error saving prompt settings:', error);
@@ -166,27 +233,42 @@ const PromptConfiguration = () => {
       }
 
       if (defaultPrompts && defaultPrompts.length > 0) {
-        // Deactivate current prompts
-        const { error: deactivateError } = await supabase
-          .from('prompt_configurations')
-          .update({ is_active: false })
-          .eq('is_active', true);
+        // Archive current active prompts and replace with defaults
+        const currentActivePrompts = originalPrompts;
+        
+        for (const currentPrompt of currentActivePrompts) {
+          // Move to history
+          const { error: historyError } = await supabase
+            .from('prompt_history')
+            .insert({
+              original_prompt_id: currentPrompt.id,
+              prompt_type: currentPrompt.prompt_type,
+              content: currentPrompt.content,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              archived_by: (await supabase.auth.getUser()).data.user?.id
+            });
 
-        if (deactivateError) {
-          throw deactivateError;
-        }
+          if (historyError) {
+            throw historyError;
+          }
 
-        // Insert default prompts as new active prompts
-        const { error: insertError } = await supabase
-          .from('prompt_configurations')
-          .insert(defaultPrompts.map(prompt => ({
-            prompt_type: prompt.prompt_type,
-            content: prompt.content,
-            is_active: true
-          })));
+          // Update with default content
+          const defaultPrompt = defaultPrompts.find(def => def.prompt_type === currentPrompt.prompt_type);
+          if (defaultPrompt) {
+            const { error: updateError } = await supabase
+              .from('prompt_configurations')
+              .update({
+                content: defaultPrompt.content,
+                version: currentPrompt.version + 1,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', currentPrompt.id);
 
-        if (insertError) {
-          throw insertError;
+            if (updateError) {
+              throw updateError;
+            }
+          }
         }
 
         // Reload settings
@@ -194,7 +276,7 @@ const PromptConfiguration = () => {
 
         toast({
           title: "Prompts Reset",
-          description: "All prompts have been reset to default values.",
+          description: "All prompts have been reset to default values. Previous versions archived.",
         });
       }
     } catch (error) {
@@ -238,12 +320,19 @@ const PromptConfiguration = () => {
     );
   }
 
+  const changedPrompts = getChangedPrompts();
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageSquare className="w-5 h-5" />
           Prompt Configuration
+          {changedPrompts.length > 0 && (
+            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full ml-2">
+              {changedPrompts.length} unsaved changes
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -329,11 +418,11 @@ const PromptConfiguration = () => {
         <div className="flex gap-3 pt-4 border-t">
           <Button
             onClick={saveSettings}
-            disabled={isSaving}
+            disabled={isSaving || changedPrompts.length === 0}
             className="flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Save Prompts'}
+            {isSaving ? 'Saving...' : `Save Changes${changedPrompts.length > 0 ? ` (${changedPrompts.length})` : ''}`}
           </Button>
           
           <Button
@@ -347,9 +436,15 @@ const PromptConfiguration = () => {
         </div>
 
         <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-          <strong>Note:</strong> Prompts are now stored in the database and will be used immediately in all new chat sessions. 
-          Changes affect Laura's personality, instructions, and therapeutic approach across all users.
+          <strong>Smart Updates:</strong> Only changed prompts will be updated. Previous versions are automatically archived to the history table with version tracking. 
+          The system now tracks changes intelligently and maintains a complete audit trail.
         </div>
+
+        {changedPrompts.length > 0 && (
+          <div className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200">
+            <strong>Pending Changes:</strong> You have {changedPrompts.length} unsaved prompt change(s): {changedPrompts.map(p => p.prompt_type).join(', ')}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
