@@ -8,6 +8,7 @@ export const useAudioRecorder = () => {
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const stopPromiseRef = useRef<{ resolve: (value: string) => void; reject: (error: Error) => void } | null>(null);
 
   const startRecording = useCallback(async () => {
     try {
@@ -16,7 +17,7 @@ export const useAudioRecorder = () => {
       // Request microphone with better constraints
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
-          sampleRate: 16000, // Lower sample rate for better compatibility
+          sampleRate: 16000,
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
@@ -63,11 +64,89 @@ export const useAudioRecorder = () => {
       mediaRecorderRef.current.onerror = (event) => {
         console.error('MediaRecorder error:', event);
         setIsRecording(false);
+        if (stopPromiseRef.current) {
+          stopPromiseRef.current.reject(new Error('MediaRecorder error'));
+          stopPromiseRef.current = null;
+        }
       };
       
-      mediaRecorderRef.current.onstop = () => {
-        console.log('Recording stopped');
+      mediaRecorderRef.current.onstop = async () => {
+        console.log('Recording stopped, processing audio...');
         setIsRecording(false);
+        
+        if (stopPromiseRef.current) {
+          try {
+            console.log('Processing audio with', chunksRef.current.length, 'chunks');
+            
+            if (chunksRef.current.length === 0) {
+              console.warn('No audio chunks recorded');
+              stopPromiseRef.current.reject(new Error('No audio data recorded'));
+              return;
+            }
+            
+            // Create blob from recorded chunks
+            const mimeType = chunksRef.current[0]?.type || 'audio/webm';
+            const audioBlob = new Blob(chunksRef.current, { type: mimeType });
+            
+            console.log('Created audio blob:', {
+              size: audioBlob.size,
+              type: audioBlob.type
+            });
+            
+            if (audioBlob.size === 0) {
+              stopPromiseRef.current.reject(new Error('Empty audio recording'));
+              return;
+            }
+            
+            // Convert blob to base64
+            const reader = new FileReader();
+            reader.onload = () => {
+              try {
+                const base64String = reader.result as string;
+                const base64Audio = base64String.split(',')[1];
+                
+                console.log('Audio converted to base64, length:', base64Audio.length);
+                
+                // Stop all tracks
+                if (streamRef.current) {
+                  streamRef.current.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('Stopped audio track:', track.label);
+                  });
+                  streamRef.current = null;
+                }
+                
+                if (stopPromiseRef.current) {
+                  stopPromiseRef.current.resolve(base64Audio);
+                  stopPromiseRef.current = null;
+                }
+              } catch (error) {
+                console.error('Error converting to base64:', error);
+                if (stopPromiseRef.current) {
+                  stopPromiseRef.current.reject(error as Error);
+                  stopPromiseRef.current = null;
+                }
+              }
+            };
+            
+            reader.onerror = () => {
+              console.error('FileReader error');
+              if (stopPromiseRef.current) {
+                stopPromiseRef.current.reject(new Error('Failed to read audio file'));
+                stopPromiseRef.current = null;
+              }
+            };
+            
+            reader.readAsDataURL(audioBlob);
+            
+          } catch (error) {
+            console.error('Error processing audio:', error);
+            if (stopPromiseRef.current) {
+              stopPromiseRef.current.reject(error as Error);
+              stopPromiseRef.current = null;
+            }
+          }
+        }
       };
       
       // Start recording with smaller chunks for better processing
@@ -91,9 +170,12 @@ export const useAudioRecorder = () => {
   const stopRecording = useCallback((): Promise<string> => {
     return new Promise((resolve, reject) => {
       if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
+        console.log('Not recording, current state:', mediaRecorderRef.current?.state);
         reject(new Error('Not recording'));
         return;
       }
+
+      console.log('Stop recording requested, current state:', mediaRecorderRef.current.state);
 
       // Clear timeout
       if (recordingTimeoutRef.current) {
@@ -101,70 +183,11 @@ export const useAudioRecorder = () => {
         recordingTimeoutRef.current = null;
       }
 
-      mediaRecorderRef.current.onstop = async () => {
-        try {
-          console.log('Processing audio with', chunksRef.current.length, 'chunks');
-          
-          if (chunksRef.current.length === 0) {
-            console.warn('No audio chunks recorded');
-            reject(new Error('No audio data recorded'));
-            return;
-          }
-          
-          // Create blob from recorded chunks
-          const mimeType = chunksRef.current[0]?.type || 'audio/webm';
-          const audioBlob = new Blob(chunksRef.current, { type: mimeType });
-          
-          console.log('Created audio blob:', {
-            size: audioBlob.size,
-            type: audioBlob.type
-          });
-          
-          if (audioBlob.size === 0) {
-            reject(new Error('Empty audio recording'));
-            return;
-          }
-          
-          // Convert blob to base64 more efficiently
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              const base64String = reader.result as string;
-              // Remove the data URL prefix (e.g., "data:audio/webm;base64,")
-              const base64Audio = base64String.split(',')[1];
-              
-              console.log('Audio converted to base64, length:', base64Audio.length);
-              
-              // Stop all tracks
-              if (streamRef.current) {
-                streamRef.current.getTracks().forEach(track => {
-                  track.stop();
-                  console.log('Stopped audio track:', track.label);
-                });
-                streamRef.current = null;
-              }
-              
-              resolve(base64Audio);
-            } catch (error) {
-              console.error('Error converting to base64:', error);
-              reject(error);
-            }
-          };
-          
-          reader.onerror = () => {
-            console.error('FileReader error');
-            reject(new Error('Failed to read audio file'));
-          };
-          
-          reader.readAsDataURL(audioBlob);
-          
-        } catch (error) {
-          console.error('Error processing audio:', error);
-          reject(error);
-        }
-      };
+      // Store the promise handlers so the onstop handler can use them
+      stopPromiseRef.current = { resolve, reject };
 
-      console.log('Stopping audio recording...');
+      // Stop the recording - the onstop handler will process the result
+      console.log('Calling MediaRecorder.stop()...');
       mediaRecorderRef.current.stop();
     });
   }, []);
