@@ -60,6 +60,36 @@ export type Database = {
         }
         Relationships: []
       }
+      prompt_configurations: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          prompt_type: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          prompt_type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          prompt_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           answer: string

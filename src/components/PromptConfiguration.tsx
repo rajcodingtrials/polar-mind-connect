@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { MessageSquare, RotateCcw, Save, Eye } from 'lucide-react';
+import { MessageSquare, RotateCcw, Save, Eye, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PromptSettings {
   basePrompt: string;
@@ -21,71 +22,17 @@ interface PromptSettings {
 
 const PromptConfiguration = () => {
   const { toast } = useToast();
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [settings, setSettings] = useState<PromptSettings>({
-    basePrompt: `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
-
-Your core approach:
-- Always speak warmly, slowly, and patiently
-- Use pauses between sentences and speak at 60% of normal voice speed
-- Keep sentences short, joyful, and calm
-- Avoid complex words and use age-appropriate language
-- Praise any response warmly, even if incomplete
-- Use encouraging phrases like: "That's amazing!", "Great trying!", or "I'm so proud of you!"
-- Always stay calm, patient, and supportive
-- Show genuine interest in the child's responses
-
-When greeting a child:
-- Greet them warmly and slowly
-- Ask their name in a calm, friendly tone
-- After they share their name, say it back gently with kindness`,
+    basePrompt: '',
     activityPrompts: {
-      first_words: `
-
-ACTIVITY: First Words Practice
-- Help the child practice first words and basic sounds
-- Ask one question at a time and wait for their response
-- Encourage any attempt at pronunciation, even if not perfect
-- Gently model the correct pronunciation after their attempts
-- Break words into syllables when teaching (e.g., "Aaa–pple")
-- Use simple fruit names: apple 🍎, banana 🍌, orange 🍊`,
-      question_time: `
-
-ACTIVITY: Picture Questions
-- Ask specific questions about pictures shown to the child
-- Ask one question at a time and wait for their response
-- Check if their answer matches the expected answer
-- If correct, praise them warmly and move to the next question
-- If incorrect, gently correct them and encourage them to try again
-- Pause briefly after question marks before continuing`,
-      build_sentence: `
-
-ACTIVITY: Sentence Building
-- Help the child build complete sentences together
-- Start with their responses and guide them to expand into full sentences
-- Provide gentle guidance and examples
-- Encourage them to use complete sentences
-- Model proper sentence structure when needed`,
-      lets_chat: `
-
-ACTIVITY: Natural Conversation
-- Have a friendly, natural conversation with the child
-- Ask follow-up questions based on what they say
-- Keep the conversation flowing around the chosen topic
-- Encourage them to speak in full sentences when possible
-- Let the conversation develop organically based on their responses
-- Gently guide them back to topic if they go off track
-- Keep the session to about 5-6 exchanges to maintain attention`,
-      default: `
-
-ACTIVITY: General Speech Practice
-- Begin with a short and playful speech lesson
-- Teach the names of 3 simple fruits: apple, banana, and orange
-- For each fruit, say the name clearly and slowly, breaking it into syllables
-- Ask the child to try saying it with you
-- You can use fruit emojis: 🍎 for apple, 🍌 for banana, 🍊 for orange
-- At the end, praise the child by name and remind them they did something special`
+      first_words: '',
+      question_time: '',
+      build_sentence: '',
+      lets_chat: '',
+      default: ''
     }
   });
 
@@ -101,122 +48,163 @@ ACTIVITY: General Speech Practice
     loadSettings();
   }, []);
 
-  const loadSettings = () => {
-    // Load from localStorage
-    const savedBasePrompt = localStorage.getItem('customBasePrompt');
-    const savedActivityPrompts = localStorage.getItem('customActivityPrompts');
+  const loadSettings = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch all active prompt configurations from Supabase
+      const { data: prompts, error } = await supabase
+        .from('prompt_configurations')
+        .select('prompt_type, content')
+        .eq('is_active', true);
 
-    if (savedBasePrompt) {
-      setSettings(prev => ({ ...prev, basePrompt: savedBasePrompt }));
-    }
-
-    if (savedActivityPrompts) {
-      try {
-        const parsedPrompts = JSON.parse(savedActivityPrompts);
-        setSettings(prev => ({ ...prev, activityPrompts: { ...prev.activityPrompts, ...parsedPrompts } }));
-      } catch (error) {
-        console.error('Error parsing saved activity prompts:', error);
+      if (error) {
+        console.error('Error loading prompts:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load prompt configurations from database.",
+          variant: "destructive",
+        });
+        return;
       }
+
+      if (prompts && prompts.length > 0) {
+        const newSettings: PromptSettings = {
+          basePrompt: '',
+          activityPrompts: {
+            first_words: '',
+            question_time: '',
+            build_sentence: '',
+            lets_chat: '',
+            default: ''
+          }
+        };
+
+        prompts.forEach(prompt => {
+          if (prompt.prompt_type === 'base_prompt') {
+            newSettings.basePrompt = prompt.content;
+          } else if (prompt.prompt_type in newSettings.activityPrompts) {
+            newSettings.activityPrompts[prompt.prompt_type as keyof typeof newSettings.activityPrompts] = prompt.content;
+          }
+        });
+
+        setSettings(newSettings);
+      }
+    } catch (error) {
+      console.error('Error loading prompt settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load prompt settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const saveSettings = async () => {
-    setIsSaving(true);
+    setSaving(true);
     try {
-      localStorage.setItem('customBasePrompt', settings.basePrompt);
-      localStorage.setItem('customActivityPrompts', JSON.stringify(settings.activityPrompts));
+      // Prepare all prompts for upsert
+      const promptsToSave = [
+        { prompt_type: 'base_prompt', content: settings.basePrompt },
+        ...Object.entries(settings.activityPrompts).map(([type, content]) => ({
+          prompt_type: type,
+          content
+        }))
+      ];
+
+      // First, deactivate existing prompts
+      const { error: deactivateError } = await supabase
+        .from('prompt_configurations')
+        .update({ is_active: false })
+        .eq('is_active', true);
+
+      if (deactivateError) {
+        throw deactivateError;
+      }
+
+      // Insert new active prompts
+      const { error: insertError } = await supabase
+        .from('prompt_configurations')
+        .insert(promptsToSave.map(prompt => ({
+          ...prompt,
+          is_active: true
+        })));
+
+      if (insertError) {
+        throw insertError;
+      }
 
       toast({
         title: "Prompts Saved",
-        description: "Custom prompts have been updated and will be used in all chat sessions.",
+        description: "Custom prompts have been saved to the database and will be used in all chat sessions.",
       });
     } catch (error) {
       console.error('Error saving prompt settings:', error);
       toast({
         title: "Error",
-        description: "Failed to save prompt settings.",
+        description: "Failed to save prompt settings to database.",
         variant: "destructive",
       });
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
-  const resetToDefaults = () => {
-    localStorage.removeItem('customBasePrompt');
-    localStorage.removeItem('customActivityPrompts');
-    
-    // Reset to original defaults
-    setSettings({
-      basePrompt: `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
+  const resetToDefaults = async () => {
+    try {
+      // Load default prompts from database (the ones inserted during migration)
+      const { data: defaultPrompts, error } = await supabase
+        .from('prompt_configurations')
+        .select('prompt_type, content')
+        .order('created_at', { ascending: true })
+        .limit(6); // Get the original 6 default prompts
 
-Your core approach:
-- Always speak warmly, slowly, and patiently
-- Use pauses between sentences and speak at 60% of normal voice speed
-- Keep sentences short, joyful, and calm
-- Avoid complex words and use age-appropriate language
-- Praise any response warmly, even if incomplete
-- Use encouraging phrases like: "That's amazing!", "Great trying!", or "I'm so proud of you!"
-- Always stay calm, patient, and supportive
-- Show genuine interest in the child's responses
-
-When greeting a child:
-- Greet them warmly and slowly
-- Ask their name in a calm, friendly tone
-- After they share their name, say it back gently with kindness`,
-      activityPrompts: {
-        first_words: `
-
-ACTIVITY: First Words Practice
-- Help the child practice first words and basic sounds
-- Ask one question at a time and wait for their response
-- Encourage any attempt at pronunciation, even if not perfect
-- Gently model the correct pronunciation after their attempts
-- Break words into syllables when teaching (e.g., "Aaa–pple")
-- Use simple fruit names: apple 🍎, banana 🍌, orange 🍊`,
-        question_time: `
-
-ACTIVITY: Picture Questions
-- Ask specific questions about pictures shown to the child
-- Ask one question at a time and wait for their response
-- Check if their answer matches the expected answer
-- If correct, praise them warmly and move to the next question
-- If incorrect, gently correct them and encourage them to try again
-- Pause briefly after question marks before continuing`,
-        build_sentence: `
-
-ACTIVITY: Sentence Building
-- Help the child build complete sentences together
-- Start with their responses and guide them to expand into full sentences
-- Provide gentle guidance and examples
-- Encourage them to use complete sentences
-- Model proper sentence structure when needed`,
-        lets_chat: `
-
-ACTIVITY: Natural Conversation
-- Have a friendly, natural conversation with the child
-- Ask follow-up questions based on what they say
-- Keep the conversation flowing around the chosen topic
-- Encourage them to speak in full sentences when possible
-- Let the conversation develop organically based on their responses
-- Gently guide them back to topic if they go off track
-- Keep the session to about 5-6 exchanges to maintain attention`,
-        default: `
-
-ACTIVITY: General Speech Practice
-- Begin with a short and playful speech lesson
-- Teach the names of 3 simple fruits: apple, banana, and orange
-- For each fruit, say the name clearly and slowly, breaking it into syllables
-- Ask the child to try saying it with you
-- You can use fruit emojis: 🍎 for apple, 🍌 for banana, 🍊 for orange
-- At the end, praise the child by name and remind them they did something special`
+      if (error) {
+        throw error;
       }
-    });
 
-    toast({
-      title: "Prompts Reset",
-      description: "All prompts have been reset to default values.",
-    });
+      if (defaultPrompts && defaultPrompts.length > 0) {
+        // Deactivate current prompts
+        const { error: deactivateError } = await supabase
+          .from('prompt_configurations')
+          .update({ is_active: false })
+          .eq('is_active', true);
+
+        if (deactivateError) {
+          throw deactivateError;
+        }
+
+        // Insert default prompts as new active prompts
+        const { error: insertError } = await supabase
+          .from('prompt_configurations')
+          .insert(defaultPrompts.map(prompt => ({
+            prompt_type: prompt.prompt_type,
+            content: prompt.content,
+            is_active: true
+          })));
+
+        if (insertError) {
+          throw insertError;
+        }
+
+        // Reload settings
+        await loadSettings();
+
+        toast({
+          title: "Prompts Reset",
+          description: "All prompts have been reset to default values.",
+        });
+      }
+    } catch (error) {
+      console.error('Error resetting prompts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reset prompts to defaults.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getPreview = (activityType?: string) => {
@@ -230,6 +218,25 @@ ACTIVITY: General Speech Practice
     
     return preview;
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            Prompt Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading prompt configurations...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -340,8 +347,8 @@ ACTIVITY: General Speech Practice
         </div>
 
         <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-          <strong>Note:</strong> Custom prompts will be used immediately in all new chat sessions. 
-          Changes affect Laura's personality, instructions, and therapeutic approach.
+          <strong>Note:</strong> Prompts are now stored in the database and will be used immediately in all new chat sessions. 
+          Changes affect Laura's personality, instructions, and therapeutic approach across all users.
         </div>
       </CardContent>
     </Card>

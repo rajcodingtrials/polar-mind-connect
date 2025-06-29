@@ -31,10 +31,10 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Use unified prompt system - priority: custom systemPrompt > generated prompt with custom prompts > default
+    // Use unified prompt system - priority: custom systemPrompt > generated prompt with custom prompts > database prompts > default
     let finalSystemPrompt = systemPrompt;
     if (!finalSystemPrompt) {
-      finalSystemPrompt = createSystemPrompt(activityType, customInstructions, customBasePrompt, customActivityPrompts);
+      finalSystemPrompt = await createSystemPrompt(activityType, customInstructions, customBasePrompt, customActivityPrompts);
     }
 
     const systemMessage = {
