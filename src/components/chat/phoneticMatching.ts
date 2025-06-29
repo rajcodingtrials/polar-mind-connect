@@ -1,6 +1,4 @@
 
-import * as natural from 'natural';
-
 // Common speech delay patterns for young children
 const speechDelayPatterns = [
   // Final consonant deletion
@@ -79,25 +77,4 @@ export const generateSpeechDelayVariants = (word: string): string[] => {
   }
   
   return [...new Set(variants)]; // Remove duplicates
-};
-
-export const calculatePhoneticSimilarity = (word1: string, word2: string): number => {
-  try {
-    // Use the natural library's direct methods
-    const metaphone1 = natural.Metaphone.process(word1);
-    const metaphone2 = natural.Metaphone.process(word2);
-    const soundex1 = natural.SoundEx.process(word1);
-    const soundex2 = natural.SoundEx.process(word2);
-    
-    // Check if phonetic codes match
-    const metaphoneMatch = metaphone1 === metaphone2 ? 1 : 0;
-    const soundexMatch = soundex1 === soundex2 ? 1 : 0;
-    
-    // Return highest phonetic similarity
-    return Math.max(metaphoneMatch, soundexMatch);
-  } catch (error) {
-    console.error('Error in calculatePhoneticSimilarity:', error);
-    // Fallback to simple string comparison
-    return word1.toLowerCase() === word2.toLowerCase() ? 1 : 0;
-  }
 };

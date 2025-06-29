@@ -1,6 +1,6 @@
 
 import Fuse from 'fuse.js';
-import { generateSpeechDelayVariants, calculatePhoneticSimilarity } from './phoneticMatching';
+import { generateSpeechDelayVariants } from './phoneticMatching';
 
 export interface MatchingOptions {
   speechDelayMode?: boolean;
@@ -30,12 +30,6 @@ export const calculateSimilarity = (
   
   // In speech delay mode, use more forgiving matching
   if (speechDelayMode) {
-    // Check phonetic similarity first
-    const phoneticSimilarity = calculatePhoneticSimilarity(normalizedUser, normalizedCorrect);
-    if (phoneticSimilarity > 0) {
-      return phoneticSimilarity;
-    }
-    
     // Generate speech delay variants and check for matches
     const variants = generateSpeechDelayVariants(normalizedCorrect);
     for (const variant of variants) {
