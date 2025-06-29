@@ -28,6 +28,7 @@ const TTSConfiguration = () => {
   });
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const voices = [
     { value: 'alloy', label: 'Alloy (Neutral)' },
@@ -42,27 +43,81 @@ const TTSConfiguration = () => {
     loadSettings();
   }, []);
 
-  const loadSettings = () => {
-    const savedVoice = localStorage.getItem('ttsVoice') || 'nova';
-    const savedSpeed = parseFloat(localStorage.getItem('ttsSpeed') || '1.0');
-    const savedSSML = localStorage.getItem('ttsEnableSSML') === 'true';
-    const savedSampleSSML = localStorage.getItem('ttsSampleSSML') || settings.sampleSSML;
+  const loadSettings = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Load the most recent TTS settings from the database
+      const { data, error } = await supabase
+        .from('tts_settings')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
 
-    setSettings({
-      voice: savedVoice,
-      speed: savedSpeed,
-      enableSSML: savedSSML,
-      sampleSSML: savedSampleSSML
-    });
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error loading TTS settings:', error);
+        throw error;
+      }
+
+      if (data) {
+        setSettings({
+          voice: data.voice,
+          speed: data.speed,
+          enableSSML: data.enable_ssml,
+          sampleSSML: data.sample_ssml
+        });
+      }
+    } catch (error) {
+      console.error('Error loading TTS settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load TTS settings. Using defaults.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const saveSettings = async () => {
     setIsSaving(true);
     try {
-      localStorage.setItem('ttsVoice', settings.voice);
-      localStorage.setItem('ttsSpeed', settings.speed.toString());
-      localStorage.setItem('ttsEnableSSML', settings.enableSSML.toString());
-      localStorage.setItem('ttsSampleSSML', settings.sampleSSML);
+      // Check if settings exist
+      const { data: existingSettings } = await supabase
+        .from('tts_settings')
+        .select('id')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (existingSettings) {
+        // Update existing settings
+        const { error } = await supabase
+          .from('tts_settings')
+          .update({
+            voice: settings.voice,
+            speed: settings.speed,
+            enable_ssml: settings.enableSSML,
+            sample_ssml: settings.sampleSSML,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingSettings.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new settings
+        const { error } = await supabase
+          .from('tts_settings')
+          .insert({
+            voice: settings.voice,
+            speed: settings.speed,
+            enable_ssml: settings.enableSSML,
+            sample_ssml: settings.sampleSSML
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Settings Saved",
@@ -126,6 +181,27 @@ const TTSConfiguration = () => {
       setIsPlaying(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Volume2 className="w-5 h-5" />
+            Text-to-Speech Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              <p className="text-gray-600">Loading TTS settings...</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

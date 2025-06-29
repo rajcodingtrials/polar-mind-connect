@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -43,28 +42,56 @@ const OpenAIChat = ({
   
   const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
 
-  // Get TTS settings from localStorage (set by admin)
-  const getTTSSettings = () => {
+  // Get TTS settings from database instead of localStorage
+  const getTTSSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tts_settings')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error loading TTS settings:', error);
+      }
+
+      if (data) {
+        return {
+          voice: data.voice,
+          speed: data.speed,
+          enableSSML: data.enable_ssml
+        };
+      }
+    } catch (error) {
+      console.error('Error loading TTS settings:', error);
+    }
+
+    // Return defaults if database query fails
     return {
-      voice: localStorage.getItem('ttsVoice') || 'nova',
-      speed: parseFloat(localStorage.getItem('ttsSpeed') || '1.0'),
-      enableSSML: localStorage.getItem('ttsEnableSSML') === 'true'
+      voice: 'nova',
+      speed: 1.0,
+      enableSSML: false
     };
   };
 
-  // Debug log for questions and images
+  // Debug log for questions and images - updated to load TTS settings from DB
   useEffect(() => {
     console.log('OpenAIChat received questions:', questions.length);
     console.log('Questions:', questions);
     console.log('Available image URLs:', Object.keys(imageUrls));
     console.log('Selected question type:', selectedQuestionType);
-    console.log('TTS Settings:', getTTSSettings());
+    
+    // Log TTS settings asynchronously
+    getTTSSettings().then(settings => {
+      console.log('TTS Settings from database:', settings);
+    });
   }, [questions, imageUrls, selectedQuestionType]);
 
-  // Helper function to generate TTS with admin settings and return a promise that resolves when audio finishes
+  // Helper function to generate TTS with database settings and return a promise that resolves when audio finishes
   const generateTTS = async (text: string): Promise<void> => {
     try {
-      const ttsSettings = getTTSSettings();
+      const ttsSettings = await getTTSSettings();
       const processedText = ttsSettings.enableSSML ? text : addPausesAfterQuestions(text);
       
       const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {

@@ -162,6 +162,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tts_settings: {
+        Row: {
+          created_at: string
+          enable_ssml: boolean
+          id: string
+          sample_ssml: string
+          speed: number
+          updated_at: string
+          voice: string
+        }
+        Insert: {
+          created_at?: string
+          enable_ssml?: boolean
+          id?: string
+          sample_ssml?: string
+          speed?: number
+          updated_at?: string
+          voice?: string
+        }
+        Update: {
+          created_at?: string
+          enable_ssml?: boolean
+          id?: string
+          sample_ssml?: string
+          speed?: number
+          updated_at?: string
+          voice?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
