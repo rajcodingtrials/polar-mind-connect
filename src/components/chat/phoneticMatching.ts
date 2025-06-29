@@ -1,4 +1,4 @@
-import { metaphone, soundex } from 'natural';
+import { Metaphone, SoundEx } from 'natural';
 
 // Common speech delay patterns for young children
 const speechDelayPatterns = [
@@ -81,10 +81,10 @@ export const generateSpeechDelayVariants = (word: string): string[] => {
 };
 
 export const calculatePhoneticSimilarity = (word1: string, word2: string): number => {
-  const metaphone1 = metaphone(word1);
-  const metaphone2 = metaphone(word2);
-  const soundex1 = soundex(word1);
-  const soundex2 = soundex(word2);
+  const metaphone1 = Metaphone.process(word1);
+  const metaphone2 = Metaphone.process(word2);
+  const soundex1 = SoundEx.process(word1);
+  const soundex2 = SoundEx.process(word2);
   
   // Check if phonetic codes match
   const metaphoneMatch = metaphone1 === metaphone2 ? 1 : 0;
