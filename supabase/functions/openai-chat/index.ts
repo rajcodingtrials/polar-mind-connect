@@ -17,16 +17,24 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, model = 'gpt-4o-mini', systemPrompt, activityType, customInstructions } = await req.json();
+    const { 
+      messages, 
+      model = 'gpt-4o-mini', 
+      systemPrompt, 
+      activityType, 
+      customInstructions,
+      customBasePrompt,
+      customActivityPrompts
+    } = await req.json();
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Use unified prompt system - priority: custom systemPrompt > generated prompt > default
+    // Use unified prompt system - priority: custom systemPrompt > generated prompt with custom prompts > default
     let finalSystemPrompt = systemPrompt;
     if (!finalSystemPrompt) {
-      finalSystemPrompt = createSystemPrompt(activityType, customInstructions);
+      finalSystemPrompt = createSystemPrompt(activityType, customInstructions, customBasePrompt, customActivityPrompts);
     }
 
     const systemMessage = {

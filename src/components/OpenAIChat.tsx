@@ -50,6 +50,26 @@ const OpenAIChat = ({
     };
   };
 
+  // Helper function to get custom prompts from localStorage
+  const getCustomPrompts = () => {
+    const customBasePrompt = localStorage.getItem('customBasePrompt');
+    const customActivityPrompts = localStorage.getItem('customActivityPrompts');
+    
+    let parsedActivityPrompts = null;
+    if (customActivityPrompts) {
+      try {
+        parsedActivityPrompts = JSON.parse(customActivityPrompts);
+      } catch (error) {
+        console.error('Error parsing custom activity prompts:', error);
+      }
+    }
+    
+    return {
+      customBasePrompt,
+      customActivityPrompts: parsedActivityPrompts
+    };
+  };
+
   // Debug log for questions and images
   useEffect(() => {
     console.log('OpenAIChat received questions:', questions.length);
@@ -185,12 +205,16 @@ ${firstQuestion?.question}`;
         }, 2000); // 2 second delay after intro
 
       } else {
-        // Free chat mode - use default activity type
+        // Free chat mode - use custom prompts if available
+        const { customBasePrompt, customActivityPrompts } = getCustomPrompts();
+        
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [],
             model: 'gpt-4o-mini',
-            activityType: 'default'
+            activityType: 'default',
+            customBasePrompt,
+            customActivityPrompts
           }
         });
 
@@ -232,14 +256,17 @@ ${firstQuestion?.question}`;
 
       if (useStructuredMode && currentQuestions.length > 0) {
         if (selectedQuestionType === 'lets_chat') {
-          // Handle natural conversation mode
+          // Handle natural conversation mode with custom prompts
+          const { customBasePrompt, customActivityPrompts } = getCustomPrompts();
           const conversationHistory = messages.map(m => ({ role: m.role, content: m.content }));
           
           const { data, error } = await supabase.functions.invoke('openai-chat', {
             body: {
               messages: [...conversationHistory, userMessage],
               model: 'gpt-4o-mini',
-              activityType: 'lets_chat'
+              activityType: 'lets_chat',
+              customBasePrompt,
+              customActivityPrompts
             }
           });
 
@@ -306,12 +333,16 @@ Now, can you tell me what you see in this picture again?`;
           }
         }
       } else {
-        // Free chat mode
+        // Free chat mode with custom prompts
+        const { customBasePrompt, customActivityPrompts } = getCustomPrompts();
+        
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [...messages, userMessage],
             model: 'gpt-4o-mini',
-            activityType: 'default'
+            activityType: 'default',
+            customBasePrompt,
+            customActivityPrompts
           }
         });
 

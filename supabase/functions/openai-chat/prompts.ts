@@ -1,3 +1,4 @@
+
 export const baseSpeechTherapistPrompt = `You are Laura, a gentle and supportive virtual speech therapist for young children with speech delays or sensory needs.
 
 Your core approach:
@@ -67,13 +68,23 @@ ACTIVITY: General Speech Practice
 - At the end, praise the child by name and remind them they did something special`
 };
 
-export const createSystemPrompt = (activityType?: string, customInstructions?: string): string => {
-  let prompt = baseSpeechTherapistPrompt;
+// Helper function to get custom prompts from request headers or use defaults
+const getCustomPrompts = (customBasePrompt?: string, customActivityPrompts?: any) => {
+  const basePrompt = customBasePrompt || baseSpeechTherapistPrompt;
+  const activities = customActivityPrompts ? { ...activityPrompts, ...customActivityPrompts } : activityPrompts;
   
-  if (activityType && activityPrompts[activityType as keyof typeof activityPrompts]) {
-    prompt += activityPrompts[activityType as keyof typeof activityPrompts];
+  return { basePrompt, activities };
+};
+
+export const createSystemPrompt = (activityType?: string, customInstructions?: string, customBasePrompt?: string, customActivityPrompts?: any): string => {
+  const { basePrompt, activities } = getCustomPrompts(customBasePrompt, customActivityPrompts);
+  
+  let prompt = basePrompt;
+  
+  if (activityType && activities[activityType as keyof typeof activities]) {
+    prompt += activities[activityType as keyof typeof activities];
   } else {
-    prompt += activityPrompts.default;
+    prompt += activities.default;
   }
   
   if (customInstructions) {
