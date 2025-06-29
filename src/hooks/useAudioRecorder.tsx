@@ -111,8 +111,7 @@ export const useAudioRecorder = () => {
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: false, // We'll handle this with our custom processing
-          autoGainControl: false, // We'll handle gain manually
-          latency: 0.01 // Low latency for real-time processing
+          autoGainControl: false // We'll handle gain manually
         } 
       });
       
