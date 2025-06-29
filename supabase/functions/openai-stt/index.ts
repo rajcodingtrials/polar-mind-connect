@@ -25,58 +25,62 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Processing audio for speech-to-text, length:', audio.length);
+    console.log('Processing audio for speech-to-text, base64 length:', audio.length);
 
-    // Decode base64 audio data
-    let binaryString: string;
+    // Decode base64 audio data with better error handling
+    let audioBytes: Uint8Array;
     try {
-      binaryString = atob(audio);
-      console.log('Successfully decoded audio data, binary length:', binaryString.length);
+      const binaryString = atob(audio);
+      audioBytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        audioBytes[i] = binaryString.charCodeAt(i);
+      }
+      console.log('Successfully decoded audio data, bytes:', audioBytes.length);
     } catch (decodeError) {
       console.error('Failed to decode base64 audio:', decodeError);
       throw new Error('Invalid base64 audio data');
     }
 
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    if (audioBytes.length === 0) {
+      throw new Error('Empty audio data');
     }
     
-    console.log('Created audio buffer with', bytes.length, 'bytes');
-    
-    const formData = new FormData();
-    
-    // Detect audio format from the data
+    // Detect audio format from file signature
     let mimeType = 'audio/webm'; // Default
-    const header = new Uint8Array(bytes.slice(0, 12));
+    let filename = 'audio.webm';
+    
+    const header = audioBytes.slice(0, 12);
     
     // Check for common audio file signatures
     if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
       // RIFF header (WAV)
       mimeType = 'audio/wav';
+      filename = 'audio.wav';
     } else if (header[4] === 0x66 && header[5] === 0x74 && header[6] === 0x79 && header[7] === 0x70) {
       // MP4 container
       mimeType = 'audio/mp4';
+      filename = 'audio.mp4';
     } else if (header[0] === 0x1A && header[1] === 0x45 && header[2] === 0xDF && header[3] === 0xA3) {
       // WebM container
       mimeType = 'audio/webm';
+      filename = 'audio.webm';
     } else if (header[0] === 0x4F && header[1] === 0x67 && header[2] === 0x67 && header[3] === 0x53) {
       // Ogg container
       mimeType = 'audio/ogg';
+      filename = 'audio.ogg';
     }
     
-    console.log('Detected audio format:', mimeType);
+    console.log('Detected audio format:', mimeType, 'filename:', filename);
     
-    const blob = new Blob([bytes], { type: mimeType });
-    const filename = mimeType === 'audio/wav' ? 'audio.wav' : 
-                    mimeType === 'audio/mp4' ? 'audio.mp4' : 
-                    mimeType === 'audio/ogg' ? 'audio.ogg' : 'audio.webm';
+    // Create form data for OpenAI Whisper API
+    const formData = new FormData();
+    const audioBlob = new Blob([audioBytes], { type: mimeType });
     
-    formData.append('file', blob, filename);
+    formData.append('file', audioBlob, filename);
     formData.append('model', 'whisper-1');
     formData.append('language', 'en');
-    formData.append('temperature', '0.2'); // Lower temperature for more accurate transcription
-    formData.append('prompt', 'This is audio from a child in a speech therapy session. The child may speak softly or make partial sounds. Please transcribe their speech accurately, including any attempts at words or partial pronunciations.');
+    formData.append('temperature', '0.3'); // Slightly higher for better accuracy with children's speech
+    formData.append('prompt', 'This is audio from a child in a speech therapy session. The child may speak softly, make partial sounds, or give short answers. Please transcribe their speech accurately, including any attempts at words, partial pronunciations, or simple responses like "yes", "no", single words, or short phrases.');
 
     console.log('Sending audio to OpenAI Whisper API...');
 
@@ -90,16 +94,28 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      console.error('OpenAI API error:', response.status, response.statusText, errorText);
       throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
-    console.log('Transcription result:', result);
+    console.log('Transcription successful:', result);
+
+    // Validate transcription result
+    if (!result.text) {
+      console.warn('No text in transcription result');
+      return new Response(
+        JSON.stringify({ 
+          text: '',
+          message: 'No speech detected in audio'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     return new Response(
       JSON.stringify({ 
-        text: result.text,
+        text: result.text.trim(),
         language: result.language,
         duration: result.duration
       }),
@@ -109,7 +125,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in openai-stt function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Speech-to-text processing failed'
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
