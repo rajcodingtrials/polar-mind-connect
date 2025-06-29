@@ -108,57 +108,72 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
     setIsLoading(true);
     
     try {
-      console.log('📡 Calling openai-chat edge function...');
-      console.log('Request payload:', {
-        messages: [],
-        activityType: selectedQuestionType,
-        customInstructions: useStructuredMode ? 
-          `You have ${questions.length} questions available for the ${selectedQuestionType} activity.` : 
-          undefined
-      });
+      let initialMessage: Message;
       
-      const { data, error } = await supabase.functions.invoke('openai-chat', {
-        body: {
+      if (useStructuredMode && questions.length > 0) {
+        // For structured mode, present the first question directly
+        const firstQuestion = questions[0];
+        const messageContent = `Hello! I'm so excited to work with you today! 🌟\n\nWe're going to be practicing ${selectedQuestionType.replace('_', ' ')}. Let's start!\n\n${firstQuestion.question}`;
+        
+        initialMessage = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: messageContent,
+          timestamp: new Date(),
+          imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
+        };
+        
+        setIsWaitingForAnswer(true);
+      } else {
+        // For free chat mode, use OpenAI to generate initial greeting
+        console.log('📡 Calling openai-chat edge function...');
+        console.log('Request payload:', {
           messages: [],
           activityType: selectedQuestionType,
           customInstructions: useStructuredMode ? 
             `You have ${questions.length} questions available for the ${selectedQuestionType} activity.` : 
             undefined
-        }
-      });
-
-      console.log('📥 Edge function response received:');
-      console.log('Data:', data);
-      console.log('Error:', error);
-
-      if (error) {
-        console.error('❌ Error calling OpenAI chat function:', error);
-        toast({
-          title: "Connection Error",
-          description: "Failed to connect to Laura. Please try again.",
-          variant: "destructive",
         });
-        return;
-      }
-
-      if (data?.choices?.[0]?.message?.content) {
-        console.log('✅ Creating AI message from response');
-        const aiMessage: Message = {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: data.choices[0].message.content,
-          timestamp: new Date()
-        };
-
-        console.log('💬 AI Message created:', aiMessage);
-        setMessages([aiMessage]);
         
-        if (useStructuredMode && questions.length > 0) {
-          setIsWaitingForAnswer(true);
+        const { data, error } = await supabase.functions.invoke('openai-chat', {
+          body: {
+            messages: [],
+            activityType: selectedQuestionType,
+            customInstructions: useStructuredMode ? 
+              `You have ${questions.length} questions available for the ${selectedQuestionType} activity.` : 
+              undefined
+          }
+        });
+
+        console.log('📥 Edge function response received:');
+        console.log('Data:', data);
+        console.log('Error:', error);
+
+        if (error) {
+          console.error('❌ Error calling OpenAI chat function:', error);
+          toast({
+            title: "Connection Error",
+            description: "Failed to connect to Laura. Please try again.",
+            variant: "destructive",
+          });
+          return;
         }
-      } else {
-        console.log('⚠️ No content received from AI');
+
+        if (data?.choices?.[0]?.message?.content) {
+          initialMessage = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: data.choices[0].message.content,
+            timestamp: new Date()
+          };
+        } else {
+          console.log('⚠️ No content received from AI');
+          return;
+        }
       }
+
+      console.log('💬 Initial message created:', initialMessage);
+      setMessages([initialMessage]);
     } catch (error) {
       console.error('💥 Error in sendInitialMessage:', error);
       toast({
@@ -189,56 +204,86 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
     setInputValue('');
     
     try {
-      console.log('📡 Calling openai-chat edge function with conversation...');
-      console.log('Messages to send:', updatedMessages.map(m => ({ role: m.role, content: m.content })));
-      console.log('Activity type:', selectedQuestionType);
-      
-      const { data, error } = await supabase.functions.invoke('openai-chat', {
-        body: {
-          messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
-          activityType: selectedQuestionType
-        }
-      });
-
-      console.log('📥 Edge function response:');
-      console.log('Response data:', data);
-      console.log('Response error:', error);
-
-      if (error) {
-        console.error('❌ Error calling OpenAI chat function:', error);
-        toast({
-          title: "Error",
-          description: "Failed to get response from Laura. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data?.choices?.[0]?.message?.content) {
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: data.choices[0].message.content,
-          timestamp: new Date()
-        };
-
-        setMessages([...updatedMessages, aiMessage]);
+      if (useStructuredMode && isWaitingForAnswer && questions[currentQuestionIndex]) {
+        // Handle structured mode with predefined questions
+        const currentQuestion = questions[currentQuestionIndex];
+        const similarity = calculateSimilarity(messageContent, currentQuestion.answer);
         
-        if (useStructuredMode && isWaitingForAnswer && questions[currentQuestionIndex]) {
-          const currentQuestion = questions[currentQuestionIndex];
-          const similarity = calculateSimilarity(messageContent, currentQuestion.answer);
+        let responseMessage: Message;
+        
+        if (similarity > 0.7) {
+          // Correct answer
+          onCorrectAnswer();
           
-          if (similarity > 0.7) {
-            onCorrectAnswer();
+          if (currentQuestionIndex + 1 < questions.length) {
+            // Move to next question
+            const nextQuestion = questions[currentQuestionIndex + 1];
+            responseMessage = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: `That's amazing! Great job! 🎉\n\nLet's try the next one:\n\n${nextQuestion.question}`,
+              timestamp: new Date(),
+              imageUrl: nextQuestion.imageName && imageUrls[nextQuestion.imageName] ? imageUrls[nextQuestion.imageName] : undefined
+            };
             setCurrentQuestionIndex(prev => prev + 1);
+          } else {
+            // All questions completed
+            responseMessage = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: `Excellent work! 🌟 You've completed all the questions! I'm so proud of you!`,
+              timestamp: new Date()
+            };
             setIsWaitingForAnswer(false);
-            
-            setTimeout(() => {
-              if (currentQuestionIndex + 1 < questions.length) {
-                setIsWaitingForAnswer(true);
-              }
-            }, 2000);
           }
+        } else {
+          // Incorrect answer - encourage and give hint
+          responseMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: `Good try! Let me help you. Look at the picture carefully and try again. What do you see?`,
+            timestamp: new Date(),
+            imageUrl: currentQuestion.imageName && imageUrls[currentQuestion.imageName] ? imageUrls[currentQuestion.imageName] : undefined
+          };
+        }
+        
+        setMessages([...updatedMessages, responseMessage]);
+      } else {
+        // Free chat mode or general conversation
+        console.log('📡 Calling openai-chat edge function with conversation...');
+        console.log('Messages to send:', updatedMessages.map(m => ({ role: m.role, content: m.content })));
+        console.log('Activity type:', selectedQuestionType);
+        
+        const { data, error } = await supabase.functions.invoke('openai-chat', {
+          body: {
+            messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
+            activityType: selectedQuestionType
+          }
+        });
+
+        console.log('📥 Edge function response:');
+        console.log('Response data:', data);
+        console.log('Response error:', error);
+
+        if (error) {
+          console.error('❌ Error calling OpenAI chat function:', error);
+          toast({
+            title: "Error",
+            description: "Failed to get response from Laura. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data?.choices?.[0]?.message?.content) {
+          const aiMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: data.choices[0].message.content,
+            timestamp: new Date()
+          };
+
+          setMessages([...updatedMessages, aiMessage]);
         }
       }
     } catch (error) {
@@ -261,123 +306,86 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const currentQuestion = getCurrentQuestion();
 
   return (
-    <Card className="w-full h-[600px] flex flex-col bg-white border-gray-200 shadow-lg">
-      <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50 shrink-0">
+    <div className="w-full h-[600px] flex flex-col bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-3xl shadow-xl overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-100 to-blue-50 border-b border-blue-200 p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">L</span>
-            </div>
-            <div>
-              <CardTitle className="text-xl font-bold text-gray-800">
-                Chat with Laura 💫
-              </CardTitle>
-              <div className="flex items-center space-x-2 mt-1">
-                <Badge variant="secondary" className="text-xs">
-                  {selectedQuestionType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </Badge>
-                <Badge 
-                  variant={useStructuredMode ? "default" : "outline"} 
-                  className="text-xs cursor-pointer hover:bg-gray-100"
-                  onClick={onToggleMode}
-                >
-                  {useStructuredMode ? "Structured" : "Free Chat"}
-                </Badge>
-              </div>
-            </div>
+          <div className="flex items-center gap-3">
+            <div className="text-2xl font-bold text-blue-900">Laura</div>
+            <div className="text-sm text-blue-700">Your AI Speech Therapy Assistant</div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose}
-            className="hover:bg-gray-100"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {useStructuredMode && (
+              <div className="text-xs text-blue-600 font-medium">
+                Q&A Mode: {currentQuestionIndex + 1}/{questions.length}
+              </div>
+            )}
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-        {currentQuestion && useStructuredMode && (
-          <div className="p-4 bg-amber-50 border-b border-amber-200 shrink-0">
-            <div className="flex items-center space-x-3">
-              {currentQuestion.imageName && imageUrls[currentQuestion.imageName] && (
-                <img 
-                  src={imageUrls[currentQuestion.imageName]} 
-                  alt="Question" 
-                  className="w-16 h-16 object-cover rounded-lg border-2 border-amber-300"
-                />
-              )}
-              <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800 mb-1">
-                  Question {currentQuestionIndex + 1} of {questions.length}
-                </p>
-                <p className="text-amber-700">{currentQuestion.question}</p>
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {messages.map((message) => (
+          <ChatMessage 
+            key={message.id} 
+            message={message} 
+            ttsSettings={ttsSettings}
+          />
+        ))}
+        {isLoading && (
+          <div className="flex items-start gap-3">
+            <div className="bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-2xl px-4 py-3 shadow-sm">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
+      </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message) => (
-            <ChatMessage 
-              key={message.id} 
-              message={message} 
-              ttsSettings={ttsSettings}
-            />
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-lg px-4 py-2 max-w-xs">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <div className="border-t border-gray-200 p-4 shrink-0">
-          <div className="flex space-x-2">
-            <div className="flex-1 relative">
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Type your message..."
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage(inputValue);
-                  }
-                }}
-                disabled={isLoading}
-                className="pr-12"
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
-                onClick={() => sendMessage(inputValue)}
-                disabled={isLoading || !inputValue.trim()}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-            <VoiceRecorder
-              onTranscription={(text) => {
-                setInputValue(text);
-                sendMessage(text);
+      {/* Input */}
+      <div className="border-t border-blue-200 p-4 bg-gradient-to-r from-blue-50 to-white">
+        <div className="flex space-x-2">
+          <div className="flex-1 relative">
+            <Input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Type your message..."
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage(inputValue);
+                }
               }}
-              isRecording={isRecording}
-              setIsRecording={setIsRecording}
+              disabled={isLoading}
+              className="pr-12 border-blue-200 focus:border-blue-400"
             />
+            <Button
+              size="sm"
+              variant="ghost"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+              onClick={() => sendMessage(inputValue)}
+              disabled={isLoading || !inputValue.trim()}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 cursor-pointer transition-colors">
+            <Mic className="h-5 w-5" />
           </div>
         </div>
-      </CardContent>
-    </Card>
+        <div className="text-center mt-2 text-blue-600 text-sm">
+          Tap microphone to answer
+        </div>
+      </div>
+    </div>
   );
 };
 

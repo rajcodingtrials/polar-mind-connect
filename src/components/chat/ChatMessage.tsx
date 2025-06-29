@@ -44,34 +44,24 @@ const ChatMessage = ({ message, ttsSettings }: ChatMessageProps) => {
   };
 
   return (
-    <div
-      className={`flex ${
-        message.role === 'user' ? 'justify-end' : 'justify-start'
-      }`}
-    >
-      <div
-        className={`max-w-[85%] rounded-xl p-4 shadow-sm ${
-          message.role === 'user'
-            ? 'bg-gradient-to-br from-blue-200 to-blue-300 text-blue-900 border border-blue-300'
-            : 'bg-white border border-blue-200 text-blue-900'
-        }`}
-      >
-        {message.role === 'assistant' && (
-          <div className="flex items-center gap-2 mb-3">
-            <Avatar className="h-6 w-6">
-              <AvatarImage 
-                src="/lovable-uploads/Laura.png" 
-                alt="Laura" 
-              />
-              <AvatarFallback className="bg-blue-200 text-blue-800 text-xs font-semibold">L</AvatarFallback>
-            </Avatar>
-            <span className="text-xs font-semibold text-blue-700">Laura:</span>
+    <div className="w-full">
+      {message.role === 'assistant' && (
+        <div className="flex items-start gap-3 mb-4">
+          <Avatar className="h-10 w-10 border-2 border-blue-200">
+            <AvatarImage 
+              src="/lovable-uploads/Laura.png" 
+              alt="Laura" 
+            />
+            <AvatarFallback className="bg-blue-200 text-blue-800 text-sm font-semibold">L</AvatarFallback>
+          </Avatar>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-blue-700">Laura:</span>
             <Button
               size="sm"
               variant="ghost"
               onClick={handlePlayTTS}
               disabled={isGeneratingAudio || isPlaying}
-              className="ml-auto h-6 w-6 p-0 hover:bg-blue-100"
+              className="h-6 w-6 p-0 hover:bg-blue-100"
             >
               {isGeneratingAudio ? (
                 <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -82,23 +72,34 @@ const ChatMessage = ({ message, ttsSettings }: ChatMessageProps) => {
               )}
             </Button>
           </div>
-        )}
-        {message.imageUrl && (
-          <div className="mb-4 flex justify-center items-center p-6 bg-gradient-to-br from-blue-50 to-white rounded-2xl border-2 border-blue-100 shadow-inner">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 to-purple-100/30 rounded-xl blur-sm"></div>
-              <img 
-                src={message.imageUrl} 
-                alt="Question image" 
-                className="relative max-w-4xl max-h-[500px] object-contain rounded-xl shadow-2xl border-4 border-white ring-2 ring-blue-200/50"
-                onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
-                onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
-              />
+        </div>
+      )}
+      
+      <div className={`w-full ${message.role === 'user' ? 'flex justify-end' : ''}`}>
+        <div
+          className={`max-w-full p-4 rounded-2xl shadow-sm ${
+            message.role === 'user'
+              ? 'bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200 text-blue-900 ml-12'
+              : 'bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-blue-900'
+          }`}
+        >
+          {message.imageUrl && (
+            <div className="mb-4 flex justify-center items-center p-6 bg-gradient-to-br from-blue-50 to-white rounded-2xl border-2 border-blue-100 shadow-inner">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 to-purple-100/30 rounded-xl blur-sm"></div>
+                <img 
+                  src={message.imageUrl} 
+                  alt="Question image" 
+                  className="relative max-w-full max-h-[400px] object-contain rounded-xl shadow-lg border-2 border-white"
+                  onLoad={() => console.log('Image loaded successfully:', message.imageUrl)}
+                  onError={(e) => console.error('Image failed to load:', message.imageUrl, e)}
+                />
+              </div>
             </div>
+          )}
+          <div className="leading-relaxed whitespace-pre-wrap text-base">
+            {message.content}
           </div>
-        )}
-        <div className="leading-relaxed whitespace-pre-wrap font-sans text-lg">
-          {message.content}
         </div>
       </div>
     </div>
