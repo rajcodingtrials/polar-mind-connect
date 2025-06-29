@@ -79,8 +79,8 @@ const OpenAIChat = ({
     console.log('TTS Settings:', getTTSSettings());
   }, [questions, imageUrls, selectedQuestionType]);
 
-  // Helper function to generate TTS with admin settings
-  const generateTTS = async (text: string) => {
+  // Helper function to generate TTS with admin settings and return a promise that resolves when audio finishes
+  const generateTTS = async (text: string): Promise<void> => {
     try {
       const ttsSettings = getTTSSettings();
       const processedText = ttsSettings.enableSSML ? text : addPausesAfterQuestions(text);
@@ -94,7 +94,13 @@ const OpenAIChat = ({
       });
 
       if (!ttsError && ttsData.audioContent) {
-        await playAudio(ttsData.audioContent);
+        // Wait for the audio to finish playing
+        return new Promise((resolve) => {
+          playAudio(ttsData.audioContent).then(() => {
+            // Add a small buffer after audio finishes
+            setTimeout(resolve, 500);
+          });
+        });
       }
     } catch (ttsError) {
       console.error('TTS Error:', ttsError);
@@ -166,43 +172,41 @@ We're going to be ${activityDescription}. Let's start!`;
 
         setMessages([assistantIntroMessage]);
 
-        // Generate and play TTS for intro with admin settings
+        // Generate and play TTS for intro with admin settings - WAIT for it to finish
         await generateTTS(introMessage);
 
-        // Wait a moment, then start with first question or conversation starter
-        setTimeout(async () => {
-          let firstContent = '';
-          let firstMessage: Message;
+        // Now that intro is finished, show the first question
+        let firstContent = '';
+        let firstMessage: Message;
 
-          if (selectedQuestionType === 'lets_chat') {
-            const conversationPlan = createConversationalLessonPlan();
-            firstContent = `I'd love to chat with you about ${conversationPlan.topic}! Tell me, what do you think about ${conversationPlan.topic}?`;
-          } else {
-            const firstQuestion = selectedQuestions[0];
-            firstContent = `Let's start with the first one:
+        if (selectedQuestionType === 'lets_chat') {
+          const conversationPlan = createConversationalLessonPlan();
+          firstContent = `I'd love to chat with you about ${conversationPlan.topic}! Tell me, what do you think about ${conversationPlan.topic}?`;
+        } else {
+          const firstQuestion = selectedQuestions[0];
+          firstContent = `Let's start with the first one:
 
 ${firstQuestion?.question}`;
+        }
+
+        firstMessage = {
+          role: 'assistant',
+          content: firstContent
+        };
+
+        // Add image for non-chat questions
+        if (selectedQuestionType !== 'lets_chat') {
+          const firstQuestion = selectedQuestions[0];
+          if (firstQuestion && firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
+            firstMessage.imageUrl = imageUrls[firstQuestion.imageName];
+            console.log('Adding image to first question:', firstQuestion.imageName, firstMessage.imageUrl);
           }
+        }
 
-          firstMessage = {
-            role: 'assistant',
-            content: firstContent
-          };
+        setMessages(prev => [...prev, firstMessage]);
 
-          // Add image for non-chat questions
-          if (selectedQuestionType !== 'lets_chat') {
-            const firstQuestion = selectedQuestions[0];
-            if (firstQuestion && firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
-              firstMessage.imageUrl = imageUrls[firstQuestion.imageName];
-              console.log('Adding image to first question:', firstQuestion.imageName, firstMessage.imageUrl);
-            }
-          }
-
-          setMessages(prev => [...prev, firstMessage]);
-
-          // Generate and play TTS for first question with admin settings
-          await generateTTS(firstContent);
-        }, 2000); // 2 second delay after intro
+        // Generate and play TTS for first question with admin settings
+        await generateTTS(firstContent);
 
       } else {
         // Free chat mode - use custom prompts if available
