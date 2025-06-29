@@ -20,8 +20,7 @@ export const useAudioRecorder = () => {
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true,
-          volume: 1.0
+          autoGainControl: true
         } 
       });
       
