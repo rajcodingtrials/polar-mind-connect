@@ -37,6 +37,8 @@ serve(async (req) => {
       finalSystemPrompt = await createSystemPrompt(activityType, customInstructions, customBasePrompt, customActivityPrompts);
     }
 
+    console.log('Using system prompt (first 200 chars):', finalSystemPrompt.substring(0, 200) + '...');
+
     const systemMessage = {
       role: 'system',
       content: finalSystemPrompt

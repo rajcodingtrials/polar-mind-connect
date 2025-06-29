@@ -150,4 +150,5 @@ export const createSystemPrompt = async (activityType?: string, customInstructio
   return prompt;
 };
 
-export const speechTherapistPrompt = await createSystemPrompt();
+// Remove the module-level call - this was causing the issue
+// export const speechTherapistPrompt = await createSystemPrompt();
