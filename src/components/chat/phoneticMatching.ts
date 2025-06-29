@@ -82,10 +82,14 @@ export const generateSpeechDelayVariants = (word: string): string[] => {
 };
 
 export const calculatePhoneticSimilarity = (word1: string, word2: string): number => {
-  const metaphone1 = natural.metaphone(word1);
-  const metaphone2 = natural.metaphone(word2);
-  const soundex1 = natural.soundex(word1);
-  const soundex2 = natural.soundex(word2);
+  // Create instances of the phonetic algorithms
+  const metaphone = new natural.Metaphone();
+  const soundex = new natural.SoundEx();
+  
+  const metaphone1 = metaphone.process(word1);
+  const metaphone2 = metaphone.process(word2);
+  const soundex1 = soundex.process(word1);
+  const soundex2 = soundex.process(word2);
   
   // Check if phonetic codes match
   const metaphoneMatch = metaphone1 === metaphone2 ? 1 : 0;
