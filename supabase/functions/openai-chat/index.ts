@@ -11,22 +11,31 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('🚀 === OPENAI-CHAT EDGE FUNCTION CALLED ===');
+  console.log('Request method:', req.method);
+  console.log('Request URL:', req.url);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('⚡ Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('📥 Reading request body...');
+    const requestBody = await req.json();
+    console.log('📋 Request body received:', JSON.stringify(requestBody, null, 2));
+    
     const { 
       messages, 
       model = 'gpt-4o-mini', 
       systemPrompt, 
       activityType, 
       customInstructions
-    } = await req.json();
+    } = requestBody;
 
-    console.log('=== OPENAI CHAT FUNCTION CALLED ===');
-    console.log('Request body received:', {
+    console.log('=== OPENAI CHAT FUNCTION PROCESSING ===');
+    console.log('Request details:', {
       messagesCount: messages?.length || 0,
       model,
       hasSystemPrompt: !!systemPrompt,
@@ -35,8 +44,11 @@ serve(async (req) => {
     });
 
     if (!openAIApiKey) {
+      console.error('❌ OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
     }
+
+    console.log('✅ OpenAI API key is available');
 
     // Always use database prompts by calling createSystemPrompt
     let finalSystemPrompt = systemPrompt;
@@ -83,9 +95,12 @@ serve(async (req) => {
       }),
     });
 
+    console.log('📡 OpenAI API response status:', response.status);
+    console.log('📡 OpenAI API response ok:', response.ok);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error response:', errorText);
+      console.error('❌ OpenAI API error response:', errorText);
       throw new Error(`OpenAI API error: ${response.statusText} - ${errorText}`);
     }
 
@@ -94,13 +109,14 @@ serve(async (req) => {
     console.log('=== OPENAI RESPONSE RECEIVED ===');
     console.log('Response choices count:', data.choices?.length || 0);
     console.log('First choice message content preview:', data.choices?.[0]?.message?.content?.substring(0, 200) + '...');
+    console.log('🎉 Sending successful response back to client');
     
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('=== ERROR IN OPENAI-CHAT FUNCTION ===');
-    console.error('Error details:', error);
+    console.error('💥 === ERROR IN OPENAI-CHAT FUNCTION ===');
+    console.error('Error type:', error.constructor.name);
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     

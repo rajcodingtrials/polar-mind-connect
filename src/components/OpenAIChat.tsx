@@ -1,519 +1,362 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Mic, MicOff, Send, X, RotateCcw, Volume2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import ChatHeader from './chat/ChatHeader';
-import ChatMessage from './chat/ChatMessage';
+import { useToast } from '@/hooks/use-toast';
 import VoiceRecorder from './chat/VoiceRecorder';
-import { 
-  selectRandomQuestions, 
-  createConversationalLessonPlan, 
-  addPausesAfterQuestions 
-} from './chat/utils';
-import { fuzzyMatchAnswer, getEncouragingFeedback } from './chat/fuzzyMatching';
-import { Message, Question, OpenAIChatProps } from './chat/types';
+import ChatMessage from './chat/ChatMessage';
+import { calculateSimilarity } from './chat/fuzzyMatching';
+import type { Message, Question } from './chat/types';
+import type { Database } from '@/integrations/supabase/types';
 
-const OpenAIChat = ({ 
-  onClose, 
-  questions = [], 
-  imageUrls = {}, 
-  useStructuredMode = false, 
-  onToggleMode, 
-  selectedQuestionType, 
-  onCorrectAnswer 
-}: OpenAIChatProps) => {
+type QuestionType = Database['public']['Enums']['question_type_enum'];
+
+interface OpenAIChatProps {
+  onClose: () => void;
+  questions: Question[];
+  imageUrls: {[key: string]: string};
+  useStructuredMode: boolean;
+  onToggleMode: () => void;
+  selectedQuestionType: QuestionType;
+  onCorrectAnswer: () => void;
+}
+
+const OpenAIChat: React.FC<OpenAIChatProps> = ({
+  onClose,
+  questions,
+  imageUrls,
+  useStructuredMode,
+  onToggleMode,
+  selectedQuestionType,
+  onCorrectAnswer
+}) => {
+  console.log('OpenAIChat received questions:', questions.length);
+  console.log('Questions:', questions);
+  console.log('Available image URLs:', Object.keys(imageUrls));
+  console.log('Selected question type:', selectedQuestionType);
+
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
-  const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
+  const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  
-  const {
-    isRecording,
-    isProcessing,
-    setIsProcessing,
-    startRecording,
-    stopRecording,
-  } = useAudioRecorder();
-  
-  const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
 
-  // Get TTS settings from database instead of localStorage
-  const getTTSSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('tts_settings')
-        .select('*')
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    const loadTTSSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tts_settings')
+          .select('*')
+          .single();
+        
+        if (error) {
+          console.error('Error loading TTS settings:', error);
+          return;
+        }
+        
+        if (data) {
+          setTtsSettings({
+            voice: data.voice,
+            speed: Number(data.speed),
+            enableSSML: data.enable_ssml
+          });
+          console.log('TTS Settings from database:', {
+            voice: data.voice,
+            speed: Number(data.speed),
+            enableSSML: data.enable_ssml
+          });
+        }
+      } catch (error) {
         console.error('Error loading TTS settings:', error);
       }
-
-      if (data) {
-        return {
-          voice: data.voice,
-          speed: data.speed,
-          enableSSML: data.enable_ssml
-        };
-      }
-    } catch (error) {
-      console.error('Error loading TTS settings:', error);
-    }
-
-    // Return defaults if database query fails
-    return {
-      voice: 'nova',
-      speed: 1.0,
-      enableSSML: false
     };
-  };
 
-  // Debug log for questions and images - updated to load TTS settings from DB
+    loadTTSSettings();
+  }, []);
+
   useEffect(() => {
-    console.log('OpenAIChat received questions:', questions.length);
-    console.log('Questions:', questions);
-    console.log('Available image URLs:', Object.keys(imageUrls));
-    console.log('Selected question type:', selectedQuestionType);
+    if (messages.length === 0) {
+      sendInitialMessage();
+    }
+  }, [selectedQuestionType, useStructuredMode]);
+
+  const sendInitialMessage = async () => {
+    setIsLoading(true);
     
-    // Log TTS settings asynchronously
-    getTTSSettings().then(settings => {
-      console.log('TTS Settings from database:', settings);
-    });
-  }, [questions, imageUrls, selectedQuestionType]);
-
-  // Helper function to generate TTS with database settings and return a promise that resolves when audio finishes
-  const generateTTS = async (text: string): Promise<void> => {
     try {
-      const ttsSettings = await getTTSSettings();
-      const processedText = ttsSettings.enableSSML ? text : addPausesAfterQuestions(text);
+      console.log('=== SENDING INITIAL MESSAGE ===');
+      console.log('Activity type:', selectedQuestionType);
+      console.log('Structured mode:', useStructuredMode);
       
-      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('openai-tts', {
-        body: { 
-          text: processedText,
-          voice: ttsSettings.voice,
-          speed: ttsSettings.speed
+      const { data, error } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          messages: [],
+          activityType: selectedQuestionType,
+          customInstructions: useStructuredMode ? 
+            `You have ${questions.length} questions available for the ${selectedQuestionType} activity.` : 
+            undefined
         }
       });
 
-      if (!ttsError && ttsData.audioContent) {
-        // Wait for the audio to finish playing
-        return new Promise((resolve) => {
-          playAudio(ttsData.audioContent).then(() => {
-            // Add a longer buffer after audio finishes to ensure proper timing
-            setTimeout(resolve, 1000);
-          });
+      console.log('=== EDGE FUNCTION RESPONSE ===');
+      console.log('Data:', data);
+      console.log('Error:', error);
+
+      if (error) {
+        console.error('Error calling OpenAI chat function:', error);
+        toast({
+          title: "Connection Error",
+          description: "Failed to connect to Laura. Please try again.",
+          variant: "destructive",
         });
+        return;
       }
-    } catch (ttsError) {
-      console.error('TTS Error:', ttsError);
-    }
-  };
 
-  // Start conversation when component mounts or mode changes
-  useEffect(() => {
-    if (!hasStarted || (useStructuredMode && currentQuestions.length === 0)) {
-      startConversation();
-      setHasStarted(true);
-    }
-  }, [useStructuredMode, selectedQuestionType]);
+      if (data?.choices?.[0]?.message?.content) {
+        const aiMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: data.choices[0].message.content,
+          timestamp: new Date()
+        };
 
-  const startConversation = async () => {
-    setLoading(true);
-    setMessages([]);
-
-    try {
-      let assistantContent = '';
-
-      if (useStructuredMode && selectedQuestionType) {
-        let selectedQuestions: Question[] = [];
-        let activityDescription = '';
+        setMessages([aiMessage]);
         
-        // Handle different question types with custom instructions
-        switch (selectedQuestionType) {
-          case 'first_words':
-            selectedQuestions = questions.filter(q => q.questionType === 'first_words').slice(0, 5);
-            activityDescription = 'practicing first words and basic sounds';
-            break;
-            
-          case 'question_time':
-            selectedQuestions = selectRandomQuestions(questions).filter(q => q.questionType === 'question_time');
-            activityDescription = 'answering questions about pictures';
-            break;
-            
-          case 'build_sentence':
-            selectedQuestions = questions.filter(q => q.questionType === 'build_sentence').slice(0, 5);
-            activityDescription = 'building sentences together';
-            break;
-            
-          case 'lets_chat':
-            const conversationPlan = createConversationalLessonPlan();
-            activityDescription = `having a friendly conversation about ${conversationPlan.topic}`;
-            
-            setCurrentQuestions([{ id: '1', question: conversationPlan.topic, answer: '', questionType: 'lets_chat' }]);
-            break;
-            
-          default:
-            selectedQuestions = selectRandomQuestions(questions);
-            activityDescription = 'practicing speech together';
+        if (useStructuredMode && questions.length > 0) {
+          setIsWaitingForAnswer(true);
         }
-
-        setCurrentQuestions(selectedQuestions);
-        setCurrentQuestionIndex(0);
-
-        console.log('Selected questions for session:', selectedQuestions);
-
-        // Create introductory message first
-        const introMessage = `Hello! I'm so excited to work with you today! 🌟 
-
-We're going to be ${activityDescription}. Let's start!`;
-
-        const assistantIntroMessage: Message = {
-          role: 'assistant',
-          content: introMessage
-        };
-
-        setMessages([assistantIntroMessage]);
-
-        // Generate and play TTS for intro with admin settings - WAIT for it to finish completely
-        console.log('Starting intro TTS...');
-        await generateTTS(introMessage);
-        console.log('Intro TTS completed, now showing first question...');
-
-        // Now that intro is finished, show the first question
-        let firstContent = '';
-        let firstMessage: Message;
-
-        if (selectedQuestionType === 'lets_chat') {
-          const conversationPlan = createConversationalLessonPlan();
-          firstContent = `I'd love to chat with you about ${conversationPlan.topic}! Tell me, what do you think about ${conversationPlan.topic}?`;
-        } else {
-          const firstQuestion = selectedQuestions[0];
-          firstContent = `Let's start with the first one:
-
-${firstQuestion?.question}`;
-        }
-
-        firstMessage = {
-          role: 'assistant',
-          content: firstContent
-        };
-
-        // Add image for non-chat questions
-        if (selectedQuestionType !== 'lets_chat') {
-          const firstQuestion = selectedQuestions[0];
-          if (firstQuestion && firstQuestion.imageName && imageUrls[firstQuestion.imageName]) {
-            firstMessage.imageUrl = imageUrls[firstQuestion.imageName];
-            console.log('Adding image to first question:', firstQuestion.imageName, firstMessage.imageUrl);
-          }
-        }
-
-        setMessages(prev => [...prev, firstMessage]);
-
-        // Generate and play TTS for first question with admin settings - WAIT for it to finish
-        console.log('Starting first question TTS...');
-        await generateTTS(firstContent);
-        console.log('First question TTS completed');
-
-      } else {
-        // Free chat mode - let the edge function handle database prompts
-        const { data, error } = await supabase.functions.invoke('openai-chat', {
-          body: {
-            messages: [],
-            model: 'gpt-4o-mini',
-            activityType: 'default'
-          }
-        });
-
-        if (error) throw error;
-        assistantContent = data.choices[0].message.content;
-
-        const assistantMessage: Message = {
-          role: 'assistant',
-          content: assistantContent
-        };
-
-        setMessages([assistantMessage]);
-
-        // Generate and play TTS for Laura's response with admin settings
-        await generateTTS(assistantContent);
       }
-
     } catch (error) {
-      console.error('Error starting conversation:', error);
+      console.error('Error in sendInitialMessage:', error);
       toast({
         title: "Error",
-        description: "Failed to start conversation with Laura. Please try again.",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const sendMessage = async (messageText: string) => {
-    if (!messageText.trim()) return;
-
-    const userMessage: Message = { role: 'user', content: messageText };
-    setMessages(prev => [...prev, userMessage]);
-    setLoading(true);
-
+  const sendMessage = async (messageContent: string) => {
+    if (!messageContent.trim()) return;
+    
+    setIsLoading(true);
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: messageContent.trim(),
+      timestamp: new Date()
+    };
+    
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInputValue('');
+    
     try {
-      let assistantContent = '';
-
-      if (useStructuredMode && currentQuestions.length > 0) {
-        if (selectedQuestionType === 'lets_chat') {
-          // Handle natural conversation mode - let edge function use database prompts
-          const conversationHistory = messages.map(m => ({ role: m.role, content: m.content }));
-          
-          const { data, error } = await supabase.functions.invoke('openai-chat', {
-            body: {
-              messages: [...conversationHistory, userMessage],
-              model: 'gpt-4o-mini',
-              activityType: 'lets_chat'
-            }
-          });
-
-          if (error) throw error;
-          assistantContent = data.choices[0].message.content;
-        } else {
-          // Handle other question types with fuzzy matching for expected answers
-          const currentQ = currentQuestions[currentQuestionIndex];
-          
-          // Use fuzzy matching to check if answer is close enough
-          const matchResult = fuzzyMatchAnswer(messageText, currentQ.answer, 0.5);
-          console.log('Fuzzy match result:', matchResult, 'for user response:', messageText, 'expected:', currentQ.answer);
-          
-          const nextIndex = currentQuestionIndex + 1;
-
-          if (matchResult.isMatch) {
-            // Trigger progress character update
-            onCorrectAnswer?.();
-            
-            if (nextIndex < currentQuestions.length) {
-              // Show encouraging feedback based on confidence
-              const encouragement = matchResult.confidence >= 0.8 ? 
-                "Perfect! That's exactly right! 🎉" : 
-                getEncouragingFeedback(matchResult.confidence) + " You got it! 🎉";
-              
-              assistantContent = encouragement;
-              
-              const congratulatoryMessage: Message = {
-                role: 'assistant',
-                content: assistantContent
-              };
-
-              setMessages(prev => [...prev, congratulatoryMessage]);
-
-              // Generate and play TTS for congratulatory message with admin settings
-              await generateTTS(assistantContent);
-
-              // Wait a moment, then show next question with image
-              setTimeout(async () => {
-                const nextQ = currentQuestions[nextIndex];
-                const nextQuestionContent = `Now let's look at the next picture. ${nextQ.question}`;
-                
-                const nextQuestionMessage: Message = {
-                  role: 'assistant',
-                  content: nextQuestionContent
-                };
-
-                // Add image to next question
-                if (nextQ.imageName && imageUrls[nextQ.imageName]) {
-                  nextQuestionMessage.imageUrl = imageUrls[nextQ.imageName];
-                  console.log('Adding next question image:', nextQ.imageName);
-                }
-
-                setMessages(prev => [...prev, nextQuestionMessage]);
-                setCurrentQuestionIndex(nextIndex);
-
-                // Generate and play TTS for next question with admin settings
-                await generateTTS(nextQuestionContent);
-              }, 1500); // 1.5 second delay
-
-              setLoading(false);
-              return; // Exit early to avoid duplicate processing
-            } else {
-              const finalEncouragement = matchResult.confidence >= 0.8 ? "Perfect!" : "Wonderful!";
-              assistantContent = `${finalEncouragement} You got it right! 🌟 
-
-You did such an amazing job answering all the questions today! You should be very proud of yourself. Great work! 🎊`;
-            }
-          } else {
-            // Provide encouraging feedback even for incorrect answers
-            const encouragement = getEncouragingFeedback(matchResult.confidence);
-            
-            if (matchResult.confidence >= 0.3) {
-              // Close but not quite right
-              assistantContent = `${encouragement} You're close! The answer I was looking for is "${currentQ.answer}". Let's try saying it together: ${currentQ.answer}. 
-
-Now, can you tell me what you see in this picture again?`;
-            } else {
-              // Not very close, provide more guidance
-              assistantContent = `${encouragement} The answer I was looking for is "${currentQ.answer}". Let's try saying it together: ${currentQ.answer}. You're doing great! 
-
-Now, can you tell me what you see in this picture again?`;
-            }
-          }
+      console.log('=== SENDING MESSAGE TO EDGE FUNCTION ===');
+      console.log('Messages to send:', updatedMessages.map(m => ({ role: m.role, content: m.content })));
+      console.log('Activity type:', selectedQuestionType);
+      
+      const { data, error } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
+          activityType: selectedQuestionType
         }
-      } else {
-        // Free chat mode - let edge function use database prompts
-        const { data, error } = await supabase.functions.invoke('openai-chat', {
-          body: {
-            messages: [...messages, userMessage],
-            model: 'gpt-4o-mini',
-            activityType: 'default'
-          }
+      });
+
+      console.log('=== EDGE FUNCTION RESPONSE ===');
+      console.log('Response data:', data);
+      console.log('Response error:', error);
+
+      if (error) {
+        console.error('Error calling OpenAI chat function:', error);
+        toast({
+          title: "Error",
+          description: "Failed to get response from Laura. Please try again.",
+          variant: "destructive",
         });
-
-        if (error) throw error;
-        assistantContent = data.choices[0].message.content;
+        return;
       }
 
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: assistantContent
-      };
+      if (data?.choices?.[0]?.message?.content) {
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.choices[0].message.content,
+          timestamp: new Date()
+        };
 
-      // Add image for structured mode questions (incorrect answers or final message)
-      if (useStructuredMode && currentQuestions.length > 0 && selectedQuestionType !== 'lets_chat') {
-        const currentQ = currentQuestions[currentQuestionIndex];
-        const matchResult = fuzzyMatchAnswer(messageText, currentQ.answer, 0.5);
+        setMessages([...updatedMessages, aiMessage]);
         
-        if (!matchResult.isMatch) {
-          // User answered incorrectly - show current question's image again
-          if (currentQ.imageName && imageUrls[currentQ.imageName]) {
-            assistantMessage.imageUrl = imageUrls[currentQ.imageName];
-            console.log('Adding current question image again:', currentQ.imageName);
+        if (useStructuredMode && isWaitingForAnswer && questions[currentQuestionIndex]) {
+          const currentQuestion = questions[currentQuestionIndex];
+          const similarity = calculateSimilarity(messageContent, currentQuestion.answer);
+          
+          if (similarity > 0.7) {
+            onCorrectAnswer();
+            setCurrentQuestionIndex(prev => prev + 1);
+            setIsWaitingForAnswer(false);
+            
+            setTimeout(() => {
+              if (currentQuestionIndex + 1 < questions.length) {
+                setIsWaitingForAnswer(true);
+              }
+            }, 2000);
           }
         }
-        // If correct and last question, no image needed
       }
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Generate and play TTS for Laura's response with admin settings
-      await generateTTS(assistantContent);
-
     } catch (error) {
-      console.error('Error calling OpenAI:', error);
+      console.error('Error sending message:', error);
       toast({
         title: "Error",
-        description: "Failed to get response from Laura. Please try again.",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleVoiceRecording = async () => {
-    if (isRecording) {
-      try {
-        setIsProcessing(true);
-        const audioData = await stopRecording();
-        
-        console.log('Audio recording stopped, processing speech-to-text...');
-        
-        // Convert speech to text
-        const { data, error } = await supabase.functions.invoke('openai-stt', {
-          body: { audio: audioData }
-        });
-
-        if (error) throw error;
-        
-        if (data.text) {
-          console.log('Speech-to-text completed');
-          await sendMessage(data.text);
-        }
-      } catch (error) {
-        console.error('Error processing voice:', error);
-        toast({
-          title: "Error",
-          description: "Failed to process voice recording. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsProcessing(false);
-      }
-    } else {
-      try {
-        await startRecording();
-      } catch (error) {
-        console.error('Error starting recording:', error);
-        toast({
-          title: "Error",
-          description: "Failed to access microphone. Please check permissions.",
-          variant: "destructive",
-        });
-      }
-    }
+  const getCurrentQuestion = () => {
+    if (!useStructuredMode || !questions.length) return null;
+    return questions[currentQuestionIndex];
   };
 
-  const toggleAudio = () => {
-    if (isPlaying) {
-      stopAudio();
-    }
-  };
+  const currentQuestion = getCurrentQuestion();
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-lg border-blue-200 bg-blue-50">
-      <CardHeader className="bg-gradient-to-r from-blue-100 to-blue-150 border-b border-blue-200 p-6">
-        <CardTitle>
-          <ChatHeader
-            useStructuredMode={useStructuredMode}
-            selectedQuestionType={selectedQuestionType}
-            currentQuestionIndex={currentQuestionIndex}
-            totalQuestions={currentQuestions.length}
-            isRecording={isRecording}
-            isPlaying={isPlaying}
-            hasQuestions={questions.length > 0}
-            onToggleMode={onToggleMode}
-            onToggleAudio={toggleAudio}
-            onClose={onClose}
-          />
-        </CardTitle>
+    <Card className="w-full h-[600px] flex flex-col bg-white border-gray-200 shadow-lg">
+      <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50 shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-lg">L</span>
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold text-gray-800">
+                Chat with Laura 💫
+              </CardTitle>
+              <div className="flex items-center space-x-2 mt-1">
+                <Badge variant="secondary" className="text-xs">
+                  {selectedQuestionType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </Badge>
+                <Badge 
+                  variant={useStructuredMode ? "default" : "outline"} 
+                  className="text-xs cursor-pointer hover:bg-gray-100"
+                  onClick={onToggleMode}
+                >
+                  {useStructuredMode ? "Structured" : "Free Chat"}
+                </Badge>
+              </div>
+            </div>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClose}
+            className="hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4 p-6 bg-blue-50">
-        <div className="h-[600px] overflow-y-auto border border-blue-200 rounded-lg p-4 space-y-4 bg-gradient-to-b from-white to-blue-50 shadow-inner">
-          {messages.map((message, index) => (
-            <ChatMessage key={index} message={message} index={index} />
+
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+        {currentQuestion && useStructuredMode && (
+          <div className="p-4 bg-amber-50 border-b border-amber-200 shrink-0">
+            <div className="flex items-center space-x-3">
+              {currentQuestion.imageName && imageUrls[currentQuestion.imageName] && (
+                <img 
+                  src={imageUrls[currentQuestion.imageName]} 
+                  alt="Question" 
+                  className="w-16 h-16 object-cover rounded-lg border-2 border-amber-300"
+                />
+              )}
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800 mb-1">
+                  Question {currentQuestionIndex + 1} of {questions.length}
+                </p>
+                <p className="text-amber-700">{currentQuestion.question}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.map((message) => (
+            <ChatMessage 
+              key={message.id} 
+              message={message} 
+              ttsSettings={ttsSettings}
+            />
           ))}
-          {loading && (
+          {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-blue-200 rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage 
-                      src="/lovable-uploads/Laura.png" 
-                      alt="Laura" 
-                    />
-                    <AvatarFallback className="bg-blue-200 text-blue-800 text-xs font-semibold">L</AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs font-semibold text-blue-700">Laura:</span>
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
+              <div className="bg-gray-100 rounded-lg px-4 py-2 max-w-xs">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
-        
-        <VoiceRecorder
-          isRecording={isRecording}
-          isProcessing={isProcessing}
-          loading={loading}
-          onVoiceRecording={handleVoiceRecording}
-        />
+
+        <div className="border-t border-gray-200 p-4 shrink-0">
+          <div className="flex space-x-2">
+            <div className="flex-1 relative">
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Type your message..."
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage(inputValue);
+                  }
+                }}
+                disabled={isLoading}
+                className="pr-12"
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                onClick={() => sendMessage(inputValue)}
+                disabled={isLoading || !inputValue.trim()}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+            <VoiceRecorder
+              onTranscription={(text) => {
+                setInputValue(text);
+                sendMessage(text);
+              }}
+              isRecording={isRecording}
+              setIsRecording={setIsRecording}
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
