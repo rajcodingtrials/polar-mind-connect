@@ -25,13 +25,13 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Processing enhanced, preprocessed audio for children\'s speech, length:', audio.length);
+    console.log('Processing audio for speech-to-text, length:', audio.length);
 
-    // Enhanced base64 decoding for preprocessed audio
+    // Decode base64 audio data
     let binaryString: string;
     try {
       binaryString = atob(audio);
-      console.log('Successfully decoded enhanced audio data, binary length:', binaryString.length);
+      console.log('Successfully decoded audio data, binary length:', binaryString.length);
     } catch (decodeError) {
       console.error('Failed to decode base64 audio:', decodeError);
       throw new Error('Invalid base64 audio data');
@@ -42,41 +42,43 @@ serve(async (req) => {
       bytes[i] = binaryString.charCodeAt(i);
     }
     
-    console.log('Created enhanced audio buffer with', bytes.length, 'bytes from preprocessed audio');
+    console.log('Created audio buffer with', bytes.length, 'bytes');
     
     const formData = new FormData();
     
-    // Enhanced audio format detection for preprocessed audio
-    let mimeType = 'audio/wav'; // Default to WAV for preprocessed PCM
+    // Detect audio format from the data
+    let mimeType = 'audio/webm'; // Default
     const header = new Uint8Array(bytes.slice(0, 12));
     
-    // Check for audio file signatures
+    // Check for common audio file signatures
     if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
+      // RIFF header (WAV)
       mimeType = 'audio/wav';
     } else if (header[4] === 0x66 && header[5] === 0x74 && header[6] === 0x79 && header[7] === 0x70) {
+      // MP4 container
       mimeType = 'audio/mp4';
     } else if (header[0] === 0x1A && header[1] === 0x45 && header[2] === 0xDF && header[3] === 0xA3) {
+      // WebM container
       mimeType = 'audio/webm';
-    } else {
-      // For raw PCM data from preprocessing, treat as WAV
-      mimeType = 'audio/wav';
+    } else if (header[0] === 0x4F && header[1] === 0x67 && header[2] === 0x67 && header[3] === 0x53) {
+      // Ogg container
+      mimeType = 'audio/ogg';
     }
     
-    console.log('Detected audio format for enhanced speech:', mimeType);
+    console.log('Detected audio format:', mimeType);
     
     const blob = new Blob([bytes], { type: mimeType });
-    const filename = mimeType === 'audio/wav' ? 'enhanced_child_speech.wav' : 
-                    mimeType === 'audio/mp4' ? 'enhanced_child_speech.mp4' : 'enhanced_child_speech.webm';
+    const filename = mimeType === 'audio/wav' ? 'audio.wav' : 
+                    mimeType === 'audio/mp4' ? 'audio.mp4' : 
+                    mimeType === 'audio/ogg' ? 'audio.ogg' : 'audio.webm';
     
     formData.append('file', blob, filename);
     formData.append('model', 'whisper-1');
     formData.append('language', 'en');
-    
-    // Enhanced settings optimized for preprocessed children's speech
-    formData.append('temperature', '0.0'); // Most accurate transcription
-    formData.append('prompt', 'This is enhanced, preprocessed audio from a child in a speech therapy session. The audio has been processed with noise reduction, gain adjustment, and compression to improve clarity. The child may still speak softly, repeat words, or make partial sounds. Please transcribe their speech accurately, including any attempts at words, partial pronunciations, or repeated sounds. The audio quality has been enhanced but be patient with speech patterns typical of children in speech therapy.');
+    formData.append('temperature', '0.2'); // Lower temperature for more accurate transcription
+    formData.append('prompt', 'This is audio from a child in a speech therapy session. The child may speak softly or make partial sounds. Please transcribe their speech accurately, including any attempts at words or partial pronunciations.');
 
-    console.log('Sending enhanced, preprocessed audio to OpenAI Whisper API...');
+    console.log('Sending audio to OpenAI Whisper API...');
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -93,21 +95,19 @@ serve(async (req) => {
     }
 
     const result = await response.json();
-    console.log('Enhanced transcription result for preprocessed child speech:', result);
+    console.log('Transcription result:', result);
 
     return new Response(
       JSON.stringify({ 
         text: result.text,
         language: result.language,
-        duration: result.duration,
-        audioEnhanced: true,
-        preprocessingApplied: ['noise_reduction', 'gain_adjustment', 'compression', 'high_pass_filter']
+        duration: result.duration
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in enhanced openai-stt function:', error);
+    console.error('Error in openai-stt function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
