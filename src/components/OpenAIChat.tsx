@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,6 +14,7 @@ import {
   createConversationalLessonPlan, 
   addPausesAfterQuestions 
 } from './chat/utils';
+import { fuzzyMatchAnswer, getEncouragingFeedback } from './chat/fuzzyMatching';
 import { Message, Question, OpenAIChatProps } from './chat/types';
 
 const OpenAIChat = ({ 
@@ -254,18 +256,26 @@ ${firstQuestion?.question}`;
           if (error) throw error;
           assistantContent = data.choices[0].message.content;
         } else {
-          // Handle other question types with expected answers
+          // Handle other question types with fuzzy matching for expected answers
           const currentQ = currentQuestions[currentQuestionIndex];
-          const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
+          
+          // Use fuzzy matching to check if answer is close enough
+          const matchResult = fuzzyMatchAnswer(messageText, currentQ.answer, 0.5);
+          console.log('Fuzzy match result:', matchResult, 'for user response:', messageText, 'expected:', currentQ.answer);
+          
           const nextIndex = currentQuestionIndex + 1;
 
-          if (isCorrect) {
+          if (matchResult.isMatch) {
             // Trigger progress character update
             onCorrectAnswer?.();
             
             if (nextIndex < currentQuestions.length) {
-              // First show congratulatory message without image
-              assistantContent = `Wonderful! That's exactly right! 🎉`;
+              // Show encouraging feedback based on confidence
+              const encouragement = matchResult.confidence >= 0.8 ? 
+                "Perfect! That's exactly right! 🎉" : 
+                getEncouragingFeedback(matchResult.confidence) + " You got it! 🎉";
+              
+              assistantContent = encouragement;
               
               const congratulatoryMessage: Message = {
                 role: 'assistant',
@@ -303,14 +313,26 @@ ${firstQuestion?.question}`;
               setLoading(false);
               return; // Exit early to avoid duplicate processing
             } else {
-              assistantContent = `Perfect! You got it right! 🌟 
+              const finalEncouragement = matchResult.confidence >= 0.8 ? "Perfect!" : "Wonderful!";
+              assistantContent = `${finalEncouragement} You got it right! 🌟 
 
 You did such an amazing job answering all the questions today! You should be very proud of yourself. Great work! 🎊`;
             }
           } else {
-            assistantContent = `That's a good try! The answer I was looking for is "${currentQ.answer}". Let's try saying it together: ${currentQ.answer}. You're doing great! 
+            // Provide encouraging feedback even for incorrect answers
+            const encouragement = getEncouragingFeedback(matchResult.confidence);
+            
+            if (matchResult.confidence >= 0.3) {
+              // Close but not quite right
+              assistantContent = `${encouragement} You're close! The answer I was looking for is "${currentQ.answer}". Let's try saying it together: ${currentQ.answer}. 
 
 Now, can you tell me what you see in this picture again?`;
+            } else {
+              // Not very close, provide more guidance
+              assistantContent = `${encouragement} The answer I was looking for is "${currentQ.answer}". Let's try saying it together: ${currentQ.answer}. You're doing great! 
+
+Now, can you tell me what you see in this picture again?`;
+            }
           }
         }
       } else {
@@ -335,9 +357,9 @@ Now, can you tell me what you see in this picture again?`;
       // Add image for structured mode questions (incorrect answers or final message)
       if (useStructuredMode && currentQuestions.length > 0 && selectedQuestionType !== 'lets_chat') {
         const currentQ = currentQuestions[currentQuestionIndex];
-        const isCorrect = messageText.toLowerCase().includes(currentQ.answer.toLowerCase());
+        const matchResult = fuzzyMatchAnswer(messageText, currentQ.answer, 0.5);
         
-        if (!isCorrect) {
+        if (!matchResult.isMatch) {
           // User answered incorrectly - show current question's image again
           if (currentQ.imageName && imageUrls[currentQ.imageName]) {
             assistantMessage.imageUrl = imageUrls[currentQ.imageName];
