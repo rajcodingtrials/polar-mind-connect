@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +50,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [hasIntroduced, setHasIntroduced] = useState(false);
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
+  const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
@@ -244,11 +244,21 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       if (useStructuredMode && isWaitingForAnswer && questions[currentQuestionIndex]) {
         // Handle structured mode with predefined questions
         const currentQuestion = questions[currentQuestionIndex];
-        const similarity = calculateSimilarity(messageContent, currentQuestion.answer);
+        
+        // Use enhanced similarity calculation with speech delay mode
+        const similarity = calculateSimilarity(messageContent, currentQuestion.answer, {
+          speechDelayMode,
+          threshold: speechDelayMode ? 0.4 : 0.6 // Lower threshold for speech delay mode
+        });
+        
+        console.log(`Similarity score: ${similarity} (Speech delay mode: ${speechDelayMode})`);
         
         let responseMessage: Message;
         
-        if (similarity > 0.7) {
+        // Lower acceptance threshold in speech delay mode
+        const acceptanceThreshold = speechDelayMode ? 0.5 : 0.7;
+        
+        if (similarity > acceptanceThreshold) {
           // Correct answer
           onCorrectAnswer();
           
@@ -353,7 +363,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
 
   return (
     <div className="w-full h-[600px] flex flex-col bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-3xl shadow-xl overflow-hidden">
-      {/* Header with Laura's image and volume control */}
+      {/* Header with Laura's image and controls */}
       <div className="bg-gradient-to-r from-blue-100 to-blue-50 border-b border-blue-200 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -372,6 +382,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
               {useStructuredMode && (
                 <p className="text-blue-600 text-xs">
                   Q&A Mode: {currentQuestionIndex + 1}/{questions.length}
+                  {speechDelayMode && <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">Speech Delay Mode</span>}
                 </p>
               )}
               {isRecording && (
@@ -382,6 +393,19 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {useStructuredMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSpeechDelayMode(!speechDelayMode)}
+                className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm ${
+                  speechDelayMode ? "bg-purple-100 border-purple-300" : ""
+                }`}
+                title={speechDelayMode ? "Speech Delay Mode ON" : "Speech Delay Mode OFF"}
+              >
+                {speechDelayMode ? "🧠 ON" : "🧠 OFF"}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="icon"
