@@ -77,8 +77,8 @@ const OpenAIChat = ({
         // Wait for the audio to finish playing
         return new Promise((resolve) => {
           playAudio(ttsData.audioContent).then(() => {
-            // Add a small buffer after audio finishes
-            setTimeout(resolve, 500);
+            // Add a longer buffer after audio finishes to ensure proper timing
+            setTimeout(resolve, 1000);
           });
         });
       }
@@ -152,8 +152,10 @@ We're going to be ${activityDescription}. Let's start!`;
 
         setMessages([assistantIntroMessage]);
 
-        // Generate and play TTS for intro with admin settings - WAIT for it to finish
+        // Generate and play TTS for intro with admin settings - WAIT for it to finish completely
+        console.log('Starting intro TTS...');
         await generateTTS(introMessage);
+        console.log('Intro TTS completed, now showing first question...');
 
         // Now that intro is finished, show the first question
         let firstContent = '';
@@ -185,8 +187,10 @@ ${firstQuestion?.question}`;
 
         setMessages(prev => [...prev, firstMessage]);
 
-        // Generate and play TTS for first question with admin settings
+        // Generate and play TTS for first question with admin settings - WAIT for it to finish
+        console.log('Starting first question TTS...');
         await generateTTS(firstContent);
+        console.log('First question TTS completed');
 
       } else {
         // Free chat mode - let the edge function handle database prompts
