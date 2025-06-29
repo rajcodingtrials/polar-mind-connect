@@ -65,7 +65,7 @@ ACTIVITY: Natural Conversation
 ACTIVITY: General Speech Practice
 - Begin with a short and playful speech lesson
 - Teach the names of 3 simple fruits: apple, banana, and orange
-- For each fruit, say the name clearly and slowly, breaking it into syllsyllables
+- For each fruit, say the name clearly and slowly, breaking it into syllables
 - Ask the child to try saying it with you
 - You can use fruit emojis: 🍎 for apple, 🍌 for banana, 🍊 for orange
 - At the end, praise the child by name and remind them they did something special`
@@ -74,8 +74,13 @@ ACTIVITY: General Speech Practice
 // Function to load prompts from Supabase
 export const loadPromptsFromDatabase = async () => {
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.log('Supabase credentials not available, using default prompts');
+      return null;
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
@@ -106,6 +111,7 @@ export const loadPromptsFromDatabase = async () => {
       }
     });
 
+    console.log('Successfully loaded prompts from database');
     return {
       basePrompt,
       activities: { ...activityPrompts, ...databasePrompts }
@@ -122,6 +128,7 @@ const getCustomPrompts = async (customBasePrompt?: string, customActivityPrompts
   const databasePrompts = await loadPromptsFromDatabase();
   
   if (databasePrompts) {
+    console.log('Using database prompts');
     return databasePrompts;
   }
 
@@ -129,26 +136,32 @@ const getCustomPrompts = async (customBasePrompt?: string, customActivityPrompts
   const basePrompt = customBasePrompt || baseSpeechTherapistPrompt;
   const activities = customActivityPrompts ? { ...activityPrompts, ...customActivityPrompts } : activityPrompts;
   
+  console.log('Using fallback prompts (no database or custom prompts)');
   return { basePrompt, activities };
 };
 
 export const createSystemPrompt = async (activityType?: string, customInstructions?: string, customBasePrompt?: string, customActivityPrompts?: any): Promise<string> => {
+  console.log('Creating system prompt for activity type:', activityType);
+  
   const { basePrompt, activities } = await getCustomPrompts(customBasePrompt, customActivityPrompts);
   
   let prompt = basePrompt;
   
   if (activityType && activities[activityType as keyof typeof activities]) {
     prompt += activities[activityType as keyof typeof activities];
+    console.log('Added activity-specific prompt for:', activityType);
   } else {
     prompt += activities.default;
+    console.log('Using default activity prompt');
   }
   
   if (customInstructions) {
     prompt += `\n\nADDITIONAL INSTRUCTIONS:\n${customInstructions}`;
+    console.log('Added custom instructions');
   }
+  
+  console.log('Final prompt length:', prompt.length);
+  console.log('Prompt preview (first 200 chars):', prompt.substring(0, 200) + '...');
   
   return prompt;
 };
-
-// Remove the module-level call - this was causing the issue
-// export const speechTherapistPrompt = await createSystemPrompt();
