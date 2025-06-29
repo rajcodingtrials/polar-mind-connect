@@ -1,13 +1,12 @@
 
-import React, { useState } from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessageProps } from './types';
 
-const ChatMessage = ({ message, ttsSettings }: ChatMessageProps) => {
+const ChatMessage = ({ message, ttsSettings, autoPlayTTS = true }: ChatMessageProps & { autoPlayTTS?: boolean }) => {
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
 
@@ -43,38 +42,15 @@ const ChatMessage = ({ message, ttsSettings }: ChatMessageProps) => {
     }
   };
 
+  // Auto-play TTS for assistant messages when they first appear
+  useEffect(() => {
+    if (message.role === 'assistant' && autoPlayTTS && !isPlaying && !isGeneratingAudio) {
+      handlePlayTTS();
+    }
+  }, [message.id, message.role, autoPlayTTS]);
+
   return (
     <div className="w-full">
-      {message.role === 'assistant' && (
-        <div className="flex items-start gap-3 mb-4">
-          <Avatar className="h-10 w-10 border-2 border-blue-200">
-            <AvatarImage 
-              src="/lovable-uploads/Laura.png" 
-              alt="Laura" 
-            />
-            <AvatarFallback className="bg-blue-200 text-blue-800 text-sm font-semibold">L</AvatarFallback>
-          </Avatar>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-blue-700">Laura:</span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handlePlayTTS}
-              disabled={isGeneratingAudio || isPlaying}
-              className="h-6 w-6 p-0 hover:bg-blue-100"
-            >
-              {isGeneratingAudio ? (
-                <div className="w-3 h-3 border border-blue-600 border-t-transparent rounded-full animate-spin" />
-              ) : isPlaying ? (
-                <VolumeX className="h-3 w-3 text-blue-600" />
-              ) : (
-                <Volume2 className="h-3 w-3 text-blue-600" />
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-      
       <div className={`w-full ${message.role === 'user' ? 'flex justify-end' : ''}`}>
         <div
           className={`max-w-full p-4 rounded-2xl shadow-sm ${

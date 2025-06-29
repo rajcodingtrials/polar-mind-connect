@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Mic, MicOff, Send, X, RotateCcw, Volume2 } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Mic, MicOff, Send, X, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import VoiceRecorder from './chat/VoiceRecorder';
 import ChatMessage from './chat/ChatMessage';
 import { calculateSimilarity } from './chat/fuzzyMatching';
@@ -46,9 +48,12 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
+  const [hasIntroduced, setHasIntroduced] = useState(false);
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
+  const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { isPlaying, stopAudio } = useAudioPlayer();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -97,6 +102,21 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
     }
   }, [selectedQuestionType, useStructuredMode]);
 
+  const getBasePrompt = () => {
+    return `You are Laura, a warm, encouraging, and patient AI speech therapy assistant designed specifically for children. Your personality traits include:
+
+- You speak in a friendly, upbeat tone that makes children feel comfortable
+- You use age-appropriate language and explanations
+- You celebrate every effort and progress, no matter how small
+- You provide gentle correction and encouragement when needed
+- You make learning fun through positive reinforcement
+- You are patient and never rush the child
+- You ask simple, clear questions that are easy to understand
+- You use emojis and enthusiastic language to keep children engaged
+
+Remember to always be supportive, encouraging, and make the child feel proud of their efforts in speech therapy practice.`;
+  };
+
   const sendInitialMessage = async () => {
     console.log('🚀 === SENDING INITIAL MESSAGE ===');
     console.log('Component state:', {
@@ -111,37 +131,31 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
       let initialMessage: Message;
       
       if (useStructuredMode && questions.length > 0) {
-        // For structured mode, present the first question directly
-        const firstQuestion = questions[0];
-        const messageContent = `Hello! I'm so excited to work with you today! 🌟\n\nWe're going to be practicing ${selectedQuestionType.replace('_', ' ')}. Let's start!\n\n${firstQuestion.question}`;
+        // For structured mode, start with introduction first
+        const messageContent = `Hello! I'm Laura, and I'm so excited to work with you today! 🌟\n\nWe're going to be practicing ${selectedQuestionType.replace('_', ' ')} together. I'll ask you some questions and show you pictures to help us learn. Are you ready to have some fun? Let's begin! 🎉`;
         
         initialMessage = {
           id: Date.now().toString(),
           role: 'assistant',
           content: messageContent,
-          timestamp: new Date(),
-          imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
+          timestamp: new Date()
         };
         
-        setIsWaitingForAnswer(true);
+        setHasIntroduced(true);
       } else {
         // For free chat mode, use OpenAI to generate initial greeting
         console.log('📡 Calling openai-chat edge function...');
         console.log('Request payload:', {
           messages: [],
           activityType: selectedQuestionType,
-          customInstructions: useStructuredMode ? 
-            `You have ${questions.length} questions available for the ${selectedQuestionType} activity.` : 
-            undefined
+          customInstructions: getBasePrompt()
         });
         
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [],
             activityType: selectedQuestionType,
-            customInstructions: useStructuredMode ? 
-              `You have ${questions.length} questions available for the ${selectedQuestionType} activity.` : 
-              undefined
+            customInstructions: getBasePrompt()
           }
         });
 
@@ -174,6 +188,13 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
 
       console.log('💬 Initial message created:', initialMessage);
       setMessages([initialMessage]);
+      
+      // After introduction, present first question if in structured mode
+      if (useStructuredMode && questions.length > 0 && hasIntroduced) {
+        setTimeout(() => {
+          presentFirstQuestion();
+        }, 2000);
+      }
     } catch (error) {
       console.error('💥 Error in sendInitialMessage:', error);
       toast({
@@ -183,6 +204,22 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const presentFirstQuestion = () => {
+    if (questions.length > 0) {
+      const firstQuestion = questions[0];
+      const questionMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        role: 'assistant',
+        content: `Great! Now let's start with our first question:\n\n${firstQuestion.question}`,
+        timestamp: new Date(),
+        imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
+      };
+      
+      setMessages(prev => [...prev, questionMessage]);
+      setIsWaitingForAnswer(true);
     }
   };
 
@@ -257,7 +294,8 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
-            activityType: selectedQuestionType
+            activityType: selectedQuestionType,
+            customInstructions: getBasePrompt()
           }
         });
 
@@ -298,6 +336,14 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
     }
   };
 
+  // Present first question after introduction in structured mode
+  useEffect(() => {
+    if (useStructuredMode && hasIntroduced && messages.length === 1 && questions.length > 0) {
+      const timer = setTimeout(presentFirstQuestion, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasIntroduced, messages.length, useStructuredMode, questions.length]);
+
   const getCurrentQuestion = () => {
     if (!useStructuredMode || !questions.length) return null;
     return questions[currentQuestionIndex];
@@ -307,19 +353,52 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
 
   return (
     <div className="w-full h-[600px] flex flex-col bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-3xl shadow-xl overflow-hidden">
-      {/* Header */}
+      {/* Header with Laura's image and volume control */}
       <div className="bg-gradient-to-r from-blue-100 to-blue-50 border-b border-blue-200 p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl font-bold text-blue-900">Laura</div>
-            <div className="text-sm text-blue-700">Your AI Speech Therapy Assistant</div>
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 border-4 border-white shadow-sm">
+              <AvatarImage 
+                src="/lovable-uploads/Laura.png" 
+                alt="Laura - Speech Therapist" 
+              />
+              <AvatarFallback className="bg-blue-200 text-blue-800 text-lg font-semibold">L</AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="text-2xl font-bold text-blue-900">Laura</h2>
+              <p className="text-blue-700 text-sm font-normal">
+                Your AI Speech Therapy Assistant
+              </p>
+              {useStructuredMode && (
+                <p className="text-blue-600 text-xs">
+                  Q&A Mode: {currentQuestionIndex + 1}/{questions.length}
+                </p>
+              )}
+              {isRecording && (
+                <p className="text-rose-600 text-xs font-medium animate-pulse">
+                  🔴 Recording... Tap the mic again to stop
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            {useStructuredMode && (
-              <div className="text-xs text-blue-600 font-medium">
-                Q&A Mode: {currentQuestionIndex + 1}/{questions.length}
-              </div>
-            )}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                if (isPlaying) {
+                  stopAudio();
+                } else {
+                  setAutoPlayTTS(!autoPlayTTS);
+                }
+              }}
+              className={`border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 shadow-sm ${
+                autoPlayTTS && !isPlaying ? "bg-blue-100 border-blue-300" : ""
+              }`}
+              title={isPlaying ? "Stop Audio" : autoPlayTTS ? "Auto-play ON" : "Auto-play OFF"}
+            >
+              {isPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </Button>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -334,6 +413,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
             key={message.id} 
             message={message} 
             ttsSettings={ttsSettings}
+            autoPlayTTS={autoPlayTTS}
           />
         ))}
         {isLoading && (
