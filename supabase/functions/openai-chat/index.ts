@@ -25,6 +25,15 @@ serve(async (req) => {
       customInstructions
     } = await req.json();
 
+    console.log('=== OPENAI CHAT FUNCTION CALLED ===');
+    console.log('Request body received:', {
+      messagesCount: messages?.length || 0,
+      model,
+      hasSystemPrompt: !!systemPrompt,
+      activityType,
+      hasCustomInstructions: !!customInstructions
+    });
+
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
@@ -32,15 +41,33 @@ serve(async (req) => {
     // Always use database prompts by calling createSystemPrompt
     let finalSystemPrompt = systemPrompt;
     if (!finalSystemPrompt) {
-      console.log('Creating system prompt with activityType:', activityType);
+      console.log('=== CREATING SYSTEM PROMPT ===');
+      console.log('Activity type passed to createSystemPrompt:', activityType);
+      console.log('Custom instructions passed:', customInstructions);
+      
       finalSystemPrompt = await createSystemPrompt(activityType, customInstructions);
-      console.log('Generated system prompt (first 200 chars):', finalSystemPrompt.substring(0, 200) + '...');
+      
+      console.log('=== SYSTEM PROMPT CREATED ===');
+      console.log('Final system prompt length:', finalSystemPrompt.length);
+      console.log('Final system prompt preview (first 500 chars):', finalSystemPrompt.substring(0, 500) + '...');
+      console.log('Final system prompt contains "Laura":', finalSystemPrompt.includes('Laura'));
+      console.log('Final system prompt contains "speech therapist":', finalSystemPrompt.includes('speech therapist'));
+      console.log('Final system prompt contains "gentle":', finalSystemPrompt.includes('gentle'));
+    } else {
+      console.log('=== USING PROVIDED SYSTEM PROMPT ===');
+      console.log('Provided system prompt length:', finalSystemPrompt.length);
+      console.log('Provided system prompt preview:', finalSystemPrompt.substring(0, 200) + '...');
     }
 
     const systemMessage = {
       role: 'system',
       content: finalSystemPrompt
     };
+
+    console.log('=== CALLING OPENAI API ===');
+    console.log('System message role:', systemMessage.role);
+    console.log('System message content length:', systemMessage.content.length);
+    console.log('Total messages being sent to OpenAI:', [systemMessage, ...messages].length);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -57,16 +84,26 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('OpenAI API error response:', errorText);
+      throw new Error(`OpenAI API error: ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
+    
+    console.log('=== OPENAI RESPONSE RECEIVED ===');
+    console.log('Response choices count:', data.choices?.length || 0);
+    console.log('First choice message content preview:', data.choices?.[0]?.message?.content?.substring(0, 200) + '...');
     
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in openai-chat function:', error);
+    console.error('=== ERROR IN OPENAI-CHAT FUNCTION ===');
+    console.error('Error details:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

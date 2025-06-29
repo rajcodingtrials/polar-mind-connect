@@ -74,28 +74,40 @@ ACTIVITY: General Speech Practice
 // Function to load prompts from Supabase
 export const loadPromptsFromDatabase = async () => {
   try {
+    console.log('=== ATTEMPTING TO LOAD PROMPTS FROM DATABASE ===');
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
+    console.log('Supabase URL available:', !!supabaseUrl);
+    console.log('Supabase Service Key available:', !!supabaseServiceKey);
+    
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.log('Supabase credentials not available, using default prompts');
+      console.log('❌ Supabase credentials not available, using default prompts');
       return null;
     }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('✅ Supabase client created successfully');
     
+    console.log('🔍 Querying prompt_configurations table...');
     const { data: prompts, error } = await supabase
       .from('prompt_configurations')
       .select('prompt_type, content')
       .eq('is_active', true);
 
     if (error) {
-      console.error('Error loading prompts from database:', error);
+      console.error('❌ Error loading prompts from database:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return null;
     }
 
+    console.log('📊 Database query completed');
+    console.log('Prompts data received:', prompts);
+    console.log('Number of prompts found:', prompts?.length || 0);
+
     if (!prompts || prompts.length === 0) {
-      console.log('No active prompts found in database, using defaults');
+      console.log('⚠️ No active prompts found in database, using defaults');
       return null;
     }
 
@@ -103,32 +115,52 @@ export const loadPromptsFromDatabase = async () => {
     const databasePrompts: any = {};
     let basePrompt = baseSpeechTherapistPrompt;
 
-    prompts.forEach(prompt => {
+    console.log('🔄 Processing database prompts...');
+    prompts.forEach((prompt, index) => {
+      console.log(`Processing prompt ${index + 1}:`, {
+        type: prompt.prompt_type,
+        contentLength: prompt.content?.length || 0,
+        contentPreview: prompt.content?.substring(0, 100) + '...'
+      });
+      
       if (prompt.prompt_type === 'base_prompt') {
         basePrompt = prompt.content;
+        console.log('✅ Found base_prompt in database, length:', basePrompt.length);
       } else {
         databasePrompts[prompt.prompt_type] = prompt.content;
+        console.log(`✅ Added activity prompt: ${prompt.prompt_type}`);
       }
     });
 
-    console.log('Successfully loaded prompts from database');
+    console.log('✅ Successfully loaded prompts from database');
+    console.log('Final base prompt length:', basePrompt.length);
+    console.log('Final base prompt preview:', basePrompt.substring(0, 200) + '...');
+    console.log('Activity prompts loaded:', Object.keys(databasePrompts));
+    
     return {
       basePrompt,
       activities: { ...activityPrompts, ...databasePrompts }
     };
   } catch (error) {
-    console.error('Error connecting to database for prompts:', error);
+    console.error('❌ Exception in loadPromptsFromDatabase:', error);
+    console.error('Exception details:', JSON.stringify(error, null, 2));
     return null;
   }
 };
 
 // Helper function to get custom prompts from request headers or database
 const getCustomPrompts = async (customBasePrompt?: string, customActivityPrompts?: any) => {
+  console.log('=== GET CUSTOM PROMPTS CALLED ===');
+  console.log('Custom base prompt provided:', !!customBasePrompt);
+  console.log('Custom activity prompts provided:', !!customActivityPrompts);
+  
   // First try to load from database
   const databasePrompts = await loadPromptsFromDatabase();
   
   if (databasePrompts) {
-    console.log('Using database prompts');
+    console.log('✅ Using database prompts');
+    console.log('Database base prompt length:', databasePrompts.basePrompt.length);
+    console.log('Database activities available:', Object.keys(databasePrompts.activities));
     return databasePrompts;
   }
 
@@ -136,32 +168,52 @@ const getCustomPrompts = async (customBasePrompt?: string, customActivityPrompts
   const basePrompt = customBasePrompt || baseSpeechTherapistPrompt;
   const activities = customActivityPrompts ? { ...activityPrompts, ...customActivityPrompts } : activityPrompts;
   
-  console.log('Using fallback prompts (no database or custom prompts)');
+  console.log('⚠️ Using fallback prompts (no database prompts available)');
+  console.log('Fallback base prompt length:', basePrompt.length);
+  console.log('Fallback activities available:', Object.keys(activities));
+  
   return { basePrompt, activities };
 };
 
 export const createSystemPrompt = async (activityType?: string, customInstructions?: string, customBasePrompt?: string, customActivityPrompts?: any): Promise<string> => {
-  console.log('Creating system prompt for activity type:', activityType);
+  console.log('=== CREATE SYSTEM PROMPT CALLED ===');
+  console.log('Activity type:', activityType);
+  console.log('Custom instructions provided:', !!customInstructions);
+  console.log('Custom base prompt provided:', !!customBasePrompt);
+  console.log('Custom activity prompts provided:', !!customActivityPrompts);
   
   const { basePrompt, activities } = await getCustomPrompts(customBasePrompt, customActivityPrompts);
+  
+  console.log('📝 Building final prompt...');
+  console.log('Base prompt length:', basePrompt.length);
+  console.log('Base prompt preview:', basePrompt.substring(0, 200) + '...');
   
   let prompt = basePrompt;
   
   if (activityType && activities[activityType as keyof typeof activities]) {
-    prompt += activities[activityType as keyof typeof activities];
-    console.log('Added activity-specific prompt for:', activityType);
+    const activityPrompt = activities[activityType as keyof typeof activities];
+    prompt += activityPrompt;
+    console.log(`✅ Added activity-specific prompt for: ${activityType}`);
+    console.log('Activity prompt length:', activityPrompt.length);
   } else {
-    prompt += activities.default;
-    console.log('Using default activity prompt');
+    const defaultPrompt = activities.default;
+    prompt += defaultPrompt;
+    console.log('✅ Using default activity prompt');
+    console.log('Default prompt length:', defaultPrompt.length);
   }
   
   if (customInstructions) {
-    prompt += `\n\nADDITIONAL INSTRUCTIONS:\n${customInstructions}`;
-    console.log('Added custom instructions');
+    const instructionsAddition = `\n\nADDITIONAL INSTRUCTIONS:\n${customInstructions}`;
+    prompt += instructionsAddition;
+    console.log('✅ Added custom instructions');
+    console.log('Custom instructions length:', instructionsAddition.length);
   }
   
-  console.log('Final prompt length:', prompt.length);
-  console.log('Prompt preview (first 200 chars):', prompt.substring(0, 200) + '...');
+  console.log('=== FINAL PROMPT SUMMARY ===');
+  console.log('Final prompt total length:', prompt.length);
+  console.log('Final prompt contains "Laura":', prompt.includes('Laura'));
+  console.log('Final prompt contains "speech therapist":', prompt.includes('speech therapist'));
+  console.log('Final prompt preview (first 300 chars):', prompt.substring(0, 300) + '...');
   
   return prompt;
 };
