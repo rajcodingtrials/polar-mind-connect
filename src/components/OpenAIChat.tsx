@@ -50,6 +50,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [introductionComplete, setIntroductionComplete] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
@@ -111,6 +112,15 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
       sendInitialMessage();
     }
   }, [selectedQuestionType, useStructuredMode]);
+
+  useEffect(() => {
+    if (introductionComplete && useStructuredMode && questions.length > 0) {
+      console.log('Introduction complete, sending first question...');
+      const firstQuestion = questions[0];
+      sendFirstQuestion(firstQuestion);
+      setIntroductionComplete(false); // Reset for next time
+    }
+  }, [introductionComplete, useStructuredMode, questions]);
 
   const handleVoiceRecording = async () => {
     if (isRecording) {
@@ -239,10 +249,8 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
           
           setMessages([initialMessage]);
           
-          // After a short delay, send the first question with image
-          setTimeout(async () => {
-            await sendFirstQuestion(firstQuestion);
-          }, 1000);
+          // Mark introduction as complete to trigger the next effect
+          setIntroductionComplete(true);
         } else {
           console.log('⚠️ No content received from AI');
           return;
