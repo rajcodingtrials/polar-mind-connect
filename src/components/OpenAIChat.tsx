@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,11 +44,10 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   console.log('Selected question type:', selectedQuestionType);
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
-  const [showIntroOnly, setShowIntroOnly] = useState(true); // New state to control intro vs questions
+  const [showIntroOnly, setShowIntroOnly] = useState(true);
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
@@ -68,6 +66,14 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Stop audio when component unmounts (window closes)
+  useEffect(() => {
+    return () => {
+      console.log('OpenAIChat component unmounting, stopping audio...');
+      stopAudio();
+    };
+  }, [stopAudio]);
 
   useEffect(() => {
     const loadTTSSettings = async () => {
@@ -197,7 +203,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       let initialMessage: Message;
       
       if (useStructuredMode) {
-        // For structured mode, show intro only first (without questions or images)
         console.log('📡 Calling openai-chat edge function for structured mode intro...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
@@ -226,7 +231,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             role: 'assistant',
             content: data.choices[0].message.content,
             timestamp: new Date()
-            // No image for intro message
           };
           
           setShowIntroOnly(true);
@@ -235,7 +239,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
           return;
         }
       } else {
-        // For free chat mode, use OpenAI to generate initial greeting
         console.log('📡 Calling openai-chat edge function...');
         console.log('Request payload:', {
           messages: [],
@@ -330,9 +333,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       };
       
       setMessages(prev => [...prev, userMessage]);
-      setInputValue('');
       
-      // Show first question after user interaction
       setTimeout(() => {
         showFirstQuestion();
       }, 1000);
@@ -350,32 +351,27 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
     
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
-    setInputValue('');
     
     try {
       if (useStructuredMode && isWaitingForAnswer && questions[currentQuestionIndex]) {
         // Handle structured mode with predefined questions
         const currentQuestion = questions[currentQuestionIndex];
         
-        // Use enhanced similarity calculation with speech delay mode
         const similarity = calculateSimilarity(messageContent, currentQuestion.answer, {
           speechDelayMode,
-          threshold: speechDelayMode ? 0.4 : 0.6 // Lower threshold for speech delay mode
+          threshold: speechDelayMode ? 0.4 : 0.6
         });
         
         console.log(`Similarity score: ${similarity} (Speech delay mode: ${speechDelayMode})`);
         
         let responseMessage: Message;
         
-        // Lower acceptance threshold in speech delay mode
         const acceptanceThreshold = speechDelayMode ? 0.5 : 0.7;
         
         if (similarity > acceptanceThreshold) {
-          // Correct answer
           onCorrectAnswer();
           
           if (currentQuestionIndex + 1 < questions.length) {
-            // Move to next question
             const nextQuestion = questions[currentQuestionIndex + 1];
             responseMessage = {
               id: (Date.now() + 1).toString(),
@@ -386,7 +382,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             };
             setCurrentQuestionIndex(prev => prev + 1);
           } else {
-            // All questions completed
             responseMessage = {
               id: (Date.now() + 1).toString(),
               role: 'assistant',
@@ -396,7 +391,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             setIsWaitingForAnswer(false);
           }
         } else {
-          // Incorrect answer - encourage and give hint
           responseMessage = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
@@ -465,6 +459,12 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
 
   const currentQuestion = getCurrentQuestion();
 
+  const handleClose = () => {
+    console.log('Closing chat, stopping audio...');
+    stopAudio();
+    onClose();
+  };
+
   return (
     <div className="w-full h-[600px] flex flex-col bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-3xl shadow-xl overflow-hidden">
       {/* Header with Laura's image and controls */}
@@ -520,7 +520,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
                 Start Questions! 🚀
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={handleClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -552,48 +552,24 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
+      {/* Voice-only Input Interface */}
       <div className="border-t border-blue-200 p-4 bg-gradient-to-r from-blue-50 to-white">
-        <div className="flex space-x-2">
-          <div className="flex-1 relative">
-            <Input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Type your message..."
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage(inputValue);
-                }
-              }}
-              disabled={isLoading || isRecording || isProcessing}
-              className="pr-12 border-blue-200 focus:border-blue-400"
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
-              onClick={() => sendMessage(inputValue)}
-              disabled={isLoading || !inputValue.trim() || isRecording || isProcessing}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+        <div className="flex flex-col items-center space-y-3">
           <Button
-            size="sm"
+            size="lg"
             variant={isRecording ? "destructive" : "outline"}
             onClick={handleVoiceRecording}
             disabled={isLoading || isProcessing}
-            className="shrink-0 px-3"
+            className="w-16 h-16 rounded-full border-2 border-blue-300 hover:border-blue-400"
           >
-            {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
           </Button>
-        </div>
-        <div className="text-center mt-2 text-blue-600 text-sm">
-          {isRecording ? "Recording... Tap microphone to stop" : 
-           isProcessing ? "Processing your voice..." :
-           useStructuredMode && showIntroOnly && questions.length > 0 ? "Say hello or click 'Start Questions!' to begin" :
-           "Tap microphone to answer"}
+          <div className="text-center text-blue-600 text-sm font-medium">
+            {isRecording ? "Recording... Tap microphone to stop" : 
+             isProcessing ? "Processing your voice..." :
+             useStructuredMode && showIntroOnly && questions.length > 0 ? "Say hello or click 'Start Questions!' to begin" :
+             "Tap microphone to answer"}
+          </div>
         </div>
       </div>
     </div>
@@ -601,4 +577,3 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
 };
 
 export default OpenAIChat;
-

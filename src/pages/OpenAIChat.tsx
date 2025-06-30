@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -176,23 +177,23 @@ const OpenAIChatPage = () => {
     setUseStructuredMode(true);
     setShowQuestionTypes(false);
     setShowChat(true);
-    setCorrectAnswers(0); // Reset progress when starting new session
-    setChatKey(prev => prev + 1); // Reset chat when starting new session
+    setCorrectAnswers(0);
+    setChatKey(prev => prev + 1);
   };
 
   const handleCloseChat = () => {
     setShowChat(false);
     setShowQuestionTypes(false);
     setSelectedQuestionType(null);
-    setCorrectAnswers(0); // Reset progress when closing
-    setChatKey(prev => prev + 1); // Reset chat when closing
+    setCorrectAnswers(0);
+    setChatKey(prev => prev + 1);
   };
 
   const toggleChatMode = () => {
     console.log('Toggling chat mode from', useStructuredMode, 'to', !useStructuredMode);
     setUseStructuredMode(!useStructuredMode);
-    setCorrectAnswers(0); // Reset progress when changing modes
-    setChatKey(prev => prev + 1); // Force chat component to re-render with new mode
+    setCorrectAnswers(0);
+    setChatKey(prev => prev + 1);
   };
 
   const handleCorrectAnswer = () => {
@@ -200,19 +201,20 @@ const OpenAIChatPage = () => {
   };
 
   const handleLawrenceClick = () => {
-    // Placeholder for Lawrence functionality
     console.log('Lawrence clicked - functionality to be implemented');
   };
 
-  // Filter questions by selected type
+  // Filter questions by selected type - fixed logic
   const filteredQuestions = selectedQuestionType 
     ? questions.filter(q => {
-        console.log(`Filtering question ${q.id}: type=${q.questionType}, selected=${selectedQuestionType}, match=${q.questionType === selectedQuestionType}`);
-        return q.questionType === selectedQuestionType;
+        const matches = q.questionType === selectedQuestionType;
+        console.log(`Filtering question ${q.id}: type='${q.questionType}', selected='${selectedQuestionType}', matches=${matches}`);
+        return matches;
       })
     : questions;
 
   console.log('Filtered questions for', selectedQuestionType, ':', filteredQuestions.length);
+  console.log('Available questions:', questions.map(q => ({ id: q.id, type: q.questionType, imageName: q.imageName })));
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -327,7 +329,7 @@ const OpenAIChatPage = () => {
                         <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
                       </div>
                       
-                      {questionsOfType > 0 && type.value !== 'first_words' && type.value !== 'lets_chat' ? (
+                      {questionsOfType > 0 ? (
                         <div className="mt-4 text-center">
                           <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm">
                             🎯 {questionsOfType} questions ready!
