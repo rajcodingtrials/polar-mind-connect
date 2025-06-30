@@ -47,8 +47,16 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false }: ChatMessageP
   useEffect(() => {
     if (message.role === 'assistant' && autoPlayTTS && !hasAutoPlayed && !isPlaying && !isGeneratingAudio) {
       console.log('Auto-playing TTS for assistant message:', message.id);
-      setHasAutoPlayed(true);
-      handlePlayTTS();
+      // Add a small delay to prevent immediate overlapping
+      const timer = setTimeout(() => {
+        // Double-check that no audio is playing before starting
+        if (!isPlaying && !isGeneratingAudio) {
+          setHasAutoPlayed(true);
+          handlePlayTTS();
+        }
+      }, 500); // Small delay to prevent race conditions
+      
+      return () => clearTimeout(timer);
     }
   }, [message.id, message.role, autoPlayTTS, hasAutoPlayed, isPlaying, isGeneratingAudio]);
 

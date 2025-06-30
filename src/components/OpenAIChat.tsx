@@ -49,8 +49,9 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
   const [hasIntroduced, setHasIntroduced] = useState(false);
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
-  const [autoPlayTTS, setAutoPlayTTS] = useState(true); // Re-enabled for agent messages
+  const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
+  const [isPresentingQuestion, setIsPresentingQuestion] = useState(false); // New state to track question presentation
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
@@ -252,12 +253,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       console.log('💬 Initial message created:', initialMessage);
       setMessages([initialMessage]);
       
-      // After introduction, present first question if in structured mode
-      if (useStructuredMode && questions.length > 0 && hasIntroduced) {
-        setTimeout(() => {
-          presentFirstQuestion();
-        }, 2000);
-      }
+      // Don't present first question here - let the useEffect handle it with proper timing
     } catch (error) {
       console.error('💥 Error in sendInitialMessage:', error);
       toast({
@@ -271,7 +267,8 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
   };
 
   const presentFirstQuestion = () => {
-    if (questions.length > 0) {
+    if (questions.length > 0 && !isPresentingQuestion) {
+      setIsPresentingQuestion(true);
       const firstQuestion = questions[0];
       const questionMessage: Message = {
         id: (Date.now() + 2).toString(),
@@ -283,6 +280,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       
       setMessages(prev => [...prev, questionMessage]);
       setIsWaitingForAnswer(true);
+      setIsPresentingQuestion(false);
     }
   };
 
@@ -409,13 +407,23 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
     }
   };
 
-  // Present first question after introduction in structured mode
+  // Present first question after introduction in structured mode with proper delay
   useEffect(() => {
-    if (useStructuredMode && hasIntroduced && messages.length === 1 && questions.length > 0) {
-      const timer = setTimeout(presentFirstQuestion, 2000);
+    if (useStructuredMode && hasIntroduced && messages.length === 1 && questions.length > 0 && !isPresentingQuestion) {
+      // Wait for introduction TTS to finish before presenting first question
+      const timer = setTimeout(() => {
+        // Only present if no audio is currently playing
+        if (!isPlaying) {
+          presentFirstQuestion();
+        } else {
+          // If audio is playing, wait a bit longer
+          const retryTimer = setTimeout(presentFirstQuestion, 3000);
+          return () => clearTimeout(retryTimer);
+        }
+      }, 4000); // Increased delay to ensure introduction finishes
       return () => clearTimeout(timer);
     }
-  }, [hasIntroduced, messages.length, useStructuredMode, questions.length]);
+  }, [hasIntroduced, messages.length, useStructuredMode, questions.length, isPresentingQuestion, isPlaying]);
 
   const getCurrentQuestion = () => {
     if (!useStructuredMode || !questions.length) return null;
