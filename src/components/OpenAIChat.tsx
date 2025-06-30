@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -560,3 +561,4 @@ Now, let's look at this picture! ${firstQuestion.question}`;
 };
 
 export default OpenAIChat;
+
