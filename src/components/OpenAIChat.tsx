@@ -407,23 +407,25 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
     }
   };
 
-  // Present first question after introduction in structured mode with proper delay
+  // Present first question after introduction in structured mode with proper audio state checking
   useEffect(() => {
     if (useStructuredMode && hasIntroduced && messages.length === 1 && questions.length > 0 && !isPresentingQuestion) {
-      // Wait for introduction TTS to finish before presenting first question
-      const timer = setTimeout(() => {
-        // Only present if no audio is currently playing
-        if (!isPlaying) {
+      // Check audio state every 500ms until introduction finishes
+      const checkAudioState = () => {
+        if (!isPlaying && !isGeneratingAudio) {
+          // Audio has finished, now present the first question
           presentFirstQuestion();
         } else {
-          // If audio is playing, wait a bit longer
-          const retryTimer = setTimeout(presentFirstQuestion, 3000);
-          return () => clearTimeout(retryTimer);
+          // Audio is still playing, check again in 500ms
+          setTimeout(checkAudioState, 500);
         }
-      }, 4000); // Increased delay to ensure introduction finishes
+      };
+      
+      // Start checking after a small initial delay to ensure TTS has started
+      const timer = setTimeout(checkAudioState, 1000);
       return () => clearTimeout(timer);
     }
-  }, [hasIntroduced, messages.length, useStructuredMode, questions.length, isPresentingQuestion, isPlaying]);
+  }, [hasIntroduced, messages.length, useStructuredMode, questions.length, isPresentingQuestion, isPlaying, isGeneratingAudio]);
 
   const getCurrentQuestion = () => {
     if (!useStructuredMode || !questions.length) return null;
