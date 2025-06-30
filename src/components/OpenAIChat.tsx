@@ -47,7 +47,6 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
-  const [showIntroOnly, setShowIntroOnly] = useState(true);
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
@@ -202,13 +201,15 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
     try {
       let initialMessage: Message;
       
-      if (useStructuredMode) {
-        console.log('📡 Calling openai-chat edge function for structured mode intro...');
+      if (useStructuredMode && questions.length > 0) {
+        const firstQuestion = questions[0];
+        
+        console.log('📡 Calling openai-chat edge function for structured mode with first question...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [{
               role: 'user',
-              content: `Start the ${selectedQuestionType} activity with a warm introduction only. Do not ask any questions yet or show any images. Just introduce yourself and the activity briefly.`
+              content: `Start the ${selectedQuestionType} activity with a warm introduction, then immediately show the first question: "${firstQuestion.question}"`
             }],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
@@ -230,19 +231,13 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             id: Date.now().toString(),
             role: 'assistant',
             content: data.choices[0].message.content,
-            timestamp: new Date()
+            timestamp: new Date(),
+            imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
           };
           
-          setShowIntroOnly(true);
-          
-          // Automatically show first question after 3 seconds
-          setTimeout(() => {
-            if (questions.length > 0) {
-              showFirstQuestion();
-            }
-          }, 3000);
+          setIsWaitingForAnswer(true);
         } else {
-          console.log('⚠️ No content received from AI for intro');
+          console.log('⚠️ No content received from AI for intro + first question');
           return;
         }
       } else {
@@ -303,50 +298,11 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
     }
   };
 
-  const showFirstQuestion = async () => {
-    if (!questions.length) {
-      console.log('No questions available');
-      return;
-    }
-
-    console.log('📋 Showing first question...');
-    const firstQuestion = questions[0];
-    
-    const questionMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: `Great! Now let's look at this picture! ${firstQuestion.question}`,
-      timestamp: new Date(),
-      imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
-    };
-    
-    setMessages(prev => [...prev, questionMessage]);
-    setShowIntroOnly(false);
-    setIsWaitingForAnswer(true);
-  };
-
   const sendMessage = async (messageContent: string) => {
     if (!messageContent.trim()) return;
     
     console.log('📤 Sending user message:', messageContent);
     
-    // If we're still in intro-only mode and user sends a message, show the first question immediately
-    if (useStructuredMode && showIntroOnly && questions.length > 0) {
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: messageContent.trim(),
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, userMessage]);
-      
-      setTimeout(() => {
-        showFirstQuestion();
-      }, 1000);
-      return;
-    }
-
     setIsLoading(true);
     
     const userMessage: Message = {
