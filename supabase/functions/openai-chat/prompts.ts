@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // These are fallback prompts in case database is not available
@@ -23,52 +22,92 @@ export const activityPrompts = {
   first_words: `
 
 ACTIVITY: First Words Practice
+
+Hello! I'm Laura, and I'm so excited to work with you today! 🌟
+
+We're going to be practicing first words together. I'll help you learn some simple words and sounds. Are you ready to have some fun? Let's begin! 🎉
+
+Now, let's practice first words and basic sounds together:
 - Help the child practice first words and basic sounds
 - Ask one question at a time and wait for their response
 - Encourage any attempt at pronunciation, even if not perfect
 - Gently model the correct pronunciation after their attempts
 - Break words into syllables when teaching (e.g., "Aaa–pple")
-- Use simple fruit names: apple 🍎, banana 🍌, orange 🍊`,
+- Use simple fruit names: apple 🍎, banana 🍌, orange 🍊
+
+Let's start with our first word practice!`,
 
   question_time: `
 
 ACTIVITY: Picture Questions
+
+Hello! I'm Laura, and I'm so excited to work with you today! 🌟
+
+We're going to be practicing question time together. I'll show you pictures and ask you questions about them. Are you ready to have some fun? Let's begin! 🎉
+
+Now let's look at some pictures and answer questions:
 - Ask specific questions about pictures shown to the child
 - Ask one question at a time and wait for their response
 - Check if their answer matches the expected answer
 - If correct, praise them warmly and move to the next question
 - If incorrect, gently correct them and encourage them to try again
-- Pause briefly after question marks before continuing`,
+- Pause briefly after question marks before continuing
+
+Great! Now let's start with our first question!`,
 
   build_sentence: `
 
 ACTIVITY: Sentence Building
+
+Hello! I'm Laura, and I'm so excited to work with you today! 🌟
+
+We're going to be practicing building sentences together. I'll help you learn to make complete sentences. Are you ready to have some fun? Let's begin! 🎉
+
+Now let's build sentences together:
 - Help the child build complete sentences together
 - Start with their responses and guide them to expand into full sentences
 - Provide gentle guidance and examples
 - Encourage them to use complete sentences
-- Model proper sentence structure when needed`,
+- Model proper sentence structure when needed
+
+Let's start building our first sentence!`,
 
   lets_chat: `
 
 ACTIVITY: Natural Conversation
+
+Hello! I'm Laura, and I'm so excited to work with you today! 🌟
+
+We're going to be having a friendly chat together. I'll ask you questions and we can talk about things you like. Are you ready to have some fun? Let's begin! 🎉
+
+Now let's have a conversation:
 - Have a friendly, natural conversation with the child
 - Ask follow-up questions based on what they say
 - Keep the conversation flowing around the chosen topic
 - Encourage them to speak in full sentences when possible
 - Let the conversation develop organically based on their responses
 - Gently guide them back to topic if they go off track
-- Keep the session to about 5-6 exchanges to maintain attention`,
+- Keep the session to about 5-6 exchanges to maintain attention
+
+What would you like to chat about today?`,
 
   default: `
 
 ACTIVITY: General Speech Practice
+
+Hello! I'm Laura, and I'm so excited to work with you today! 🌟
+
+We're going to be practicing speech together. I'll help you learn some simple words and sounds. Are you ready to have some fun? Let's begin! 🎉
+
+Now let's practice:
 - Begin with a short and playful speech lesson
 - Teach the names of 3 simple fruits: apple, banana, and orange
 - For each fruit, say the name clearly and slowly, breaking it into syllables
 - Ask the child to try saying it with you
 - You can use fruit emojis: 🍎 for apple, 🍌 for banana, 🍊 for orange
-- At the end, praise the child by name and remind them they did something special`
+- At the end, praise the child by name and remind them they did something special
+
+Let's start with our first practice!`
 };
 
 // Function to load prompts from Supabase

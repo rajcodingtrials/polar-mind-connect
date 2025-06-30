@@ -47,12 +47,10 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
-  const [hasIntroduced, setHasIntroduced] = useState(false);
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
-  const [isPresentingQuestion, setIsPresentingQuestion] = useState(false);
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false); // Add missing state
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
@@ -196,17 +194,47 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       let initialMessage: Message;
       
       if (useStructuredMode && questions.length > 0) {
-        // For structured mode, start with introduction first
-        const messageContent = `Hello! I'm Laura, and I'm so excited to work with you today! 🌟\n\nWe're going to be practicing ${selectedQuestionType.replace('_', ' ')} together. I'll ask you some questions and show you pictures to help us learn. Are you ready to have some fun? Let's begin! 🎉`;
+        // For structured mode, send the first question immediately with the integrated introduction
+        const firstQuestion = questions[0];
         
-        initialMessage = {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: messageContent,
-          timestamp: new Date()
-        };
-        
-        setHasIntroduced(true);
+        // Call OpenAI to get the activity-specific response that includes both intro and first question
+        console.log('📡 Calling openai-chat edge function for structured mode...');
+        const { data, error } = await supabase.functions.invoke('openai-chat', {
+          body: {
+            messages: [],
+            activityType: selectedQuestionType,
+            customInstructions: getBasePrompt()
+          }
+        });
+
+        if (error) {
+          console.error('❌ Error calling OpenAI chat function:', error);
+          toast({
+            title: "Connection Error",
+            description: "Failed to connect to Laura. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data?.choices?.[0]?.message?.content) {
+          // Append the first question to the AI response
+          const aiResponse = data.choices[0].message.content;
+          const combinedContent = `${aiResponse}\n\n${firstQuestion.question}`;
+          
+          initialMessage = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: combinedContent,
+            timestamp: new Date(),
+            imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
+          };
+          
+          setIsWaitingForAnswer(true);
+        } else {
+          console.log('⚠️ No content received from AI');
+          return;
+        }
       } else {
         // For free chat mode, use OpenAI to generate initial greeting
         console.log('📡 Calling openai-chat edge function...');
@@ -254,7 +282,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       console.log('💬 Initial message created:', initialMessage);
       setMessages([initialMessage]);
       
-      // Don't present first question here - let the useEffect handle it with proper timing
     } catch (error) {
       console.error('💥 Error in sendInitialMessage:', error);
       toast({
@@ -264,24 +291,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const presentFirstQuestion = () => {
-    if (questions.length > 0 && !isPresentingQuestion) {
-      setIsPresentingQuestion(true);
-      const firstQuestion = questions[0];
-      const questionMessage: Message = {
-        id: (Date.now() + 2).toString(),
-        role: 'assistant',
-        content: `Great! Now let's start with our first question:\n\n${firstQuestion.question}`,
-        timestamp: new Date(),
-        imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
-      };
-      
-      setMessages(prev => [...prev, questionMessage]);
-      setIsWaitingForAnswer(true);
-      setIsPresentingQuestion(false);
     }
   };
 
@@ -410,23 +419,10 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
 
   // Present first question after introduction in structured mode with proper audio state checking
   useEffect(() => {
-    if (useStructuredMode && hasIntroduced && messages.length === 1 && questions.length > 0 && !isPresentingQuestion) {
-      // Check audio state every 500ms until introduction finishes
-      const checkAudioState = () => {
-        if (!isPlaying && !isGeneratingAudio) {
-          // Audio has finished, now present the first question
-          presentFirstQuestion();
-        } else {
-          // Audio is still playing, check again in 500ms
-          setTimeout(checkAudioState, 500);
-        }
-      };
-      
-      // Start checking after a small initial delay to ensure TTS has started
-      const timer = setTimeout(checkAudioState, 1000);
-      return () => clearTimeout(timer);
+    if (useStructuredMode && isWaitingForAnswer && messages.length === 1 && questions.length > 0) {
+      setIsWaitingForAnswer(false);
     }
-  }, [hasIntroduced, messages.length, useStructuredMode, questions.length, isPresentingQuestion, isPlaying, isGeneratingAudio]);
+  }, [useStructuredMode, isWaitingForAnswer, messages.length, questions.length]);
 
   const getCurrentQuestion = () => {
     if (!useStructuredMode || !questions.length) return null;
