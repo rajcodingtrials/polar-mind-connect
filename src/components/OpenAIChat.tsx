@@ -49,6 +49,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
+  const [showIntroOnly, setShowIntroOnly] = useState(true); // New state to control intro vs questions
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
@@ -195,14 +196,14 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
     try {
       let initialMessage: Message;
       
-      if (useStructuredMode && questions.length > 0) {
-        // For structured mode with questions, generate intro then immediately show first question
+      if (useStructuredMode) {
+        // For structured mode, show intro only first (without questions or images)
         console.log('📡 Calling openai-chat edge function for structured mode intro...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [{
               role: 'user',
-              content: `Start the ${selectedQuestionType} activity with a warm introduction, but do not ask any questions yet. Just introduce yourself and the activity.`
+              content: `Start the ${selectedQuestionType} activity with a warm introduction only. Do not ask any questions yet or show any images. Just introduce yourself and the activity briefly.`
             }],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
@@ -220,22 +221,15 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
         }
 
         if (data?.choices?.[0]?.message?.content) {
-          const firstQuestion = questions[0];
-          
-          // Combine intro with first question
-          const combinedContent = `${data.choices[0].message.content}
-
-Now, let's look at this picture! ${firstQuestion.question}`;
-
           initialMessage = {
             id: Date.now().toString(),
             role: 'assistant',
-            content: combinedContent,
-            timestamp: new Date(),
-            imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
+            content: data.choices[0].message.content,
+            timestamp: new Date()
+            // No image for intro message
           };
           
-          setIsWaitingForAnswer(true);
+          setShowIntroOnly(true);
         } else {
           console.log('⚠️ No content received from AI for intro');
           return;
@@ -299,10 +293,52 @@ Now, let's look at this picture! ${firstQuestion.question}`;
     }
   };
 
+  const showFirstQuestion = async () => {
+    if (!questions.length) {
+      console.log('No questions available');
+      return;
+    }
+
+    console.log('📋 Showing first question...');
+    const firstQuestion = questions[0];
+    
+    const questionMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: `Great! Now let's look at this picture! ${firstQuestion.question}`,
+      timestamp: new Date(),
+      imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
+    };
+    
+    setMessages(prev => [...prev, questionMessage]);
+    setShowIntroOnly(false);
+    setIsWaitingForAnswer(true);
+  };
+
   const sendMessage = async (messageContent: string) => {
     if (!messageContent.trim()) return;
     
     console.log('📤 Sending user message:', messageContent);
+    
+    // If we're still in intro-only mode and user sends a message, show the first question
+    if (useStructuredMode && showIntroOnly && questions.length > 0) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: messageContent.trim(),
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, userMessage]);
+      setInputValue('');
+      
+      // Show first question after user interaction
+      setTimeout(() => {
+        showFirstQuestion();
+      }, 1000);
+      return;
+    }
+
     setIsLoading(true);
     
     const userMessage: Message = {
@@ -422,13 +458,6 @@ Now, let's look at this picture! ${firstQuestion.question}`;
     }
   };
 
-  // Present first question after introduction in structured mode with proper audio state checking
-  useEffect(() => {
-    if (useStructuredMode && isWaitingForAnswer && messages.length === 1 && questions.length > 0) {
-      setIsWaitingForAnswer(false);
-    }
-  }, [useStructuredMode, isWaitingForAnswer, messages.length, questions.length]);
-
   const getCurrentQuestion = () => {
     if (!useStructuredMode || !questions.length) return null;
     return questions[currentQuestionIndex];
@@ -479,6 +508,16 @@ Now, let's look at this picture! ${firstQuestion.question}`;
                 title={speechDelayMode ? "Speech Delay Mode ON" : "Speech Delay Mode OFF"}
               >
                 {speechDelayMode ? "🧠 ON" : "🧠 OFF"}
+              </Button>
+            )}
+            {useStructuredMode && showIntroOnly && questions.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={showFirstQuestion}
+                className="border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300 shadow-sm"
+              >
+                Start Questions! 🚀
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -553,6 +592,7 @@ Now, let's look at this picture! ${firstQuestion.question}`;
         <div className="text-center mt-2 text-blue-600 text-sm">
           {isRecording ? "Recording... Tap microphone to stop" : 
            isProcessing ? "Processing your voice..." :
+           useStructuredMode && showIntroOnly && questions.length > 0 ? "Say hello or click 'Start Questions!' to begin" :
            "Tap microphone to answer"}
         </div>
       </div>

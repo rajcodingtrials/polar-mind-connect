@@ -93,6 +93,10 @@ const OpenAIChatPage = () => {
           
           setQuestions(formattedQuestions);
           console.log('Loaded questions from Supabase:', formattedQuestions.length);
+          console.log('Questions by type:', formattedQuestions.reduce((acc, q) => {
+            acc[q.questionType || 'unknown'] = (acc[q.questionType || 'unknown'] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>));
 
           // Load image URLs for questions that have images
           const imageUrlMap: {[key: string]: string} = {};
@@ -202,8 +206,13 @@ const OpenAIChatPage = () => {
 
   // Filter questions by selected type
   const filteredQuestions = selectedQuestionType 
-    ? questions.filter(q => q.questionType === selectedQuestionType)
+    ? questions.filter(q => {
+        console.log(`Filtering question ${q.id}: type=${q.questionType}, selected=${selectedQuestionType}, match=${q.questionType === selectedQuestionType}`);
+        return q.questionType === selectedQuestionType;
+      })
     : questions;
+
+  console.log('Filtered questions for', selectedQuestionType, ':', filteredQuestions.length);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -318,10 +327,16 @@ const OpenAIChatPage = () => {
                         <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
                       </div>
                       
-                      {questionsOfType > 0 && type.value !== 'first_words' && type.value !== 'lets_chat' && (
+                      {questionsOfType > 0 && type.value !== 'first_words' && type.value !== 'lets_chat' ? (
                         <div className="mt-4 text-center">
                           <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm">
                             🎯 {questionsOfType} questions ready!
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-4 text-center">
+                          <span className="bg-white bg-opacity-60 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
+                            ✨ AI-generated content
                           </span>
                         </div>
                       )}
