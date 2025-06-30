@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // These are fallback prompts in case database is not available
@@ -33,7 +34,8 @@ Now, let's practice first words and basic sounds together:
 - Encourage any attempt at pronunciation, even if not perfect
 - Gently model the correct pronunciation after their attempts
 - Break words into syllables when teaching (e.g., "Aaa–pple")
-- Use simple fruit names: apple 🍎, banana 🍌, orange 🍊
+- Use simple, clear questions about pictures or objects shown
+- If no specific questions are provided, you can use simple fruit names: apple 🍎, banana 🍌, orange 🍊
 
 Let's start with our first word practice!`,
 

@@ -194,14 +194,16 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       let initialMessage: Message;
       
       if (useStructuredMode && questions.length > 0) {
-        // For structured mode, send the first question immediately with the integrated introduction
+        // For structured mode with questions, create a combined intro + first question
         const firstQuestion = questions[0];
         
-        // Call OpenAI to get the activity-specific response that includes both intro and first question
         console.log('📡 Calling openai-chat edge function for structured mode...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
-            messages: [],
+            messages: [{
+              role: 'user',
+              content: `Start the ${selectedQuestionType} activity and then ask this specific question: "${firstQuestion.question}"`
+            }],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
           }
@@ -218,14 +220,10 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
         }
 
         if (data?.choices?.[0]?.message?.content) {
-          // Append the first question to the AI response
-          const aiResponse = data.choices[0].message.content;
-          const combinedContent = `${aiResponse}\n\n${firstQuestion.question}`;
-          
           initialMessage = {
             id: Date.now().toString(),
             role: 'assistant',
-            content: combinedContent,
+            content: data.choices[0].message.content,
             timestamp: new Date(),
             imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
           };
