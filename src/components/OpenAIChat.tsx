@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -207,13 +206,20 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
         console.log('First question image name:', firstQuestion.imageName);
         console.log('Available image URLs:', imageUrls);
         
-        // Include the first question in the initial request so AI can incorporate it
-        console.log('📡 Calling openai-chat edge function with first question context...');
+        // Create a comprehensive prompt that includes the actual question from Supabase
+        const contextPrompt = `Please start the ${selectedQuestionType} activity. Here is the specific question from our database that you should ask:
+
+Question: "${firstQuestion.question}"
+Expected Answer: "${firstQuestion.answer}"
+
+Please provide a warm introduction first, then ask this exact question. Do not create your own questions - use only the question provided above.`;
+
+        console.log('📡 Calling openai-chat edge function with specific question context...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [{
               role: 'user', 
-              content: `Please start the ${selectedQuestionType} activity and show me the first question: "${firstQuestion.question}"`
+              content: contextPrompt
             }],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
