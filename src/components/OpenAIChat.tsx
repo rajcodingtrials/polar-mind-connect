@@ -51,7 +51,8 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
-  const [isPresentingQuestion, setIsPresentingQuestion] = useState(false); // New state to track question presentation
+  const [isPresentingQuestion, setIsPresentingQuestion] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false); // Add missing state
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
@@ -494,6 +495,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             message={message} 
             ttsSettings={ttsSettings}
             autoPlayTTS={autoPlayTTS}
+            onAudioStateChange={setIsGeneratingAudio}
           />
         ))}
         {isLoading && (

@@ -6,10 +6,22 @@ import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessageProps } from './types';
 
-const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false }: ChatMessageProps & { autoPlayTTS?: boolean }) => {
+interface ExtendedChatMessageProps extends ChatMessageProps {
+  autoPlayTTS?: boolean;
+  onAudioStateChange?: (isGenerating: boolean) => void;
+}
+
+const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateChange }: ExtendedChatMessageProps) => {
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
+
+  // Notify parent component about audio generation state
+  useEffect(() => {
+    if (onAudioStateChange) {
+      onAudioStateChange(isGeneratingAudio);
+    }
+  }, [isGeneratingAudio, onAudioStateChange]);
 
   const handlePlayTTS = async () => {
     if (isPlaying) return;
