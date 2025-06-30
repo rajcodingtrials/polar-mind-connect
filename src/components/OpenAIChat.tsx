@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -194,15 +195,13 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       let initialMessage: Message;
       
       if (useStructuredMode && questions.length > 0) {
-        // For structured mode with questions, create a combined intro + first question
-        const firstQuestion = questions[0];
-        
-        console.log('📡 Calling openai-chat edge function for structured mode...');
+        // For structured mode with questions, generate intro then immediately show first question
+        console.log('📡 Calling openai-chat edge function for structured mode intro...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [{
               role: 'user',
-              content: `Start the ${selectedQuestionType} activity and then ask this specific question: "${firstQuestion.question}"`
+              content: `Start the ${selectedQuestionType} activity with a warm introduction, but do not ask any questions yet. Just introduce yourself and the activity.`
             }],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
@@ -220,17 +219,24 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
         }
 
         if (data?.choices?.[0]?.message?.content) {
+          const firstQuestion = questions[0];
+          
+          // Combine intro with first question
+          const combinedContent = `${data.choices[0].message.content}
+
+Now, let's look at this picture! ${firstQuestion.question}`;
+
           initialMessage = {
             id: Date.now().toString(),
             role: 'assistant',
-            content: data.choices[0].message.content,
+            content: combinedContent,
             timestamp: new Date(),
             imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
           };
           
           setIsWaitingForAnswer(true);
         } else {
-          console.log('⚠️ No content received from AI');
+          console.log('⚠️ No content received from AI for intro');
           return;
         }
       } else {
