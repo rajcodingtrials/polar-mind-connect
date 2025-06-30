@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -204,13 +203,10 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       if (useStructuredMode && questions.length > 0) {
         const firstQuestion = questions[0];
         
-        console.log('📡 Calling openai-chat edge function for structured mode with first question...');
+        console.log('📡 Calling openai-chat edge function - single call with activity prompt...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
-            messages: [{
-              role: 'user',
-              content: `Start the ${selectedQuestionType} activity with a warm introduction, then immediately show the first question: "${firstQuestion.question}"`
-            }],
+            messages: [],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
           }
@@ -237,17 +233,11 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
           
           setIsWaitingForAnswer(true);
         } else {
-          console.log('⚠️ No content received from AI for intro + first question');
+          console.log('⚠️ No content received from AI');
           return;
         }
       } else {
-        console.log('📡 Calling openai-chat edge function...');
-        console.log('Request payload:', {
-          messages: [],
-          activityType: selectedQuestionType,
-          customInstructions: getBasePrompt()
-        });
-        
+        console.log('📡 Calling openai-chat edge function for free chat...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [],
@@ -255,10 +245,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             customInstructions: getBasePrompt()
           }
         });
-
-        console.log('📥 Edge function response received:');
-        console.log('Data:', data);
-        console.log('Error:', error);
 
         if (error) {
           console.error('❌ Error calling OpenAI chat function:', error);
@@ -367,8 +353,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       } else {
         // Free chat mode or general conversation
         console.log('📡 Calling openai-chat edge function with conversation...');
-        console.log('Messages to send:', updatedMessages.map(m => ({ role: m.role, content: m.content })));
-        console.log('Activity type:', selectedQuestionType);
         
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
@@ -377,10 +361,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             customInstructions: getBasePrompt()
           }
         });
-
-        console.log('📥 Edge function response:');
-        console.log('Response data:', data);
-        console.log('Response error:', error);
 
         if (error) {
           console.error('❌ Error calling OpenAI chat function:', error);
@@ -518,9 +498,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
           </Button>
           <div className="text-center text-blue-600 text-sm font-medium">
-            {isRecording ? "Recording... Tap microphone to stop" : 
-             isProcessing ? "Processing your voice..." :
-             "Tap to answer"}
+            Tap to answer
           </div>
         </div>
       </div>
