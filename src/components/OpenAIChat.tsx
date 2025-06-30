@@ -234,6 +234,13 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
           };
           
           setShowIntroOnly(true);
+          
+          // Automatically show first question after 3 seconds
+          setTimeout(() => {
+            if (questions.length > 0) {
+              showFirstQuestion();
+            }
+          }, 3000);
         } else {
           console.log('⚠️ No content received from AI for intro');
           return;
@@ -323,7 +330,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
     
     console.log('📤 Sending user message:', messageContent);
     
-    // If we're still in intro-only mode and user sends a message, show the first question
+    // If we're still in intro-only mode and user sends a message, show the first question immediately
     if (useStructuredMode && showIntroOnly && questions.length > 0) {
       const userMessage: Message = {
         id: Date.now().toString(),
@@ -510,16 +517,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
                 {speechDelayMode ? "🧠 ON" : "🧠 OFF"}
               </Button>
             )}
-            {useStructuredMode && showIntroOnly && questions.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={showFirstQuestion}
-                className="border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300 shadow-sm"
-              >
-                Start Questions! 🚀
-              </Button>
-            )}
             <Button variant="ghost" size="sm" onClick={handleClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -567,8 +564,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
           <div className="text-center text-blue-600 text-sm font-medium">
             {isRecording ? "Recording... Tap microphone to stop" : 
              isProcessing ? "Processing your voice..." :
-             useStructuredMode && showIntroOnly && questions.length > 0 ? "Say hello or click 'Start Questions!' to begin" :
-             "Tap microphone to answer"}
+             "Tap to answer"}
           </div>
         </div>
       </div>
