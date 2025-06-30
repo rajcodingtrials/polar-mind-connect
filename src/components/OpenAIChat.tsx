@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Mic, MicOff, Send, X, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { Mic, MicOff, Send, X, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
@@ -50,7 +49,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
   const [hasIntroduced, setHasIntroduced] = useState(false);
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
-  const [autoPlayTTS, setAutoPlayTTS] = useState(false); // Disabled by default to prevent dual audio
+  const [autoPlayTTS, setAutoPlayTTS] = useState(true); // Re-enabled for agent messages
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -470,23 +469,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
                 {speechDelayMode ? "🧠 ON" : "🧠 OFF"}
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                if (isPlaying) {
-                  stopAudio();
-                } else {
-                  setAutoPlayTTS(!autoPlayTTS);
-                }
-              }}
-              className={`border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 shadow-sm ${
-                autoPlayTTS && !isPlaying ? "bg-blue-100 border-blue-300" : ""
-              }`}
-              title={isPlaying ? "Stop Audio" : autoPlayTTS ? "Auto-play ON" : "Auto-play OFF"}
-            >
-              {isPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </Button>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>

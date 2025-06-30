@@ -46,6 +46,7 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false }: ChatMessageP
   // Auto-play TTS for assistant messages when they first appear (only if enabled and not already played)
   useEffect(() => {
     if (message.role === 'assistant' && autoPlayTTS && !hasAutoPlayed && !isPlaying && !isGeneratingAudio) {
+      console.log('Auto-playing TTS for assistant message:', message.id);
       setHasAutoPlayed(true);
       handlePlayTTS();
     }
