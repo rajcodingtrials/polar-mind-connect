@@ -203,23 +203,16 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       if (useStructuredMode && questions.length > 0) {
         const firstQuestion = questions[0];
         console.log('First question:', firstQuestion);
-        console.log('First question image name:', firstQuestion.imageName);
-        console.log('Available image URLs:', imageUrls);
         
-        // Create a comprehensive prompt that includes the actual question from Supabase
-        const contextPrompt = `Please start the ${selectedQuestionType} activity. Here is the specific question from our database that you should ask:
+        // First, get just the introduction from AI
+        const introPrompt = `Please provide a warm introduction for starting the ${selectedQuestionType} activity. Just the introduction - do not ask any questions yet.`;
 
-Question: "${firstQuestion.question}"
-Expected Answer: "${firstQuestion.answer}"
-
-Please provide a warm introduction first, then ask this exact question. Do not create your own questions - use only the question provided above.`;
-
-        console.log('📡 Calling openai-chat edge function with specific question context...');
+        console.log('📡 Calling openai-chat edge function for introduction...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [{
               role: 'user', 
-              content: contextPrompt
+              content: introPrompt
             }],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
@@ -241,16 +234,15 @@ Please provide a warm introduction first, then ask this exact question. Do not c
             id: Date.now().toString(),
             role: 'assistant',
             content: data.choices[0].message.content,
-            timestamp: new Date(),
-            imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
+            timestamp: new Date()
           };
           
-          console.log('Initial message with image:', {
-            content: initialMessage.content.substring(0, 100) + '...',
-            imageUrl: initialMessage.imageUrl
-          });
+          setMessages([initialMessage]);
           
-          setIsWaitingForAnswer(true);
+          // After a short delay, send the first question with image
+          setTimeout(async () => {
+            await sendFirstQuestion(firstQuestion);
+          }, 1000);
         } else {
           console.log('⚠️ No content received from AI');
           return;
@@ -282,14 +274,13 @@ Please provide a warm introduction first, then ask this exact question. Do not c
             content: data.choices[0].message.content,
             timestamp: new Date()
           };
+          
+          setMessages([initialMessage]);
         } else {
           console.log('⚠️ No content received from AI');
           return;
         }
       }
-
-      console.log('💬 Initial message created:', initialMessage);
-      setMessages([initialMessage]);
       
     } catch (error) {
       console.error('💥 Error in sendInitialMessage:', error);
@@ -298,6 +289,52 @@ Please provide a warm introduction first, then ask this exact question. Do not c
         description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendFirstQuestion = async (question: Question) => {
+    try {
+      setIsLoading(true);
+      
+      const questionPrompt = `Now ask this specific question from our database:
+
+Question: "${question.question}"
+Expected Answer: "${question.answer}"
+
+Ask this exact question - do not modify or create your own question.`;
+
+      const { data, error } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          messages: [{
+            role: 'user', 
+            content: questionPrompt
+          }],
+          activityType: selectedQuestionType,
+          customInstructions: getBasePrompt()
+        }
+      });
+
+      if (error) {
+        console.error('❌ Error sending first question:', error);
+        return;
+      }
+
+      if (data?.choices?.[0]?.message?.content) {
+        const questionMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.choices[0].message.content,
+          timestamp: new Date(),
+          imageUrl: question.imageName && imageUrls[question.imageName] ? imageUrls[question.imageName] : undefined
+        };
+        
+        setMessages(prev => [...prev, questionMessage]);
+        setIsWaitingForAnswer(true);
+      }
+    } catch (error) {
+      console.error('💥 Error sending first question:', error);
     } finally {
       setIsLoading(false);
     }
