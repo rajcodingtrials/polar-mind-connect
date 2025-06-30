@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,7 +51,6 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-  const [introductionComplete, setIntroductionComplete] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
@@ -112,15 +112,6 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
       sendInitialMessage();
     }
   }, [selectedQuestionType, useStructuredMode]);
-
-  useEffect(() => {
-    if (introductionComplete && useStructuredMode && questions.length > 0) {
-      console.log('Introduction complete, sending first question...');
-      const firstQuestion = questions[0];
-      sendFirstQuestion(firstQuestion);
-      setIntroductionComplete(false); // Reset for next time
-    }
-  }, [introductionComplete, useStructuredMode, questions]);
 
   const handleVoiceRecording = async () => {
     if (isRecording) {
@@ -209,20 +200,30 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
     
     try {
       let initialMessage: Message;
+      let promptContent: string;
       
       if (useStructuredMode && questions.length > 0) {
         const firstQuestion = questions[0];
         console.log('First question:', firstQuestion);
         
-        // First, get just the introduction from AI
-        const introPrompt = `Please provide a warm introduction for starting the ${selectedQuestionType} activity. Just the introduction - do not ask any questions yet.`;
+        // Single API call that combines introduction and first question
+        promptContent = `Please provide a warm introduction for starting the ${selectedQuestionType} activity, followed by asking this specific question from our database:
 
-        console.log('📡 Calling openai-chat edge function for introduction...');
+Question: "${firstQuestion.question}"
+Expected Answer: "${firstQuestion.answer}"
+
+Structure your response as:
+1. A warm, encouraging introduction to the activity
+2. Then ask the exact question provided above (do not modify the question)
+
+Make it all flow naturally as one cohesive message.`;
+
+        console.log('📡 Calling openai-chat edge function for unified introduction + question...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [{
               role: 'user', 
-              content: introPrompt
+              content: promptContent
             }],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
@@ -244,22 +245,27 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             id: Date.now().toString(),
             role: 'assistant',
             content: data.choices[0].message.content,
-            timestamp: new Date()
+            timestamp: new Date(),
+            imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
           };
           
           setMessages([initialMessage]);
-          
-          // Mark introduction as complete to trigger the next effect
-          setIntroductionComplete(true);
+          setIsWaitingForAnswer(true); // We're now waiting for answer to the first question
         } else {
           console.log('⚠️ No content received from AI');
           return;
         }
       } else {
+        // Free chat mode
+        promptContent = `Please provide a warm, encouraging introduction for a ${selectedQuestionType} session.`;
+        
         console.log('📡 Calling openai-chat edge function for free chat...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
-            messages: [],
+            messages: [{
+              role: 'user', 
+              content: promptContent
+            }],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
           }
@@ -297,52 +303,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
         description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const sendFirstQuestion = async (question: Question) => {
-    try {
-      setIsLoading(true);
-      
-      const questionPrompt = `Now ask this specific question from our database:
-
-Question: "${question.question}"
-Expected Answer: "${question.answer}"
-
-Ask this exact question - do not modify or create your own question.`;
-
-      const { data, error } = await supabase.functions.invoke('openai-chat', {
-        body: {
-          messages: [{
-            role: 'user', 
-            content: questionPrompt
-          }],
-          activityType: selectedQuestionType,
-          customInstructions: getBasePrompt()
-        }
-      });
-
-      if (error) {
-        console.error('❌ Error sending first question:', error);
-        return;
-      }
-
-      if (data?.choices?.[0]?.message?.content) {
-        const questionMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: data.choices[0].message.content,
-          timestamp: new Date(),
-          imageUrl: question.imageName && imageUrls[question.imageName] ? imageUrls[question.imageName] : undefined
-        };
-        
-        setMessages(prev => [...prev, questionMessage]);
-        setIsWaitingForAnswer(true);
-      }
-    } catch (error) {
-      console.error('💥 Error sending first question:', error);
     } finally {
       setIsLoading(false);
     }
