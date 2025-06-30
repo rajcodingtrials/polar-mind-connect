@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -202,11 +203,18 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
       
       if (useStructuredMode && questions.length > 0) {
         const firstQuestion = questions[0];
+        console.log('First question:', firstQuestion);
+        console.log('First question image name:', firstQuestion.imageName);
+        console.log('Available image URLs:', imageUrls);
         
-        console.log('📡 Calling openai-chat edge function - single call with activity prompt...');
+        // Include the first question in the initial request so AI can incorporate it
+        console.log('📡 Calling openai-chat edge function with first question context...');
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
-            messages: [],
+            messages: [{
+              role: 'user', 
+              content: `Please start the ${selectedQuestionType} activity and show me the first question: "${firstQuestion.question}"`
+            }],
             activityType: selectedQuestionType,
             customInstructions: getBasePrompt()
           }
@@ -230,6 +238,11 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
             timestamp: new Date(),
             imageUrl: firstQuestion.imageName && imageUrls[firstQuestion.imageName] ? imageUrls[firstQuestion.imageName] : undefined
           };
+          
+          console.log('Initial message with image:', {
+            content: initialMessage.content.substring(0, 100) + '...',
+            imageUrl: initialMessage.imageUrl
+          });
           
           setIsWaitingForAnswer(true);
         } else {
