@@ -8,12 +8,13 @@ import { ChatMessageProps } from './types';
 interface ExtendedChatMessageProps extends ChatMessageProps {
   autoPlayTTS?: boolean;
   onAudioStateChange?: (isGenerating: boolean) => void;
+  forceStopAudio?: boolean;
 }
 
-const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateChange }: ExtendedChatMessageProps) => {
+const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateChange, forceStopAudio = false }: ExtendedChatMessageProps) => {
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
-  const { isPlaying, playAudio } = useAudioPlayer();
+  const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
 
   // Notify parent component about audio generation state
   useEffect(() => {
@@ -21,6 +22,24 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
       onAudioStateChange(isGeneratingAudio);
     }
   }, [isGeneratingAudio, onAudioStateChange]);
+
+  // Stop audio when forceStopAudio is true (when chat closes)
+  useEffect(() => {
+    if (forceStopAudio) {
+      console.log('Force stopping audio in ChatMessage:', message.id);
+      stopAudio();
+      setIsGeneratingAudio(false);
+    }
+  }, [forceStopAudio, stopAudio, message.id]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('ChatMessage unmounting, stopping audio:', message.id);
+      stopAudio();
+      setIsGeneratingAudio(false);
+    };
+  }, [stopAudio, message.id]);
 
   const handlePlayTTS = async () => {
     if (isPlaying) return;

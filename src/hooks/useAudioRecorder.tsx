@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 
 export const useAudioRecorder = () => {
@@ -97,6 +96,52 @@ export const useAudioRecorder = () => {
               stopPromiseRef.current.reject(new Error('Empty audio recording'));
               return;
             }
+
+            // --- Audio Quality Analysis ---
+            async function analyzeAudioQuality(audioBlob: Blob): Promise<{ isSilent: boolean; isClipped: boolean }> {
+              return new Promise((resolve) => {
+                const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const reader = new FileReader();
+                reader.onload = async () => {
+                  const arrayBuffer = reader.result as ArrayBuffer;
+                  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+                  let max = 0;
+                  let sum = 0;
+                  let count = 0;
+
+                  for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+                    const data = audioBuffer.getChannelData(i);
+                    for (let j = 0; j < data.length; j++) {
+                      const abs = Math.abs(data[j]);
+                      max = Math.max(max, abs);
+                      sum += abs;
+                      count++;
+                    }
+                  }
+
+                  const avg = sum / count;
+                  const isSilent = avg < 0.01; // Adjust threshold as needed
+                  const isClipped = max > 0.98; // Clipping if near 1.0
+
+                  resolve({ isSilent, isClipped });
+                };
+                reader.readAsArrayBuffer(audioBlob);
+              });
+            }
+
+            const quality = await analyzeAudioQuality(audioBlob);
+            if (quality.isSilent) {
+              alert("The recording is too quiet. Please try again closer to the microphone.");
+              stopPromiseRef.current.reject(new Error('Audio too quiet'));
+              return;
+            }
+            if (quality.isClipped) {
+              alert("The recording is too loud or distorted. Please try again speaking softer.");
+              stopPromiseRef.current.reject(new Error('Audio clipped'));
+              return;
+            }
+            // --- End Audio Quality Analysis ---
             
             // Convert blob to base64
             const reader = new FileReader();

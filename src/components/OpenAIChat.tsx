@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +50,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
@@ -69,10 +69,16 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   // Stop audio when component unmounts (window closes)
   useEffect(() => {
     return () => {
-      console.log('OpenAIChat component unmounting, stopping audio...');
+      console.log('OpenAIChat component unmounting, stopping all audio...');
       stopAudio();
+      // Stop any ongoing recording
+      if (isRecording) {
+        stopRecording().catch(console.error);
+      }
+      // Stop any processing
+      setIsProcessing(false);
     };
-  }, [stopAudio]);
+  }, [stopAudio, isRecording, stopRecording]);
 
   useEffect(() => {
     const loadTTSSettings = async () => {
@@ -339,7 +345,7 @@ Make it all flow naturally as one cohesive message.`;
         
         let responseMessage: Message;
         
-        const acceptanceThreshold = speechDelayMode ? 0.5 : 0.7;
+        const acceptanceThreshold = speechDelayMode ? 0.4 : 0.7;
         
         if (similarity > acceptanceThreshold) {
           onCorrectAnswer();
@@ -427,13 +433,23 @@ Make it all flow naturally as one cohesive message.`;
   const currentQuestion = getCurrentQuestion();
 
   const handleClose = () => {
-    console.log('Closing chat, stopping audio...');
+    console.log('Closing chat, stopping all audio...');
+    // Set closing state to force stop all audio in ChatMessage components
+    setIsClosing(true);
+    // Stop any playing audio
     stopAudio();
+    // Stop any ongoing recording
+    if (isRecording) {
+      stopRecording().catch(console.error);
+    }
+    // Stop any processing
+    setIsProcessing(false);
+    // Close the chat
     onClose();
   };
 
   return (
-    <div className="w-full h-[600px] flex flex-col bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-3xl shadow-xl overflow-hidden">
+    <div className="w-full h-[800px] flex flex-col bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-3xl shadow-xl overflow-hidden">
       {/* Header with Laura's image and controls */}
       <div className="bg-gradient-to-r from-blue-100 to-blue-50 border-b border-blue-200 p-4">
         <div className="flex items-center justify-between">
@@ -493,6 +509,7 @@ Make it all flow naturally as one cohesive message.`;
             ttsSettings={ttsSettings}
             autoPlayTTS={autoPlayTTS}
             onAudioStateChange={setIsGeneratingAudio}
+            forceStopAudio={isClosing}
           />
         ))}
         {isLoading && (

@@ -1,6 +1,5 @@
-
 import Fuse from 'fuse.js';
-import { generateSpeechDelayVariants } from './phoneticMatching';
+import { generateSpeechDelayVariants, isPhoneticallySimilar, getPhoneticScore } from './phoneticMatching';
 
 export interface MatchingOptions {
   speechDelayMode?: boolean;
@@ -28,21 +27,22 @@ export const calculateSimilarity = (
   // Exact match
   if (normalizedUser === normalizedCorrect) return 1;
   
-  // In speech delay mode, use more forgiving matching
+  // In speech delay mode, use phonetic and Levenshtein logic
   if (speechDelayMode) {
-    // Generate speech delay variants and check for matches
+    // Use new phonetic similarity logic
+    if (isPhoneticallySimilar(normalizedUser, normalizedCorrect, 0.7)) {
+      return getPhoneticScore(normalizedUser, normalizedCorrect);
+    }
+    // Generate speech delay variants and check for matches (legacy logic)
     const variants = generateSpeechDelayVariants(normalizedCorrect);
     for (const variant of variants) {
       if (normalizedUser === variant) {
         return 0.9; // High confidence for known speech delay patterns
       }
-      
-      // Also check if user's answer contains the variant
       if (normalizedUser.includes(variant) || variant.includes(normalizedUser)) {
         return 0.85;
       }
     }
-    
     // Also check reverse - if correct answer variants match user input
     const userVariants = generateSpeechDelayVariants(normalizedUser);
     for (const variant of userVariants) {
