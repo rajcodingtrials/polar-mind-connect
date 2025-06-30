@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Volume2, VolumeX } from 'lucide-react';
@@ -82,8 +81,11 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
               : 'bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-blue-900'
           }`}
         >
+          <div className="leading-relaxed whitespace-pre-wrap text-base">
+            {message.content}
+          </div>
           {message.imageUrl && (
-            <div className="mb-4 flex justify-center items-center p-6 bg-gradient-to-br from-blue-50 to-white rounded-2xl border-2 border-blue-100 shadow-inner">
+            <div className="mt-4 flex justify-center items-center p-6 bg-gradient-to-br from-blue-50 to-white rounded-2xl border-2 border-blue-100 shadow-inner">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 to-purple-100/30 rounded-xl blur-sm"></div>
                 <img 
@@ -96,9 +98,6 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
               </div>
             </div>
           )}
-          <div className="leading-relaxed whitespace-pre-wrap text-base">
-            {message.content}
-          </div>
           {message.role === 'assistant' && (
             <div className="mt-3 flex justify-end">
               <Button
