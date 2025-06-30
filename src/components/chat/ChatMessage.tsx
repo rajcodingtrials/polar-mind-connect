@@ -6,8 +6,9 @@ import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessageProps } from './types';
 
-const ChatMessage = ({ message, ttsSettings, autoPlayTTS = true }: ChatMessageProps & { autoPlayTTS?: boolean }) => {
+const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false }: ChatMessageProps & { autoPlayTTS?: boolean }) => {
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
 
   const handlePlayTTS = async () => {
@@ -42,12 +43,13 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = true }: ChatMessagePr
     }
   };
 
-  // Auto-play TTS for assistant messages when they first appear
+  // Auto-play TTS for assistant messages when they first appear (only if enabled and not already played)
   useEffect(() => {
-    if (message.role === 'assistant' && autoPlayTTS && !isPlaying && !isGeneratingAudio) {
+    if (message.role === 'assistant' && autoPlayTTS && !hasAutoPlayed && !isPlaying && !isGeneratingAudio) {
+      setHasAutoPlayed(true);
       handlePlayTTS();
     }
-  }, [message.id, message.role, autoPlayTTS]);
+  }, [message.id, message.role, autoPlayTTS, hasAutoPlayed, isPlaying, isGeneratingAudio]);
 
   return (
     <div className="w-full">
@@ -76,6 +78,23 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = true }: ChatMessagePr
           <div className="leading-relaxed whitespace-pre-wrap text-base">
             {message.content}
           </div>
+          {message.role === 'assistant' && (
+            <div className="mt-3 flex justify-end">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handlePlayTTS}
+                disabled={isGeneratingAudio}
+                className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+              >
+                {isGeneratingAudio ? (
+                  <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" />
+                ) : (
+                  <Volume2 className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

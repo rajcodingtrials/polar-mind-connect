@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Mic, MicOff, Send, X, RotateCcw, Volume2, VolumeX } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import VoiceRecorder from './chat/VoiceRecorder';
 import ChatMessage from './chat/ChatMessage';
 import { calculateSimilarity } from './chat/fuzzyMatching';
@@ -44,16 +46,18 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
   const [hasIntroduced, setHasIntroduced] = useState(false);
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
-  const [autoPlayTTS, setAutoPlayTTS] = useState(true);
+  const [autoPlayTTS, setAutoPlayTTS] = useState(false); // Disabled by default to prevent dual audio
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
+  
+  // Audio recording functionality
+  const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -101,6 +105,66 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
       sendInitialMessage();
     }
   }, [selectedQuestionType, useStructuredMode]);
+
+  const handleVoiceRecording = async () => {
+    if (isRecording) {
+      console.log('Stopping recording...');
+      setIsProcessing(true);
+      
+      try {
+        const base64Audio = await stopRecording();
+        console.log('Recording stopped, processing audio...');
+        
+        // Send audio to speech-to-text
+        const { data, error } = await supabase.functions.invoke('openai-stt', {
+          body: { audio: base64Audio }
+        });
+
+        if (error) {
+          console.error('Speech-to-text error:', error);
+          toast({
+            title: "Voice Recognition Error",
+            description: "Failed to process your voice. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data?.text && data.text.trim()) {
+          console.log('Transcription received:', data.text);
+          await sendMessage(data.text.trim());
+        } else {
+          console.log('No speech detected');
+          toast({
+            title: "No Speech Detected",
+            description: "Please try speaking again.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Error processing voice recording:', error);
+        toast({
+          title: "Recording Error",
+          description: "Failed to process voice recording. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      console.log('Starting recording...');
+      try {
+        await startRecording();
+      } catch (error) {
+        console.error('Error starting recording:', error);
+        toast({
+          title: "Microphone Error",
+          description: "Failed to access microphone. Please check permissions.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const getBasePrompt = () => {
     return `You are Laura, a warm, encouraging, and patient AI speech therapy assistant designed specifically for children. Your personality traits include:
@@ -385,9 +449,9 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
                   {speechDelayMode && <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">Speech Delay Mode</span>}
                 </p>
               )}
-              {isRecording && (
+              {(isRecording || isProcessing) && (
                 <p className="text-rose-600 text-xs font-medium animate-pulse">
-                  🔴 Recording... Tap the mic again to stop
+                  {isRecording ? "🔴 Recording... Tap the mic again to stop" : "🔄 Processing your voice..."}
                 </p>
               )}
             </div>
@@ -468,7 +532,7 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
                   sendMessage(inputValue);
                 }
               }}
-              disabled={isLoading}
+              disabled={isLoading || isRecording || isProcessing}
               className="pr-12 border-blue-200 focus:border-blue-400"
             />
             <Button
@@ -476,17 +540,25 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
               variant="ghost"
               className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
               onClick={() => sendMessage(inputValue)}
-              disabled={isLoading || !inputValue.trim()}
+              disabled={isLoading || !inputValue.trim() || isRecording || isProcessing}
             >
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          <div className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 cursor-pointer transition-colors">
-            <Mic className="h-5 w-5" />
-          </div>
+          <Button
+            size="sm"
+            variant={isRecording ? "destructive" : "outline"}
+            onClick={handleVoiceRecording}
+            disabled={isLoading || isProcessing}
+            className="shrink-0 px-3"
+          >
+            {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </Button>
         </div>
         <div className="text-center mt-2 text-blue-600 text-sm">
-          Tap microphone to answer
+          {isRecording ? "Recording... Tap microphone to stop" : 
+           isProcessing ? "Processing your voice..." :
+           "Tap microphone to answer"}
         </div>
       </div>
     </div>
