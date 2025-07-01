@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { useEffect } from "react";
+import { stopAllAudio } from "./utils/audioUtils";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Chat from "./pages/Chat";
@@ -27,6 +29,33 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  // Global audio cleanup effect
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      console.log('🛑 Page unloading, stopping all audio...');
+      stopAllAudio();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('🛑 Page hidden, stopping all audio...');
+        stopAllAudio();
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      console.log('🛑 App component unmounting, stopping all audio...');
+      stopAllAudio();
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

@@ -80,7 +80,8 @@ serve(async (req) => {
     formData.append('model', 'whisper-1');
     formData.append('language', 'en');
     formData.append('temperature', '0.3'); // Slightly higher for better accuracy with children's speech
-    formData.append('prompt', 'This is audio from a child in a speech therapy session. The child may speak softly, make partial sounds, or give short answers. Please transcribe their speech accurately, including any attempts at words, partial pronunciations, or simple responses like "yes", "no", single words, or short phrases.');
+    formData.append('response_format', 'json'); // Get structured response
+    formData.append('prompt', 'This is audio from a child in a speech therapy session. The child may speak softly, make partial sounds, or give short answers. Please transcribe their speech accurately, including any attempts at words, partial pronunciations, or simple responses like "yes", "no", single words, or short phrases. Focus on the primary speaker and ignore background voices or conversations.');
 
     console.log('Sending audio to OpenAI Whisper API...');
 
@@ -117,7 +118,8 @@ serve(async (req) => {
       JSON.stringify({ 
         text: result.text.trim(),
         language: result.language,
-        duration: result.duration
+        duration: result.duration,
+        segments: result.segments || [] // Include segments for better debugging
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

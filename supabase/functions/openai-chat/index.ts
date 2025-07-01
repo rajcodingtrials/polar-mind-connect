@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createSystemPrompt } from "./prompts.ts";
@@ -31,7 +30,9 @@ serve(async (req) => {
       model = 'gpt-4o-mini', 
       systemPrompt, 
       activityType, 
-      customInstructions
+      customInstructions,
+      therapistName,
+      childName
     } = requestBody;
 
     console.log('=== OPENAI CHAT FUNCTION PROCESSING ===');
@@ -40,7 +41,9 @@ serve(async (req) => {
       model,
       hasSystemPrompt: !!systemPrompt,
       activityType,
-      hasCustomInstructions: !!customInstructions
+      hasCustomInstructions: !!customInstructions,
+      therapistName,
+      childName
     });
 
     if (!openAIApiKey) {
@@ -56,8 +59,10 @@ serve(async (req) => {
       console.log('=== CREATING SYSTEM PROMPT ===');
       console.log('Activity type passed to createSystemPrompt:', activityType);
       console.log('Custom instructions passed:', customInstructions);
+      console.log('Therapist name:', therapistName);
+      console.log('Child name:', childName);
       
-      finalSystemPrompt = await createSystemPrompt(activityType, customInstructions);
+      finalSystemPrompt = await createSystemPrompt(activityType, customInstructions, undefined, undefined, childName, therapistName);
       
       console.log('=== SYSTEM PROMPT CREATED ===');
       console.log('Final system prompt length:', finalSystemPrompt.length);

@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { stopAllAudio } from '@/utils/audioUtils';
 import VoiceRecorder from './chat/VoiceRecorder';
 import ChatMessage from './chat/ChatMessage';
 import { calculateSimilarity } from './chat/fuzzyMatching';
@@ -25,6 +26,8 @@ interface OpenAIChatProps {
   onToggleMode: () => void;
   selectedQuestionType: QuestionType;
   onCorrectAnswer: () => void;
+  therapistName: string;
+  childName: string;
 }
 
 const OpenAIChat: React.FC<OpenAIChatProps> = ({
@@ -34,7 +37,9 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   useStructuredMode,
   onToggleMode,
   selectedQuestionType,
-  onCorrectAnswer
+  onCorrectAnswer,
+  therapistName,
+  childName
 }) => {
   console.log('🎯 === OPENAI CHAT COMPONENT LOADED ===');
   console.log('OpenAIChat received questions:', questions.length);
@@ -51,6 +56,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [retryCount, setRetryCount] = useState(0); // Track attempts for current question
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
@@ -71,6 +77,10 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
     return () => {
       console.log('OpenAIChat component unmounting, stopping all audio...');
       stopAudio();
+      
+      // Use the utility function to aggressively stop all audio
+      stopAllAudio();
+      
       // Stop any ongoing recording
       if (isRecording) {
         stopRecording().catch(console.error);
@@ -232,7 +242,9 @@ Make it all flow naturally as one cohesive message.`;
               content: promptContent
             }],
             activityType: selectedQuestionType,
-            customInstructions: getBasePrompt()
+            customInstructions: getBasePrompt(),
+            therapistName,
+            childName
           }
         });
 
@@ -257,6 +269,7 @@ Make it all flow naturally as one cohesive message.`;
           
           setMessages([initialMessage]);
           setIsWaitingForAnswer(true); // We're now waiting for answer to the first question
+          setRetryCount(0); // Reset retry count for new session
         } else {
           console.log('⚠️ No content received from AI');
           return;
@@ -273,7 +286,9 @@ Make it all flow naturally as one cohesive message.`;
               content: promptContent
             }],
             activityType: selectedQuestionType,
-            customInstructions: getBasePrompt()
+            customInstructions: getBasePrompt(),
+            therapistName,
+            childName
           }
         });
 
@@ -338,14 +353,14 @@ Make it all flow naturally as one cohesive message.`;
         
         const similarity = calculateSimilarity(messageContent, currentQuestion.answer, {
           speechDelayMode,
-          threshold: speechDelayMode ? 0.4 : 0.6
+          threshold: speechDelayMode ? 0.3 : 0.6
         });
         
         console.log(`Similarity score: ${similarity} (Speech delay mode: ${speechDelayMode})`);
         
         let responseMessage: Message;
         
-        const acceptanceThreshold = speechDelayMode ? 0.4 : 0.7;
+        const acceptanceThreshold = speechDelayMode ? 0.3 : 0.7;
         
         if (similarity > acceptanceThreshold) {
           onCorrectAnswer();
@@ -355,28 +370,59 @@ Make it all flow naturally as one cohesive message.`;
             responseMessage = {
               id: (Date.now() + 1).toString(),
               role: 'assistant',
-              content: `That's amazing! Great job! 🎉\n\nLet's try the next one:\n\n${nextQuestion.question}`,
+              content: `That's amazing! Great job! The answer is "${currentQuestion.answer}" 🎉\n\nLet's try the next one:\n\n${nextQuestion.question}`,
               timestamp: new Date(),
               imageUrl: nextQuestion.imageName && imageUrls[nextQuestion.imageName] ? imageUrls[nextQuestion.imageName] : undefined
             };
             setCurrentQuestionIndex(prev => prev + 1);
+            setRetryCount(0); // Reset retry count for new question
           } else {
             responseMessage = {
               id: (Date.now() + 1).toString(),
               role: 'assistant',
-              content: `Excellent work! 🌟 You've completed all the questions! I'm so proud of you!`,
+              content: `Excellent work! The answer is "${currentQuestion.answer}" 🌟 You've completed all the questions! I'm so proud of you!`,
               timestamp: new Date()
             };
             setIsWaitingForAnswer(false);
           }
         } else {
-          responseMessage = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: `Good try! Let me help you. Look at the picture carefully and try again. What do you see?`,
-            timestamp: new Date(),
-            imageUrl: currentQuestion.imageName && imageUrls[currentQuestion.imageName] ? imageUrls[currentQuestion.imageName] : undefined
-          };
+          // Increment retry count
+          const newRetryCount = retryCount + 1;
+          setRetryCount(newRetryCount);
+          
+          if (newRetryCount >= 2) {
+            // After 2 attempts, move to next question with encouragement
+            if (currentQuestionIndex + 1 < questions.length) {
+              const nextQuestion = questions[currentQuestionIndex + 1];
+              responseMessage = {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: `That was a really good try! The correct answer is "${currentQuestion.answer}". We'll practice that more later! 🌟\n\nLet's try the next one:\n\n${nextQuestion.question}`,
+                timestamp: new Date(),
+                imageUrl: nextQuestion.imageName && imageUrls[nextQuestion.imageName] ? imageUrls[nextQuestion.imageName] : undefined
+              };
+              setCurrentQuestionIndex(prev => prev + 1);
+              setRetryCount(0); // Reset retry count for new question
+            } else {
+              // Last question - complete the session
+              responseMessage = {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: `That was a really good try! The correct answer is "${currentQuestion.answer}". We'll practice that more later! 🌟\n\nExcellent work! You've completed all the questions! I'm so proud of you!`,
+                timestamp: new Date()
+              };
+              setIsWaitingForAnswer(false);
+            }
+          } else {
+            // First attempt - encourage to try again with the same question
+            responseMessage = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: `Good try! The correct answer is "${currentQuestion.answer}". Let me help you. Look at the picture carefully and try again.\n\n${currentQuestion.question}`,
+              timestamp: new Date(),
+              imageUrl: currentQuestion.imageName && imageUrls[currentQuestion.imageName] ? imageUrls[currentQuestion.imageName] : undefined
+            };
+          }
         }
         
         setMessages([...updatedMessages, responseMessage]);
@@ -388,7 +434,9 @@ Make it all flow naturally as one cohesive message.`;
           body: {
             messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
             activityType: selectedQuestionType,
-            customInstructions: getBasePrompt()
+            customInstructions: getBasePrompt(),
+            therapistName,
+            childName
           }
         });
 
@@ -438,14 +486,22 @@ Make it all flow naturally as one cohesive message.`;
     setIsClosing(true);
     // Stop any playing audio
     stopAudio();
+    
+    // Use the utility function to aggressively stop all audio
+    stopAllAudio();
+    
     // Stop any ongoing recording
     if (isRecording) {
       stopRecording().catch(console.error);
     }
     // Stop any processing
     setIsProcessing(false);
-    // Close the chat
-    onClose();
+    
+    // Small delay to ensure all audio stops before closing
+    setTimeout(() => {
+      console.log('Closing chat window...');
+      onClose();
+    }, 100);
   };
 
   return (

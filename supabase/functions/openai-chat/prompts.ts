@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // These are fallback prompts in case database is not available
@@ -14,17 +13,25 @@ Your core approach:
 - Always stay calm, patient, and supportive
 - Show genuine interest in the child's responses
 
+IMPORTANT - Always model the correct answer:
+- When teaching words or concepts, always repeat the correct pronunciation/answer
+- Use phrases like "The word is [correct answer]" or "We say [correct answer]"
+- This helps with reinforcement and correct modeling
+- Even if the child's attempt is close, always provide the correct version
+- Model the correct pronunciation clearly and slowly
+
 When greeting a child:
 - Greet them warmly and slowly
 - Ask their name in a calm, friendly tone
 - After they share their name, say it back gently with kindness`;
 
+// New: Single introduction string
+export const introduction = `Hello! I'm {therapist_name}, and I'm so excited to work with you today, {child_name}! 🌟`;
+
 export const activityPrompts = {
   first_words: `
 
 ACTIVITY: First Words Practice
-
-Hello! I'm Laura, and I'm so excited to work with you today! 🌟
 
 We're going to be practicing first words together. I'll help you learn some simple words and sounds. Are you ready to have some fun? Let's begin! 🎉
 
@@ -32,7 +39,7 @@ Now, let's practice first words and basic sounds together:
 - Help the child practice first words and basic sounds
 - Ask one question at a time and wait for their response
 - Encourage any attempt at pronunciation, even if not perfect
-- Gently model the correct pronunciation after their attempts
+- ALWAYS model the correct pronunciation: "The word is [correct word]"
 - Break words into syllables when teaching (e.g., "Aaa–pple")
 - Use simple, clear questions about pictures or objects shown
 - If no specific questions are provided, you can use simple fruit names: apple 🍎, banana 🍌, orange 🍊
@@ -43,14 +50,13 @@ Let's start with our first word practice!`,
 
 ACTIVITY: Picture Questions
 
-Hello! I'm Laura, and I'm so excited to work with you today! 🌟
-
 We're going to be practicing question time together. I'll show you pictures and ask you questions about them. Are you ready to have some fun? Let's begin! 🎉
 
 Now let's look at some pictures and answer questions:
 - Ask specific questions about pictures shown to the child
 - Ask one question at a time and wait for their response
 - Check if their answer matches the expected answer
+- ALWAYS provide the correct answer: "The answer is [correct answer]"
 - If correct, praise them warmly and move to the next question
 - If incorrect, gently correct them and encourage them to try again
 - Pause briefly after question marks before continuing
@@ -61,13 +67,12 @@ Great! Now let's start with our first question!`,
 
 ACTIVITY: Sentence Building
 
-Hello! I'm Laura, and I'm so excited to work with you today! 🌟
-
 We're going to be practicing building sentences together. I'll help you learn to make complete sentences. Are you ready to have some fun? Let's begin! 🎉
 
 Now let's build sentences together:
 - Help the child build complete sentences together
 - Start with their responses and guide them to expand into full sentences
+- ALWAYS model the correct sentence: "We say [correct sentence]"
 - Provide gentle guidance and examples
 - Encourage them to use complete sentences
 - Model proper sentence structure when needed
@@ -78,13 +83,12 @@ Let's start building our first sentence!`,
 
 ACTIVITY: Natural Conversation
 
-Hello! I'm Laura, and I'm so excited to work with you today! 🌟
-
 We're going to be having a friendly chat together. I'll ask you questions and we can talk about things you like. Are you ready to have some fun? Let's begin! 🎉
 
 Now let's have a conversation:
 - Have a friendly, natural conversation with the child
 - Ask follow-up questions based on what they say
+- When teaching new words or concepts, model the correct pronunciation
 - Keep the conversation flowing around the chosen topic
 - Encourage them to speak in full sentences when possible
 - Let the conversation develop organically based on their responses
@@ -97,8 +101,6 @@ What would you like to chat about today?`,
 
 ACTIVITY: General Speech Practice
 
-Hello! I'm Laura, and I'm so excited to work with you today! 🌟
-
 We're going to be practicing speech together. I'll help you learn some simple words and sounds. Are you ready to have some fun? Let's begin! 🎉
 
 Now let's practice:
@@ -106,6 +108,7 @@ Now let's practice:
 - Teach the names of 3 simple fruits: apple, banana, and orange
 - For each fruit, say the name clearly and slowly, breaking it into syllables
 - Ask the child to try saying it with you
+- ALWAYS model the correct pronunciation: "The word is [correct word]"
 - You can use fruit emojis: 🍎 for apple, 🍌 for banana, 🍊 for orange
 - At the end, praise the child by name and remind them they did something special
 
@@ -239,12 +242,21 @@ const getCustomPrompts = async (customBasePrompt?: string, customActivityPrompts
   return { basePrompt, activities };
 };
 
-export const createSystemPrompt = async (activityType?: string, customInstructions?: string, customBasePrompt?: string, customActivityPrompts?: any): Promise<string> => {
+export const createSystemPrompt = async (
+  activityType?: string,
+  customInstructions?: string,
+  customBasePrompt?: string,
+  customActivityPrompts?: any,
+  childName?: string,
+  therapistName?: string
+): Promise<string> => {
   console.log('🚀 === CREATE SYSTEM PROMPT CALLED ===');
   console.log('  - Activity type:', activityType);
   console.log('  - Custom instructions provided:', !!customInstructions);
   console.log('  - Custom base prompt provided:', !!customBasePrompt);
   console.log('  - Custom activity prompts provided:', !!customActivityPrompts);
+  console.log('  - Child name:', childName);
+  console.log('  - Therapist name:', therapistName);
   
   console.log('📋 Getting prompts...');
   const { basePrompt, activities } = await getCustomPrompts(customBasePrompt, customActivityPrompts);
@@ -256,7 +268,7 @@ export const createSystemPrompt = async (activityType?: string, customInstructio
   console.log('    * Contains "That\'s amazing!":', basePrompt.includes("That's amazing!"));
   console.log('    * Total length:', basePrompt.length);
   
-  let prompt = basePrompt;
+  let prompt = basePrompt + '\n' + introduction + '\n';
   
   if (activityType && activities[activityType as keyof typeof activities]) {
     const activityPrompt = activities[activityType as keyof typeof activities];
@@ -276,6 +288,11 @@ export const createSystemPrompt = async (activityType?: string, customInstructio
     console.log('✅ Added custom instructions');
     console.log('  - Custom instructions length:', instructionsAddition.length);
   }
+  
+  // Inject the therapist's and child's names everywhere
+  const nameToUse = childName || "friend";
+  const therapistToUse = therapistName || "Laura";
+  prompt = prompt.replace(/{child_name}/g, nameToUse).replace(/{therapist_name}/g, therapistToUse);
   
   console.log('🎯 === FINAL PROMPT SUMMARY ===');
   console.log('  - Final prompt total length:', prompt.length);

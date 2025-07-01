@@ -1,9 +1,9 @@
-
 import { useState, useRef, useCallback } from 'react';
 
 export const useAudioPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const currentUrlRef = useRef<string | null>(null);
 
   const playAudio = useCallback(async (base64Audio: string) => {
     try {
@@ -19,30 +19,60 @@ export const useAudioPlayer = () => {
       const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
       const audioUrl = URL.createObjectURL(audioBlob);
       
+      // Clean up previous audio
       if (audioRef.current) {
         audioRef.current.pause();
-        URL.revokeObjectURL(audioRef.current.src);
+        audioRef.current.onended = null;
+        audioRef.current.onerror = null;
+      }
+      if (currentUrlRef.current) {
+        URL.revokeObjectURL(currentUrlRef.current);
       }
       
+      currentUrlRef.current = audioUrl;
       audioRef.current = new Audio(audioUrl);
+      
       audioRef.current.onended = () => {
         setIsPlaying(false);
-        URL.revokeObjectURL(audioUrl);
+        if (currentUrlRef.current) {
+          URL.revokeObjectURL(currentUrlRef.current);
+          currentUrlRef.current = null;
+        }
+      };
+      
+      audioRef.current.onerror = () => {
+        console.error('Audio playback error');
+        setIsPlaying(false);
+        if (currentUrlRef.current) {
+          URL.revokeObjectURL(currentUrlRef.current);
+          currentUrlRef.current = null;
+        }
       };
       
       await audioRef.current.play();
     } catch (error) {
       console.error('Error playing audio:', error);
       setIsPlaying(false);
+      if (currentUrlRef.current) {
+        URL.revokeObjectURL(currentUrlRef.current);
+        currentUrlRef.current = null;
+      }
     }
   }, []);
 
   const stopAudio = useCallback(() => {
+    console.log('Stopping audio...');
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      setIsPlaying(false);
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
     }
+    if (currentUrlRef.current) {
+      URL.revokeObjectURL(currentUrlRef.current);
+      currentUrlRef.current = null;
+    }
+    setIsPlaying(false);
   }, []);
 
   return {

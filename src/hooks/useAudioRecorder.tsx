@@ -121,8 +121,8 @@ export const useAudioRecorder = () => {
                   }
 
                   const avg = sum / count;
-                  const isSilent = avg < 0.01; // Adjust threshold as needed
-                  const isClipped = max > 0.98; // Clipping if near 1.0
+                  const isSilent = avg < 0.005; // More lenient silence threshold
+                  const isClipped = max > 0.99; // Only consider clipped if very close to 1.0
 
                   resolve({ isSilent, isClipped });
                 };
@@ -131,15 +131,22 @@ export const useAudioRecorder = () => {
             }
 
             const quality = await analyzeAudioQuality(audioBlob);
+            console.log('Audio quality analysis:', {
+              isSilent: quality.isSilent,
+              isClipped: quality.isClipped,
+              blobSize: audioBlob.size
+            });
+            
+            // Only reject if the audio is completely silent
             if (quality.isSilent) {
-              alert("The recording is too quiet. Please try again closer to the microphone.");
-              stopPromiseRef.current.reject(new Error('Audio too quiet'));
-              return;
+              console.warn('Audio too quiet, but continuing anyway');
+              // Don't reject, just continue with the recording
             }
+            
+            // Only reject if the audio is severely clipped (very rare)
             if (quality.isClipped) {
-              alert("The recording is too loud or distorted. Please try again speaking softer.");
-              stopPromiseRef.current.reject(new Error('Audio clipped'));
-              return;
+              console.warn('Audio may be clipped, but continuing anyway');
+              // Don't reject, just continue with the recording
             }
             // --- End Audio Quality Analysis ---
             

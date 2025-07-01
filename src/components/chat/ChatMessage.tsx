@@ -4,6 +4,7 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessageProps } from './types';
+import { stopAllAudio } from '@/utils/audioUtils';
 
 interface ExtendedChatMessageProps extends ChatMessageProps {
   autoPlayTTS?: boolean;
@@ -16,6 +17,18 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
   const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
   const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
 
+  // Stop audio when forceStopAudio is true (chat window closing)
+  useEffect(() => {
+    if (forceStopAudio && (isPlaying || isGeneratingAudio)) {
+      console.log('Force stopping audio due to chat window closing');
+      stopAudio();
+      setIsGeneratingAudio(false);
+      
+      // Use the utility function to aggressively stop all audio
+      stopAllAudio();
+    }
+  }, [forceStopAudio, isPlaying, isGeneratingAudio, stopAudio]);
+
   // Notify parent component about audio generation state
   useEffect(() => {
     if (onAudioStateChange) {
@@ -23,26 +36,17 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
     }
   }, [isGeneratingAudio, onAudioStateChange]);
 
-  // Stop audio when forceStopAudio is true (when chat closes)
-  useEffect(() => {
-    if (forceStopAudio) {
-      console.log('Force stopping audio in ChatMessage:', message.id);
-      stopAudio();
-      setIsGeneratingAudio(false);
-    }
-  }, [forceStopAudio, stopAudio, message.id]);
-
-  // Cleanup on unmount
+  // Cleanup audio when component unmounts
   useEffect(() => {
     return () => {
-      console.log('ChatMessage unmounting, stopping audio:', message.id);
+      console.log('ChatMessage component unmounting, stopping audio...');
       stopAudio();
       setIsGeneratingAudio(false);
     };
-  }, [stopAudio, message.id]);
+  }, [stopAudio]);
 
   const handlePlayTTS = async () => {
-    if (isPlaying) return;
+    if (isPlaying || forceStopAudio) return;
     
     setIsGeneratingAudio(true);
     try {
@@ -62,7 +66,7 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
         return;
       }
 
-      if (data?.audioContent) {
+      if (data?.audioContent && !forceStopAudio) {
         console.log('Playing TTS audio...');
         await playAudio(data.audioContent);
       }
@@ -75,12 +79,12 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
 
   // Auto-play TTS for assistant messages when they first appear (only if enabled and not already played)
   useEffect(() => {
-    if (message.role === 'assistant' && autoPlayTTS && !hasAutoPlayed && !isPlaying && !isGeneratingAudio) {
+    if (message.role === 'assistant' && autoPlayTTS && !hasAutoPlayed && !isPlaying && !isGeneratingAudio && !forceStopAudio) {
       console.log('Auto-playing TTS for assistant message:', message.id);
       // Add a small delay to prevent immediate overlapping
       const timer = setTimeout(() => {
         // Double-check that no audio is playing before starting
-        if (!isPlaying && !isGeneratingAudio) {
+        if (!isPlaying && !isGeneratingAudio && !forceStopAudio) {
           setHasAutoPlayed(true);
           handlePlayTTS();
         }
@@ -88,7 +92,7 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
       
       return () => clearTimeout(timer);
     }
-  }, [message.id, message.role, autoPlayTTS, hasAutoPlayed, isPlaying, isGeneratingAudio]);
+  }, [message.id, message.role, autoPlayTTS, hasAutoPlayed, isPlaying, isGeneratingAudio, forceStopAudio]);
 
   return (
     <div className="w-full">
@@ -123,7 +127,7 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
                 size="sm"
                 variant="ghost"
                 onClick={handlePlayTTS}
-                disabled={isGeneratingAudio}
+                disabled={isGeneratingAudio || forceStopAudio}
                 className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
               >
                 {isGeneratingAudio ? (
