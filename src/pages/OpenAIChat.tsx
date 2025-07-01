@@ -221,16 +221,16 @@ const OpenAIChatPage = () => {
   console.log('Available questions:', questions.map(q => ({ id: q.id, type: q.questionType, imageName: q.imageName })));
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       <main className="flex-grow p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Welcome Section - only show when not in chat */}
           {!showChat && !showQuestionTypes && (
             <>
-              <div className="mb-8">
-                <h1 className="text-4xl font-bold text-center mb-6 text-black">
-                  Welcome, {profile?.name || 'User'}! 🌈
+              <div className="mb-8 text-center">
+                <h1 className="text-5xl font-bold mb-4 text-slate-700">
+                  Welcome, {profile?.name || 'User'}!
                 </h1>
               </div>
 
@@ -238,21 +238,21 @@ const OpenAIChatPage = () => {
               <CartoonCharacterUploader />
 
               {/* Affirmation for the day Section */}
-              <Card className="mb-8 bg-slate-50 border-slate-200 shadow-sm">
+              <Card className="mb-8 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 hover:border-amber-300 shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-slate-700 flex items-center gap-2 pl-2">
+                  <CardTitle className="text-xl font-semibold text-black flex items-center gap-2 pl-2">
                     Affirmation for the day
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-slate-600 text-lg pl-2">
+                  <p className="text-black text-lg pl-2">
                     You are amazing just the way you are! 🌟 Every word you say is important and every sound you make is beautiful. Today is going to be filled with fun learning and lots of smiles! 😊
                   </p>
                 </CardContent>
               </Card>
 
               {/* Your Therapists Section */}
-              <Card className="mb-8 bg-slate-50 border-slate-200 shadow-sm">
+              <Card className="mb-8 bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-xl font-semibold text-slate-700 flex items-center gap-2">
                     Your Therapists
@@ -261,7 +261,7 @@ const OpenAIChatPage = () => {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div 
-                      className="flex items-center space-x-6 cursor-pointer bg-blue-50 hover:bg-blue-100 p-6 rounded-2xl transition-all duration-300 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-105 min-h-[120px]"
+                      className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 p-6 rounded-2xl transition-all duration-300 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-105 min-h-[120px]"
                       onClick={handleLauraClick}
                     >
                       <Avatar className="h-20 w-20 border-2 border-blue-200">
@@ -273,11 +273,11 @@ const OpenAIChatPage = () => {
                       </Avatar>
                       <div className="flex-1">
                         <h3 className="font-semibold text-slate-700 text-xl mb-2">Laura 💫</h3>
-                        <p className="text-slate-600 text-base">Practiced conversations</p>
+                        <p className="text-slate-600 text-base">Lead Speech Language Pathologist</p>
                       </div>
                     </div>
                     <div 
-                      className="flex items-center space-x-6 cursor-pointer bg-green-50 hover:bg-green-100 p-6 rounded-2xl transition-all duration-300 border border-green-200 hover:border-green-300 shadow-sm hover:shadow-xl hover:scale-105 min-h-[120px]"
+                      className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 p-6 rounded-2xl transition-all duration-300 border border-green-200 hover:border-green-300 shadow-sm hover:shadow-xl hover:scale-105 min-h-[120px]"
                       onClick={handleLawrenceClick}
                     >
                       <Avatar className="h-20 w-20 border-2 border-green-200">
@@ -289,7 +289,7 @@ const OpenAIChatPage = () => {
                       </Avatar>
                       <div className="flex-1">
                         <h3 className="font-semibold text-slate-700 text-xl mb-2">Lawrence 🌟</h3>
-                        <p className="text-slate-600 text-base mb-2">Worked on questions</p>
+                        <p className="text-slate-600 text-base">Associate Speech Language Pathologist</p>
                       </div>
                     </div>
                   </div>
@@ -300,15 +300,15 @@ const OpenAIChatPage = () => {
 
           {/* Question Type Selection */}
           {showQuestionTypes && (
-            <div className="mb-8">
-              <div className="text-center mb-8">
+            <div className="mb-8 flex flex-col items-center">
+              <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-black mb-4">
-                  🎨 Choose Your Learning Adventure with Laura! 🎨
+                  Choose Your Learning Adventure with Laura!
                 </h2>
                 <p className="text-gray-600 text-lg">Select the type of questions you'd like to practice today</p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto justify-items-center">
                 {questionTypes.map((type) => {
                   const questionsOfType = questions.filter(q => q.questionType === type.value).length;
                   const IconComponent = type.icon;
@@ -316,7 +316,7 @@ const OpenAIChatPage = () => {
                   return (
                     <div
                       key={type.value}
-                      className={`${type.color} ${type.textColor} rounded-3xl p-6 cursor-pointer hover:shadow-xl hover:scale-105 transition-all duration-300 min-h-[200px] flex flex-col justify-between border-3 hover:border-white`}
+                      className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer hover:shadow-xl hover:scale-105 transition-all duration-300 min-h-[250px] flex flex-col justify-between border-3 hover:border-white`}
                       onClick={() => handleQuestionTypeSelect(type.value)}
                     >
                       <div className="flex flex-col items-center text-center">
