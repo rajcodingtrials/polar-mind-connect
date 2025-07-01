@@ -8,13 +8,12 @@ const VoiceRecorder = ({ onTranscription, isRecording, setIsRecording }: VoiceRe
   const handleVoiceRecording = () => {
     if (isRecording) {
       setIsRecording(false);
-      // In a real implementation, this would stop recording and process the audio
-      // For now, we'll just simulate a transcription
-      setTimeout(() => {
-        onTranscription("This is a test transcription");
-      }, 1000);
+      // Call onTranscription with empty string to indicate recording stopped
+      onTranscription("");
     } else {
       setIsRecording(true);
+      // In a real implementation, this would start recording
+      // For now, we'll just set the recording state
     }
   };
 
