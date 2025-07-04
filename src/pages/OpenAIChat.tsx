@@ -33,11 +33,15 @@ const OpenAIChatPage = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [therapistName, setTherapistName] = useState('Laura');
   
-  // New state for the redesigned flow
+  // Updated state for better question management
   const [currentScreen, setCurrentScreen] = useState<'home' | 'introduction' | 'question' | 'celebration' | 'complete'>('home');
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [availableQuestions, setAvailableQuestions] = useState<Question[]>([]);
+  const [askedQuestionIds, setAskedQuestionIds] = useState<Set<string>>(new Set());
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
+  const [sessionQuestionCount, setSessionQuestionCount] = useState(0);
+  const maxQuestionsPerSession = 5;
 
   // Set childName from profile (fallback to 'friend' if not available)
   const childName = profile?.name || profile?.username || 'friend';
@@ -77,7 +81,6 @@ const OpenAIChatPage = () => {
     }
   ];
 
-  // Load questions and images from Supabase
   useEffect(() => {
     const loadQuestionsAndImages = async () => {
       try {
@@ -135,7 +138,6 @@ const OpenAIChatPage = () => {
     loadQuestionsAndImages();
   }, []);
 
-  // Listen for storage changes (when admin uploads new content)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'adminQuestions' && e.newValue) {
@@ -175,54 +177,101 @@ const OpenAIChatPage = () => {
     setShowQuestionTypes(true);
   };
 
+  const selectRandomQuestion = (questionsPool: Question[]): Question | null => {
+    if (questionsPool.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * questionsPool.length);
+    return questionsPool[randomIndex];
+  };
+
   const handleQuestionTypeSelect = (questionType: QuestionType) => {
+    console.log('🎯 Selected question type:', questionType);
     setSelectedQuestionType(questionType);
     setShowQuestionTypes(false);
     setCorrectAnswers(0);
-    setCurrentQuestionIndex(0);
     setRetryCount(0);
     setSpeechDelayMode(false);
+    setSessionQuestionCount(0);
+    setAskedQuestionIds(new Set());
+    
+    // Filter questions by selected type and shuffle them
+    const filteredQuestions = questions.filter(q => q.questionType === questionType);
+    console.log('🎯 Available questions for type:', filteredQuestions.length);
+    
+    setAvailableQuestions(filteredQuestions);
     setCurrentScreen('introduction');
   };
 
   const handleStartQuestions = () => {
-    setCurrentScreen('question');
+    // Select first random question
+    const firstQuestion = selectRandomQuestion(availableQuestions);
+    if (firstQuestion) {
+      console.log('🎯 Starting with question:', firstQuestion.question);
+      setCurrentQuestion(firstQuestion);
+      setAskedQuestionIds(new Set([firstQuestion.id]));
+      setSessionQuestionCount(1);
+      setCurrentScreen('question');
+    }
   };
 
   const handleCorrectAnswer = () => {
+    console.log('🎉 Correct answer! Moving to celebration...');
     setCorrectAnswers(prev => prev + 1);
     setCurrentScreen('celebration');
     setRetryCount(0);
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex + 1 < filteredQuestions.length) {
-      setCurrentQuestionIndex(prev => prev + 1);
+    console.log('🔄 Moving to next question...');
+    
+    if (sessionQuestionCount >= maxQuestionsPerSession) {
+      console.log('🏁 Session complete - reached max questions');
+      setCurrentScreen('complete');
+      return;
+    }
+
+    // Get remaining questions (not asked yet)
+    const remainingQuestions = availableQuestions.filter(q => !askedQuestionIds.has(q.id));
+    console.log('🎯 Remaining questions:', remainingQuestions.length);
+    
+    if (remainingQuestions.length === 0) {
+      console.log('🏁 No more questions available - session complete');
+      setCurrentScreen('complete');
+      return;
+    }
+
+    // Select next random question
+    const nextQuestion = selectRandomQuestion(remainingQuestions);
+    if (nextQuestion) {
+      console.log('🎯 Next question selected:', nextQuestion.question);
+      setCurrentQuestion(nextQuestion);
+      setAskedQuestionIds(prev => new Set([...prev, nextQuestion.id]));
+      setSessionQuestionCount(prev => prev + 1);
       setRetryCount(0);
       setCurrentScreen('question');
     } else {
+      console.log('🏁 No valid next question - session complete');
       setCurrentScreen('complete');
     }
   };
 
   const handleCelebrationComplete = () => {
-    if (currentQuestionIndex + 1 < filteredQuestions.length) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setCurrentScreen('question');
-    } else {
-      setCurrentScreen('complete');
-    }
+    console.log('🎊 Celebration complete - moving to next question');
+    handleNextQuestion();
   };
 
   const handleCompleteSession = () => {
+    console.log('🔄 Resetting session...');
     setCurrentScreen('home');
     setShowQuestionTypes(false);
     setSelectedQuestionType(null);
     setCorrectAnswers(0);
-    setCurrentQuestionIndex(0);
     setRetryCount(0);
     setSpeechDelayMode(false);
     setTherapistName('Laura');
+    setCurrentQuestion(null);
+    setAvailableQuestions([]);
+    setAskedQuestionIds(new Set());
+    setSessionQuestionCount(0);
   };
 
   const handleCloseChat = () => {
@@ -232,11 +281,6 @@ const OpenAIChatPage = () => {
   const handleLawrenceClick = () => {
     console.log('Lawrence clicked - functionality to be implemented');
   };
-
-  // Filter questions by selected type
-  const filteredQuestions = selectedQuestionType 
-    ? questions.filter(q => q.questionType === selectedQuestionType)
-    : questions;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
@@ -382,12 +426,12 @@ const OpenAIChatPage = () => {
           )}
 
           {/* Single Question View */}
-          {currentScreen === 'question' && selectedQuestionType && filteredQuestions[currentQuestionIndex] && (
+          {currentScreen === 'question' && selectedQuestionType && currentQuestion && (
             <SingleQuestionView
-              question={filteredQuestions[currentQuestionIndex]}
-              imageUrl={filteredQuestions[currentQuestionIndex].imageName ? imageUrls[filteredQuestions[currentQuestionIndex].imageName!] : undefined}
-              questionNumber={currentQuestionIndex + 1}
-              totalQuestions={Math.min(filteredQuestions.length, 5)}
+              question={currentQuestion}
+              imageUrl={currentQuestion.imageName ? imageUrls[currentQuestion.imageName] : undefined}
+              questionNumber={sessionQuestionCount}
+              totalQuestions={Math.min(maxQuestionsPerSession, availableQuestions.length)}
               therapistName={therapistName}
               childName={childName}
               speechDelayMode={speechDelayMode}
@@ -413,7 +457,7 @@ const OpenAIChatPage = () => {
             <div className="flex flex-col items-center justify-center min-h-[80vh]">
               <ProgressCharacter 
                 correctAnswers={correctAnswers}
-                totalQuestions={Math.min(filteredQuestions.length, 5)}
+                totalQuestions={Math.min(maxQuestionsPerSession, availableQuestions.length)}
                 questionType={selectedQuestionType}
               />
               <div className="mt-8">

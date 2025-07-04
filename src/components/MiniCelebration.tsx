@@ -1,6 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCartoonCharacters } from '@/hooks/useCartoonCharacters';
+import { supabase } from '@/integrations/supabase/client';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 
 interface MiniCelebrationProps {
   correctAnswers: number;
@@ -11,23 +13,72 @@ const MiniCelebration = ({ correctAnswers, onComplete }: MiniCelebrationProps) =
   const { selectedCharacter } = useCartoonCharacters();
   const [showConfetti, setShowConfetti] = useState(true);
   const [isRolling, setIsRolling] = useState(true);
+  const [isPlayingTTS, setIsPlayingTTS] = useState(false);
+  const { playAudio, isPlaying } = useAudioPlayer();
 
   useEffect(() => {
-    // Hide confetti after animation
-    const confettiTimer = setTimeout(() => setShowConfetti(false), 2000);
-    
-    // Stop rolling animation
-    const rollingTimer = setTimeout(() => setIsRolling(false), 1500);
-    
-    // Complete celebration
-    const completeTimer = setTimeout(() => onComplete(), 3000);
+    const runCelebration = async () => {
+      // Hide confetti after animation
+      const confettiTimer = setTimeout(() => setShowConfetti(false), 2000);
+      
+      // Stop rolling animation
+      const rollingTimer = setTimeout(() => setIsRolling(false), 1500);
+      
+      // Play celebration TTS
+      try {
+        setIsPlayingTTS(true);
+        const response = await supabase.functions.invoke('openai-tts', {
+          body: {
+            text: 'Amazing work! That was perfect!',
+            voice: 'nova',
+            speed: 1.0
+          }
+        });
 
-    return () => {
-      clearTimeout(confettiTimer);
-      clearTimeout(rollingTimer);
-      clearTimeout(completeTimer);
+        if (response.data?.audioContent) {
+          await playAudio(response.data.audioContent);
+          
+          // Wait for TTS to completely finish before proceeding
+          const waitForTTSComplete = () => {
+            if (isPlaying) {
+              setTimeout(waitForTTSComplete, 100);
+            } else {
+              console.log('🎊 TTS finished, celebration complete');
+              setIsPlayingTTS(false);
+              // Add a small delay after TTS finishes before moving to next question
+              setTimeout(() => {
+                onComplete();
+              }, 1000);
+            }
+          };
+          
+          // Start checking if TTS is done
+          setTimeout(waitForTTSComplete, 1000);
+        } else {
+          // If no TTS, proceed after standard delay
+          setTimeout(() => {
+            setIsPlayingTTS(false);
+            onComplete();
+          }, 3000);
+        }
+      } catch (error) {
+        console.error('TTS error in celebration:', error);
+        // If TTS fails, proceed after standard delay
+        setTimeout(() => {
+          setIsPlayingTTS(false);
+          onComplete();
+        }, 3000);
+      }
+
+      // Cleanup timers
+      return () => {
+        clearTimeout(confettiTimer);
+        clearTimeout(rollingTimer);
+      };
     };
-  }, [onComplete]);
+
+    runCelebration();
+  }, [onComplete, playAudio, isPlaying]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 p-6">
@@ -119,6 +170,15 @@ const MiniCelebration = ({ correctAnswers, onComplete }: MiniCelebrationProps) =
             <span className="text-2xl">🌟</span>
           </div>
         </div>
+        
+        {/* TTS Status */}
+        {isPlayingTTS && (
+          <div className="mt-4">
+            <p className="text-sm text-emerald-600 animate-pulse">
+              🎵 Playing celebration message...
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
