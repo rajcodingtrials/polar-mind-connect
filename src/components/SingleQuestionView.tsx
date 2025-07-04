@@ -300,12 +300,6 @@ const SingleQuestionView = ({
         </div>
 
         <div className="flex items-center gap-6">
-          <div className="text-center">
-            <p className="text-xl font-bold text-purple-800">
-              Question {questionNumber} of {totalQuestions}
-            </p>
-          </div>
-          
           <Button
             variant="outline"
             size="lg"
@@ -316,26 +310,32 @@ const SingleQuestionView = ({
           >
             Speech Delay Mode: {speechDelayMode ? "ON" : "OFF"}
           </Button>
+          
+          <div className="text-center">
+            <p className="text-xl font-bold text-purple-800">
+              Question {questionNumber} of {totalQuestions}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Main Question Area */}
       <div className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
-        {/* Question Text */}
+        {/* Question Text - No white block background */}
         <div className="mb-8 animate-fade-in">
           <h2 className="text-4xl font-bold text-center text-blue-900 leading-relaxed">
             {question.question}
           </h2>
         </div>
 
-        {/* Question Image */}
+        {/* Question Image - Larger with border that fits the image */}
         {imageUrl && (
-          <div className="mb-4 animate-scale-in flex justify-center">
+          <div className="mb-8 animate-scale-in flex justify-center">
             <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
               <img
                 src={imageUrl}
                 alt="Question"
-                className="w-96 h-72 object-cover"
+                className="w-auto h-96 max-w-4xl object-contain"
                 onError={(e) => {
                   console.error('Error loading question image:', imageUrl);
                   e.currentTarget.style.display = 'none';
@@ -345,40 +345,41 @@ const SingleQuestionView = ({
           </div>
         )}
 
-        {/* Voice Input Button - Positioned directly below image */}
-        {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
-          <div className="flex flex-col items-center animate-fade-in mb-8">
-            <Button
-              size="lg"
-              onClick={handleVoiceRecording}
-              disabled={isProcessing || isPlaying || isProcessingAnswer}
-              className={`w-20 h-20 rounded-full border-2 shadow-lg transform hover:scale-105 transition-all duration-300 ${
-                isRecording 
-                  ? "bg-red-500 hover:bg-red-600 border-red-400 text-white" 
-                  : "bg-gray-500 hover:bg-gray-600 border-gray-400 text-white"
-              }`}
-            >
-              {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
-            </Button>
-            
-            <p className="text-xs text-blue-600 font-medium mt-2">
-              Tap to record
-            </p>
-            
-            {retryCount > 0 && (
-              <p className="text-sm text-purple-600 mt-1">
-                Attempt {retryCount + 1} of 2
-              </p>
-            )}
-          </div>
-        )}
-
         {/* Feedback Area */}
         {showFeedback && (
-          <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-4 border-green-200 rounded-3xl p-6 max-w-2xl mx-auto animate-fade-in">
+          <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-4 border-green-200 rounded-3xl p-6 max-w-2xl mx-auto mb-8 animate-fade-in">
             <p className="text-lg text-center text-green-800 font-medium">
               {currentResponse}
             </p>
+          </div>
+        )}
+
+        {/* Voice Input Button - Much bigger microphone like the reference */}
+        {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
+          <div className="text-center animate-fade-in">
+            <Button
+              size="lg"
+              variant={isRecording ? "destructive" : "outline"}
+              onClick={handleVoiceRecording}
+              disabled={isProcessing || isPlaying || isProcessingAnswer}
+              className="w-36 h-36 rounded-full border-4 border-blue-300 hover:border-blue-400 shadow-xl transform hover:scale-105 transition-all duration-300 bg-green-500 hover:bg-green-600 border-green-400 text-white"
+            >
+              {isRecording ? <MicOff className="h-20 w-20" /> : <Mic className="h-20 w-20" />}
+            </Button>
+            
+            <div className="mt-4 text-center">
+              <p className="text-blue-600 font-semibold text-lg">
+                {isRecording ? "🔴 Recording... Tap again to stop" : 
+                 isProcessing ? "🔄 Processing your voice..." :
+                 isPlaying ? "🎵 Playing..." :
+                 "Tap to answer"}
+              </p>
+              {retryCount > 0 && (
+                <p className="text-sm text-purple-600 mt-2">
+                  Attempt {retryCount + 1} of 2
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
