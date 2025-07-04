@@ -577,8 +577,8 @@ Make it all flow naturally as one cohesive message.`;
               disabled={isLoading || isProcessing}
               className={`w-16 h-16 rounded-full border-2 shadow-lg transition-all duration-300 flex items-center justify-center ${
                 isRecording 
-                  ? 'bg-red-500 border-red-400 text-white transform scale-105' 
-                  : 'bg-purple-400 hover:bg-purple-500 border-purple-300 text-white hover:scale-105'
+                  ? 'bg-red-300 border-red-200 text-white transform scale-105' 
+                  : 'bg-slate-200 hover:bg-slate-300 border-slate-100 text-slate-600 hover:scale-105'
               } ${(isLoading || isProcessing) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <MicrophoneIcon isRecording={isRecording} size={32} />
