@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
@@ -69,6 +69,7 @@ const SingleQuestionView = ({
   const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
   const { playAudio, isPlaying, stopAudio } = useAudioPlayer();
   const { toast } = useToast();
+  const mainContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setHasCalledCorrectAnswer(false);
@@ -109,6 +110,12 @@ const SingleQuestionView = ({
 
     setTimeout(readQuestion, 1000);
   }, [question.question, playAudio, stopAudio, shouldReadQuestion]);
+
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [question.id]);
 
   const handleVoiceRecording = async () => {
     if (isProcessingAnswer) return;
@@ -309,7 +316,7 @@ const SingleQuestionView = ({
       </div>
 
       {/* Main Question Area */}
-      <div className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
+      <div ref={mainContentRef} className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
         {/* Question Text */}
         <div className="mb-8 animate-fade-in">
           <h2 className="text-4xl font-bold text-center text-blue-900 leading-relaxed">
