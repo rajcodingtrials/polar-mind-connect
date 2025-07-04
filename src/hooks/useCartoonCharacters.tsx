@@ -21,25 +21,33 @@ export const useCartoonCharacters = () => {
 
   const loadCharacters = async () => {
     try {
+      console.log('🔍 Loading cartoon characters from database...');
+      
       // Load character metadata from database
       const { data: charactersData, error } = await supabase
         .from('cartoon_characters')
         .select('*');
 
       if (error) {
-        console.error('Error loading characters:', error);
+        console.error('❌ Error loading characters from database:', error);
         return;
       }
 
+      console.log('📊 Raw characters data from database:', charactersData);
+
       if (charactersData && charactersData.length > 0) {
+        console.log(`📝 Found ${charactersData.length} characters in database`);
+        
         // Get public URLs for each character
         const charactersWithUrls = charactersData.map(character => {
+          console.log(`🔗 Processing character: ${character.name}`);
+          console.log(`📁 Storage path: ${character.storage_path}`);
+          
           const { data } = supabase.storage
             .from('cartoon-characters')
             .getPublicUrl(character.storage_path);
           
-          console.log(`Loading character ${character.name} from path: ${character.storage_path}`);
-          console.log(`Public URL: ${data.publicUrl}`);
+          console.log(`🌐 Generated public URL for ${character.name}: ${data.publicUrl}`);
           
           return {
             ...character,
@@ -47,16 +55,21 @@ export const useCartoonCharacters = () => {
           };
         });
 
+        console.log('✅ Characters with URLs:', charactersWithUrls);
         setCharacters(charactersWithUrls);
         
         // Select a random character if none is selected
         if (!selectedCharacter && charactersWithUrls.length > 0) {
           const randomIndex = Math.floor(Math.random() * charactersWithUrls.length);
-          setSelectedCharacter(charactersWithUrls[randomIndex]);
+          const randomCharacter = charactersWithUrls[randomIndex];
+          console.log(`🎲 Selected random character: ${randomCharacter.name}`);
+          setSelectedCharacter(randomCharacter);
         }
+      } else {
+        console.log('⚠️ No characters found in database');
       }
     } catch (error) {
-      console.error('Error loading cartoon characters:', error);
+      console.error('💥 Error loading cartoon characters:', error);
     } finally {
       setLoading(false);
     }
@@ -65,15 +78,21 @@ export const useCartoonCharacters = () => {
   const selectRandomCharacter = () => {
     if (characters.length > 0) {
       const randomIndex = Math.floor(Math.random() * characters.length);
-      setSelectedCharacter(characters[randomIndex]);
+      const randomCharacter = characters[randomIndex];
+      console.log(`🎲 Manually selected random character: ${randomCharacter.name}`);
+      setSelectedCharacter(randomCharacter);
     }
   };
 
   const uploadCharacterImages = async (files: { name: string; file: File }[]) => {
+    console.log('📤 Starting character image upload process...');
+    
     const uploadPromises = files.map(async ({ name, file }) => {
       const fileName = `${name.toLowerCase().replace(/\s+/g, '-')}.png`;
       
-      console.log(`Uploading ${fileName} to cartoon-characters bucket`);
+      console.log(`📤 Uploading ${fileName} to cartoon-characters bucket...`);
+      console.log(`📝 Character name: ${name}`);
+      console.log(`📁 File name: ${fileName}`);
       
       const { error } = await supabase.storage
         .from('cartoon-characters')
@@ -83,18 +102,22 @@ export const useCartoonCharacters = () => {
         });
 
       if (error) {
-        console.error(`Error uploading ${fileName}:`, error);
+        console.error(`❌ Error uploading ${fileName}:`, error);
         return false;
       }
       
-      console.log(`Successfully uploaded ${fileName}`);
+      console.log(`✅ Successfully uploaded ${fileName}`);
       return true;
     });
 
     const results = await Promise.all(uploadPromises);
     const allUploaded = results.every(result => result === true);
     
+    console.log('📊 Upload results:', results);
+    console.log(`🎯 All uploaded successfully: ${allUploaded}`);
+    
     if (allUploaded) {
+      console.log('🔄 Reloading characters after successful upload...');
       await loadCharacters(); // Reload characters after upload
     }
     
