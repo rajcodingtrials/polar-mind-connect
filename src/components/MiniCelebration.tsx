@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useCartoonCharacters } from '@/hooks/useCartoonCharacters';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
@@ -15,9 +15,24 @@ const MiniCelebration = ({ correctAnswers, onComplete }: MiniCelebrationProps) =
   const [isRolling, setIsRolling] = useState(true);
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
   const { playAudio, isPlaying } = useAudioPlayer();
+  
+  // Use refs to access latest values in useEffect
+  const isPlayingRef = useRef(isPlaying);
+  const onCompleteRef = useRef(onComplete);
+  
+  // Update refs when values change
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+  
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     const runCelebration = async () => {
+      console.log('🎊 Starting celebration TTS - component mounted');
+      
       // Hide confetti after animation
       const confettiTimer = setTimeout(() => setShowConfetti(false), 2000);
       
@@ -40,14 +55,14 @@ const MiniCelebration = ({ correctAnswers, onComplete }: MiniCelebrationProps) =
           
           // Wait for TTS to completely finish before proceeding
           const waitForTTSComplete = () => {
-            if (isPlaying) {
+            if (isPlayingRef.current) {
               setTimeout(waitForTTSComplete, 100);
             } else {
               console.log('🎊 TTS finished, celebration complete');
               setIsPlayingTTS(false);
               // Add a small delay after TTS finishes before moving to next question
               setTimeout(() => {
-                onComplete();
+                onCompleteRef.current();
               }, 1000);
             }
           };
@@ -78,7 +93,7 @@ const MiniCelebration = ({ correctAnswers, onComplete }: MiniCelebrationProps) =
     };
 
     runCelebration();
-  }, [onComplete, playAudio, isPlaying]);
+  }, []); // Empty dependency array - only run once
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 p-6">

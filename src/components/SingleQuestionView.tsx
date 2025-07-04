@@ -34,6 +34,7 @@ interface SingleQuestionViewProps {
   retryCount: number;
   onRetryCountChange: (count: number) => void;
   onSpeechDelayModeChange: (enabled: boolean) => void;
+  comingFromCelebration?: boolean;
 }
 
 const SingleQuestionView = ({
@@ -49,23 +50,46 @@ const SingleQuestionView = ({
   onComplete,
   retryCount,
   onRetryCountChange,
-  onSpeechDelayModeChange
+  onSpeechDelayModeChange,
+  comingFromCelebration = false
 }: SingleQuestionViewProps) => {
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(true);
   const [currentResponse, setCurrentResponse] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+  const [hasCalledCorrectAnswer, setHasCalledCorrectAnswer] = useState(false);
+  const [shouldReadQuestion, setShouldReadQuestion] = useState(true);
   
   const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
   const { playAudio, isPlaying, stopAudio } = useAudioPlayer();
   const { toast } = useToast();
 
+  // Reset flags when question changes
+  useEffect(() => {
+    setHasCalledCorrectAnswer(false);
+    setIsProcessingAnswer(false);
+    setShowFeedback(false);
+    setCurrentResponse('');
+    setIsWaitingForAnswer(true);
+    setShouldReadQuestion(!comingFromCelebration);
+  }, [question.id, comingFromCelebration]);
+
   // Auto-read question when component loads
   useEffect(() => {
     const readQuestion = async () => {
+      console.log('🔊 Question reading check:', { shouldReadQuestion, comingFromCelebration });
+      // Only read question if flag is set to true
+      if (!shouldReadQuestion) {
+        console.log('🔇 Skipping question reading - coming from celebration');
+        return;
+      }
+      
       try {
         // Stop any currently playing audio first
         stopAudio();
+        
+        // Add a longer delay to ensure any celebration TTS has finished
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         const response = await supabase.functions.invoke('openai-tts', {
           body: {
@@ -83,8 +107,9 @@ const SingleQuestionView = ({
       }
     };
 
-    setTimeout(readQuestion, 500);
-  }, [question.question, playAudio, stopAudio]);
+    // Increased delay to prevent overlap with celebration TTS
+    setTimeout(readQuestion, 1000);
+  }, [question.question, playAudio, stopAudio, shouldReadQuestion]);
 
   const handleVoiceRecording = async () => {
     if (isProcessingAnswer) return; // Prevent multiple submissions
@@ -157,48 +182,21 @@ const SingleQuestionView = ({
     const newRetryCount = retryCount + 1;
 
     if (similarity > acceptanceThreshold) {
-      // Correct answer
+      // Correct answer - show feedback and move to celebration
       setCurrentResponse(`Amazing work, ${childName}! That's exactly right! The answer is "${question.answer}" 🎉`);
       setShowFeedback(true);
-      onCorrectAnswer();
       
-      // Play success TTS and wait for it to complete
-      try {
-        const response = await supabase.functions.invoke('openai-tts', {
-          body: {
-            text: `Amazing work, ${childName}! That's exactly right!`,
-            voice: 'nova',
-            speed: 1.0
-          }
-        });
-
-        if (response.data?.audioContent) {
-          await playAudio(response.data.audioContent);
-          // Wait for audio to finish before proceeding
-          await new Promise(resolve => {
-            const checkAudioFinished = () => {
-              if (!isPlaying) {
-                resolve(undefined);
-              } else {
-                setTimeout(checkAudioFinished, 100);
-              }
-            };
-            setTimeout(checkAudioFinished, 1000); // Give it at least 1 second
-          });
-        }
-      } catch (error) {
-        console.error('TTS error:', error);
+      // Prevent multiple calls to onCorrectAnswer
+      if (!hasCalledCorrectAnswer) {
+        setHasCalledCorrectAnswer(true);
+        console.log('🎉 Calling onCorrectAnswer for question:', questionNumber);
+        onCorrectAnswer();
       }
-
-      // Continue to next question or complete after audio finishes
+      
+      // Reset processing state after a short delay
       setTimeout(() => {
-        if (questionNumber < totalQuestions) {
-          onNextQuestion();
-        } else {
-          onComplete();
-        }
         setIsProcessingAnswer(false);
-      }, 1000);
+      }, 500);
       
     } else if (newRetryCount >= 2) {
       // After 2 attempts, move to next question
@@ -233,6 +231,7 @@ const SingleQuestionView = ({
         console.error('TTS error:', error);
       }
 
+      // After 2 failed attempts, move to next question directly
       setTimeout(() => {
         if (questionNumber < totalQuestions) {
           onNextQuestion();

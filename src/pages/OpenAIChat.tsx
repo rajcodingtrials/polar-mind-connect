@@ -41,6 +41,7 @@ const OpenAIChatPage = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const [sessionQuestionCount, setSessionQuestionCount] = useState(0);
+  const [comingFromCelebration, setComingFromCelebration] = useState(false);
   const maxQuestionsPerSession = 5;
 
   // Set childName from profile (fallback to 'friend' if not available)
@@ -215,13 +216,25 @@ const OpenAIChatPage = () => {
 
   const handleCorrectAnswer = () => {
     console.log('🎉 Correct answer! Moving to celebration...');
+    console.log('📊 Correct answer state:', {
+      currentQuestionId: currentQuestion?.id,
+      sessionQuestionCount,
+      correctAnswers: correctAnswers + 1
+    });
     setCorrectAnswers(prev => prev + 1);
+    setComingFromCelebration(true);
     setCurrentScreen('celebration');
     setRetryCount(0);
   };
 
   const handleNextQuestion = () => {
     console.log('🔄 Moving to next question...');
+    console.log('📊 Current session state:', {
+      sessionQuestionCount,
+      maxQuestionsPerSession,
+      askedQuestionIds: Array.from(askedQuestionIds),
+      availableQuestionsCount: availableQuestions.length
+    });
     
     if (sessionQuestionCount >= maxQuestionsPerSession) {
       console.log('🏁 Session complete - reached max questions');
@@ -232,6 +245,7 @@ const OpenAIChatPage = () => {
     // Get remaining questions (not asked yet)
     const remainingQuestions = availableQuestions.filter(q => !askedQuestionIds.has(q.id));
     console.log('🎯 Remaining questions:', remainingQuestions.length);
+    console.log('🎯 Remaining question IDs:', remainingQuestions.map(q => q.id));
     
     if (remainingQuestions.length === 0) {
       console.log('🏁 No more questions available - session complete');
@@ -242,12 +256,18 @@ const OpenAIChatPage = () => {
     // Select next random question
     const nextQuestion = selectRandomQuestion(remainingQuestions);
     if (nextQuestion) {
-      console.log('🎯 Next question selected:', nextQuestion.question);
+      console.log('🎯 Next question selected:', {
+        id: nextQuestion.id,
+        question: nextQuestion.question,
+        newSessionCount: sessionQuestionCount + 1
+      });
       setCurrentQuestion(nextQuestion);
       setAskedQuestionIds(prev => new Set([...prev, nextQuestion.id]));
       setSessionQuestionCount(prev => prev + 1);
       setRetryCount(0);
       setCurrentScreen('question');
+      // Reset the flag after setting the question
+      setTimeout(() => setComingFromCelebration(false), 100);
     } else {
       console.log('🏁 No valid next question - session complete');
       setCurrentScreen('complete');
@@ -256,6 +276,11 @@ const OpenAIChatPage = () => {
 
   const handleCelebrationComplete = () => {
     console.log('🎊 Celebration complete - moving to next question');
+    console.log('📊 Celebration state:', {
+      sessionQuestionCount,
+      correctAnswers,
+      currentQuestionId: currentQuestion?.id
+    });
     handleNextQuestion();
   };
 
@@ -441,6 +466,7 @@ const OpenAIChatPage = () => {
               retryCount={retryCount}
               onRetryCountChange={setRetryCount}
               onSpeechDelayModeChange={setSpeechDelayMode}
+              comingFromCelebration={comingFromCelebration}
             />
           )}
 
