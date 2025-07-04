@@ -329,7 +329,7 @@ const SingleQuestionView = ({
 
         {/* Question Image */}
         {imageUrl && (
-          <div className="mb-8 animate-scale-in flex justify-center">
+          <div className="mb-4 animate-scale-in flex justify-center">
             <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
               <img
                 src={imageUrl}
@@ -344,49 +344,40 @@ const SingleQuestionView = ({
           </div>
         )}
 
-        {/* Feedback Area */}
-        {showFeedback && (
-          <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-4 border-green-200 rounded-3xl p-6 max-w-2xl mx-auto mb-8 animate-fade-in">
-            <p className="text-lg text-center text-green-800 font-medium">
-              {currentResponse}
+        {/* Voice Input Button - Positioned directly below image */}
+        {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
+          <div className="flex flex-col items-center animate-fade-in mb-8">
+            <Button
+              size="lg"
+              onClick={handleVoiceRecording}
+              disabled={isProcessing || isPlaying || isProcessingAnswer}
+              className={`w-20 h-20 rounded-full border-2 shadow-lg transform hover:scale-105 transition-all duration-300 ${
+                isRecording 
+                  ? "bg-red-500 hover:bg-red-600 border-red-400 text-white" 
+                  : "bg-gray-500 hover:bg-gray-600 border-gray-400 text-white"
+              }`}
+            >
+              {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
+            </Button>
+            
+            <p className="text-xs text-blue-600 font-medium mt-2">
+              Tap to record
             </p>
+            
+            {retryCount > 0 && (
+              <p className="text-sm text-purple-600 mt-1">
+                Attempt {retryCount + 1} of 2
+              </p>
+            )}
           </div>
         )}
 
-        {/* Voice Input Button - Fixed positioning and styling */}
-        {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
-          <div className="flex flex-col items-center animate-fade-in mb-8">
-            <div className="flex items-center gap-6">
-              <Button
-                size="lg"
-                onClick={handleVoiceRecording}
-                disabled={isProcessing || isPlaying || isProcessingAnswer}
-                className={`w-40 h-40 rounded-full border-4 shadow-xl transform hover:scale-105 transition-all duration-300 ${
-                  isRecording 
-                    ? "bg-red-500 hover:bg-red-600 border-red-400 text-white" 
-                    : "bg-green-500 hover:bg-green-600 border-green-400 text-white"
-                }`}
-              >
-                {isRecording ? <MicOff className="h-24 w-24" /> : <Mic className="h-24 w-24" />}
-              </Button>
-              
-              <div className="text-left">
-                <p className="text-2xl font-bold text-blue-700 mb-2">
-                  Tap to record
-                </p>
-                <p className="text-lg text-blue-600 font-semibold">
-                  {isRecording ? "🔴 Recording... Tap again to stop" : 
-                   isProcessing ? "🔄 Processing your voice..." :
-                   isPlaying ? "🎵 Playing..." :
-                   "Press and speak your answer"}
-                </p>
-                {retryCount > 0 && (
-                  <p className="text-sm text-purple-600 mt-2">
-                    Attempt {retryCount + 1} of 2
-                  </p>
-                )}
-              </div>
-            </div>
+        {/* Feedback Area */}
+        {showFeedback && (
+          <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-4 border-green-200 rounded-3xl p-6 max-w-2xl mx-auto animate-fade-in">
+            <p className="text-lg text-center text-green-800 font-medium">
+              {currentResponse}
+            </p>
           </div>
         )}
       </div>
