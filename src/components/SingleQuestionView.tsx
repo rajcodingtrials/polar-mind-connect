@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -253,22 +252,22 @@ const SingleQuestionView = ({
         </div>
 
         <div className="flex items-center gap-6">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => onSpeechDelayModeChange(!speechDelayMode)}
+            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-6 py-3 text-lg font-semibold transition-all ${
+              speechDelayMode ? "bg-purple-200 border-purple-400 text-purple-800" : "bg-white"
+            }`}
+          >
+            Speech Delay Mode: {speechDelayMode ? "ON" : "OFF"}
+          </Button>
+          
           <div className="text-center">
             <p className="text-xl font-bold text-purple-800">
               Question {questionNumber} of {totalQuestions}
             </p>
           </div>
-          
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => onSpeechDelayModeChange(!speechDelayMode)}
-            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-6 py-3 text-lg font-semibold ${
-              speechDelayMode ? "bg-purple-100 border-purple-300" : ""
-            }`}
-          >
-            Speech Delay Mode
-          </Button>
         </div>
       </div>
 
@@ -281,18 +280,20 @@ const SingleQuestionView = ({
           </h2>
         </div>
 
-        {/* Question Image - Much wider and larger */}
+        {/* Question Image - Larger with border that fits the image */}
         {imageUrl && (
-          <div className="mb-8 animate-scale-in w-full max-w-5xl">
-            <img
-              src={imageUrl}
-              alt="Question"
-              className="w-full max-h-96 object-contain rounded-3xl shadow-2xl border-4 border-white"
-              onError={(e) => {
-                console.error('Error loading question image:', imageUrl);
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+          <div className="mb-8 animate-scale-in flex justify-center">
+            <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
+              <img
+                src={imageUrl}
+                alt="Question"
+                className="w-auto h-96 max-w-4xl object-contain"
+                onError={(e) => {
+                  console.error('Error loading question image:', imageUrl);
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
           </div>
         )}
 
