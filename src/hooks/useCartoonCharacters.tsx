@@ -38,6 +38,9 @@ export const useCartoonCharacters = () => {
             .from('cartoon-characters')
             .getPublicUrl(character.storage_path);
           
+          console.log(`Loading character ${character.name} from path: ${character.storage_path}`);
+          console.log(`Public URL: ${data.publicUrl}`);
+          
           return {
             ...character,
             image_url: data.publicUrl
@@ -68,7 +71,9 @@ export const useCartoonCharacters = () => {
 
   const uploadCharacterImages = async (files: { name: string; file: File }[]) => {
     const uploadPromises = files.map(async ({ name, file }) => {
-      const fileName = `${name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+      const fileName = `${name.toLowerCase().replace(/\s+/g, '-')}.png`;
+      
+      console.log(`Uploading ${fileName} to cartoon-characters bucket`);
       
       const { error } = await supabase.storage
         .from('cartoon-characters')
@@ -82,6 +87,7 @@ export const useCartoonCharacters = () => {
         return false;
       }
       
+      console.log(`Successfully uploaded ${fileName}`);
       return true;
     });
 

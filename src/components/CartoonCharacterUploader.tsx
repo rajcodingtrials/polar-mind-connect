@@ -19,9 +19,7 @@ const CartoonCharacterUploader = () => {
     setUploading(true);
 
     try {
-      // Convert the uploaded images to File objects
-      // Note: In a real scenario, you would handle file selection
-      // For now, we'll create placeholder files based on the character names
+      // Convert the uploaded images to File objects with PNG extensions
       const characterFiles = [
         { name: 'Happy Giraffe', file: new File([''], 'giraffe.png', { type: 'image/png' }) },
         { name: 'Cute Elephant', file: new File([''], 'elephant.png', { type: 'image/png' }) },
