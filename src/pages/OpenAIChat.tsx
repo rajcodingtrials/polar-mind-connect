@@ -3,13 +3,15 @@ import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import OpenAIChat from '../components/OpenAIChat';
+import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import ProgressCharacter from '../components/ProgressCharacter';
-import CartoonCharacterUploader from '../components/CartoonCharacterUploader';
+import IntroductionScreen from '../components/IntroductionScreen';
+import SingleQuestionView from '../components/SingleQuestionView';
+import MiniCelebration from '../components/MiniCelebration';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -27,11 +29,14 @@ const OpenAIChatPage = () => {
   const [showQuestionTypes, setShowQuestionTypes] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [imageUrls, setImageUrls] = useState<{[key: string]: string}>({});
-  const [useStructuredMode, setUseStructuredMode] = useState(false);
   const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType | null>(null);
-  const [chatKey, setChatKey] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [therapistName, setTherapistName] = useState('Laura');
+  
+  // New state for the redesigned flow
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'introduction' | 'question' | 'celebration' | 'complete'>('home');
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Set childName from profile (fallback to 'friend' if not available)
   const childName = profile?.name || profile?.username || 'friend';
@@ -129,10 +134,7 @@ const OpenAIChatPage = () => {
     loadQuestionsAndImages();
 
     // Also check localStorage for default mode
-    const defaultMode = localStorage.getItem('defaultChatMode');
-    if (defaultMode) {
-      setUseStructuredMode(defaultMode === 'structured');
-    }
+    
   }, []);
 
   // Listen for storage changes (when admin uploads new content)
@@ -177,65 +179,79 @@ const OpenAIChatPage = () => {
 
   const handleQuestionTypeSelect = (questionType: QuestionType) => {
     setSelectedQuestionType(questionType);
-    setUseStructuredMode(true);
     setShowQuestionTypes(false);
-    setShowChat(true);
     setCorrectAnswers(0);
-    setChatKey(prev => prev + 1);
+    setCurrentQuestionIndex(0);
+    setRetryCount(0);
+    setCurrentScreen('introduction');
   };
 
-  const handleCloseChat = () => {
-    setShowChat(false);
-    setShowQuestionTypes(false);
-    setSelectedQuestionType(null);
-    setCorrectAnswers(0);
-    setChatKey(prev => prev + 1);
-    setTherapistName('Laura');
-  };
-
-  const toggleChatMode = () => {
-    console.log('Toggling chat mode from', useStructuredMode, 'to', !useStructuredMode);
-    setUseStructuredMode(!useStructuredMode);
-    setCorrectAnswers(0);
-    setChatKey(prev => prev + 1);
+  const handleStartQuestions = () => {
+    setCurrentScreen('question');
   };
 
   const handleCorrectAnswer = () => {
     setCorrectAnswers(prev => prev + 1);
+    setCurrentScreen('celebration');
+    setRetryCount(0); // Reset retry count for next question
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex + 1 < filteredQuestions.length) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setRetryCount(0);
+      setCurrentScreen('question');
+    } else {
+      setCurrentScreen('complete');
+    }
+  };
+
+  const handleCelebrationComplete = () => {
+    // After mini-celebration, move to next question or complete
+    if (currentQuestionIndex + 1 < filteredQuestions.length) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentScreen('question');
+    } else {
+      setCurrentScreen('complete');
+    }
+  };
+
+  const handleCompleteSession = () => {
+    setCurrentScreen('home');
+    setShowQuestionTypes(false);
+    setSelectedQuestionType(null);
+    setCorrectAnswers(0);
+    setCurrentQuestionIndex(0);
+    setRetryCount(0);
+    setTherapistName('Laura');
+  };
+
+  const handleCloseChat = () => {
+    handleCompleteSession();
   };
 
   const handleLawrenceClick = () => {
     console.log('Lawrence clicked - functionality to be implemented');
   };
 
-  // Filter questions by selected type - fixed logic
+  // Filter questions by selected type
   const filteredQuestions = selectedQuestionType 
-    ? questions.filter(q => {
-        const matches = q.questionType === selectedQuestionType;
-        console.log(`Filtering question ${q.id}: type='${q.questionType}', selected='${selectedQuestionType}', matches=${matches}`);
-        return matches;
-      })
+    ? questions.filter(q => q.questionType === selectedQuestionType)
     : questions;
-
-  console.log('Filtered questions for', selectedQuestionType, ':', filteredQuestions.length);
-  console.log('Available questions:', questions.map(q => ({ id: q.id, type: q.questionType, imageName: q.imageName })));
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       <main className="flex-grow p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
-          {/* Welcome Section - only show when not in chat */}
-          {!showChat && !showQuestionTypes && (
+          {/* Home Screen */}
+          {currentScreen === 'home' && !showQuestionTypes && (
             <>
               <div className="mb-8 text-center">
                 <h1 className="text-5xl font-bold mb-4 text-slate-700">
                   Welcome, {profile?.name || 'User'}!
                 </h1>
               </div>
-
-              {/* Cartoon Character Uploader */}
-              <CartoonCharacterUploader />
 
               {/* Affirmation for the day Section */}
               <Card className="mb-8 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 hover:border-amber-300 shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300">
@@ -298,8 +314,8 @@ const OpenAIChatPage = () => {
             </>
           )}
 
-          {/* Question Type Selection */}
-          {showQuestionTypes && (
+          {/* Question Type Selection Screen */}
+          {showQuestionTypes && currentScreen === 'home' && (
             <div className="mb-8 flex flex-col items-center">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-black mb-4">
@@ -356,32 +372,58 @@ const OpenAIChatPage = () => {
             </div>
           )}
 
-          {/* Chat Interface with side-by-side layout */}
-          {showChat && selectedQuestionType && (
-            <div className="flex flex-col lg:flex-row gap-6 h-full">
-              {/* Chat Interface positioned on the left side */}
-              <div className="flex-1 w-full lg:w-auto">
-                <OpenAIChat 
-                  key={chatKey}
-                  onClose={handleCloseChat}
-                  questions={filteredQuestions}
-                  imageUrls={imageUrls}
-                  useStructuredMode={useStructuredMode}
-                  onToggleMode={toggleChatMode}
-                  selectedQuestionType={selectedQuestionType}
-                  onCorrectAnswer={handleCorrectAnswer}
-                  therapistName={therapistName}
-                  childName={childName}
-                />
-              </div>
-              
-              {/* Progress Character positioned on the right side */}
-              <div className="w-full lg:w-80 flex-shrink-0">
-                <ProgressCharacter 
-                  correctAnswers={correctAnswers}
-                  totalQuestions={filteredQuestions.length}
-                  questionType={selectedQuestionType}
-                />
+          {/* Introduction Screen */}
+          {currentScreen === 'introduction' && selectedQuestionType && (
+            <IntroductionScreen
+              selectedQuestionType={selectedQuestionType}
+              therapistName={therapistName}
+              childName={childName}
+              onStartQuestions={handleStartQuestions}
+            />
+          )}
+
+          {/* Single Question View */}
+          {currentScreen === 'question' && selectedQuestionType && filteredQuestions[currentQuestionIndex] && (
+            <SingleQuestionView
+              question={filteredQuestions[currentQuestionIndex]}
+              imageUrl={filteredQuestions[currentQuestionIndex].imageName ? imageUrls[filteredQuestions[currentQuestionIndex].imageName!] : undefined}
+              questionNumber={currentQuestionIndex + 1}
+              totalQuestions={Math.min(filteredQuestions.length, 5)}
+              therapistName={therapistName}
+              childName={childName}
+              speechDelayMode={false} // You can add this as a toggle if needed
+              onCorrectAnswer={handleCorrectAnswer}
+              onNextQuestion={handleNextQuestion}
+              onComplete={() => setCurrentScreen('complete')}
+              retryCount={retryCount}
+              onRetryCountChange={setRetryCount}
+            />
+          )}
+
+          {/* Mini Celebration */}
+          {currentScreen === 'celebration' && (
+            <MiniCelebration
+              correctAnswers={correctAnswers}
+              onComplete={handleCelebrationComplete}
+            />
+          )}
+
+          {/* Complete Session with Progress Character */}
+          {currentScreen === 'complete' && (
+            <div className="flex flex-col items-center justify-center min-h-[80vh]">
+              <ProgressCharacter 
+                correctAnswers={correctAnswers}
+                totalQuestions={Math.min(filteredQuestions.length, 5)}
+                questionType={selectedQuestionType}
+              />
+              <div className="mt-8">
+                <Button
+                  onClick={handleCompleteSession}
+                  size="lg"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
+                >
+                  Continue Learning! 🚀
+                </Button>
               </div>
             </div>
           )}
