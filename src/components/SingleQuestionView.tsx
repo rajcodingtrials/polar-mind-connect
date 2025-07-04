@@ -239,31 +239,31 @@ const SingleQuestionView = ({
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
       {/* Header with therapist, progress, and speech delay toggle */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
+          <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
             <AvatarImage src="/lovable-uploads/Laura.png" alt={therapistName} />
             <AvatarFallback className="bg-blue-200 text-blue-800 font-semibold">
               {therapistName.charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="font-semibold text-blue-900 text-lg">{therapistName}</h3>
+            <h3 className="font-bold text-blue-900 text-2xl">{therapistName}</h3>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <div className="text-center">
-            <p className="text-lg font-bold text-purple-800">
+            <p className="text-xl font-bold text-purple-800">
               Question {questionNumber} of {totalQuestions}
             </p>
           </div>
           
           <Button
             variant="outline"
-            size="sm"
+            size="lg"
             onClick={() => onSpeechDelayModeChange(!speechDelayMode)}
-            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-4 py-2 ${
+            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-6 py-3 text-lg font-semibold ${
               speechDelayMode ? "bg-purple-100 border-purple-300" : ""
             }`}
           >
@@ -273,21 +273,21 @@ const SingleQuestionView = ({
       </div>
 
       {/* Main Question Area */}
-      <div className="flex-grow flex flex-col items-center justify-center max-w-4xl mx-auto">
-        {/* Question Text Above Image */}
-        <div className="bg-white rounded-3xl p-8 shadow-xl border-4 border-blue-200 max-w-2xl mx-auto mb-8 animate-fade-in">
-          <h2 className="text-3xl font-bold text-center text-gray-800 leading-relaxed">
+      <div className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
+        {/* Question Text - No white block background */}
+        <div className="mb-8 animate-fade-in">
+          <h2 className="text-4xl font-bold text-center text-blue-900 leading-relaxed">
             {question.question}
           </h2>
         </div>
 
-        {/* Question Image - Larger Size */}
+        {/* Question Image - Much wider and larger */}
         {imageUrl && (
-          <div className="mb-8 animate-scale-in">
+          <div className="mb-8 animate-scale-in w-full max-w-5xl">
             <img
               src={imageUrl}
               alt="Question"
-              className="max-w-lg max-h-80 object-contain rounded-2xl shadow-xl border-4 border-white"
+              className="w-full max-h-96 object-contain rounded-3xl shadow-2xl border-4 border-white"
               onError={(e) => {
                 console.error('Error loading question image:', imageUrl);
                 e.currentTarget.style.display = 'none';
@@ -305,7 +305,7 @@ const SingleQuestionView = ({
           </div>
         )}
 
-        {/* Voice Input Button */}
+        {/* Voice Input Button - Bigger microphone */}
         {isWaitingForAnswer && !showFeedback && (
           <div className="text-center animate-fade-in">
             <Button
@@ -313,9 +313,9 @@ const SingleQuestionView = ({
               variant={isRecording ? "destructive" : "outline"}
               onClick={handleVoiceRecording}
               disabled={isProcessing || isPlaying}
-              className="w-20 h-20 rounded-full border-4 border-blue-300 hover:border-blue-400 shadow-xl transform hover:scale-105 transition-all duration-300"
+              className="w-28 h-28 rounded-full border-4 border-blue-300 hover:border-blue-400 shadow-xl transform hover:scale-105 transition-all duration-300"
             >
-              {isRecording ? <MicOff className="h-10 w-10" /> : <Mic className="h-10 w-10" />}
+              {isRecording ? <MicOff className="h-14 w-14" /> : <Mic className="h-14 w-14" />}
             </Button>
             
             <div className="mt-4 text-center">
