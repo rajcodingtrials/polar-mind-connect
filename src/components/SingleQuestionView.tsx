@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -53,15 +54,19 @@ const SingleQuestionView = ({
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(true);
   const [currentResponse, setCurrentResponse] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
+  const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
   
   const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
-  const { playAudio, isPlaying } = useAudioPlayer();
+  const { playAudio, isPlaying, stopAudio } = useAudioPlayer();
   const { toast } = useToast();
 
   // Auto-read question when component loads
   useEffect(() => {
     const readQuestion = async () => {
       try {
+        // Stop any currently playing audio first
+        stopAudio();
+        
         const response = await supabase.functions.invoke('openai-tts', {
           body: {
             text: question.question,
@@ -79,9 +84,11 @@ const SingleQuestionView = ({
     };
 
     setTimeout(readQuestion, 500);
-  }, [question.question, playAudio]);
+  }, [question.question, playAudio, stopAudio]);
 
   const handleVoiceRecording = async () => {
+    if (isProcessingAnswer) return; // Prevent multiple submissions
+    
     if (isRecording) {
       setIsProcessing(true);
       
@@ -135,6 +142,12 @@ const SingleQuestionView = ({
   };
 
   const processAnswer = async (userAnswer: string) => {
+    if (isProcessingAnswer) return; // Prevent double processing
+    setIsProcessingAnswer(true);
+    
+    // Stop any currently playing audio
+    stopAudio();
+    
     const similarity = calculateSimilarity(userAnswer, question.answer, {
       speechDelayMode,
       threshold: speechDelayMode ? 0.3 : 0.6
@@ -149,7 +162,7 @@ const SingleQuestionView = ({
       setShowFeedback(true);
       onCorrectAnswer();
       
-      // Play success TTS
+      // Play success TTS and wait for it to complete
       try {
         const response = await supabase.functions.invoke('openai-tts', {
           body: {
@@ -161,19 +174,31 @@ const SingleQuestionView = ({
 
         if (response.data?.audioContent) {
           await playAudio(response.data.audioContent);
+          // Wait for audio to finish before proceeding
+          await new Promise(resolve => {
+            const checkAudioFinished = () => {
+              if (!isPlaying) {
+                resolve(undefined);
+              } else {
+                setTimeout(checkAudioFinished, 100);
+              }
+            };
+            setTimeout(checkAudioFinished, 1000); // Give it at least 1 second
+          });
         }
       } catch (error) {
         console.error('TTS error:', error);
       }
 
-      // Continue to next question or complete
+      // Continue to next question or complete after audio finishes
       setTimeout(() => {
         if (questionNumber < totalQuestions) {
           onNextQuestion();
         } else {
           onComplete();
         }
-      }, 3000);
+        setIsProcessingAnswer(false);
+      }, 1000);
       
     } else if (newRetryCount >= 2) {
       // After 2 attempts, move to next question
@@ -192,6 +217,17 @@ const SingleQuestionView = ({
 
         if (response.data?.audioContent) {
           await playAudio(response.data.audioContent);
+          // Wait for audio to finish
+          await new Promise(resolve => {
+            const checkAudioFinished = () => {
+              if (!isPlaying) {
+                resolve(undefined);
+              } else {
+                setTimeout(checkAudioFinished, 100);
+              }
+            };
+            setTimeout(checkAudioFinished, 1000);
+          });
         }
       } catch (error) {
         console.error('TTS error:', error);
@@ -203,7 +239,8 @@ const SingleQuestionView = ({
         } else {
           onComplete();
         }
-      }, 4000);
+        setIsProcessingAnswer(false);
+      }, 1000);
       
     } else {
       // First attempt - encourage to try again
@@ -222,6 +259,17 @@ const SingleQuestionView = ({
 
         if (response.data?.audioContent) {
           await playAudio(response.data.audioContent);
+          // Wait for audio to finish
+          await new Promise(resolve => {
+            const checkAudioFinished = () => {
+              if (!isPlaying) {
+                resolve(undefined);
+              } else {
+                setTimeout(checkAudioFinished, 100);
+              }
+            };
+            setTimeout(checkAudioFinished, 1000);
+          });
         }
       } catch (error) {
         console.error('TTS error:', error);
@@ -231,7 +279,8 @@ const SingleQuestionView = ({
       setTimeout(() => {
         setShowFeedback(false);
         setIsWaitingForAnswer(true);
-      }, 4000);
+        setIsProcessingAnswer(false);
+      }, 2000);
     }
   };
 
@@ -306,17 +355,17 @@ const SingleQuestionView = ({
           </div>
         )}
 
-        {/* Voice Input Button - Bigger microphone */}
-        {isWaitingForAnswer && !showFeedback && (
+        {/* Voice Input Button - Much bigger microphone like the reference */}
+        {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
           <div className="text-center animate-fade-in">
             <Button
               size="lg"
               variant={isRecording ? "destructive" : "outline"}
               onClick={handleVoiceRecording}
-              disabled={isProcessing || isPlaying}
-              className="w-28 h-28 rounded-full border-4 border-blue-300 hover:border-blue-400 shadow-xl transform hover:scale-105 transition-all duration-300"
+              disabled={isProcessing || isPlaying || isProcessingAnswer}
+              className="w-36 h-36 rounded-full border-4 border-blue-300 hover:border-blue-400 shadow-xl transform hover:scale-105 transition-all duration-300 bg-green-500 hover:bg-green-600 border-green-400 text-white"
             >
-              {isRecording ? <MicOff className="h-14 w-14" /> : <Mic className="h-14 w-14" />}
+              {isRecording ? <MicOff className="h-20 w-20" /> : <Mic className="h-20 w-20" />}
             </Button>
             
             <div className="mt-4 text-center">
