@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Mic, MicOff, Send, X, RotateCcw } from 'lucide-react';
+import { Send, X, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
@@ -29,6 +29,14 @@ interface OpenAIChatProps {
   therapistName: string;
   childName: string;
 }
+
+// Custom Microphone Icon component
+const MicrophoneIcon = ({ isRecording, size = 32 }: { isRecording?: boolean; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor"/>
+    <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v4M8 23h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 
 const OpenAIChat: React.FC<OpenAIChatProps> = ({
   onClose,
@@ -56,12 +64,11 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [retryCount, setRetryCount] = useState(0); // Track attempts for current question
+  const [retryCount, setRetryCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
   
-  // Audio recording functionality
   const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
 
   const scrollToBottom = () => {
@@ -72,20 +79,15 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Stop audio when component unmounts (window closes)
   useEffect(() => {
     return () => {
       console.log('OpenAIChat component unmounting, stopping all audio...');
       stopAudio();
-      
-      // Use the utility function to aggressively stop all audio
       stopAllAudio();
       
-      // Stop any ongoing recording
       if (isRecording) {
         stopRecording().catch(console.error);
       }
-      // Stop any processing
       setIsProcessing(false);
     };
   }, [stopAudio, isRecording, stopRecording]);
@@ -138,7 +140,6 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
         const base64Audio = await stopRecording();
         console.log('Recording stopped, processing audio...');
         
-        // Send audio to speech-to-text
         const { data, error } = await supabase.functions.invoke('openai-stt', {
           body: { audio: base64Audio }
         });
@@ -222,7 +223,6 @@ Remember to always be supportive, encouraging, and make the child feel proud of 
         const firstQuestion = questions[0];
         console.log('First question:', firstQuestion);
         
-        // Single API call that combines introduction and first question
         promptContent = `Please provide a warm introduction for starting the ${selectedQuestionType} activity, followed by asking this specific question from our database:
 
 Question: "${firstQuestion.question}"
@@ -268,14 +268,13 @@ Make it all flow naturally as one cohesive message.`;
           };
           
           setMessages([initialMessage]);
-          setIsWaitingForAnswer(true); // We're now waiting for answer to the first question
-          setRetryCount(0); // Reset retry count for new session
+          setIsWaitingForAnswer(true);
+          setRetryCount(0);
         } else {
           console.log('⚠️ No content received from AI');
           return;
         }
       } else {
-        // Free chat mode
         promptContent = `Please provide a warm, encouraging introduction for a ${selectedQuestionType} session.`;
         
         console.log('📡 Calling openai-chat edge function for free chat...');
@@ -348,7 +347,6 @@ Make it all flow naturally as one cohesive message.`;
     
     try {
       if (useStructuredMode && isWaitingForAnswer && questions[currentQuestionIndex]) {
-        // Handle structured mode with predefined questions
         const currentQuestion = questions[currentQuestionIndex];
         
         const similarity = calculateSimilarity(messageContent, currentQuestion.answer, {
@@ -375,7 +373,7 @@ Make it all flow naturally as one cohesive message.`;
               imageUrl: nextQuestion.imageName && imageUrls[nextQuestion.imageName] ? imageUrls[nextQuestion.imageName] : undefined
             };
             setCurrentQuestionIndex(prev => prev + 1);
-            setRetryCount(0); // Reset retry count for new question
+            setRetryCount(0);
           } else {
             responseMessage = {
               id: (Date.now() + 1).toString(),
@@ -386,12 +384,10 @@ Make it all flow naturally as one cohesive message.`;
             setIsWaitingForAnswer(false);
           }
         } else {
-          // Increment retry count
           const newRetryCount = retryCount + 1;
           setRetryCount(newRetryCount);
           
           if (newRetryCount >= 2) {
-            // After 2 attempts, move to next question with encouragement
             if (currentQuestionIndex + 1 < questions.length) {
               const nextQuestion = questions[currentQuestionIndex + 1];
               responseMessage = {
@@ -402,9 +398,8 @@ Make it all flow naturally as one cohesive message.`;
                 imageUrl: nextQuestion.imageName && imageUrls[nextQuestion.imageName] ? imageUrls[nextQuestion.imageName] : undefined
               };
               setCurrentQuestionIndex(prev => prev + 1);
-              setRetryCount(0); // Reset retry count for new question
+              setRetryCount(0);
             } else {
-              // Last question - complete the session
               responseMessage = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
@@ -414,7 +409,6 @@ Make it all flow naturally as one cohesive message.`;
               setIsWaitingForAnswer(false);
             }
           } else {
-            // First attempt - encourage to try again with the same question
             responseMessage = {
               id: (Date.now() + 1).toString(),
               role: 'assistant',
@@ -427,7 +421,6 @@ Make it all flow naturally as one cohesive message.`;
         
         setMessages([...updatedMessages, responseMessage]);
       } else {
-        // Free chat mode or general conversation
         console.log('📡 Calling openai-chat edge function with conversation...');
         
         const { data, error } = await supabase.functions.invoke('openai-chat', {
@@ -482,22 +475,15 @@ Make it all flow naturally as one cohesive message.`;
 
   const handleClose = () => {
     console.log('Closing chat, stopping all audio...');
-    // Set closing state to force stop all audio in ChatMessage components
     setIsClosing(true);
-    // Stop any playing audio
     stopAudio();
-    
-    // Use the utility function to aggressively stop all audio
     stopAllAudio();
     
-    // Stop any ongoing recording
     if (isRecording) {
       stopRecording().catch(console.error);
     }
-    // Stop any processing
     setIsProcessing(false);
     
-    // Small delay to ensure all audio stops before closing
     setTimeout(() => {
       console.log('Closing chat window...');
       onClose();
@@ -582,18 +568,20 @@ Make it all flow naturally as one cohesive message.`;
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Voice-only Input Interface */}
+      {/* Voice Input with Custom Microphone */}
       <div className="border-t border-blue-200 p-4 bg-gradient-to-r from-blue-50 to-white">
         <div className="flex flex-col items-center space-y-3">
-          <Button
-            size="lg"
-            variant={isRecording ? "destructive" : "outline"}
+          <button
             onClick={handleVoiceRecording}
             disabled={isLoading || isProcessing}
-            className="w-16 h-16 rounded-full border-2 border-blue-300 hover:border-blue-400"
+            className={`w-16 h-16 rounded-full border-2 shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center ${
+              isRecording 
+                ? 'bg-red-500 hover:bg-red-600 border-red-400 text-white' 
+                : 'bg-purple-400 hover:bg-purple-500 border-purple-300 text-white'
+            } ${(isLoading || isProcessing) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
-          </Button>
+            <MicrophoneIcon isRecording={isRecording} size={32} />
+          </button>
           <div className="text-center text-blue-600 text-sm font-medium">
             Tap to answer
           </div>

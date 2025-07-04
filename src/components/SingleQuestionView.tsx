@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff } from 'lucide-react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +35,14 @@ interface SingleQuestionViewProps {
   comingFromCelebration?: boolean;
 }
 
+// Custom Microphone Icon component
+const MicrophoneIcon = ({ isRecording, size = 48 }: { isRecording?: boolean; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor"/>
+    <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v4M8 23h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const SingleQuestionView = ({
   question,
   imageUrl,
@@ -64,7 +70,6 @@ const SingleQuestionView = ({
   const { playAudio, isPlaying, stopAudio } = useAudioPlayer();
   const { toast } = useToast();
 
-  // Reset flags when question changes
   useEffect(() => {
     setHasCalledCorrectAnswer(false);
     setIsProcessingAnswer(false);
@@ -74,21 +79,16 @@ const SingleQuestionView = ({
     setShouldReadQuestion(!comingFromCelebration);
   }, [question.id, comingFromCelebration]);
 
-  // Auto-read question when component loads
   useEffect(() => {
     const readQuestion = async () => {
       console.log('🔊 Question reading check:', { shouldReadQuestion, comingFromCelebration });
-      // Only read question if flag is set to true
       if (!shouldReadQuestion) {
         console.log('🔇 Skipping question reading - coming from celebration');
         return;
       }
       
       try {
-        // Stop any currently playing audio first
         stopAudio();
-        
-        // Add a longer delay to ensure any celebration TTS has finished
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         const response = await supabase.functions.invoke('openai-tts', {
@@ -107,12 +107,11 @@ const SingleQuestionView = ({
       }
     };
 
-    // Increased delay to prevent overlap with celebration TTS
     setTimeout(readQuestion, 1000);
   }, [question.question, playAudio, stopAudio, shouldReadQuestion]);
 
   const handleVoiceRecording = async () => {
-    if (isProcessingAnswer) return; // Prevent multiple submissions
+    if (isProcessingAnswer) return;
     
     if (isRecording) {
       setIsProcessing(true);
@@ -167,10 +166,9 @@ const SingleQuestionView = ({
   };
 
   const processAnswer = async (userAnswer: string) => {
-    if (isProcessingAnswer) return; // Prevent double processing
+    if (isProcessingAnswer) return;
     setIsProcessingAnswer(true);
     
-    // Stop any currently playing audio
     stopAudio();
     
     const similarity = calculateSimilarity(userAnswer, question.answer, {
@@ -182,24 +180,20 @@ const SingleQuestionView = ({
     const newRetryCount = retryCount + 1;
 
     if (similarity > acceptanceThreshold) {
-      // Correct answer - show feedback and move to celebration
       setCurrentResponse(`Amazing work, ${childName}! That's exactly right! The answer is "${question.answer}" 🎉`);
       setShowFeedback(true);
       
-      // Prevent multiple calls to onCorrectAnswer
       if (!hasCalledCorrectAnswer) {
         setHasCalledCorrectAnswer(true);
         console.log('🎉 Calling onCorrectAnswer for question:', questionNumber);
         onCorrectAnswer();
       }
       
-      // Reset processing state after a short delay
       setTimeout(() => {
         setIsProcessingAnswer(false);
       }, 500);
       
     } else if (newRetryCount >= 2) {
-      // After 2 attempts, move to next question
       onRetryCountChange(newRetryCount);
       setCurrentResponse(`Good try, ${childName}! The correct answer is "${question.answer}". We'll practice that more later! 🌟`);
       setShowFeedback(true);
@@ -215,7 +209,6 @@ const SingleQuestionView = ({
 
         if (response.data?.audioContent) {
           await playAudio(response.data.audioContent);
-          // Wait for audio to finish
           await new Promise(resolve => {
             const checkAudioFinished = () => {
               if (!isPlaying) {
@@ -231,7 +224,6 @@ const SingleQuestionView = ({
         console.error('TTS error:', error);
       }
 
-      // After 2 failed attempts, move to next question directly
       setTimeout(() => {
         if (questionNumber < totalQuestions) {
           onNextQuestion();
@@ -242,7 +234,6 @@ const SingleQuestionView = ({
       }, 1000);
       
     } else {
-      // First attempt - encourage to try again
       onRetryCountChange(newRetryCount);
       setCurrentResponse(`Good try! The correct answer is "${question.answer}". Look at the picture carefully and try again! 🤔`);
       setShowFeedback(true);
@@ -258,7 +249,6 @@ const SingleQuestionView = ({
 
         if (response.data?.audioContent) {
           await playAudio(response.data.audioContent);
-          // Wait for audio to finish
           await new Promise(resolve => {
             const checkAudioFinished = () => {
               if (!isPlaying) {
@@ -274,7 +264,6 @@ const SingleQuestionView = ({
         console.error('TTS error:', error);
       }
 
-      // Reset for another attempt
       setTimeout(() => {
         setShowFeedback(false);
         setIsWaitingForAnswer(true);
@@ -321,14 +310,14 @@ const SingleQuestionView = ({
 
       {/* Main Question Area */}
       <div className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
-        {/* Question Text - No white block background */}
+        {/* Question Text */}
         <div className="mb-8 animate-fade-in">
           <h2 className="text-4xl font-bold text-center text-blue-900 leading-relaxed">
             {question.question}
           </h2>
         </div>
 
-        {/* Question Image - Larger with border that fits the image */}
+        {/* Question Image */}
         {imageUrl && (
           <div className="mb-8 animate-scale-in flex justify-center">
             <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
@@ -354,18 +343,20 @@ const SingleQuestionView = ({
           </div>
         )}
 
-        {/* Voice Input Button - Much bigger microphone like the reference */}
+        {/* Custom Microphone Button */}
         {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
           <div className="text-center animate-fade-in">
-            <Button
-              size="lg"
-              variant={isRecording ? "destructive" : "outline"}
+            <button
               onClick={handleVoiceRecording}
               disabled={isProcessing || isPlaying || isProcessingAnswer}
-              className="w-36 h-36 rounded-full border-4 border-blue-300 hover:border-blue-400 shadow-xl transform hover:scale-105 transition-all duration-300 bg-green-500 hover:bg-green-600 border-green-400 text-white"
+              className={`w-32 h-32 rounded-full border-4 shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center ${
+                isRecording 
+                  ? 'bg-red-500 hover:bg-red-600 border-red-400 text-white' 
+                  : 'bg-purple-400 hover:bg-purple-500 border-purple-300 text-white'
+              } ${(isProcessing || isPlaying || isProcessingAnswer) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {isRecording ? <MicOff className="h-20 w-20" /> : <Mic className="h-20 w-20" />}
-            </Button>
+              <MicrophoneIcon isRecording={isRecording} size={64} />
+            </button>
             
             <div className="mt-4 text-center">
               <p className="text-blue-600 font-semibold text-lg">
