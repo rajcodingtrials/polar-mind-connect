@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -274,27 +273,27 @@ const SingleQuestionView = ({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
       {/* Header with therapist, progress, and speech delay toggle */}
-      <div className="flex items-center justify-between p-4 bg-white/30 backdrop-blur-sm">
+      <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
+          <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
             <AvatarImage src="/lovable-uploads/Laura.png" alt={therapistName} />
             <AvatarFallback className="bg-blue-200 text-blue-800 font-semibold">
               {therapistName.charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="font-bold text-blue-900 text-xl">{therapistName}</h3>
+            <h3 className="font-bold text-blue-900 text-2xl">{therapistName}</h3>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <Button
             variant="outline"
-            size="sm"
+            size="lg"
             onClick={() => onSpeechDelayModeChange(!speechDelayMode)}
-            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-4 py-2 font-semibold transition-all ${
+            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-6 py-3 text-lg font-semibold transition-all ${
               speechDelayMode ? "bg-purple-200 border-purple-400 text-purple-800" : "bg-white"
             }`}
           >
@@ -302,30 +301,30 @@ const SingleQuestionView = ({
           </Button>
           
           <div className="text-center">
-            <p className="text-lg font-bold text-purple-800">
+            <p className="text-xl font-bold text-purple-800">
               Question {questionNumber} of {totalQuestions}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Main Content Area - Centered */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 space-y-6">
+      {/* Main Question Area */}
+      <div className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
         {/* Question Text */}
-        <div className="text-center animate-fade-in">
-          <h2 className="text-3xl font-bold text-blue-900 leading-relaxed max-w-4xl">
+        <div className="mb-8 animate-fade-in">
+          <h2 className="text-4xl font-bold text-center text-blue-900 leading-relaxed">
             {question.question}
           </h2>
         </div>
 
-        {/* Question Image - Centered and optimized size */}
+        {/* Question Image */}
         {imageUrl && (
-          <div className="animate-scale-in flex justify-center">
-            <div className="inline-block rounded-2xl shadow-xl border-3 border-white overflow-hidden">
+          <div className="mb-8 animate-scale-in flex justify-center">
+            <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
               <img
                 src={imageUrl}
                 alt="Question"
-                className="w-auto h-64 max-w-2xl object-contain"
+                className="w-auto h-96 max-w-4xl object-contain"
                 onError={(e) => {
                   console.error('Error loading question image:', imageUrl);
                   e.currentTarget.style.display = 'none';
@@ -337,38 +336,38 @@ const SingleQuestionView = ({
 
         {/* Feedback Area */}
         {showFeedback && (
-          <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-3 border-green-200 rounded-2xl p-4 max-w-xl mx-auto animate-fade-in">
-            <p className="text-base text-center text-green-800 font-medium">
+          <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-4 border-green-200 rounded-3xl p-6 max-w-2xl mx-auto mb-8 animate-fade-in">
+            <p className="text-lg text-center text-green-800 font-medium">
               {currentResponse}
             </p>
           </div>
         )}
 
-        {/* Microphone Button - Centered */}
+        {/* Fixed Microphone Button */}
         {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
           <div className="text-center animate-fade-in">
-            <div className="flex flex-col items-center space-y-3">
+            <div className="flex flex-col items-center">
               <button
                 onClick={handleVoiceRecording}
                 disabled={isProcessing || isPlaying || isProcessingAnswer}
-                className={`w-24 h-24 rounded-full border-3 shadow-lg transition-all duration-300 flex items-center justify-center ${
+                className={`w-32 h-32 rounded-full border-4 shadow-xl transition-all duration-300 flex items-center justify-center ${
                   isRecording 
                     ? 'bg-red-300 border-red-200 text-white transform scale-105' 
                     : 'bg-slate-200 hover:bg-slate-300 border-slate-100 text-slate-600 hover:scale-105'
                 } ${(isProcessing || isPlaying || isProcessingAnswer) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <MicrophoneIcon isRecording={isRecording} size={48} />
+                <MicrophoneIcon isRecording={isRecording} size={64} />
               </button>
               
-              <div className="text-center">
-                <p className="text-blue-600 font-semibold text-base">
+              <div className="mt-4 text-center">
+                <p className="text-blue-600 font-semibold text-lg">
                   {isRecording ? "🔴 Recording... Tap again to stop" : 
                    isProcessing ? "🔄 Processing your voice..." :
                    isPlaying ? "🎵 Playing..." :
                    "Tap to answer"}
                 </p>
                 {retryCount > 0 && (
-                  <p className="text-sm text-purple-600 mt-1">
+                  <p className="text-sm text-purple-600 mt-2">
                     Attempt {retryCount + 1} of 2
                   </p>
                 )}
