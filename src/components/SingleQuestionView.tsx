@@ -33,6 +33,7 @@ interface SingleQuestionViewProps {
   onComplete: () => void;
   retryCount: number;
   onRetryCountChange: (count: number) => void;
+  onSpeechDelayModeChange: (enabled: boolean) => void;
 }
 
 const SingleQuestionView = ({
@@ -47,7 +48,8 @@ const SingleQuestionView = ({
   onNextQuestion,
   onComplete,
   retryCount,
-  onRetryCountChange
+  onRetryCountChange,
+  onSpeechDelayModeChange
 }: SingleQuestionViewProps) => {
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(true);
   const [currentResponse, setCurrentResponse] = useState('');
@@ -236,42 +238,56 @@ const SingleQuestionView = ({
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
-      {/* Header with therapist and progress */}
+      {/* Header with therapist, progress, and speech delay toggle */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+          <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
             <AvatarImage src="/lovable-uploads/Laura.png" alt={therapistName} />
             <AvatarFallback className="bg-blue-200 text-blue-800 font-semibold">
               {therapistName.charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="font-semibold text-blue-900">{therapistName}</h3>
-            <p className="text-sm text-blue-600">Your Speech Assistant</p>
+            <h3 className="font-semibold text-blue-900 text-lg">{therapistName}</h3>
           </div>
         </div>
-        
-        <div className="text-right">
-          <p className="text-lg font-bold text-purple-800">
-            Question {questionNumber} of {totalQuestions}
-          </p>
-          {speechDelayMode && (
-            <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">
-              Speech Delay Mode
-            </span>
-          )}
+
+        <div className="flex items-center gap-4">
+          <div className="text-center">
+            <p className="text-lg font-bold text-purple-800">
+              Question {questionNumber} of {totalQuestions}
+            </p>
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onSpeechDelayModeChange(!speechDelayMode)}
+            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-4 py-2 ${
+              speechDelayMode ? "bg-purple-100 border-purple-300" : ""
+            }`}
+          >
+            Speech Delay Mode
+          </Button>
         </div>
       </div>
 
       {/* Main Question Area */}
       <div className="flex-grow flex flex-col items-center justify-center max-w-4xl mx-auto">
-        {/* Question Image */}
+        {/* Question Text Above Image */}
+        <div className="bg-white rounded-3xl p-8 shadow-xl border-4 border-blue-200 max-w-2xl mx-auto mb-8 animate-fade-in">
+          <h2 className="text-3xl font-bold text-center text-gray-800 leading-relaxed">
+            {question.question}
+          </h2>
+        </div>
+
+        {/* Question Image - Larger Size */}
         {imageUrl && (
           <div className="mb-8 animate-scale-in">
             <img
               src={imageUrl}
               alt="Question"
-              className="max-w-md max-h-64 object-contain rounded-2xl shadow-xl border-4 border-white"
+              className="max-w-lg max-h-80 object-contain rounded-2xl shadow-xl border-4 border-white"
               onError={(e) => {
                 console.error('Error loading question image:', imageUrl);
                 e.currentTarget.style.display = 'none';
@@ -279,13 +295,6 @@ const SingleQuestionView = ({
             />
           </div>
         )}
-
-        {/* Question Text */}
-        <div className="bg-white rounded-3xl p-8 shadow-xl border-4 border-blue-200 max-w-2xl mx-auto mb-8 animate-fade-in">
-          <h2 className="text-2xl font-bold text-center text-gray-800 leading-relaxed">
-            {question.question}
-          </h2>
-        </div>
 
         {/* Feedback Area */}
         {showFeedback && (

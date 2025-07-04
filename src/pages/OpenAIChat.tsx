@@ -37,6 +37,7 @@ const OpenAIChatPage = () => {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'introduction' | 'question' | 'celebration' | 'complete'>('home');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
+  const [speechDelayMode, setSpeechDelayMode] = useState(false);
 
   // Set childName from profile (fallback to 'friend' if not available)
   const childName = profile?.name || profile?.username || 'friend';
@@ -132,9 +133,6 @@ const OpenAIChatPage = () => {
     };
 
     loadQuestionsAndImages();
-
-    // Also check localStorage for default mode
-    
   }, []);
 
   // Listen for storage changes (when admin uploads new content)
@@ -183,6 +181,7 @@ const OpenAIChatPage = () => {
     setCorrectAnswers(0);
     setCurrentQuestionIndex(0);
     setRetryCount(0);
+    setSpeechDelayMode(false);
     setCurrentScreen('introduction');
   };
 
@@ -193,7 +192,7 @@ const OpenAIChatPage = () => {
   const handleCorrectAnswer = () => {
     setCorrectAnswers(prev => prev + 1);
     setCurrentScreen('celebration');
-    setRetryCount(0); // Reset retry count for next question
+    setRetryCount(0);
   };
 
   const handleNextQuestion = () => {
@@ -207,7 +206,6 @@ const OpenAIChatPage = () => {
   };
 
   const handleCelebrationComplete = () => {
-    // After mini-celebration, move to next question or complete
     if (currentQuestionIndex + 1 < filteredQuestions.length) {
       setCurrentQuestionIndex(prev => prev + 1);
       setCurrentScreen('question');
@@ -223,6 +221,7 @@ const OpenAIChatPage = () => {
     setCorrectAnswers(0);
     setCurrentQuestionIndex(0);
     setRetryCount(0);
+    setSpeechDelayMode(false);
     setTherapistName('Laura');
   };
 
@@ -391,12 +390,13 @@ const OpenAIChatPage = () => {
               totalQuestions={Math.min(filteredQuestions.length, 5)}
               therapistName={therapistName}
               childName={childName}
-              speechDelayMode={false} // You can add this as a toggle if needed
+              speechDelayMode={speechDelayMode}
               onCorrectAnswer={handleCorrectAnswer}
               onNextQuestion={handleNextQuestion}
               onComplete={() => setCurrentScreen('complete')}
               retryCount={retryCount}
               onRetryCountChange={setRetryCount}
+              onSpeechDelayModeChange={setSpeechDelayMode}
             />
           )}
 
