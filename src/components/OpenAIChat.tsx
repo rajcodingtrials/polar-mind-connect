@@ -568,22 +568,24 @@ Make it all flow naturally as one cohesive message.`;
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Voice Input with Custom Microphone */}
+      {/* Fixed Voice Input with Custom Microphone */}
       <div className="border-t border-blue-200 p-4 bg-gradient-to-r from-blue-50 to-white">
         <div className="flex flex-col items-center space-y-3">
-          <button
-            onClick={handleVoiceRecording}
-            disabled={isLoading || isProcessing}
-            className={`w-16 h-16 rounded-full border-2 shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center ${
-              isRecording 
-                ? 'bg-red-500 hover:bg-red-600 border-red-400 text-white' 
-                : 'bg-purple-400 hover:bg-purple-500 border-purple-300 text-white'
-            } ${(isLoading || isProcessing) ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <MicrophoneIcon isRecording={isRecording} size={32} />
-          </button>
-          <div className="text-center text-blue-600 text-sm font-medium">
-            Tap to answer
+          <div className="flex flex-col items-center">
+            <button
+              onClick={handleVoiceRecording}
+              disabled={isLoading || isProcessing}
+              className={`w-16 h-16 rounded-full border-2 shadow-lg transition-all duration-300 flex items-center justify-center ${
+                isRecording 
+                  ? 'bg-red-500 border-red-400 text-white transform scale-105' 
+                  : 'bg-purple-400 hover:bg-purple-500 border-purple-300 text-white hover:scale-105'
+              } ${(isLoading || isProcessing) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <MicrophoneIcon isRecording={isRecording} size={32} />
+            </button>
+            <div className="text-center text-blue-600 text-sm font-medium mt-2">
+              Tap to answer
+            </div>
           </div>
         </div>
       </div>

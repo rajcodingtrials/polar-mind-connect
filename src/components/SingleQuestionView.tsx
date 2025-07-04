@@ -343,33 +343,35 @@ const SingleQuestionView = ({
           </div>
         )}
 
-        {/* Custom Microphone Button */}
+        {/* Fixed Microphone Button */}
         {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
           <div className="text-center animate-fade-in">
-            <button
-              onClick={handleVoiceRecording}
-              disabled={isProcessing || isPlaying || isProcessingAnswer}
-              className={`w-32 h-32 rounded-full border-4 shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center ${
-                isRecording 
-                  ? 'bg-red-500 hover:bg-red-600 border-red-400 text-white' 
-                  : 'bg-purple-400 hover:bg-purple-500 border-purple-300 text-white'
-              } ${(isProcessing || isPlaying || isProcessingAnswer) ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <MicrophoneIcon isRecording={isRecording} size={64} />
-            </button>
-            
-            <div className="mt-4 text-center">
-              <p className="text-blue-600 font-semibold text-lg">
-                {isRecording ? "🔴 Recording... Tap again to stop" : 
-                 isProcessing ? "🔄 Processing your voice..." :
-                 isPlaying ? "🎵 Playing..." :
-                 "Tap to answer"}
-              </p>
-              {retryCount > 0 && (
-                <p className="text-sm text-purple-600 mt-2">
-                  Attempt {retryCount + 1} of 2
+            <div className="flex flex-col items-center">
+              <button
+                onClick={handleVoiceRecording}
+                disabled={isProcessing || isPlaying || isProcessingAnswer}
+                className={`w-32 h-32 rounded-full border-4 shadow-xl transition-all duration-300 flex items-center justify-center ${
+                  isRecording 
+                    ? 'bg-red-500 border-red-400 text-white transform scale-105' 
+                    : 'bg-purple-400 hover:bg-purple-500 border-purple-300 text-white hover:scale-105'
+                } ${(isProcessing || isPlaying || isProcessingAnswer) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <MicrophoneIcon isRecording={isRecording} size={64} />
+              </button>
+              
+              <div className="mt-4 text-center">
+                <p className="text-blue-600 font-semibold text-lg">
+                  {isRecording ? "🔴 Recording... Tap again to stop" : 
+                   isProcessing ? "🔄 Processing your voice..." :
+                   isPlaying ? "🎵 Playing..." :
+                   "Tap to answer"}
                 </p>
-              )}
+                {retryCount > 0 && (
+                  <p className="text-sm text-purple-600 mt-2">
+                    Attempt {retryCount + 1} of 2
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
