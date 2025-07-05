@@ -87,33 +87,20 @@ const IntroductionScreen = ({
     }
   };
 
-  const getTherapistAvatar = () => {
-    const avatarSrc = therapistName === 'Laura' ? '/lovable-uploads/Laura.png' : '/lovable-uploads/Lawrence.png';
-    const bgColor = therapistName === 'Laura' ? 'bg-blue-100' : 'bg-green-100';
-    const textColor = therapistName === 'Laura' ? 'text-blue-600' : 'text-green-600';
-    
-    return (
-      <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
-        <AvatarImage src={avatarSrc} alt={therapistName} />
-        <AvatarFallback className={`${bgColor} ${textColor} text-2xl`}>
-          {therapistName[0]}
-        </AvatarFallback>
-      </Avatar>
-    );
-  };
-
-  const getGradientColors = () => {
-    return therapistName === 'Laura' 
-      ? 'from-blue-400 to-purple-500' 
-      : 'from-green-400 to-teal-500';
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
       <Card className="max-w-2xl w-full shadow-2xl border-0 overflow-hidden">
-        <div className={`bg-gradient-to-r ${getGradientColors()} p-8 text-center`}>
+        <div className="bg-gradient-to-r from-blue-400 to-purple-500 p-8 text-center">
           <div className="flex justify-center mb-6">
-            {getTherapistAvatar()}
+            <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
+              <AvatarImage 
+                src={therapistName === 'Laura' ? '/lovable-uploads/Laura.png' : '/lovable-uploads/Lawrence.png'} 
+                alt={therapistName} 
+              />
+              <AvatarFallback className="bg-blue-100 text-blue-600 text-2xl">
+                {therapistName[0]}
+              </AvatarFallback>
+            </Avatar>
           </div>
           
           <h2 className="text-3xl font-bold text-white mb-4">
@@ -150,7 +137,7 @@ const IntroductionScreen = ({
               <Button
                 onClick={onStartQuestions}
                 size="lg"
-                className={`text-lg px-8 py-3 bg-gradient-to-r ${getGradientColors()} hover:opacity-90 text-white border-0 shadow-lg transform hover:scale-105 transition-all duration-200`}
+                className="text-lg px-8 py-3 bg-gradient-to-r from-blue-400 to-purple-500 hover:opacity-90 text-white border-0 shadow-lg transform hover:scale-105 transition-all duration-200"
               >
                 Let's Start! 🚀
               </Button>
