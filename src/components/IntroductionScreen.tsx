@@ -1,11 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
-import { useTherapistTTS } from '../hooks/useTherapistTTS';
 import type { Database } from '@/integrations/supabase/types';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
@@ -17,126 +15,142 @@ interface IntroductionScreenProps {
   onStartQuestions: () => void;
 }
 
-const IntroductionScreen = ({ 
-  selectedQuestionType, 
-  therapistName, 
-  childName, 
-  onStartQuestions 
-}: IntroductionScreenProps) => {
-  const { toast } = useToast();
-  const { settings: ttsSettings, isLoading: ttsLoading } = useTherapistTTS(therapistName);
-  const [isPlayingIntro, setIsPlayingIntro] = useState(false);
+const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, onStartQuestions }: IntroductionScreenProps) => {
+  const [introMessage, setIntroMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [showContinueButton, setShowContinueButton] = useState(false);
+  const { playAudio, isPlaying } = useAudioPlayer();
 
-  const questionTypeLabels = {
-    'first_words': 'First Words',
-    'question_time': 'Question Time',
-    'build_sentence': 'Build a Sentence',
-    'lets_chat': "Let's Chat"
+  const getActivityName = (type: QuestionType) => {
+    switch (type) {
+      case 'first_words': return 'First Words';
+      case 'question_time': return 'Question Time';
+      case 'build_sentence': return 'Build a Sentence';
+      case 'lets_chat': return 'Let\'s Chat';
+      default: return 'Learning';
+    }
   };
-
-  const introductionText = `Hello ${childName}! I'm so happy to see you today! ⭐ We're going to have so much fun learning new words together. Are you ready? Let's begin! 🎉`;
 
   useEffect(() => {
-    // Auto-play introduction when component mounts
-    if (!ttsLoading) {
-      playIntroduction();
-    }
-  }, [ttsLoading]);
+    const generateIntroduction = async () => {
+      try {
+        const activityName = getActivityName(selectedQuestionType);
+        
+        const { data, error } = await supabase.functions.invoke('openai-chat', {
+          body: {
+            messages: [{
+              role: 'user',
+              content: `Create a warm, encouraging introduction for ${childName} starting a ${activityName} activity. Keep it short (2-3 sentences), friendly, and exciting for a child. End with something like "Let's begin!" or "Are you ready?"`
+            }],
+            activityType: selectedQuestionType,
+            customInstructions: `You are ${therapistName}, a warm and encouraging AI speech therapy assistant. Speak directly to ${childName} in a friendly, upbeat tone.`,
+            therapistName,
+            childName
+          }
+        });
 
-  const playIntroduction = async () => {
-    if (isPlayingIntro) return;
-    
-    setIsPlayingIntro(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('openai-tts', {
-        body: { 
-          text: introductionText,
-          voice: ttsSettings.voice,
-          speed: ttsSettings.speed
+        if (error) {
+          console.error('Error generating introduction:', error);
+          setIntroMessage(`Hi ${childName}! I'm ${therapistName}, and I'm so excited to work on ${activityName} with you today! Are you ready to have some fun learning together?`);
+        } else if (data?.choices?.[0]?.message?.content) {
+          setIntroMessage(data.choices[0].message.content);
         }
-      });
 
-      if (error) throw error;
+        // Auto-play TTS after a short delay
+        setTimeout(async () => {
+          try {
+            const ttsResponse = await supabase.functions.invoke('openai-tts', {
+              body: {
+                text: introMessage || `Hi ${childName}! I'm ${therapistName}, and I'm so excited to work on ${activityName} with you today! Are you ready to have some fun learning together?`,
+                voice: 'nova',
+                speed: 1.0
+              }
+            });
 
-      if (data.audioContent) {
-        const binaryString = atob(data.audioContent);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        const audio = new Audio(audioUrl);
-        audio.onended = () => {
-          setIsPlayingIntro(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-        
-        await audio.play();
+            if (ttsResponse.data?.audioContent) {
+              await playAudio(ttsResponse.data.audioContent);
+              // Show continue button after TTS finishes
+              setTimeout(() => setShowContinueButton(true), 3000);
+            } else {
+              setShowContinueButton(true);
+            }
+          } catch (error) {
+            console.error('TTS error:', error);
+            setShowContinueButton(true);
+          }
+        }, 1000);
+
+      } catch (error) {
+        console.error('Error in generateIntroduction:', error);
+        setIntroMessage(`Hi ${childName}! I'm ${therapistName}, and I'm so excited to work with you today! Are you ready to have some fun learning together?`);
+        setShowContinueButton(true);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error playing introduction:', error);
-      toast({
-        title: "Audio Error",
-        description: "Could not play introduction audio. You can still continue with the questions.",
-        variant: "destructive",
-      });
-      setIsPlayingIntro(false);
-    }
-  };
+    };
+
+    generateIntroduction();
+  }, [selectedQuestionType, therapistName, childName, playAudio]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 p-4">
-      <div className="flex flex-col items-center mb-8">
-        <Avatar className="h-32 w-32 border-4 border-white shadow-2xl mb-6">
-          <AvatarImage 
-            src={therapistName === 'Laura' ? '/lovable-uploads/Laura.png' : '/lovable-uploads/Lawrence.png'} 
-            alt={therapistName} 
-          />
-          <AvatarFallback className="bg-purple-100 text-purple-600 text-2xl">
-            {therapistName[0]}
-          </AvatarFallback>
-        </Avatar>
-      </div>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-6 animate-fade-in">
+      <div className="flex-grow flex flex-col items-center justify-center max-w-4xl mx-auto">
+        {/* Therapist Avatar */}
+        <div className="mb-8 animate-scale-in">
+          <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
+            <AvatarImage 
+              src="/lovable-uploads/Laura.png" 
+              alt={`${therapistName} - Speech Therapist`}
+            />
+            <AvatarFallback className="bg-blue-200 text-blue-800 text-4xl font-bold">
+              {therapistName.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
 
-      <Card className="max-w-2xl w-full bg-white/90 backdrop-blur-sm shadow-2xl border-0 rounded-3xl overflow-hidden">
-        <CardContent className="p-8 text-center">
-          <h1 className="text-3xl font-bold text-purple-600 mb-6">
-            Welcome to {questionTypeLabels[selectedQuestionType]}!
-          </h1>
-          
-          <p className="text-lg text-gray-700 mb-8 leading-relaxed">
-            Hello, {childName}! I'm so happy to see you today! ⭐ We're going to have so much fun learning new words together. Are you ready? Let's begin! 🎉
-          </p>
-          
-          <div className="space-y-4">
-            <Button
-              onClick={playIntroduction}
-              disabled={isPlayingIntro || ttsLoading}
-              variant="outline"
-              size="lg"
-              className="text-lg px-8 py-3 bg-purple-100 border-purple-200 text-purple-700 hover:bg-purple-200"
-            >
-              {isPlayingIntro ? '🎵 Playing introduction...' : 'Listen...'}
-            </Button>
+        {/* Welcome Message */}
+        <div className="bg-white rounded-3xl p-8 shadow-xl border-4 border-purple-200 max-w-2xl mx-auto mb-8 animate-fade-in" 
+             style={{ animationDelay: '0.3s' }}>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-purple-800 mb-4">
+              Welcome to {getActivityName(selectedQuestionType)}!
+            </h1>
             
-            <div className="text-sm text-purple-400 mt-2">
-              {isPlayingIntro ? '🎵 Playing introduction...' : ''}
-            </div>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="flex space-x-2">
+                  <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce"></div>
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-3 h-3 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-lg text-gray-700 leading-relaxed">
+                {introMessage}
+              </p>
+            )}
           </div>
-        </CardContent>
-      </Card>
-      
-      <div className="mt-8">
-        <Button
-          onClick={onStartQuestions}
-          size="lg"
-          className="text-lg px-12 py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
-        >
-          Let's Start! 🚀
-        </Button>
+        </div>
+
+        {/* Continue Button */}
+        {showContinueButton && (
+          <Button
+            onClick={onStartQuestions}
+            size="lg"
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-12 py-4 text-xl font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300 animate-fade-in"
+            style={{ animationDelay: '0.6s' }}
+            disabled={isPlaying}
+          >
+            {isPlaying ? 'Listen...' : 'Let\'s Start! 🚀'}
+          </Button>
+        )}
+
+        {/* Loading indicator during TTS */}
+        {isPlaying && (
+          <div className="mt-4 text-center animate-pulse">
+            <p className="text-purple-600 font-medium">🎵 Playing introduction...</p>
+          </div>
+        )}
       </div>
     </div>
   );

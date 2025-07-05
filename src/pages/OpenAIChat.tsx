@@ -31,7 +31,7 @@ const OpenAIChatPage = () => {
   const [imageUrls, setImageUrls] = useState<{[key: string]: string}>({});
   const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType | null>(null);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [therapistName, setTherapistName] = useState<'Laura' | 'Lawrence'>('Laura');
+  const [therapistName, setTherapistName] = useState('Laura');
   
   // Updated state for better question management
   const [currentScreen, setCurrentScreen] = useState<'home' | 'introduction' | 'question' | 'celebration' | 'complete'>('home');
@@ -178,11 +178,6 @@ const OpenAIChatPage = () => {
     setShowQuestionTypes(true);
   };
 
-  const handleLawrenceClick = () => {
-    setTherapistName('Lawrence');
-    setShowQuestionTypes(true);
-  };
-
   const selectRandomQuestion = (questionsPool: Question[]): Question | null => {
     if (questionsPool.length === 0) return null;
     const randomIndex = Math.floor(Math.random() * questionsPool.length);
@@ -308,6 +303,10 @@ const OpenAIChatPage = () => {
     handleCompleteSession();
   };
 
+  const handleLawrenceClick = () => {
+    console.log('Lawrence clicked - functionality to be implemented');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
@@ -388,7 +387,7 @@ const OpenAIChatPage = () => {
             <div className="mb-8 flex flex-col items-center">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-black mb-4">
-                  Choose Your Learning Adventure with {therapistName}!
+                  Choose Your Learning Adventure with Laura!
                 </h2>
                 <p className="text-gray-600 text-lg">Select the type of questions you'd like to practice today</p>
               </div>

@@ -1,14 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
-import { useTherapistTTS } from '../hooks/useTherapistTTS';
-import VoiceRecorder from './chat/VoiceRecorder';
-import { Volume2, Mic, MicOff, RotateCcw, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { calculateSimilarity } from '@/components/chat/fuzzyMatching';
 import type { Database } from '@/integrations/supabase/types';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
@@ -38,6 +35,14 @@ interface SingleQuestionViewProps {
   comingFromCelebration?: boolean;
 }
 
+// Custom Microphone Icon component
+const MicrophoneIcon = ({ isRecording, size = 48 }: { isRecording?: boolean; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor"/>
+    <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v4M8 23h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const SingleQuestionView = ({
   question,
   imageUrl,
@@ -54,336 +59,329 @@ const SingleQuestionView = ({
   onSpeechDelayModeChange,
   comingFromCelebration = false
 }: SingleQuestionViewProps) => {
+  const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(true);
+  const [currentResponse, setCurrentResponse] = useState('');
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+  const [hasCalledCorrectAnswer, setHasCalledCorrectAnswer] = useState(false);
+  const [shouldReadQuestion, setShouldReadQuestion] = useState(true);
+  
+  const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
+  const { playAudio, isPlaying, stopAudio } = useAudioPlayer();
   const { toast } = useToast();
-  const { settings: ttsSettings, isLoading: ttsLoading } = useTherapistTTS(therapistName);
-  const [isPlayingQuestion, setIsPlayingQuestion] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [isEvaluatingAnswer, setIsEvaluatingAnswer] = useState(false);
-  const [showEncouragement, setShowEncouragement] = useState(false);
+  const mainContentRef = useRef<HTMLDivElement>(null);
 
-  // Auto-play question when component loads (but not when coming from celebration)
   useEffect(() => {
-    if (!comingFromCelebration && !ttsLoading) {
-      const timer = setTimeout(() => {
-        playQuestion();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [question.id, ttsLoading, comingFromCelebration]);
+    setHasCalledCorrectAnswer(false);
+    setIsProcessingAnswer(false);
+    setShowFeedback(false);
+    setCurrentResponse('');
+    setIsWaitingForAnswer(true);
+    setShouldReadQuestion(!comingFromCelebration);
+  }, [question.id, comingFromCelebration]);
 
-  const playQuestion = async () => {
-    if (isPlayingQuestion || ttsLoading) return;
-    
-    setIsPlayingQuestion(true);
-    try {
-      const questionText = `${childName}, ${question.question}`;
-      
-      const { data, error } = await supabase.functions.invoke('openai-tts', {
-        body: { 
-          text: questionText,
-          voice: ttsSettings.voice,
-          speed: ttsSettings.speed
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.audioContent) {
-        const binaryString = atob(data.audioContent);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        const audio = new Audio(audioUrl);
-        audio.onended = () => {
-          setIsPlayingQuestion(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-        
-        await audio.play();
-      }
-    } catch (error) {
-      console.error('Error playing question:', error);
-      toast({
-        title: "Audio Error",
-        description: "Could not play question audio.",
-        variant: "destructive",
-      });
-      setIsPlayingQuestion(false);
-    }
-  };
-
-  const handleVoiceResult = async (audioBlob: Blob) => {
-    setIsListening(false);
-    setIsEvaluatingAnswer(true);
-    
-    try {
-      // Convert blob to base64
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      
-      // Send to speech-to-text service
-      const { data: sttData, error: sttError } = await supabase.functions.invoke('openai-stt', {
-        body: { audioContent: base64Audio }
-      });
-
-      if (sttError) throw sttError;
-
-      const userTranscript = sttData.text || '';
-      setTranscript(userTranscript);
-      
-      if (!userTranscript.trim()) {
-        toast({
-          title: "No Speech Detected",
-          description: "I didn't hear anything. Please try speaking again.",
-          variant: "destructive",
-        });
-        setIsEvaluatingAnswer(false);
+  useEffect(() => {
+    const readQuestion = async () => {
+      console.log('🔊 Question reading check:', { shouldReadQuestion, comingFromCelebration });
+      if (!shouldReadQuestion) {
+        console.log('🔇 Skipping question reading - coming from celebration');
         return;
       }
-
-      // Evaluate the answer using OpenAI
-      const evaluationPrompt = `
-        Question: "${question.question}"
-        Expected Answer: "${question.answer}"
-        Child's Answer: "${userTranscript}"
-        Child's Name: "${childName}"
-        Therapist: "${therapistName}"
-        
-        Is the child's answer correct or close enough to be considered correct for a speech therapy session?
-        Consider partial matches, phonetic similarities, and age-appropriate responses.
-        
-        Respond with only "CORRECT" or "INCORRECT" followed by a brief encouraging response for the child.
-      `;
-
-      const { data: chatData, error: chatError } = await supabase.functions.invoke('openai-chat', {
-        body: { 
-          message: evaluationPrompt,
-          childName,
-          therapistName,
-          systemRole: 'speech_therapist_evaluator'
-        }
-      });
-
-      if (chatError) throw chatError;
-
-      const evaluation = chatData.response || '';
-      const isCorrect = evaluation.toUpperCase().includes('CORRECT') && !evaluation.toUpperCase().includes('INCORRECT');
       
-      if (isCorrect) {
-        onCorrectAnswer();
-        onRetryCountChange(0);
-      } else {
-        // Handle incorrect answer
-        const newRetryCount = retryCount + 1;
-        onRetryCountChange(newRetryCount);
+      try {
+        stopAudio();
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
-        if (newRetryCount >= 2) {
-          // Enable speech delay mode after 2 incorrect attempts
-          onSpeechDelayModeChange(true);
-          setShowEncouragement(true);
-          
-          // Play encouragement
-          const encouragementText = `That's okay, ${childName}! Let's try this together. The answer is "${question.answer}". Can you say "${question.answer}" with me?`;
-          await playEncouragement(encouragementText);
-        } else {
-          // Give another try
-          const tryAgainText = `Not quite, ${childName}. Let's try again! ${question.question}`;
-          await playEncouragement(tryAgainText);
+        const response = await supabase.functions.invoke('openai-tts', {
+          body: {
+            text: question.question,
+            voice: 'nova',
+            speed: 1.0
+          }
+        });
+
+        if (response.data?.audioContent) {
+          await playAudio(response.data.audioContent);
         }
+      } catch (error) {
+        console.error('Error reading question:', error);
       }
-    } catch (error) {
-      console.error('Error processing voice answer:', error);
-      toast({
-        title: "Error",
-        description: "There was an error processing your answer. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsEvaluatingAnswer(false);
+    };
+
+    setTimeout(readQuestion, 1000);
+  }, [question.question, playAudio, stopAudio, shouldReadQuestion]);
+
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  };
+  }, [question.id]);
 
-  const playEncouragement = async (text: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('openai-tts', {
-        body: { 
-          text,
-          voice: ttsSettings.voice,
-          speed: ttsSettings.speed
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.audioContent) {
-        const binaryString = atob(data.audioContent);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        const audio = new Audio(audioUrl);
-        audio.onended = () => URL.revokeObjectURL(audioUrl);
-        
-        await audio.play();
-      }
-    } catch (error) {
-      console.error('Error playing encouragement:', error);
-    }
-  };
-
-  const handleCorrectInSpeechDelayMode = () => {
-    onCorrectAnswer();
-    onRetryCountChange(0);
-    onSpeechDelayModeChange(false);
-    setShowEncouragement(false);
-  };
-
-  const getTherapistAvatar = () => {
-    const avatarSrc = therapistName === 'Laura' ? '/lovable-uploads/Laura.png' : '/lovable-uploads/Lawrence.png';
-    const bgColor = therapistName === 'Laura' ? 'bg-blue-100' : 'bg-green-100';
-    const textColor = therapistName === 'Laura' ? 'text-blue-600' : 'text-green-600';
+  const handleVoiceRecording = async () => {
+    if (isProcessingAnswer) return;
     
-    return (
-      <Avatar className="h-16 w-16 border-2 border-white shadow-lg">
-        <AvatarImage src={avatarSrc} alt={therapistName} />
-        <AvatarFallback className={`${bgColor} ${textColor} text-lg`}>
-          {therapistName[0]}
-        </AvatarFallback>
-      </Avatar>
-    );
+    if (isRecording) {
+      setIsProcessing(true);
+      
+      try {
+        const base64Audio = await stopRecording();
+        
+        const { data, error } = await supabase.functions.invoke('openai-stt', {
+          body: { audio: base64Audio }
+        });
+
+        if (error) {
+          console.error('Speech-to-text error:', error);
+          toast({
+            title: "Voice Recognition Error",
+            description: "Failed to process your voice. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data?.text && data.text.trim()) {
+          await processAnswer(data.text.trim());
+        } else {
+          toast({
+            title: "No Speech Detected",
+            description: "Please try speaking again.",
+          });
+        }
+      } catch (error) {
+        console.error('Error processing voice recording:', error);
+        toast({
+          title: "Recording Error",
+          description: "Failed to process voice recording. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      try {
+        await startRecording();
+      } catch (error) {
+        console.error('Error starting recording:', error);
+        toast({
+          title: "Microphone Error",
+          description: "Failed to access microphone. Please check permissions.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
-  const getGradientColors = () => {
-    return therapistName === 'Laura' 
-      ? 'from-blue-400 to-purple-500' 
-      : 'from-green-400 to-teal-500';
+  const processAnswer = async (userAnswer: string) => {
+    if (isProcessingAnswer) return;
+    setIsProcessingAnswer(true);
+    
+    stopAudio();
+    
+    const similarity = calculateSimilarity(userAnswer, question.answer, {
+      speechDelayMode,
+      threshold: speechDelayMode ? 0.3 : 0.6
+    });
+
+    const acceptanceThreshold = speechDelayMode ? 0.3 : 0.7;
+    const newRetryCount = retryCount + 1;
+
+    if (similarity > acceptanceThreshold) {
+      setCurrentResponse(`Amazing work, ${childName}! That's exactly right! The answer is "${question.answer}" 🎉`);
+      setShowFeedback(true);
+      
+      if (!hasCalledCorrectAnswer) {
+        setHasCalledCorrectAnswer(true);
+        console.log('🎉 Calling onCorrectAnswer for question:', questionNumber);
+        onCorrectAnswer();
+      }
+      
+      setTimeout(() => {
+        setIsProcessingAnswer(false);
+      }, 500);
+      
+    } else if (newRetryCount >= 2) {
+      onRetryCountChange(newRetryCount);
+      setCurrentResponse(`Good try, ${childName}! The correct answer is "${question.answer}". We'll practice that more later! 🌟`);
+      setShowFeedback(true);
+      
+      try {
+        const response = await supabase.functions.invoke('openai-tts', {
+          body: {
+            text: `Good try! The correct answer is "${question.answer}". We'll practice that more later!`,
+            voice: 'nova',
+            speed: 1.0
+          }
+        });
+
+        if (response.data?.audioContent) {
+          await playAudio(response.data.audioContent);
+          await new Promise(resolve => {
+            const checkAudioFinished = () => {
+              if (!isPlaying) {
+                resolve(undefined);
+              } else {
+                setTimeout(checkAudioFinished, 100);
+              }
+            };
+            setTimeout(checkAudioFinished, 1000);
+          });
+        }
+      } catch (error) {
+        console.error('TTS error:', error);
+      }
+
+      setTimeout(() => {
+        if (questionNumber < totalQuestions) {
+          onNextQuestion();
+        } else {
+          onComplete();
+        }
+        setIsProcessingAnswer(false);
+      }, 1000);
+      
+    } else {
+      onRetryCountChange(newRetryCount);
+      setCurrentResponse(`Good try! The correct answer is "${question.answer}". Look at the picture carefully and try again! 🤔`);
+      setShowFeedback(true);
+      
+      try {
+        const response = await supabase.functions.invoke('openai-tts', {
+          body: {
+            text: `Good try! The correct answer is "${question.answer}". Look carefully and try again!`,
+            voice: 'nova',
+            speed: 1.0
+          }
+        });
+
+        if (response.data?.audioContent) {
+          await playAudio(response.data.audioContent);
+          await new Promise(resolve => {
+            const checkAudioFinished = () => {
+              if (!isPlaying) {
+                resolve(undefined);
+              } else {
+                setTimeout(checkAudioFinished, 100);
+              }
+            };
+            setTimeout(checkAudioFinished, 1000);
+          });
+        }
+      } catch (error) {
+        console.error('TTS error:', error);
+      }
+
+      setTimeout(() => {
+        setShowFeedback(false);
+        setIsWaitingForAnswer(true);
+        setIsProcessingAnswer(false);
+      }, 2000);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            {getTherapistAvatar()}
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">
-                Learning with {therapistName}
-              </h1>
-              <p className="text-gray-600">Question {questionNumber} of {totalQuestions}</p>
-            </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <Badge variant="secondary" className="text-lg px-4 py-2">
-              {questionNumber}/{totalQuestions}
-            </Badge>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+      {/* Header with therapist, progress, and speech delay toggle */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
+            <AvatarImage src="/lovable-uploads/Laura.png" alt={therapistName} />
+            <AvatarFallback className="bg-blue-200 text-blue-800 font-semibold">
+              {therapistName.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-bold text-blue-900 text-2xl">{therapistName}</h3>
           </div>
         </div>
 
-        {/* Main Question Card */}
-        <Card className="mb-6 shadow-2xl border-0 overflow-hidden">
-          <CardHeader className={`bg-gradient-to-r ${getGradientColors()} text-white`}>
-            <CardTitle className="text-2xl text-center">
-              {question.question}
-            </CardTitle>
-          </CardHeader>
+        <div className="flex items-center gap-6">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => onSpeechDelayModeChange(!speechDelayMode)}
+            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-6 py-3 text-lg font-semibold transition-all ${
+              speechDelayMode ? "bg-purple-200 border-purple-400 text-purple-800" : "bg-white"
+            }`}
+          >
+            Speech Delay Mode: {speechDelayMode ? "ON" : "OFF"}
+          </Button>
           
-          <CardContent className="p-8">
-            {/* Image */}
-            {imageUrl && (
-              <div className="mb-8 text-center">
-                <img 
-                  src={imageUrl} 
-                  alt="Question visual" 
-                  className="max-w-md mx-auto rounded-xl shadow-lg border-4 border-white"
-                />
-              </div>
-            )}
+          <div className="text-center">
+            <p className="text-xl font-bold text-purple-800">
+              Question {questionNumber} of {totalQuestions}
+            </p>
+          </div>
+        </div>
+      </div>
 
-            {/* Controls */}
-            <div className="flex flex-wrap gap-4 justify-center mb-6">
-              <Button
-                onClick={playQuestion}
-                disabled={isPlayingQuestion || ttsLoading}
-                variant="outline"
-                size="lg"
-                className="flex items-center gap-2"
+      {/* Main Question Area */}
+      <div ref={mainContentRef} className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
+        {/* Question Text */}
+        <div className="mb-8 animate-fade-in">
+          <h2 className="text-4xl font-bold text-center text-blue-900 leading-relaxed">
+            {question.question}
+          </h2>
+        </div>
+
+        {/* Question Image */}
+        {imageUrl && (
+          <div className="mb-8 animate-scale-in flex justify-center">
+            <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
+              <img
+                src={imageUrl}
+                alt="Question"
+                className="w-auto h-96 max-w-4xl object-contain"
+                onError={(e) => {
+                  console.error('Error loading question image:', imageUrl);
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Feedback Area */}
+        {showFeedback && (
+          <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-4 border-green-200 rounded-3xl p-6 max-w-2xl mx-auto mb-8 animate-fade-in">
+            <p className="text-lg text-center text-green-800 font-medium">
+              {currentResponse}
+            </p>
+          </div>
+        )}
+
+        {/* Fixed Microphone Button */}
+        {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
+          <div className="text-center animate-fade-in">
+            <div className="flex flex-col items-center">
+              <button
+                onClick={handleVoiceRecording}
+                disabled={isProcessing || isPlaying || isProcessingAnswer}
+                className={`w-32 h-32 rounded-full border-4 shadow-xl transition-all duration-300 flex items-center justify-center ${
+                  isRecording 
+                    ? 'bg-red-300 border-red-200 text-white transform scale-105' 
+                    : 'bg-slate-200 hover:bg-slate-300 border-slate-100 text-slate-600 hover:scale-105'
+                } ${(isProcessing || isPlaying || isProcessingAnswer) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <Volume2 className="w-5 h-5" />
-                {isPlayingQuestion ? 'Playing...' : 'Repeat Question'}
-              </Button>
+                <MicrophoneIcon isRecording={isRecording} size={64} />
+              </button>
+              
+              <div className="mt-4 text-center">
+                <p className="text-blue-600 font-semibold text-lg">
+                  {isRecording ? "🔴 Recording... Tap again to stop" : 
+                   isProcessing ? "🔄 Processing your voice..." :
+                   isPlaying ? "🎵 Playing..." :
+                   "Tap to answer"}
+                </p>
+                {retryCount > 0 && (
+                  <p className="text-sm text-purple-600 mt-2">
+                    Attempt {retryCount + 1} of 2
+                  </p>
+                )}
+              </div>
             </div>
-
-            {/* Voice Recording Interface */}
-            <div className="text-center space-y-4">
-              {!speechDelayMode ? (
-                <VoiceRecorder
-                  onResult={handleVoiceResult}
-                  isListening={isListening}
-                  onListeningChange={setIsListening}
-                  disabled={isEvaluatingAnswer}
-                />
-              ) : (
-                <div className="space-y-4">
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-lg text-yellow-800 mb-2">
-                      🌟 Let's practice together! The answer is:
-                    </p>
-                    <p className="text-2xl font-bold text-yellow-900 mb-4">
-                      "{question.answer}"
-                    </p>
-                    <p className="text-yellow-700">
-                      Can you say "{question.answer}" with me?
-                    </p>
-                  </div>
-                  
-                  <div className="flex gap-4 justify-center">
-                    <VoiceRecorder
-                      onResult={handleVoiceResult}
-                      isListening={isListening}
-                      onListeningChange={setIsListening}
-                      disabled={isEvaluatingAnswer}
-                    />
-                    
-                    <Button
-                      onClick={handleCorrectInSpeechDelayMode}
-                      className="bg-green-500 hover:bg-green-600 text-white"
-                      size="lg"
-                    >
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                      I Said It!
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {isEvaluatingAnswer && (
-                <div className="flex items-center justify-center gap-2 text-blue-600">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <span className="text-lg">Listening to your answer...</span>
-                </div>
-              )}
-
-              {transcript && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">I heard you say:</p>
-                  <p className="text-lg font-medium text-gray-800">"{transcript}"</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
       </div>
     </div>
   );

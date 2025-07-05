@@ -20,7 +20,6 @@ interface TTSSettings {
 
 const TTSConfiguration = () => {
   const { toast } = useToast();
-  const [selectedTherapist, setSelectedTherapist] = useState<'Laura' | 'Lawrence'>('Laura');
   const [settings, setSettings] = useState<TTSSettings>({
     voice: 'nova',
     speed: 1.0,
@@ -40,24 +39,18 @@ const TTSConfiguration = () => {
     { value: 'shimmer', label: 'Shimmer (Soft Female)' }
   ];
 
-  const therapists = [
-    { value: 'Laura' as const, label: 'Laura' },
-    { value: 'Lawrence' as const, label: 'Lawrence' }
-  ];
-
   useEffect(() => {
     loadSettings();
-  }, [selectedTherapist]);
+  }, []);
 
   const loadSettings = async () => {
     try {
       setIsLoading(true);
       
-      // Load TTS settings for the selected therapist
+      // Load the most recent TTS settings from the database
       const { data, error } = await supabase
         .from('tts_settings')
         .select('*')
-        .eq('therapist_name', selectedTherapist)
         .order('updated_at', { ascending: false })
         .limit(1)
         .single();
@@ -79,7 +72,7 @@ const TTSConfiguration = () => {
       console.error('Error loading TTS settings:', error);
       toast({
         title: "Error",
-        description: `Failed to load TTS settings for ${selectedTherapist}. Using defaults.`,
+        description: "Failed to load TTS settings. Using defaults.",
         variant: "destructive",
       });
     } finally {
@@ -90,11 +83,10 @@ const TTSConfiguration = () => {
   const saveSettings = async () => {
     setIsSaving(true);
     try {
-      // Check if settings exist for this therapist
+      // Check if settings exist
       const { data: existingSettings } = await supabase
         .from('tts_settings')
         .select('id')
-        .eq('therapist_name', selectedTherapist)
         .order('updated_at', { ascending: false })
         .limit(1)
         .single();
@@ -118,7 +110,6 @@ const TTSConfiguration = () => {
         const { error } = await supabase
           .from('tts_settings')
           .insert({
-            therapist_name: selectedTherapist,
             voice: settings.voice,
             speed: settings.speed,
             enable_ssml: settings.enableSSML,
@@ -130,13 +121,13 @@ const TTSConfiguration = () => {
 
       toast({
         title: "Settings Saved",
-        description: `TTS configuration for ${selectedTherapist} has been updated.`,
+        description: "TTS configuration has been updated for all users.",
       });
     } catch (error) {
       console.error('Error saving TTS settings:', error);
       toast({
         title: "Error",
-        description: `Failed to save TTS settings for ${selectedTherapist}.`,
+        description: "Failed to save TTS settings.",
         variant: "destructive",
       });
     } finally {
@@ -149,7 +140,7 @@ const TTSConfiguration = () => {
     try {
       const testText = settings.enableSSML 
         ? settings.sampleSSML
-        : `Hello! I'm ${selectedTherapist} speaking with the ${settings.voice} voice at ${settings.speed}x speed. How do I sound?`;
+        : `Hello! I'm Laura speaking with the ${settings.voice} voice at ${settings.speed}x speed. How do I sound?`;
 
       const { data, error } = await supabase.functions.invoke('openai-tts', {
         body: { 
@@ -221,29 +212,9 @@ const TTSConfiguration = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Therapist Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="therapist-select">Select Therapist</Label>
-          <Select 
-            value={selectedTherapist} 
-            onValueChange={(value: 'Laura' | 'Lawrence') => setSelectedTherapist(value)}
-          >
-            <SelectTrigger id="therapist-select">
-              <SelectValue placeholder="Select a therapist" />
-            </SelectTrigger>
-            <SelectContent>
-              {therapists.map((therapist) => (
-                <SelectItem key={therapist.value} value={therapist.value}>
-                  {therapist.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Voice Selection */}
         <div className="space-y-2">
-          <Label htmlFor="voice-select">Voice Selection for {selectedTherapist}</Label>
+          <Label htmlFor="voice-select">Voice Selection</Label>
           <Select 
             value={settings.voice} 
             onValueChange={(value) => setSettings(prev => ({ ...prev, voice: value }))}
@@ -292,7 +263,7 @@ const TTSConfiguration = () => {
           
           {settings.enableSSML && (
             <div className="space-y-2">
-              <Label htmlFor="ssml-sample">SSML Sample Text for {selectedTherapist}</Label>
+              <Label htmlFor="ssml-sample">SSML Sample Text</Label>
               <Textarea
                 id="ssml-sample"
                 value={settings.sampleSSML}
@@ -316,7 +287,7 @@ const TTSConfiguration = () => {
             className="flex items-center gap-2"
           >
             <Play className="w-4 h-4" />
-            {isPlaying ? 'Playing...' : `Test ${selectedTherapist}'s Voice`}
+            {isPlaying ? 'Playing...' : 'Test Voice'}
           </Button>
           
           <Button
@@ -324,13 +295,13 @@ const TTSConfiguration = () => {
             disabled={isSaving}
             className="flex items-center gap-2"
           >
-            {isSaving ? 'Saving...' : `Save ${selectedTherapist}'s Settings`}
+            {isSaving ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
 
         <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-          <strong>Note:</strong> These settings will apply to {selectedTherapist} in the chat interface. 
-          Changes take effect immediately for new conversations with {selectedTherapist}.
+          <strong>Note:</strong> These settings will apply to all users in the chat interface. 
+          Changes take effect immediately for new conversations.
         </div>
       </CardContent>
     </Card>
