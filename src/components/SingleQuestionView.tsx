@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useTTSSettings } from '@/hooks/useTTSSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { calculateSimilarity } from '@/components/chat/fuzzyMatching';
+import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 import type { Database } from '@/integrations/supabase/types';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
@@ -65,52 +66,94 @@ const SingleQuestionView = ({
   const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
   const [hasCalledCorrectAnswer, setHasCalledCorrectAnswer] = useState(false);
   const [shouldReadQuestion, setShouldReadQuestion] = useState(true);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [isUserInteracting, setIsUserInteracting] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasUserAttemptedAnswer, setHasUserAttemptedAnswer] = useState(false);
+  const [hasReadQuestion, setHasReadQuestion] = useState(false);
+  
+  const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist } = useTTSSettings(therapistName);
   
   const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
-  const { playAudio, isPlaying, stopAudio } = useAudioPlayer();
   const { toast } = useToast();
   const mainContentRef = useRef<HTMLDivElement>(null);
+  const questionRef = useRef<HTMLDivElement>(null);
 
+
+
+  // Effect 2: Reset State (Single Responsibility)
   useEffect(() => {
+    console.log(`🔄 SingleQuestionView reset for question:`, {
+      id: question.id,
+      question: question.question,
+      answer: question.answer,
+      imageName: question.imageName,
+      comingFromCelebration,
+      currentRetryCount: retryCount
+    });
+    
+    // Reset all state
     setHasCalledCorrectAnswer(false);
     setIsProcessingAnswer(false);
     setShowFeedback(false);
     setCurrentResponse('');
     setIsWaitingForAnswer(true);
     setShouldReadQuestion(!comingFromCelebration);
-  }, [question.id, comingFromCelebration]);
+    setIsUserInteracting(false);
+    setHasUserAttemptedAnswer(false);
+    setHasReadQuestion(false);
+    
+    // Reset retry count when question changes (but not when retry count changes)
+    if (!comingFromCelebration) {
+      console.log(`🔄 Question changed - resetting retry count to 0`);
+      onRetryCountChange(0);
+    }
+  }, [question.id, comingFromCelebration, onRetryCountChange]);
 
+  // Effect 3: Play TTS (Single Responsibility)
   useEffect(() => {
+    if (!ttsSettingsLoaded || !shouldReadQuestion || isUserInteracting || hasReadQuestion) {
+      return;
+    }
+
     const readQuestion = async () => {
-      console.log('🔊 Question reading check:', { shouldReadQuestion, comingFromCelebration });
-      if (!shouldReadQuestion) {
-        console.log('🔇 Skipping question reading - coming from celebration');
-        return;
-      }
-      
       try {
-        stopAudio();
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log(`🔊 Reading question with ${therapistName}'s voice: ${ttsSettings.voice}`);
+        setIsPlaying(true);
+        
+        // Stop any previous audio
+        stopGlobalAudio();
+        
+        // Use the hook's helper function to get the correct voice
+        const voiceToUse = getVoiceForTherapist();
+        console.log(`🎯 Final question voice selection for ${therapistName}: ${voiceToUse} (original: ${ttsSettings.voice})`);
         
         const response = await supabase.functions.invoke('openai-tts', {
           body: {
             text: question.question,
-            voice: 'nova',
-            speed: 1.0
+            voice: voiceToUse,
+            speed: ttsSettings.speed
           }
         });
 
         if (response.data?.audioContent) {
-          await playAudio(response.data.audioContent);
+          await playGlobalTTS(response.data.audioContent, 'SingleQuestionView');
+          setHasReadQuestion(true);
         }
       } catch (error) {
-        console.error('Error reading question:', error);
+        console.error('TTS error in question reading:', error);
+        setHasReadQuestion(true);
+      } finally {
+        setIsPlaying(false);
       }
     };
 
-    setTimeout(readQuestion, 1000);
-  }, [question.question, playAudio, stopAudio, shouldReadQuestion]);
+    readQuestion();
+  }, [ttsSettingsLoaded, shouldReadQuestion, isUserInteracting, hasReadQuestion, question.question, therapistName, ttsSettings]);
 
+  // Effect 4: Auto-scroll (Single Responsibility)
   useEffect(() => {
     if (mainContentRef.current) {
       mainContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -122,6 +165,7 @@ const SingleQuestionView = ({
     
     if (isRecording) {
       setIsProcessing(true);
+      setIsUserInteracting(true);
       
       try {
         const base64Audio = await stopRecording();
@@ -159,6 +203,11 @@ const SingleQuestionView = ({
         setIsProcessing(false);
       }
     } else {
+      // Set user interacting immediately when they start recording
+      setIsUserInteracting(true);
+      console.log('🎤 User started recording - stopping any question TTS and setting interaction flag');
+      // Stop any currently playing question TTS immediately
+      stopGlobalAudio();
       try {
         await startRecording();
       } catch (error) {
@@ -168,15 +217,35 @@ const SingleQuestionView = ({
           description: "Failed to access microphone. Please check permissions.",
           variant: "destructive",
         });
+        // Reset the flag if recording fails
+        setIsUserInteracting(false);
       }
     }
   };
 
   const processAnswer = async (userAnswer: string) => {
+    // Prevent processing if no user answer
+    if (!userAnswer || !userAnswer.trim()) {
+      console.log(`⚠️ processAnswer called with empty user answer - ignoring`);
+      return;
+    }
+    
+    console.log(`🎯 Processing answer for question:`, {
+      questionId: question.id,
+      questionText: question.question,
+      expectedAnswer: question.answer,
+      userAnswer,
+      similarity: calculateSimilarity(userAnswer, question.answer, {
+        speechDelayMode,
+        threshold: speechDelayMode ? 0.3 : 0.6
+      })
+    });
+    
     if (isProcessingAnswer) return;
     setIsProcessingAnswer(true);
+    setHasUserAttemptedAnswer(true);
     
-    stopAudio();
+    stopGlobalAudio();
     
     const similarity = calculateSimilarity(userAnswer, question.answer, {
       speechDelayMode,
@@ -185,10 +254,22 @@ const SingleQuestionView = ({
 
     const acceptanceThreshold = speechDelayMode ? 0.3 : 0.7;
     const newRetryCount = retryCount + 1;
+    
+    console.log(`🎯 Answer processing details:`, {
+      similarity,
+      acceptanceThreshold,
+      currentRetryCount: retryCount,
+      newRetryCount,
+      hasUserAttemptedAnswer,
+      willSkip: newRetryCount >= 2 && hasUserAttemptedAnswer
+    });
 
     if (similarity > acceptanceThreshold) {
       setCurrentResponse(`Amazing work, ${childName}! That's exactly right! The answer is "${question.answer}" 🎉`);
       setShowFeedback(true);
+      
+      // Don't play TTS here - let MiniCelebration handle it
+      console.log(`✅ Correct answer! Moving to celebration - TTS will be handled by MiniCelebration`);
       
       if (!hasCalledCorrectAnswer) {
         setHasCalledCorrectAnswer(true);
@@ -198,34 +279,31 @@ const SingleQuestionView = ({
       
       setTimeout(() => {
         setIsProcessingAnswer(false);
+        setIsUserInteracting(false);
       }, 500);
       
-    } else if (newRetryCount >= 2) {
+    } else if (newRetryCount >= 2 && hasUserAttemptedAnswer && userAnswer.trim()) {
+      // Only skip to next question if user has actually attempted to answer multiple times
+      console.log(`🔄 Max retries reached (${newRetryCount}) with user answer: "${userAnswer}" and hasUserAttemptedAnswer: ${hasUserAttemptedAnswer} - moving to next question`);
+      console.log(`📊 Retry details: currentRetryCount=${retryCount}, newRetryCount=${newRetryCount}, threshold=2`);
       onRetryCountChange(newRetryCount);
       setCurrentResponse(`Good try, ${childName}! The correct answer is "${question.answer}". We'll practice that more later! 🌟`);
       setShowFeedback(true);
       
       try {
-        const response = await supabase.functions.invoke('openai-tts', {
+        console.log(`🔊 Playing final feedback with ${therapistName}'s voice: ${ttsSettings.voice}`);
+        stopGlobalAudio(); // Stop any previous audio
+        
+        const { data, error } = await supabase.functions.invoke('openai-tts', {
           body: {
-            text: `Good try! The correct answer is "${question.answer}". We'll practice that more later!`,
-            voice: 'nova',
-            speed: 1.0
+            text: `Good try, ${childName}! The correct answer is "${question.answer}". We'll practice that more later!`,
+            voice: ttsSettings.voice,
+            speed: ttsSettings.speed
           }
         });
 
-        if (response.data?.audioContent) {
-          await playAudio(response.data.audioContent);
-          await new Promise(resolve => {
-            const checkAudioFinished = () => {
-              if (!isPlaying) {
-                resolve(undefined);
-              } else {
-                setTimeout(checkAudioFinished, 100);
-              }
-            };
-            setTimeout(checkAudioFinished, 1000);
-          });
+        if (data?.audioContent) {
+          await playGlobalTTS(data.audioContent, 'SingleQuestionView-Final');
         }
       } catch (error) {
         console.error('TTS error:', error);
@@ -238,34 +316,30 @@ const SingleQuestionView = ({
           onComplete();
         }
         setIsProcessingAnswer(false);
+        setIsUserInteracting(false);
       }, 1000);
       
     } else {
+      console.log(`🔄 Retry attempt ${newRetryCount} - giving another chance`);
+      console.log(`📊 Retry details: currentRetryCount=${retryCount}, newRetryCount=${newRetryCount}, threshold=2, willSkip=${newRetryCount >= 2}`);
       onRetryCountChange(newRetryCount);
       setCurrentResponse(`Good try! The correct answer is "${question.answer}". Look at the picture carefully and try again! 🤔`);
       setShowFeedback(true);
       
       try {
-        const response = await supabase.functions.invoke('openai-tts', {
+        console.log(`🔊 Playing retry feedback with ${therapistName}'s voice: ${ttsSettings.voice}`);
+        stopGlobalAudio(); // Stop any previous audio
+        
+        const { data, error } = await supabase.functions.invoke('openai-tts', {
           body: {
             text: `Good try! The correct answer is "${question.answer}". Look carefully and try again!`,
-            voice: 'nova',
-            speed: 1.0
+            voice: ttsSettings.voice,
+            speed: ttsSettings.speed
           }
         });
 
-        if (response.data?.audioContent) {
-          await playAudio(response.data.audioContent);
-          await new Promise(resolve => {
-            const checkAudioFinished = () => {
-              if (!isPlaying) {
-                resolve(undefined);
-              } else {
-                setTimeout(checkAudioFinished, 100);
-              }
-            };
-            setTimeout(checkAudioFinished, 1000);
-          });
+        if (data?.audioContent) {
+          await playGlobalTTS(data.audioContent, 'SingleQuestionView-Retry');
         }
       } catch (error) {
         console.error('TTS error:', error);
@@ -275,6 +349,7 @@ const SingleQuestionView = ({
         setShowFeedback(false);
         setIsWaitingForAnswer(true);
         setIsProcessingAnswer(false);
+        setIsUserInteracting(false);
       }, 2000);
     }
   };
@@ -285,7 +360,7 @@ const SingleQuestionView = ({
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
-            <AvatarImage src="/lovable-uploads/Laura.png" alt={therapistName} />
+            <AvatarImage src={`/lovable-uploads/${therapistName}.png`} alt={therapistName} />
             <AvatarFallback className="bg-blue-200 text-blue-800 font-semibold">
               {therapistName.charAt(0)}
             </AvatarFallback>

@@ -1,20 +1,23 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { MessageCircle, FileQuestion, Volume2, VolumeX, X } from 'lucide-react';
+import { MessageCircle, FileQuestion, Volume2, VolumeX, X, RotateCcw } from 'lucide-react';
+import { Database } from '@/integrations/supabase/types';
+
+type QuestionType = Database['public']['Enums']['question_type_enum'];
 
 interface ChatHeaderProps {
   useStructuredMode: boolean;
-  selectedQuestionType?: string;
+  selectedQuestionType: QuestionType | null;
   currentQuestionIndex: number;
   totalQuestions: number;
   isRecording: boolean;
   isPlaying: boolean;
   hasQuestions: boolean;
-  onToggleMode?: () => void;
+  therapistName: string;
+  onToggleMode: () => void;
   onToggleAudio: () => void;
-  onClose?: () => void;
+  onClose: () => void;
 }
 
 const ChatHeader = ({
@@ -25,6 +28,7 @@ const ChatHeader = ({
   isRecording,
   isPlaying,
   hasQuestions,
+  therapistName,
   onToggleMode,
   onToggleAudio,
   onClose
@@ -34,13 +38,13 @@ const ChatHeader = ({
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
           <AvatarImage 
-            src="/lovable-uploads/Laura.png" 
-            alt="Laura - Speech Therapist" 
+            src={`/lovable-uploads/${therapistName}.png`}
+            alt={`${therapistName} - Speech Therapist`} 
           />
-          <AvatarFallback className="bg-blue-200 text-blue-800 text-lg font-semibold">L</AvatarFallback>
+          <AvatarFallback className="bg-blue-200 text-blue-800 text-lg font-semibold">{therapistName.charAt(0)}</AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-2xl font-bold text-blue-900">Laura</h2>
+          <h2 className="text-2xl font-bold text-blue-900">{therapistName}</h2>
           <p className="text-blue-700 text-sm font-normal">
             Your AI Speech Therapy Assistant
           </p>

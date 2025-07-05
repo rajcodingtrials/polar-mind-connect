@@ -98,11 +98,13 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
         const { data, error } = await supabase
           .from('tts_settings')
           .select('*')
+          .eq('therapist_name', therapistName)
+          .order('updated_at', { ascending: false })
+          .limit(1)
           .single();
         
-        if (error) {
+        if (error && error.code !== 'PGRST116') {
           console.error('Error loading TTS settings:', error);
-          return;
         }
         
         if (data) {
@@ -111,19 +113,44 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
             speed: Number(data.speed),
             enableSSML: data.enable_ssml
           });
-          console.log('TTS Settings from database:', {
+          console.log(`TTS Settings for ${therapistName}:`, {
             voice: data.voice,
             speed: Number(data.speed),
             enableSSML: data.enable_ssml
           });
+        } else {
+          // Fallback: Set default voice based on therapist name
+          const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
+          setTtsSettings({
+            voice: defaultVoice,
+            speed: 1.0,
+            enableSSML: false
+          });
+          console.log(`Using fallback TTS settings for ${therapistName}:`, {
+            voice: defaultVoice,
+            speed: 1.0,
+            enableSSML: false
+          });
         }
       } catch (error) {
         console.error('Error loading TTS settings:', error);
+        // Fallback: Set default voice based on therapist name
+        const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
+        setTtsSettings({
+          voice: defaultVoice,
+          speed: 1.0,
+          enableSSML: false
+        });
+        console.log(`Using fallback TTS settings for ${therapistName} (error case):`, {
+          voice: defaultVoice,
+          speed: 1.0,
+          enableSSML: false
+        });
       }
     };
 
     loadTTSSettings();
-  }, []);
+  }, [therapistName]);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -498,13 +525,13 @@ Make it all flow naturally as one cohesive message.`;
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 border-4 border-white shadow-sm">
               <AvatarImage 
-                src="/lovable-uploads/Laura.png" 
-                alt="Laura - Speech Therapist" 
+                src={`/lovable-uploads/${therapistName}.png`}
+                alt={`${therapistName} - Speech Therapist`} 
               />
-              <AvatarFallback className="bg-blue-200 text-blue-800 text-lg font-semibold">L</AvatarFallback>
+              <AvatarFallback className="bg-blue-200 text-blue-800 text-lg font-semibold">{therapistName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-2xl font-bold text-blue-900">Laura</h2>
+              <h2 className="text-2xl font-bold text-blue-900">{therapistName}</h2>
               <p className="text-blue-700 text-sm font-normal">
                 Your AI Speech Therapy Assistant
               </p>

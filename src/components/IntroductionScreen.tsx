@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+
 import { supabase } from '@/integrations/supabase/client';
+import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 import type { Database } from '@/integrations/supabase/types';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
@@ -13,13 +13,16 @@ interface IntroductionScreenProps {
   therapistName: string;
   childName: string;
   onStartQuestions: () => void;
+  onTTSEnd?: () => void;
 }
 
-const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, onStartQuestions }: IntroductionScreenProps) => {
+const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, onStartQuestions, onTTSEnd }: IntroductionScreenProps) => {
   const [introMessage, setIntroMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showContinueButton, setShowContinueButton] = useState(false);
-  const { playAudio, isPlaying } = useAudioPlayer();
+  const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1.0 });
+  const [isPlaying, setIsPlaying] = useState(false);
+
 
   const getActivityName = (type: QuestionType) => {
     switch (type) {
@@ -30,6 +33,63 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
       default: return 'Learning';
     }
   };
+
+  // Load therapist-specific TTS settings
+  useEffect(() => {
+    const loadTTSSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tts_settings')
+          .select('*')
+          .eq('therapist_name', therapistName)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading TTS settings:', error);
+        }
+        
+        if (data) {
+          setTtsSettings({
+            voice: data.voice,
+            speed: Number(data.speed)
+          });
+          console.log(`TTS Settings for ${therapistName}:`, {
+            voice: data.voice,
+            speed: Number(data.speed)
+          });
+        } else {
+          // Fallback: Set default voice based on therapist name
+          const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
+          setTtsSettings({
+            voice: defaultVoice,
+            speed: 1.0
+          });
+          console.log(`🔄 Using fallback TTS settings for ${therapistName}:`, {
+            voice: defaultVoice,
+            speed: 1.0
+          });
+          console.log(`🔍 Debug - Introduction fallback triggered for ${therapistName}, setting voice to: ${defaultVoice}`);
+        }
+      } catch (error) {
+        console.error('Error loading TTS settings:', error);
+        // Fallback: Set default voice based on therapist name
+        const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
+        setTtsSettings({
+          voice: defaultVoice,
+          speed: 1.0
+        });
+        console.log(`🔄 Using fallback TTS settings for ${therapistName} (error case):`, {
+          voice: defaultVoice,
+          speed: 1.0
+        });
+        console.log(`🔍 Debug - Introduction error fallback triggered for ${therapistName}, setting voice to: ${defaultVoice}`);
+      }
+    };
+
+    loadTTSSettings();
+  }, [therapistName]);
 
   useEffect(() => {
     const generateIntroduction = async () => {
@@ -56,41 +116,66 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
           setIntroMessage(data.choices[0].message.content);
         }
 
-        // Auto-play TTS after a short delay
-        setTimeout(async () => {
-          try {
-            const ttsResponse = await supabase.functions.invoke('openai-tts', {
-              body: {
-                text: introMessage || `Hi ${childName}! I'm ${therapistName}, and I'm so excited to work on ${activityName} with you today! Are you ready to have some fun learning together?`,
-                voice: 'nova',
-                speed: 1.0
-              }
-            });
-
-            if (ttsResponse.data?.audioContent) {
-              await playAudio(ttsResponse.data.audioContent);
-              // Show continue button after TTS finishes
-              setTimeout(() => setShowContinueButton(true), 3000);
-            } else {
-              setShowContinueButton(true);
-            }
-          } catch (error) {
-            console.error('TTS error:', error);
-            setShowContinueButton(true);
-          }
-        }, 1000);
-
       } catch (error) {
         console.error('Error in generateIntroduction:', error);
         setIntroMessage(`Hi ${childName}! I'm ${therapistName}, and I'm so excited to work with you today! Are you ready to have some fun learning together?`);
-        setShowContinueButton(true);
       } finally {
         setIsLoading(false);
       }
     };
 
     generateIntroduction();
-  }, [selectedQuestionType, therapistName, childName, playAudio]);
+  }, [selectedQuestionType, therapistName, childName]);
+
+  // Separate effect for TTS that runs after intro message is set and TTS settings are loaded
+  useEffect(() => {
+    if (!isLoading && introMessage && ttsSettings.voice) {
+      const playTTS = async () => {
+        try {
+          console.log(`Playing TTS for ${therapistName} with voice: ${ttsSettings.voice}`);
+          
+          // Stop any previous audio
+          stopGlobalAudio();
+          
+          // Force Lawrence to use 'echo' voice regardless of settings
+          const voiceToUse = therapistName === 'Lawrence' ? 'echo' : ttsSettings.voice;
+          console.log(`🎯 Final introduction voice selection for ${therapistName}: ${voiceToUse} (original: ${ttsSettings.voice})`);
+          
+          const ttsResponse = await supabase.functions.invoke('openai-tts', {
+            body: {
+              text: introMessage,
+              voice: voiceToUse,
+              speed: ttsSettings.speed
+            }
+          });
+
+          if (ttsResponse.data?.audioContent) {
+            console.log(`✅ Introduction TTS generated successfully for ${therapistName} with voice: ${ttsSettings.voice}`);
+            await playGlobalTTS(ttsResponse.data.audioContent, 'IntroductionScreen');
+            // Show continue button after TTS finishes
+            setTimeout(() => {
+              setShowContinueButton(true);
+              if (onTTSEnd) {
+                onTTSEnd();
+              }
+            }, 3000);
+          } else {
+            console.error(`❌ No introduction audio content returned for ${therapistName}`);
+            setShowContinueButton(true);
+            if (onTTSEnd) {
+              onTTSEnd();
+            }
+          }
+        } catch (error) {
+          console.error('TTS error:', error);
+          setShowContinueButton(true);
+        }
+      };
+
+      // Add a small delay to ensure everything is ready
+      setTimeout(playTTS, 500);
+    }
+  }, [isLoading, introMessage, ttsSettings, therapistName]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-6 animate-fade-in">
@@ -99,7 +184,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
         <div className="mb-8 animate-scale-in">
           <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
             <AvatarImage 
-              src="/lovable-uploads/Laura.png" 
+              src={`/lovable-uploads/${therapistName}.png`}
               alt={`${therapistName} - Speech Therapist`}
             />
             <AvatarFallback className="bg-blue-200 text-blue-800 text-4xl font-bold">

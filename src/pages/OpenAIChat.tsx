@@ -210,6 +210,8 @@ const OpenAIChatPage = () => {
       setCurrentQuestion(firstQuestion);
       setAskedQuestionIds(new Set([firstQuestion.id]));
       setSessionQuestionCount(1);
+      setComingFromCelebration(false); // Ensure first question is not from celebration
+      console.log('🔄 comingFromCelebration set to false for first question');
       setCurrentScreen('question');
     }
   };
@@ -223,6 +225,7 @@ const OpenAIChatPage = () => {
     });
     setCorrectAnswers(prev => prev + 1);
     setComingFromCelebration(true);
+    console.log('🔄 comingFromCelebration set to true for celebration');
     setCurrentScreen('celebration');
     setRetryCount(0);
   };
@@ -265,9 +268,9 @@ const OpenAIChatPage = () => {
       setAskedQuestionIds(prev => new Set([...prev, nextQuestion.id]));
       setSessionQuestionCount(prev => prev + 1);
       setRetryCount(0);
+      setComingFromCelebration(false); // Reset immediately
+      console.log('🔄 comingFromCelebration reset to false for next question');
       setCurrentScreen('question');
-      // Reset the flag after setting the question
-      setTimeout(() => setComingFromCelebration(false), 100);
     } else {
       console.log('🏁 No valid next question - session complete');
       setCurrentScreen('complete');
@@ -304,7 +307,10 @@ const OpenAIChatPage = () => {
   };
 
   const handleLawrenceClick = () => {
-    console.log('Lawrence clicked - functionality to be implemented');
+    console.log('Lawrence clicked - setting Lawrence as therapist');
+    setTherapistName('Lawrence');
+    setShowQuestionTypes(true);
+    setCurrentScreen('home');
   };
 
   return (
@@ -387,7 +393,7 @@ const OpenAIChatPage = () => {
             <div className="mb-8 flex flex-col items-center">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-black mb-4">
-                  Choose Your Learning Adventure with Laura!
+                  Choose Your Learning Adventure with {therapistName}!
                 </h2>
                 <p className="text-gray-600 text-lg">Select the type of questions you'd like to practice today</p>
               </div>
@@ -474,6 +480,7 @@ const OpenAIChatPage = () => {
           {currentScreen === 'celebration' && (
             <MiniCelebration
               correctAnswers={correctAnswers}
+              therapistName={therapistName}
               onComplete={handleCelebrationComplete}
             />
           )}

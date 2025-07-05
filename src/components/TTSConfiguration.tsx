@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,12 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Play, Volume2 } from 'lucide-react';
+import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 
 interface TTSSettings {
   voice: string;
   speed: number;
   enableSSML: boolean;
   sampleSSML: string;
+  therapistName: string;
 }
 
 const TTSConfiguration = () => {
@@ -24,11 +25,13 @@ const TTSConfiguration = () => {
     voice: 'nova',
     speed: 1.0,
     enableSSML: false,
-    sampleSSML: '<speak>Hello! <break time="0.5s"/> I am Laura, your speech therapy assistant. <emphasis level="strong">Let\'s have fun learning together!</emphasis></speak>'
+    sampleSSML: '<speak>Hello! <break time="0.5s"/> I am Laura, your speech therapy assistant. <emphasis level="strong">Let\'s have fun learning together!</emphasis></speak>',
+    therapistName: 'Laura'
   });
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [availableTherapists, setAvailableTherapists] = useState<string[]>(['Laura', 'Lawrence']);
 
   const voices = [
     { value: 'alloy', label: 'Alloy (Neutral)' },
@@ -47,10 +50,11 @@ const TTSConfiguration = () => {
     try {
       setIsLoading(true);
       
-      // Load the most recent TTS settings from the database
+      // Load the TTS settings for the selected therapist
       const { data, error } = await supabase
         .from('tts_settings')
         .select('*')
+        .eq('therapist_name', settings.therapistName)
         .order('updated_at', { ascending: false })
         .limit(1)
         .single();
@@ -65,7 +69,8 @@ const TTSConfiguration = () => {
           voice: data.voice,
           speed: data.speed,
           enableSSML: data.enable_ssml,
-          sampleSSML: data.sample_ssml
+          sampleSSML: data.sample_ssml,
+          therapistName: data.therapist_name
         });
       }
     } catch (error) {
@@ -83,10 +88,11 @@ const TTSConfiguration = () => {
   const saveSettings = async () => {
     setIsSaving(true);
     try {
-      // Check if settings exist
+      // Check if settings exist for this therapist
       const { data: existingSettings } = await supabase
         .from('tts_settings')
         .select('id')
+        .eq('therapist_name', settings.therapistName)
         .order('updated_at', { ascending: false })
         .limit(1)
         .single();
@@ -113,7 +119,8 @@ const TTSConfiguration = () => {
             voice: settings.voice,
             speed: settings.speed,
             enable_ssml: settings.enableSSML,
-            sample_ssml: settings.sampleSSML
+            sample_ssml: settings.sampleSSML,
+            therapist_name: settings.therapistName
           });
 
         if (error) throw error;
@@ -121,7 +128,7 @@ const TTSConfiguration = () => {
 
       toast({
         title: "Settings Saved",
-        description: "TTS configuration has been updated for all users.",
+        description: `TTS configuration has been updated for ${settings.therapistName}.`,
       });
     } catch (error) {
       console.error('Error saving TTS settings:', error);
@@ -135,12 +142,60 @@ const TTSConfiguration = () => {
     }
   };
 
+  const handleTherapistChange = async (therapistName: string) => {
+    setSettings(prev => ({ ...prev, therapistName }));
+    // Load settings for the new therapist
+    try {
+      const { data, error } = await supabase
+        .from('tts_settings')
+        .select('*')
+        .eq('therapist_name', therapistName)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading TTS settings:', error);
+        return;
+      }
+
+      if (data) {
+        setSettings({
+          voice: data.voice,
+          speed: data.speed,
+          enableSSML: data.enable_ssml,
+          sampleSSML: data.sample_ssml,
+          therapistName: data.therapist_name
+        });
+      } else {
+        // Set defaults for new therapist
+        const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
+        const defaultSSML = therapistName === 'Lawrence' 
+          ? '<speak>Hello! <break time="0.5s"/> I am Lawrence, your speech therapy assistant. <emphasis level="strong">Let\'s have fun learning together!</emphasis></speak>'
+          : '<speak>Hello! <break time="0.5s"/> I am Laura, your speech therapy assistant. <emphasis level="strong">Let\'s have fun learning together!</emphasis></speak>';
+        
+        setSettings({
+          voice: defaultVoice,
+          speed: 1.0,
+          enableSSML: false,
+          sampleSSML: defaultSSML,
+          therapistName
+        });
+      }
+    } catch (error) {
+      console.error('Error loading therapist settings:', error);
+    }
+  };
+
   const testVoice = async () => {
     setIsPlaying(true);
     try {
       const testText = settings.enableSSML 
         ? settings.sampleSSML
-        : `Hello! I'm Laura speaking with the ${settings.voice} voice at ${settings.speed}x speed. How do I sound?`;
+        : `Hello! I'm ${settings.therapistName} speaking with the ${settings.voice} voice at ${settings.speed}x speed. How do I sound?`;
+
+      // Stop any previous audio
+      stopGlobalAudio();
 
       const { data, error } = await supabase.functions.invoke('openai-tts', {
         body: { 
@@ -153,23 +208,11 @@ const TTSConfiguration = () => {
       if (error) throw error;
 
       if (data.audioContent) {
-        // Convert base64 to blob and play
-        const binaryString = atob(data.audioContent);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        const audio = new Audio(audioUrl);
-        audio.onended = () => {
+        await playGlobalTTS(data.audioContent, 'TTSConfiguration');
+        // Set a timeout to reset the playing state
+        setTimeout(() => {
           setIsPlaying(false);
-          URL.revokeObjectURL(audioUrl);
-        };
-        
-        await audio.play();
+        }, 5000); // 5 seconds should be enough for the test audio
       }
     } catch (error) {
       console.error('Error testing voice:', error);
@@ -212,6 +255,26 @@ const TTSConfiguration = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Therapist Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="therapist-select">Select Therapist</Label>
+          <Select 
+            value={settings.therapistName} 
+            onValueChange={handleTherapistChange}
+          >
+            <SelectTrigger id="therapist-select">
+              <SelectValue placeholder="Select a therapist" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableTherapists.map((therapist) => (
+                <SelectItem key={therapist} value={therapist}>
+                  {therapist}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Voice Selection */}
         <div className="space-y-2">
           <Label htmlFor="voice-select">Voice Selection</Label>

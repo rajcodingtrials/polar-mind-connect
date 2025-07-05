@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Volume2, VolumeX } from 'lucide-react';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessageProps } from './types';
-import { stopAllAudio } from '@/utils/audioUtils';
+import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 
 interface ExtendedChatMessageProps extends ChatMessageProps {
   autoPlayTTS?: boolean;
@@ -15,19 +14,20 @@ interface ExtendedChatMessageProps extends ChatMessageProps {
 const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateChange, forceStopAudio = false }: ExtendedChatMessageProps) => {
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
-  const { isPlaying, playAudio, stopAudio } = useAudioPlayer();
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Stop audio when forceStopAudio is true (chat window closing)
   useEffect(() => {
     if (forceStopAudio && (isPlaying || isGeneratingAudio)) {
       console.log('Force stopping audio due to chat window closing');
-      stopAudio();
+      stopGlobalAudio();
       setIsGeneratingAudio(false);
+      setIsPlaying(false);
       
       // Use the utility function to aggressively stop all audio
       stopAllAudio();
     }
-  }, [forceStopAudio, isPlaying, isGeneratingAudio, stopAudio]);
+  }, [forceStopAudio, isPlaying, isGeneratingAudio]);
 
   // Notify parent component about audio generation state
   useEffect(() => {
@@ -40,10 +40,11 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
   useEffect(() => {
     return () => {
       console.log('ChatMessage component unmounting, stopping audio...');
-      stopAudio();
+      stopGlobalAudio();
       setIsGeneratingAudio(false);
+      setIsPlaying(false);
     };
-  }, [stopAudio]);
+  }, []);
 
   const handlePlayTTS = async () => {
     if (isPlaying || forceStopAudio) return;
@@ -68,7 +69,12 @@ const ChatMessage = ({ message, ttsSettings, autoPlayTTS = false, onAudioStateCh
 
       if (data?.audioContent && !forceStopAudio) {
         console.log('Playing TTS audio...');
-        await playAudio(data.audioContent);
+        setIsPlaying(true);
+        await playGlobalTTS(data.audioContent, 'ChatMessage');
+        // Set a timeout to reset the playing state
+        setTimeout(() => {
+          setIsPlaying(false);
+        }, 10000); // 10 seconds should be enough for most messages
       }
     } catch (error) {
       console.error('Error generating TTS:', error);
