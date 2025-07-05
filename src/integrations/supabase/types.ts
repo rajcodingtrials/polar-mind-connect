@@ -169,6 +169,7 @@ export type Database = {
           id: string
           sample_ssml: string
           speed: number
+          therapist_name: string
           updated_at: string
           voice: string
         }
@@ -178,6 +179,7 @@ export type Database = {
           id?: string
           sample_ssml?: string
           speed?: number
+          therapist_name?: string
           updated_at?: string
           voice?: string
         }
@@ -187,6 +189,7 @@ export type Database = {
           id?: string
           sample_ssml?: string
           speed?: number
+          therapist_name?: string
           updated_at?: string
           voice?: string
         }
