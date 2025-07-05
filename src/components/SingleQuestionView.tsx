@@ -1,21 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { calculateSimilarity } from '@/components/chat/fuzzyMatching';
-import type { Database } from '@/integrations/supabase/types';
-
-type QuestionType = Database['public']['Enums']['question_type_enum'];
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useTherapistTTS } from '@/hooks/useTherapistTTS';
+import VoiceRecorder from './chat/VoiceRecorder';
+import { fuzzyMatch } from './chat/fuzzyMatching';
+import { phoneticMatch } from './chat/phoneticMatching';
 
 interface Question {
   id: string;
   question: string;
   answer: string;
   imageName?: string;
-  questionType?: QuestionType;
+  questionType?: string;
 }
 
 interface SingleQuestionViewProps {
@@ -35,353 +34,319 @@ interface SingleQuestionViewProps {
   comingFromCelebration?: boolean;
 }
 
-// Custom Microphone Icon component
-const MicrophoneIcon = ({ isRecording, size = 48 }: { isRecording?: boolean; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor"/>
-    <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v4M8 23h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
-const SingleQuestionView = ({
-  question,
-  imageUrl,
-  questionNumber,
-  totalQuestions,
+const SingleQuestionView = ({ 
+  question, 
+  imageUrl, 
+  questionNumber, 
+  totalQuestions, 
   therapistName,
   childName,
   speechDelayMode,
-  onCorrectAnswer,
-  onNextQuestion,
+  onCorrectAnswer, 
+  onNextQuestion, 
   onComplete,
   retryCount,
   onRetryCountChange,
   onSpeechDelayModeChange,
   comingFromCelebration = false
 }: SingleQuestionViewProps) => {
-  const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(true);
-  const [currentResponse, setCurrentResponse] = useState('');
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
-  const [hasCalledCorrectAnswer, setHasCalledCorrectAnswer] = useState(false);
-  const [shouldReadQuestion, setShouldReadQuestion] = useState(true);
-  
-  const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
-  const { playAudio, isPlaying, stopAudio } = useAudioPlayer();
-  const { toast } = useToast();
-  const mainContentRef = useRef<HTMLDivElement>(null);
+  const [userResponse, setUserResponse] = useState('');
+  const [isCheckingAnswer, setIsCheckingAnswer] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect' | 'close' | null; message: string }>({ type: null, message: '' });
+  const [isPlayingQuestion, setIsPlayingQuestion] = useState(false);
+  const [hasPlayedInitialTTS, setHasPlayedInitialTTS] = useState(false);
+  const { playAudio, isPlaying } = useAudioPlayer();
+  const { settings: ttsSettings, loading: ttsLoading } = useTherapistTTS(therapistName);
+  const questionPlayedRef = useRef(false);
+  const comingFromCelebrationRef = useRef(comingFromCelebration);
 
+  // Update the ref when the prop changes
   useEffect(() => {
-    setHasCalledCorrectAnswer(false);
-    setIsProcessingAnswer(false);
-    setShowFeedback(false);
-    setCurrentResponse('');
-    setIsWaitingForAnswer(true);
-    setShouldReadQuestion(!comingFromCelebration);
-  }, [question.id, comingFromCelebration]);
+    comingFromCelebrationRef.current = comingFromCelebration;
+  }, [comingFromCelebration]);
 
+  // Reset states when question changes, but handle celebration flow
   useEffect(() => {
-    const readQuestion = async () => {
-      console.log('🔊 Question reading check:', { shouldReadQuestion, comingFromCelebration });
-      if (!shouldReadQuestion) {
-        console.log('🔇 Skipping question reading - coming from celebration');
-        return;
-      }
-      
-      try {
-        stopAudio();
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const response = await supabase.functions.invoke('openai-tts', {
-          body: {
-            text: question.question,
-            voice: 'nova',
-            speed: 1.0
-          }
-        });
-
-        if (response.data?.audioContent) {
-          await playAudio(response.data.audioContent);
-        }
-      } catch (error) {
-        console.error('Error reading question:', error);
-      }
-    };
-
-    setTimeout(readQuestion, 1000);
-  }, [question.question, playAudio, stopAudio, shouldReadQuestion]);
-
-  useEffect(() => {
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!comingFromCelebrationRef.current) {
+      console.log('🔄 New question loaded, resetting states');
+      setUserResponse('');
+      setFeedback({ type: null, message: '' });
+      setIsCheckingAnswer(false);
+      setHasPlayedInitialTTS(false);
+      questionPlayedRef.current = false;
+    } else {
+      console.log('🎊 Coming from celebration, keeping existing states');
+      // Reset the flag after handling
+      comingFromCelebrationRef.current = false;
     }
   }, [question.id]);
 
-  const handleVoiceRecording = async () => {
-    if (isProcessingAnswer) return;
+  // Play question TTS when component mounts or question changes
+  useEffect(() => {
+    if (!ttsLoading && !questionPlayedRef.current && !hasPlayedInitialTTS) {
+      playQuestionTTS();
+    }
+  }, [question.id, ttsLoading, hasPlayedInitialTTS]);
+
+  const playQuestionTTS = async () => {
+    if (ttsLoading || questionPlayedRef.current) return;
     
-    if (isRecording) {
-      setIsProcessing(true);
+    try {
+      console.log(`🎤 Playing question TTS with ${therapistName}'s voice (${ttsSettings.voice})`);
+      setIsPlayingQuestion(true);
+      questionPlayedRef.current = true;
+      setHasPlayedInitialTTS(true);
+
+      const questionText = `Here's your question, ${childName}: ${question.question}`;
+
+      const response = await supabase.functions.invoke('openai-tts', {
+        body: {
+          text: questionText,
+          voice: ttsSettings.voice,
+          speed: ttsSettings.speed
+        }
+      });
+
+      if (response.data?.audioContent) {
+        await playAudio(response.data.audioContent);
+      }
+    } catch (error) {
+      console.error('Error playing question TTS:', error);
+    } finally {
+      setIsPlayingQuestion(false);
+    }
+  };
+
+  const playFeedbackTTS = async (text: string) => {
+    if (ttsLoading) return;
+    
+    try {
+      console.log(`🎤 Playing feedback TTS with ${therapistName}'s voice (${ttsSettings.voice}):`, text);
       
-      try {
-        const base64Audio = await stopRecording();
+      const response = await supabase.functions.invoke('openai-tts', {
+        body: {
+          text: text,
+          voice: ttsSettings.voice,
+          speed: ttsSettings.speed
+        }
+      });
+
+      if (response.data?.audioContent) {
+        await playAudio(response.data.audioContent);
+      }
+    } catch (error) {
+      console.error('Error playing feedback TTS:', error);
+    }
+  };
+
+  const handleCheckAnswer = async () => {
+    if (!userResponse.trim()) return;
+    
+    setIsCheckingAnswer(true);
+    console.log('🔍 Checking answer:', userResponse, 'against:', question.answer);
+    
+    try {
+      // Check for exact match (case insensitive)
+      const userResponseLower = userResponse.toLowerCase().trim();
+      const correctAnswerLower = question.answer.toLowerCase().trim();
+      
+      if (userResponseLower === correctAnswerLower) {
+        setFeedback({ type: 'correct', message: 'Perfect! That\'s exactly right!' });
+        await playFeedbackTTS(`Perfect, ${childName}! That's exactly right!`);
+        setTimeout(() => {
+          onCorrectAnswer();
+        }, 2000);
+        return;
+      }
+      
+      // Check for fuzzy match
+      const fuzzyScore = fuzzyMatch(userResponseLower, correctAnswerLower);
+      const phoneticScore = phoneticMatch(userResponseLower, correctAnswerLower);
+      const bestScore = Math.max(fuzzyScore, phoneticScore);
+      
+      console.log('🎯 Matching scores:', { fuzzy: fuzzyScore, phonetic: phoneticScore, best: bestScore });
+      
+      if (bestScore >= 0.8) {
+        // Very close match - accept as correct
+        setFeedback({ type: 'correct', message: 'Great job! That\'s right!' });
+        await playFeedbackTTS(`Great job, ${childName}! That's right!`);
+        setTimeout(() => {
+          onCorrectAnswer();
+        }, 2000);
+      } else if (bestScore >= 0.6) {
+        // Close but not quite right
+        const newRetryCount = retryCount + 1;
+        onRetryCountChange(newRetryCount);
         
-        const { data, error } = await supabase.functions.invoke('openai-stt', {
-          body: { audio: base64Audio }
-        });
-
-        if (error) {
-          console.error('Speech-to-text error:', error);
-          toast({
-            title: "Voice Recognition Error",
-            description: "Failed to process your voice. Please try again.",
-            variant: "destructive",
+        if (newRetryCount >= 3) {
+          // Enable speech delay mode and give the answer
+          onSpeechDelayModeChange(true);
+          setFeedback({ 
+            type: 'close', 
+            message: `Close try! The answer is "${question.answer}". Let's practice saying it together slowly.` 
           });
-          return;
-        }
-
-        if (data?.text && data.text.trim()) {
-          await processAnswer(data.text.trim());
+          await playFeedbackTTS(`Close try, ${childName}! The answer is "${question.answer}". Let's practice saying it together slowly.`);
         } else {
-          toast({
-            title: "No Speech Detected",
-            description: "Please try speaking again.",
+          setFeedback({ 
+            type: 'close', 
+            message: `Close! Try again. Think about "${question.answer}".` 
           });
+          await playFeedbackTTS(`Close, ${childName}! Try again. Think about "${question.answer}".`);
         }
-      } catch (error) {
-        console.error('Error processing voice recording:', error);
-        toast({
-          title: "Recording Error",
-          description: "Failed to process voice recording. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsProcessing(false);
+      } else {
+        // Not close - give hint
+        const newRetryCount = retryCount + 1;
+        onRetryCountChange(newRetryCount);
+        
+        if (newRetryCount >= 3) {
+          // Give the answer after 3 attempts
+          onSpeechDelayModeChange(true);
+          setFeedback({ 
+            type: 'incorrect', 
+            message: `The answer is "${question.answer}". Let's practice saying it together.` 
+          });
+          await playFeedbackTTS(`The answer is "${question.answer}", ${childName}. Let's practice saying it together.`);
+        } else {
+          setFeedback({ 
+            type: 'incorrect', 
+            message: `Not quite right. The answer starts with "${question.answer.charAt(0)}". Try again!` 
+          });
+          await playFeedbackTTS(`Not quite right, ${childName}. The answer starts with "${question.answer.charAt(0)}". Try again!`);
+        }
       }
-    } else {
-      try {
-        await startRecording();
-      } catch (error) {
-        console.error('Error starting recording:', error);
-        toast({
-          title: "Microphone Error",
-          description: "Failed to access microphone. Please check permissions.",
-          variant: "destructive",
-        });
-      }
+    } catch (error) {
+      console.error('Error checking answer:', error);
+      setFeedback({ type: 'incorrect', message: 'Sorry, there was an error. Please try again.' });
+    } finally {
+      setIsCheckingAnswer(false);
     }
   };
 
-  const processAnswer = async (userAnswer: string) => {
-    if (isProcessingAnswer) return;
-    setIsProcessingAnswer(true);
-    
-    stopAudio();
-    
-    const similarity = calculateSimilarity(userAnswer, question.answer, {
-      speechDelayMode,
-      threshold: speechDelayMode ? 0.3 : 0.6
-    });
-
-    const acceptanceThreshold = speechDelayMode ? 0.3 : 0.7;
-    const newRetryCount = retryCount + 1;
-
-    if (similarity > acceptanceThreshold) {
-      setCurrentResponse(`Amazing work, ${childName}! That's exactly right! The answer is "${question.answer}" 🎉`);
-      setShowFeedback(true);
-      
-      if (!hasCalledCorrectAnswer) {
-        setHasCalledCorrectAnswer(true);
-        console.log('🎉 Calling onCorrectAnswer for question:', questionNumber);
-        onCorrectAnswer();
-      }
-      
-      setTimeout(() => {
-        setIsProcessingAnswer(false);
-      }, 500);
-      
-    } else if (newRetryCount >= 2) {
-      onRetryCountChange(newRetryCount);
-      setCurrentResponse(`Good try, ${childName}! The correct answer is "${question.answer}". We'll practice that more later! 🌟`);
-      setShowFeedback(true);
-      
-      try {
-        const response = await supabase.functions.invoke('openai-tts', {
-          body: {
-            text: `Good try! The correct answer is "${question.answer}". We'll practice that more later!`,
-            voice: 'nova',
-            speed: 1.0
-          }
-        });
-
-        if (response.data?.audioContent) {
-          await playAudio(response.data.audioContent);
-          await new Promise(resolve => {
-            const checkAudioFinished = () => {
-              if (!isPlaying) {
-                resolve(undefined);
-              } else {
-                setTimeout(checkAudioFinished, 100);
-              }
-            };
-            setTimeout(checkAudioFinished, 1000);
-          });
-        }
-      } catch (error) {
-        console.error('TTS error:', error);
-      }
-
-      setTimeout(() => {
-        if (questionNumber < totalQuestions) {
-          onNextQuestion();
-        } else {
-          onComplete();
-        }
-        setIsProcessingAnswer(false);
-      }, 1000);
-      
-    } else {
-      onRetryCountChange(newRetryCount);
-      setCurrentResponse(`Good try! The correct answer is "${question.answer}". Look at the picture carefully and try again! 🤔`);
-      setShowFeedback(true);
-      
-      try {
-        const response = await supabase.functions.invoke('openai-tts', {
-          body: {
-            text: `Good try! The correct answer is "${question.answer}". Look carefully and try again!`,
-            voice: 'nova',
-            speed: 1.0
-          }
-        });
-
-        if (response.data?.audioContent) {
-          await playAudio(response.data.audioContent);
-          await new Promise(resolve => {
-            const checkAudioFinished = () => {
-              if (!isPlaying) {
-                resolve(undefined);
-              } else {
-                setTimeout(checkAudioFinished, 100);
-              }
-            };
-            setTimeout(checkAudioFinished, 1000);
-          });
-        }
-      } catch (error) {
-        console.error('TTS error:', error);
-      }
-
-      setTimeout(() => {
-        setShowFeedback(false);
-        setIsWaitingForAnswer(true);
-        setIsProcessingAnswer(false);
-      }, 2000);
-    }
+  const handleVoiceResult = (transcript: string) => {
+    console.log('🎤 Voice result received:', transcript);
+    setUserResponse(transcript);
   };
+
+  const progress = ((questionNumber - 1) / totalQuestions) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
-      {/* Header with therapist, progress, and speech delay toggle */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
-            <AvatarImage src="/lovable-uploads/Laura.png" alt={therapistName} />
-            <AvatarFallback className="bg-blue-200 text-blue-800 font-semibold">
-              {therapistName.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-bold text-blue-900 text-2xl">{therapistName}</h3>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 p-6">
+      <div className="w-full max-w-4xl mx-auto">
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-purple-700">Question {questionNumber} of {totalQuestions}</span>
+            <span className="text-sm font-medium text-purple-700">{Math.round(progress)}% Complete</span>
           </div>
+          <Progress value={progress} className="w-full h-3 bg-purple-200" />
         </div>
 
-        <div className="flex items-center gap-6">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => onSpeechDelayModeChange(!speechDelayMode)}
-            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-6 py-3 text-lg font-semibold transition-all ${
-              speechDelayMode ? "bg-purple-200 border-purple-400 text-purple-800" : "bg-white"
-            }`}
-          >
-            Speech Delay Mode: {speechDelayMode ? "ON" : "OFF"}
-          </Button>
+        <Card className="bg-white/90 backdrop-blur-sm shadow-2xl border-2 border-purple-200">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold text-purple-800 mb-2">
+              {therapistName} asks:
+            </CardTitle>
+          </CardHeader>
           
-          <div className="text-center">
-            <p className="text-xl font-bold text-purple-800">
-              Question {questionNumber} of {totalQuestions}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Question Area */}
-      <div ref={mainContentRef} className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
-        {/* Question Text */}
-        <div className="mb-8 animate-fade-in">
-          <h2 className="text-4xl font-bold text-center text-blue-900 leading-relaxed">
-            {question.question}
-          </h2>
-        </div>
-
-        {/* Question Image */}
-        {imageUrl && (
-          <div className="mb-8 animate-scale-in flex justify-center">
-            <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
-              <img
-                src={imageUrl}
-                alt="Question"
-                className="w-auto h-96 max-w-4xl object-contain"
-                onError={(e) => {
-                  console.error('Error loading question image:', imageUrl);
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Feedback Area */}
-        {showFeedback && (
-          <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-4 border-green-200 rounded-3xl p-6 max-w-2xl mx-auto mb-8 animate-fade-in">
-            <p className="text-lg text-center text-green-800 font-medium">
-              {currentResponse}
-            </p>
-          </div>
-        )}
-
-        {/* Fixed Microphone Button */}
-        {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
-          <div className="text-center animate-fade-in">
-            <div className="flex flex-col items-center">
-              <button
-                onClick={handleVoiceRecording}
-                disabled={isProcessing || isPlaying || isProcessingAnswer}
-                className={`w-32 h-32 rounded-full border-4 shadow-xl transition-all duration-300 flex items-center justify-center ${
-                  isRecording 
-                    ? 'bg-red-300 border-red-200 text-white transform scale-105' 
-                    : 'bg-slate-200 hover:bg-slate-300 border-slate-100 text-slate-600 hover:scale-105'
-                } ${(isProcessing || isPlaying || isProcessingAnswer) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                <MicrophoneIcon isRecording={isRecording} size={64} />
-              </button>
-              
-              <div className="mt-4 text-center">
-                <p className="text-blue-600 font-semibold text-lg">
-                  {isRecording ? "🔴 Recording... Tap again to stop" : 
-                   isProcessing ? "🔄 Processing your voice..." :
-                   isPlaying ? "🎵 Playing..." :
-                   "Tap to answer"}
-                </p>
-                {retryCount > 0 && (
-                  <p className="text-sm text-purple-600 mt-2">
-                    Attempt {retryCount + 1} of 2
-                  </p>
-                )}
+          <CardContent className="space-y-6">
+            {/* Question Image */}
+            {imageUrl && (
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <img 
+                    src={imageUrl}
+                    alt="Question image"
+                    className="max-w-md max-h-64 object-contain rounded-lg shadow-lg border-4 border-purple-200"
+                    onError={(e) => {
+                      console.error('Error loading question image:', imageUrl);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
               </div>
+            )}
+
+            {/* Question Text */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl border-2 border-purple-200 text-center">
+              <p className="text-2xl font-bold text-purple-800 mb-4">
+                {question.question}
+              </p>
+              
+              <Button
+                onClick={playQuestionTTS}
+                disabled={isPlayingQuestion || isPlaying || ttsLoading}
+                className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transform hover:scale-105 transition-all duration-300"
+              >
+                {isPlayingQuestion || isPlaying ? `🎵 ${therapistName} is speaking...` : `🎤 Hear ${therapistName} again`}
+              </Button>
             </div>
-          </div>
-        )}
+
+            {/* Speech Delay Mode Instructions */}
+            {speechDelayMode && (
+              <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-xl">
+                <p className="text-lg font-semibold text-yellow-800 text-center mb-2">
+                  🗣️ Let's practice saying it slowly together:
+                </p>
+                <p className="text-2xl font-bold text-yellow-900 text-center">
+                  "{question.answer}"
+                </p>
+                <p className="text-sm text-yellow-700 text-center mt-2">
+                  Take your time and repeat after {therapistName}!
+                </p>
+              </div>
+            )}
+
+            {/* Voice Recorder */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border-2 border-blue-200">
+              <VoiceRecorder 
+                onResult={handleVoiceResult}
+                className="w-full"
+              />
+              
+              {userResponse && (
+                <div className="mt-4 p-4 bg-white rounded-xl border border-blue-200">
+                  <p className="text-lg font-semibold text-blue-800 mb-2">You said:</p>
+                  <p className="text-xl text-blue-900 font-bold">"{userResponse}"</p>
+                </div>
+              )}
+            </div>
+
+            {/* Feedback */}
+            {feedback.type && (
+              <div className={`p-4 rounded-xl border-2 text-center ${
+                feedback.type === 'correct' 
+                  ? 'bg-green-50 border-green-200 text-green-800' 
+                  : feedback.type === 'close'
+                  ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                  : 'bg-red-50 border-red-200 text-red-800'
+              }`}>
+                <p className="text-lg font-bold">
+                  {feedback.message}
+                </p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button
+                onClick={handleCheckAnswer}
+                disabled={!userResponse.trim() || isCheckingAnswer || isPlaying}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all duration-300"
+              >
+                {isCheckingAnswer ? 'Checking...' : '✅ Check My Answer'}
+              </Button>
+              
+              {speechDelayMode && (
+                <Button
+                  onClick={onCorrectAnswer}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all duration-300"
+                >
+                  🎉 I practiced! Next question
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
