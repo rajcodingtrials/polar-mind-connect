@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useCartoonCharacters } from '@/hooks/useCartoonCharacters';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,6 @@ const CartoonCharacterUploader = () => {
         { name: 'Happy Giraffe', file: new File([''], 'giraffe.png', { type: 'image/png' }) },
         { name: 'Cute Elephant', file: new File([''], 'elephant.png', { type: 'image/png' }) },
         { name: 'Friendly Bear', file: new File([''], 'bear.png', { type: 'image/png' }) },
-        { name: 'Playful Tiger', file: new File([''], 'tiger.png', { type: 'image/png' }) },
         { name: 'Sweet Fox', file: new File([''], 'fox.png', { type: 'image/png' }) }
       ];
 

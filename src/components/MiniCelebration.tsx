@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useCartoonCharacters } from '@/hooks/useCartoonCharacters';
 import { supabase } from '@/integrations/supabase/client';
@@ -141,7 +140,7 @@ const MiniCelebration = ({ correctAnswers, onComplete }: MiniCelebrationProps) =
       {/* Character with rolling animation */}
       <div className="relative mb-8">
         <div 
-          className={`w-32 h-32 transition-all duration-1500 ${isRolling ? 'animate-bounce' : ''}`}
+          className={`w-64 h-64 transition-all duration-1500 ${isRolling ? 'animate-bounce' : ''}`}
           style={{
             animation: isRolling ? 'character-roll 1.5s ease-in-out' : 'none'
           }}
@@ -152,15 +151,14 @@ const MiniCelebration = ({ correctAnswers, onComplete }: MiniCelebrationProps) =
               alt={selectedCharacter.name}
               className="w-full h-full object-contain rounded-lg filter brightness-110 saturate-150"
               onError={(e) => {
-                e.currentTarget.src = "/lovable-uploads/5197a6a0-9d6b-4c95-b80e-db71d2e8e099.png";
+                console.error('Error loading character image:', selectedCharacter.image_url);
+                e.currentTarget.style.display = 'none';
               }}
             />
           ) : (
-            <img 
-              src="/lovable-uploads/5197a6a0-9d6b-4c95-b80e-db71d2e8e099.png"
-              alt="Progress Buddy"
-              className="w-full h-full object-contain rounded-lg filter brightness-110 saturate-150"
-            />
+            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+              <span className="text-gray-500 text-sm">No character</span>
+            </div>
           )}
         </div>
       </div>

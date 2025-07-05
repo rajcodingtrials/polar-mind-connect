@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useCartoonCharacters } from '@/hooks/useCartoonCharacters';
 
@@ -99,7 +98,7 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
       </div>
       
       <div className="flex justify-center">
-        <div className="relative w-48 h-48 transition-all duration-1000">
+        <div className="relative w-80 h-80 transition-all duration-1000">
           {loading ? (
             <div className="w-full h-full bg-gray-200 rounded-lg animate-pulse flex items-center justify-center">
               <span className="text-gray-500">Loading...</span>
@@ -116,8 +115,8 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
                 }}
                 onError={(e) => {
                   console.error('Error loading character image:', selectedCharacter.image_url);
-                  // Fallback to default tiger image
-                  e.currentTarget.src = "/lovable-uploads/5197a6a0-9d6b-4c95-b80e-db71d2e8e099.png";
+                  // Remove fallback to tiger image - let it show as broken image
+                  e.currentTarget.style.display = 'none';
                 }}
               />
               {/* Overlay for grayscale effect when minimal progress */}
@@ -126,22 +125,10 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
               )}
             </>
           ) : (
-            // Fallback to original tiger image if no character is selected
-            <>
-              <img 
-                src="/lovable-uploads/5197a6a0-9d6b-4c95-b80e-db71d2e8e099.png"
-                alt="Progress Buddy"
-                className="w-full h-full object-contain rounded-lg transition-all duration-1000"
-                style={{ 
-                  opacity: opacity,
-                  filter: `brightness(${0.5 + (opacity * 0.5)}) saturate(${opacity})`
-                }}
-              />
-              {/* Overlay for grayscale effect when minimal progress */}
-              {correctAnswers < 2 && (
-                <div className="absolute inset-0 bg-gray-400 bg-opacity-30 rounded-lg transition-all duration-1000"></div>
-              )}
-            </>
+            // No character selected - show placeholder
+            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+              <span className="text-gray-500 text-sm">No character selected</span>
+            </div>
           )}
         </div>
       </div>
@@ -178,7 +165,7 @@ const ProgressCharacter = ({ correctAnswers, totalQuestions, questionType }: Pro
       {correctAnswers === 0 && (
         <div className="text-center mt-3">
           <p className="text-xs text-purple-600 font-medium">
-            Help your {selectedCharacter?.animal_type || 'buddy'} get colorful by answering questions! 🐅
+            Help your {selectedCharacter?.animal_type || 'buddy'} get colorful by answering questions! 🎨
           </p>
         </div>
       )}
