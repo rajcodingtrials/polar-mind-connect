@@ -178,11 +178,6 @@ const OpenAIChatPage = () => {
     setShowQuestionTypes(true);
   };
 
-  const handleLawrenceClick = () => {
-    setTherapistName('Lawrence');
-    setShowQuestionTypes(true);
-  };
-
   const selectRandomQuestion = (questionsPool: Question[]): Question | null => {
     if (questionsPool.length === 0) return null;
     const randomIndex = Math.floor(Math.random() * questionsPool.length);
@@ -308,6 +303,10 @@ const OpenAIChatPage = () => {
     handleCompleteSession();
   };
 
+  const handleLawrenceClick = () => {
+    console.log('Lawrence clicked - functionality to be implemented');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
@@ -388,7 +387,7 @@ const OpenAIChatPage = () => {
             <div className="mb-8 flex flex-col items-center">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-black mb-4">
-                  Choose Your Learning Adventure with {therapistName}!
+                  Choose Your Learning Adventure with Laura!
                 </h2>
                 <p className="text-gray-600 text-lg">Select the type of questions you'd like to practice today</p>
               </div>
@@ -475,7 +474,6 @@ const OpenAIChatPage = () => {
           {currentScreen === 'celebration' && (
             <MiniCelebration
               correctAnswers={correctAnswers}
-              therapistName={therapistName}
               onComplete={handleCelebrationComplete}
             />
           )}

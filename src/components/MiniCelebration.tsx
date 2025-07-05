@@ -1,23 +1,19 @@
-
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useCartoonCharacters } from '@/hooks/useCartoonCharacters';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { useTherapistTTS } from '@/hooks/useTherapistTTS';
 
 interface MiniCelebrationProps {
   correctAnswers: number;
-  therapistName: string;
   onComplete: () => void;
 }
 
-const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCelebrationProps) => {
+const MiniCelebration = ({ correctAnswers, onComplete }: MiniCelebrationProps) => {
   const { selectedCharacter } = useCartoonCharacters();
   const [showConfetti, setShowConfetti] = useState(true);
   const [isRolling, setIsRolling] = useState(true);
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
   const { playAudio, isPlaying } = useAudioPlayer();
-  const { settings: ttsSettings, loading: ttsLoading } = useTherapistTTS(therapistName);
   
   // Use refs to access latest values in useEffect
   const isPlayingRef = useRef(isPlaying);
@@ -33,74 +29,70 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
   }, [onComplete]);
 
   useEffect(() => {
-    if (!ttsLoading) {
-      runCelebration();
-    }
-  }, [ttsLoading]);
-
-  const runCelebration = async () => {
-    console.log(`🎊 Starting celebration TTS with ${therapistName} - component mounted`);
-    
-    // Hide confetti after animation
-    const confettiTimer = setTimeout(() => setShowConfetti(false), 2000);
-    
-    // Stop rolling animation
-    const rollingTimer = setTimeout(() => setIsRolling(false), 1500);
-    
-    // Play celebration TTS
-    try {
-      setIsPlayingTTS(true);
-      const celebrationText = 'Amazing work! That was perfect!';
+    const runCelebration = async () => {
+      console.log('🎊 Starting celebration TTS - component mounted');
       
-      const response = await supabase.functions.invoke('openai-tts', {
-        body: {
-          text: celebrationText,
-          voice: ttsSettings.voice,
-          speed: ttsSettings.speed
-        }
-      });
-
-      if (response.data?.audioContent) {
-        await playAudio(response.data.audioContent);
-        
-        // Wait for TTS to completely finish before proceeding
-        const waitForTTSComplete = () => {
-          if (isPlayingRef.current) {
-            setTimeout(waitForTTSComplete, 100);
-          } else {
-            console.log(`🎊 ${therapistName} TTS finished, celebration complete`);
-            setIsPlayingTTS(false);
-            // Add a small delay after TTS finishes before moving to next question
-            setTimeout(() => {
-              onCompleteRef.current();
-            }, 1000);
+      // Hide confetti after animation
+      const confettiTimer = setTimeout(() => setShowConfetti(false), 2000);
+      
+      // Stop rolling animation
+      const rollingTimer = setTimeout(() => setIsRolling(false), 1500);
+      
+      // Play celebration TTS
+      try {
+        setIsPlayingTTS(true);
+        const response = await supabase.functions.invoke('openai-tts', {
+          body: {
+            text: 'Amazing work! That was perfect!',
+            voice: 'nova',
+            speed: 1.0
           }
-        };
-        
-        // Start checking if TTS is done
-        setTimeout(waitForTTSComplete, 1000);
-      } else {
-        // If no TTS, proceed after standard delay
+        });
+
+        if (response.data?.audioContent) {
+          await playAudio(response.data.audioContent);
+          
+          // Wait for TTS to completely finish before proceeding
+          const waitForTTSComplete = () => {
+            if (isPlayingRef.current) {
+              setTimeout(waitForTTSComplete, 100);
+            } else {
+              console.log('🎊 TTS finished, celebration complete');
+              setIsPlayingTTS(false);
+              // Add a small delay after TTS finishes before moving to next question
+              setTimeout(() => {
+                onCompleteRef.current();
+              }, 1000);
+            }
+          };
+          
+          // Start checking if TTS is done
+          setTimeout(waitForTTSComplete, 1000);
+        } else {
+          // If no TTS, proceed after standard delay
+          setTimeout(() => {
+            setIsPlayingTTS(false);
+            onComplete();
+          }, 3000);
+        }
+      } catch (error) {
+        console.error('TTS error in celebration:', error);
+        // If TTS fails, proceed after standard delay
         setTimeout(() => {
           setIsPlayingTTS(false);
           onComplete();
         }, 3000);
       }
-    } catch (error) {
-      console.error('TTS error in celebration:', error);
-      // If TTS fails, proceed after standard delay
-      setTimeout(() => {
-        setIsPlayingTTS(false);
-        onComplete();
-      }, 3000);
-    }
 
-    // Cleanup timers
-    return () => {
-      clearTimeout(confettiTimer);
-      clearTimeout(rollingTimer);
+      // Cleanup timers
+      return () => {
+        clearTimeout(confettiTimer);
+        clearTimeout(rollingTimer);
+      };
     };
-  };
+
+    runCelebration();
+  }, []); // Empty dependency array - only run once
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 p-6">
@@ -180,7 +172,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
           That was perfect!
         </p>
         <p className="text-lg text-emerald-600">
-          {therapistName} and {selectedCharacter?.name || 'your buddy'} are so proud of you! ✨
+          {selectedCharacter?.name || 'Your buddy'} is so proud of you! ✨
         </p>
         
         {/* Progress indicator */}
@@ -196,7 +188,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
         {isPlayingTTS && (
           <div className="mt-4">
             <p className="text-sm text-emerald-600 animate-pulse">
-              🎵 {therapistName} is celebrating with you...
+              🎵 Playing celebration message...
             </p>
           </div>
         )}
