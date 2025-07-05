@@ -475,6 +475,7 @@ const OpenAIChatPage = () => {
           {currentScreen === 'celebration' && (
             <MiniCelebration
               correctAnswers={correctAnswers}
+              therapistName={therapistName}
               onComplete={handleCelebrationComplete}
             />
           )}

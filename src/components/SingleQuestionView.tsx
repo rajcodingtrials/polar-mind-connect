@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,8 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useTherapistTTS } from '@/hooks/useTherapistTTS';
 import VoiceRecorder from './chat/VoiceRecorder';
-import { fuzzyMatch } from './chat/fuzzyMatching';
-import { phoneticMatch } from './chat/phoneticMatching';
+import { calculateSimilarity } from './chat/fuzzyMatching';
 
 interface Question {
   id: string;
@@ -55,6 +55,7 @@ const SingleQuestionView = ({
   const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect' | 'close' | null; message: string }>({ type: null, message: '' });
   const [isPlayingQuestion, setIsPlayingQuestion] = useState(false);
   const [hasPlayedInitialTTS, setHasPlayedInitialTTS] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const { playAudio, isPlaying } = useAudioPlayer();
   const { settings: ttsSettings, loading: ttsLoading } = useTherapistTTS(therapistName);
   const questionPlayedRef = useRef(false);
@@ -159,21 +160,22 @@ const SingleQuestionView = ({
         return;
       }
       
-      // Check for fuzzy match
-      const fuzzyScore = fuzzyMatch(userResponseLower, correctAnswerLower);
-      const phoneticScore = phoneticMatch(userResponseLower, correctAnswerLower);
-      const bestScore = Math.max(fuzzyScore, phoneticScore);
+      // Check for fuzzy match with speech delay mode consideration
+      const similarity = calculateSimilarity(userResponseLower, correctAnswerLower, {
+        speechDelayMode,
+        threshold: speechDelayMode ? 0.3 : 0.6
+      });
       
-      console.log('🎯 Matching scores:', { fuzzy: fuzzyScore, phonetic: phoneticScore, best: bestScore });
+      console.log('🎯 Similarity score:', similarity, 'Speech delay mode:', speechDelayMode);
       
-      if (bestScore >= 0.8) {
+      if (similarity >= 0.8) {
         // Very close match - accept as correct
         setFeedback({ type: 'correct', message: 'Great job! That\'s right!' });
         await playFeedbackTTS(`Great job, ${childName}! That's right!`);
         setTimeout(() => {
           onCorrectAnswer();
         }, 2000);
-      } else if (bestScore >= 0.6) {
+      } else if (similarity >= 0.6) {
         // Close but not quite right
         const newRetryCount = retryCount + 1;
         onRetryCountChange(newRetryCount);
@@ -222,8 +224,8 @@ const SingleQuestionView = ({
     }
   };
 
-  const handleVoiceResult = (transcript: string) => {
-    console.log('🎤 Voice result received:', transcript);
+  const handleVoiceTranscription = (transcript: string) => {
+    console.log('🎤 Voice transcription received:', transcript);
     setUserResponse(transcript);
   };
 
@@ -299,8 +301,9 @@ const SingleQuestionView = ({
             {/* Voice Recorder */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border-2 border-blue-200">
               <VoiceRecorder 
-                onResult={handleVoiceResult}
-                className="w-full"
+                onTranscription={handleVoiceTranscription}
+                isRecording={isRecording}
+                setIsRecording={setIsRecording}
               />
               
               {userResponse && (
