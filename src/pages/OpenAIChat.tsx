@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +32,7 @@ const OpenAIChatPage = () => {
   const [imageUrls, setImageUrls] = useState<{[key: string]: string}>({});
   const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType | null>(null);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [therapistName, setTherapistName] = useState('Laura');
+  const [therapistName, setTherapistName] = useState<'Laura' | 'Lawrence'>('Laura');
   
   // Updated state for better question management
   const [currentScreen, setCurrentScreen] = useState<'home' | 'introduction' | 'question' | 'celebration' | 'complete'>('home');
@@ -175,6 +176,11 @@ const OpenAIChatPage = () => {
 
   const handleLauraClick = () => {
     setTherapistName('Laura');
+    setShowQuestionTypes(true);
+  };
+
+  const handleLawrenceClick = () => {
+    setTherapistName('Lawrence');
     setShowQuestionTypes(true);
   };
 
@@ -387,7 +393,7 @@ const OpenAIChatPage = () => {
             <div className="mb-8 flex flex-col items-center">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-black mb-4">
-                  Choose Your Learning Adventure with Laura!
+                  Choose Your Learning Adventure with {therapistName}!
                 </h2>
                 <p className="text-gray-600 text-lg">Select the type of questions you'd like to practice today</p>
               </div>
