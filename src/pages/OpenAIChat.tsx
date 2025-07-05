@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -307,10 +306,6 @@ const OpenAIChatPage = () => {
 
   const handleCloseChat = () => {
     handleCompleteSession();
-  };
-
-  const handleLawrenceClick = () => {
-    console.log('Lawrence clicked - functionality to be implemented');
   };
 
   return (
