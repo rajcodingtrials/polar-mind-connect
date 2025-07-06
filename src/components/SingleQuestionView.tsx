@@ -392,8 +392,8 @@ const SingleQuestionView = ({
 
       {/* Main Question Area */}
       <div ref={mainContentRef} className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
-        {/* Question Text */}
-        <div className="mb-8 animate-fade-in">
+        {/* Question Text - Hidden from UI but TTS still reads it */}
+        <div className="mb-8 animate-fade-in sr-only">
           <h2 className="text-4xl font-bold text-center text-blue-900 leading-relaxed">
             {question.question}
           </h2>
@@ -406,7 +406,7 @@ const SingleQuestionView = ({
               <img
                 src={imageUrl}
                 alt="Question"
-                className="w-auto h-96 max-w-4xl object-contain"
+                className="w-auto h-[32rem] max-w-6xl object-contain"
                 onError={(e) => {
                   console.error('Error loading question image:', imageUrl);
                   e.currentTarget.style.display = 'none';

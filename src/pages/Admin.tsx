@@ -68,9 +68,12 @@ const Admin = () => {
         question: q.question,
         answer: q.answer,
         image_name: q.imageName ? imageNameMap[q.imageName] : null,
-        question_type: (q.questionType || questionType) as QuestionType
+        question_type: questionType as QuestionType // Always use the selected question type
       }));
 
+      console.log('Inserting questions with type:', questionType);
+      console.log('Questions to insert:', questionsToInsert.map(q => ({ question: q.question, type: q.question_type })));
+      
       const { error: dbError } = await supabase
         .from('questions')
         .insert(questionsToInsert);
