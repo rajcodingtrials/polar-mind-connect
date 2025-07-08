@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 import type { Database } from '@/integrations/supabase/types';
+import { useTTSSettings } from '@/hooks/useTTSSettings';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -20,8 +21,10 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
   const [introMessage, setIntroMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showContinueButton, setShowContinueButton] = useState(false);
-  const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1.0 });
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Use the new TTS settings hook
+  const { ttsSettings, isLoaded, callTTS } = useTTSSettings(therapistName);
 
 
   const getActivityName = (type: QuestionType) => {
@@ -34,62 +37,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
     }
   };
 
-  // Load therapist-specific TTS settings
-  useEffect(() => {
-    const loadTTSSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('tts_settings')
-          .select('*')
-          .eq('therapist_name', therapistName)
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .single();
-        
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error loading TTS settings:', error);
-        }
-        
-        if (data) {
-          setTtsSettings({
-            voice: data.voice,
-            speed: Number(data.speed)
-          });
-          console.log(`TTS Settings for ${therapistName}:`, {
-            voice: data.voice,
-            speed: Number(data.speed)
-          });
-        } else {
-          // Fallback: Set default voice based on therapist name
-          const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
-          setTtsSettings({
-            voice: defaultVoice,
-            speed: 1.0
-          });
-          console.log(`🔄 Using fallback TTS settings for ${therapistName}:`, {
-            voice: defaultVoice,
-            speed: 1.0
-          });
-          console.log(`🔍 Debug - Introduction fallback triggered for ${therapistName}, setting voice to: ${defaultVoice}`);
-        }
-      } catch (error) {
-        console.error('Error loading TTS settings:', error);
-        // Fallback: Set default voice based on therapist name
-        const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
-        setTtsSettings({
-          voice: defaultVoice,
-          speed: 1.0
-        });
-        console.log(`🔄 Using fallback TTS settings for ${therapistName} (error case):`, {
-          voice: defaultVoice,
-          speed: 1.0
-        });
-        console.log(`🔍 Debug - Introduction error fallback triggered for ${therapistName}, setting voice to: ${defaultVoice}`);
-      }
-    };
-
-    loadTTSSettings();
-  }, [therapistName]);
+  // TTS settings are now handled by the useTTSSettings hook
 
   useEffect(() => {
     const generateIntroduction = async () => {
@@ -129,28 +77,23 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
 
   // Separate effect for TTS that runs after intro message is set and TTS settings are loaded
   useEffect(() => {
-    if (!isLoading && introMessage && ttsSettings.voice) {
+    if (!isLoading && introMessage && isLoaded && ttsSettings.voice) {
       const playTTS = async () => {
         try {
-          console.log(`Playing TTS for ${therapistName} with voice: ${ttsSettings.voice}`);
+          console.log(`🎯 [${therapistName}] Introduction TTS Request:`, {
+            voice: ttsSettings.voice,
+            speed: ttsSettings.speed,
+            provider: ttsSettings.provider || 'openai'
+          });
           
           // Stop any previous audio
           stopGlobalAudio();
           
-          // Force Lawrence to use 'echo' voice regardless of settings
-          const voiceToUse = therapistName === 'Lawrence' ? 'echo' : ttsSettings.voice;
-          console.log(`🎯 Final introduction voice selection for ${therapistName}: ${voiceToUse} (original: ${ttsSettings.voice})`);
-          
-          const ttsResponse = await supabase.functions.invoke('openai-tts', {
-            body: {
-              text: introMessage,
-              voice: voiceToUse,
-              speed: ttsSettings.speed
-            }
-          });
+          // Use the new TTS hook to call the appropriate provider
+          const ttsResponse = await callTTS(introMessage, ttsSettings.voice, ttsSettings.speed);
 
           if (ttsResponse.data?.audioContent) {
-            console.log(`✅ Introduction TTS generated successfully for ${therapistName} with voice: ${ttsSettings.voice}`);
+            console.log(`✅ Introduction TTS generated successfully for ${therapistName}`);
             await playGlobalTTS(ttsResponse.data.audioContent, 'IntroductionScreen');
             // Show continue button after TTS finishes
             setTimeout(() => {
@@ -175,7 +118,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
       // Add a small delay to ensure everything is ready
       setTimeout(playTTS, 500);
     }
-  }, [isLoading, introMessage, ttsSettings, therapistName]);
+  }, [isLoading, introMessage, isLoaded, ttsSettings, therapistName]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-6 animate-fade-in">

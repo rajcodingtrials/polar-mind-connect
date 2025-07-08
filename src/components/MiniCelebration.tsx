@@ -18,7 +18,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
   const [hasStartedCelebration, setHasStartedCelebration] = useState(false);
   
-  const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist } = useTTSSettings(therapistName);
+  const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist, callTTS } = useTTSSettings(therapistName);
   
   // Use ref to access latest onComplete value in useEffect
   const onCompleteRef = useRef(onComplete);
@@ -57,17 +57,10 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
         // Stop any previous audio
         stopGlobalAudio();
         
-        // Use the hook's helper function to get the correct voice
-        const voiceToUse = getVoiceForTherapist();
-        console.log(`🎯 Final celebration voice selection for ${therapistName}: ${voiceToUse} (original: ${ttsSettings.voice})`);
+        // Use the new TTS hook to call the appropriate provider
+        console.log(`🎯 Celebration TTS for ${therapistName}: voice=${ttsSettings.voice}, provider=${ttsSettings.provider || 'openai'}`);
         
-        const response = await supabase.functions.invoke('openai-tts', {
-          body: {
-            text: 'Amazing work! That was perfect!',
-            voice: voiceToUse,
-            speed: ttsSettings.speed
-          }
-        });
+        const response = await callTTS('Amazing work! That was perfect!', ttsSettings.voice, ttsSettings.speed);
 
         if (response.data?.audioContent) {
           await playGlobalTTS(response.data.audioContent, 'MiniCelebration');

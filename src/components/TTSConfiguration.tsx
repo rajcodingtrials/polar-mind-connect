@@ -17,6 +17,7 @@ interface TTSSettings {
   enableSSML: boolean;
   sampleSSML: string;
   therapistName: string;
+  provider?: string;
 }
 
 const TTSConfiguration = () => {
@@ -26,7 +27,8 @@ const TTSConfiguration = () => {
     speed: 1.0,
     enableSSML: false,
     sampleSSML: '<speak>Hello! <break time="0.5s"/> I am Laura, your speech therapy assistant. <emphasis level="strong">Let\'s have fun learning together!</emphasis></speak>',
-    therapistName: 'Laura'
+    therapistName: 'Laura',
+    provider: 'openai'
   });
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -42,6 +44,8 @@ const TTSConfiguration = () => {
     { value: 'shimmer', label: 'Shimmer (Soft Female)' }
   ];
 
+  // OpenAI TTS is the default provider for this component
+
   useEffect(() => {
     loadSettings();
   }, []);
@@ -53,7 +57,7 @@ const TTSConfiguration = () => {
       // Load the TTS settings for the selected therapist
       const { data, error } = await supabase
         .from('tts_settings')
-        .select('*')
+        .select('voice, speed, enable_ssml, sample_ssml, therapist_name, provider')
         .eq('therapist_name', settings.therapistName)
         .order('updated_at', { ascending: false })
         .limit(1)
@@ -70,7 +74,8 @@ const TTSConfiguration = () => {
           speed: data.speed,
           enableSSML: data.enable_ssml,
           sampleSSML: data.sample_ssml,
-          therapistName: data.therapist_name
+          therapistName: data.therapist_name,
+          provider: (data as any).provider || 'openai'
         });
       }
     } catch (error) {
@@ -88,17 +93,27 @@ const TTSConfiguration = () => {
   const saveSettings = async () => {
     setIsSaving(true);
     try {
+      console.log('💾 Saving TTS settings for:', settings.therapistName, settings);
+      
       // Check if settings exist for this therapist
-      const { data: existingSettings } = await supabase
+      const { data: existingSettings, error: checkError } = await supabase
         .from('tts_settings')
-        .select('id')
+        .select('id, provider')
         .eq('therapist_name', settings.therapistName)
         .order('updated_at', { ascending: false })
         .limit(1)
         .single();
 
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error checking existing settings:', checkError);
+        throw checkError;
+      }
+
+      console.log('📊 Existing settings found:', existingSettings);
+
       if (existingSettings) {
         // Update existing settings
+        console.log('🔄 Updating existing settings with ID:', existingSettings.id);
         const { error } = await supabase
           .from('tts_settings')
           .update({
@@ -106,13 +121,19 @@ const TTSConfiguration = () => {
             speed: settings.speed,
             enable_ssml: settings.enableSSML,
             sample_ssml: settings.sampleSSML,
+            provider: settings.provider,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingSettings.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Error updating settings:', error);
+          throw error;
+        }
+        console.log('✅ Settings updated successfully');
       } else {
         // Insert new settings
+        console.log('➕ Creating new settings');
         const { error } = await supabase
           .from('tts_settings')
           .insert({
@@ -120,10 +141,15 @@ const TTSConfiguration = () => {
             speed: settings.speed,
             enable_ssml: settings.enableSSML,
             sample_ssml: settings.sampleSSML,
+            provider: settings.provider,
             therapist_name: settings.therapistName
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Error inserting settings:', error);
+          throw error;
+        }
+        console.log('✅ Settings created successfully');
       }
 
       toast({
@@ -131,10 +157,10 @@ const TTSConfiguration = () => {
         description: `TTS configuration has been updated for ${settings.therapistName}.`,
       });
     } catch (error) {
-      console.error('Error saving TTS settings:', error);
+      console.error('❌ Error saving TTS settings:', error);
       toast({
         title: "Error",
-        description: "Failed to save TTS settings.",
+        description: `Failed to save TTS settings: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -148,7 +174,7 @@ const TTSConfiguration = () => {
     try {
       const { data, error } = await supabase
         .from('tts_settings')
-        .select('*')
+        .select('voice, speed, enable_ssml, sample_ssml, therapist_name, provider')
         .eq('therapist_name', therapistName)
         .order('updated_at', { ascending: false })
         .limit(1)
@@ -165,23 +191,25 @@ const TTSConfiguration = () => {
           speed: data.speed,
           enableSSML: data.enable_ssml,
           sampleSSML: data.sample_ssml,
-          therapistName: data.therapist_name
+          therapistName: data.therapist_name,
+          provider: (data as any).provider || 'openai'
         });
-      } else {
-        // Set defaults for new therapist
-        const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
-        const defaultSSML = therapistName === 'Lawrence' 
-          ? '<speak>Hello! <break time="0.5s"/> I am Lawrence, your speech therapy assistant. <emphasis level="strong">Let\'s have fun learning together!</emphasis></speak>'
-          : '<speak>Hello! <break time="0.5s"/> I am Laura, your speech therapy assistant. <emphasis level="strong">Let\'s have fun learning together!</emphasis></speak>';
-        
-        setSettings({
-          voice: defaultVoice,
-          speed: 1.0,
-          enableSSML: false,
-          sampleSSML: defaultSSML,
-          therapistName
-        });
-      }
+              } else {
+          // Set defaults for new therapist
+          const defaultVoice = therapistName === 'Lawrence' ? 'en-US-Neural2-I' : 'en-US-Neural2-J';
+          const defaultSSML = therapistName === 'Lawrence' 
+            ? '<speak>Hello! <break time="0.5s"/> I am Lawrence, your speech therapy assistant. <emphasis level="strong">Let\'s have fun learning together!</emphasis></speak>'
+            : '<speak>Hello! <break time="0.5s"/> I am Laura, your speech therapy assistant. <emphasis level="strong">Let\'s have fun learning together!</emphasis></speak>';
+          
+          setSettings({
+            voice: defaultVoice,
+            speed: 1.0,
+            enableSSML: false,
+            sampleSSML: defaultSSML,
+            therapistName,
+            provider: 'google'
+          });
+        }
     } catch (error) {
       console.error('Error loading therapist settings:', error);
     }
@@ -229,10 +257,10 @@ const TTSConfiguration = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Volume2 className="w-5 h-5" />
-            Text-to-Speech Configuration
-          </CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+          <Volume2 className="w-5 h-5" />
+          OpenAI TTS Configuration
+        </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
@@ -251,7 +279,7 @@ const TTSConfiguration = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Volume2 className="w-5 h-5" />
-          Text-to-Speech Configuration
+          OpenAI TTS Configuration
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -340,6 +368,8 @@ const TTSConfiguration = () => {
             </div>
           )}
         </div>
+
+
 
         {/* Test and Save Buttons */}
         <div className="flex gap-3 pt-4">

@@ -172,6 +172,8 @@ export type Database = {
           therapist_name: string
           updated_at: string
           voice: string
+          provider?: string
+          pitch?: number
         }
         Insert: {
           created_at?: string
@@ -182,6 +184,8 @@ export type Database = {
           therapist_name?: string
           updated_at?: string
           voice?: string
+          provider?: string
+          pitch?: number
         }
         Update: {
           created_at?: string
@@ -192,6 +196,8 @@ export type Database = {
           therapist_name?: string
           updated_at?: string
           voice?: string
+          provider?: string
+          pitch?: number
         }
         Relationships: []
       }

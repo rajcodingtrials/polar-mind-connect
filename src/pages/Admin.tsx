@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import QuestionUpload from '../components/QuestionUpload';
 import TTSConfiguration from '../components/TTSConfiguration';
+import GoogleTTSConfiguration from '../components/GoogleTTSConfiguration';
 import PromptConfiguration from '../components/PromptConfiguration';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -245,8 +246,11 @@ const Admin = () => {
           {/* Prompt Configuration */}
           <PromptConfiguration />
 
-          {/* TTS Configuration */}
+          {/* OpenAI TTS Configuration */}
           <TTSConfiguration />
+
+          {/* Google TTS Configuration */}
+          <GoogleTTSConfiguration />
 
           {/* Upload Section */}
           <QuestionUpload onQuestionsUploaded={handleQuestionsUploaded} />

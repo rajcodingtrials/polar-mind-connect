@@ -74,7 +74,7 @@ const SingleQuestionView = ({
   const [hasUserAttemptedAnswer, setHasUserAttemptedAnswer] = useState(false);
   const [hasReadQuestion, setHasReadQuestion] = useState(false);
   
-  const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist } = useTTSSettings(therapistName);
+  const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist, callTTS } = useTTSSettings(therapistName);
   
   const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
   const { toast } = useToast();
@@ -130,13 +130,7 @@ const SingleQuestionView = ({
         const voiceToUse = getVoiceForTherapist();
         console.log(`🎯 Final question voice selection for ${therapistName}: ${voiceToUse} (original: ${ttsSettings.voice})`);
         
-        const response = await supabase.functions.invoke('openai-tts', {
-          body: {
-            text: question.question,
-            voice: voiceToUse,
-            speed: ttsSettings.speed
-          }
-        });
+        const response = await callTTS(question.question, voiceToUse, ttsSettings.speed);
 
         if (response.data?.audioContent) {
           await playGlobalTTS(response.data.audioContent, 'SingleQuestionView');
@@ -294,13 +288,7 @@ const SingleQuestionView = ({
         console.log(`🔊 Playing final feedback with ${therapistName}'s voice: ${ttsSettings.voice}`);
         stopGlobalAudio(); // Stop any previous audio
         
-        const { data, error } = await supabase.functions.invoke('openai-tts', {
-          body: {
-            text: `Good try, ${childName}! The correct answer is "${question.answer}". We'll practice that more later!`,
-            voice: ttsSettings.voice,
-            speed: ttsSettings.speed
-          }
-        });
+        const { data, error } = await callTTS(`Good try, ${childName}! The correct answer is "${question.answer}". We'll practice that more later!`, ttsSettings.voice, ttsSettings.speed);
 
         if (data?.audioContent) {
           await playGlobalTTS(data.audioContent, 'SingleQuestionView-Final');
@@ -330,13 +318,7 @@ const SingleQuestionView = ({
         console.log(`🔊 Playing retry feedback with ${therapistName}'s voice: ${ttsSettings.voice}`);
         stopGlobalAudio(); // Stop any previous audio
         
-        const { data, error } = await supabase.functions.invoke('openai-tts', {
-          body: {
-            text: `Good try! The correct answer is "${question.answer}". Look carefully and try again!`,
-            voice: ttsSettings.voice,
-            speed: ttsSettings.speed
-          }
-        });
+        const { data, error } = await callTTS(`Good try! The correct answer is "${question.answer}". Look carefully and try again!`, ttsSettings.voice, ttsSettings.speed);
 
         if (data?.audioContent) {
           await playGlobalTTS(data.audioContent, 'SingleQuestionView-Retry');
