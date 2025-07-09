@@ -257,10 +257,10 @@ const TTSConfiguration = () => {
     return (
       <Card>
         <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-          <Volume2 className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2">
+            <Volume2 className="w-5 h-5" />
           OpenAI TTS Configuration
-        </CardTitle>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">

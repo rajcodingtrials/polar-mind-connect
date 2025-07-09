@@ -74,7 +74,7 @@ const Admin = () => {
 
       console.log('Inserting questions with type:', questionType);
       console.log('Questions to insert:', questionsToInsert.map(q => ({ question: q.question, type: q.question_type })));
-      
+
       const { error: dbError } = await supabase
         .from('questions')
         .insert(questionsToInsert);

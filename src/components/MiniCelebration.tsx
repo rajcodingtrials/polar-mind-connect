@@ -67,12 +67,12 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
           
           // Wait for TTS to completely finish before proceeding
           setTimeout(() => {
-            console.log('🎊 TTS finished, celebration complete');
-            setIsPlayingTTS(false);
-            // Add a small delay after TTS finishes before moving to next question
-            setTimeout(() => {
+              console.log('🎊 TTS finished, celebration complete');
+              setIsPlayingTTS(false);
+              // Add a small delay after TTS finishes before moving to next question
+              setTimeout(() => {
               onCompleteRef.current();
-            }, 1000);
+              }, 1000);
           }, 3000); // Standard delay for celebration TTS
         } else {
           // If no TTS, proceed after standard delay

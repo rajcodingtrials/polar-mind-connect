@@ -412,8 +412,8 @@ const SingleQuestionView = ({
           <div className="text-center animate-fade-in">
             <div className="flex flex-col items-center">
               <button
-                onClick={handleVoiceRecording}
-                disabled={isProcessing || isPlaying || isProcessingAnswer}
+              onClick={handleVoiceRecording}
+              disabled={isProcessing || isPlaying || isProcessingAnswer}
                 className={`w-32 h-32 rounded-full border-4 shadow-xl transition-all duration-300 flex items-center justify-center ${
                   isRecording 
                     ? 'bg-red-300 border-red-200 text-white transform scale-105' 
@@ -422,19 +422,19 @@ const SingleQuestionView = ({
               >
                 <MicrophoneIcon isRecording={isRecording} size={64} />
               </button>
-              
-              <div className="mt-4 text-center">
-                <p className="text-blue-600 font-semibold text-lg">
-                  {isRecording ? "🔴 Recording... Tap again to stop" : 
-                   isProcessing ? "🔄 Processing your voice..." :
-                   isPlaying ? "🎵 Playing..." :
-                   "Tap to answer"}
+            
+            <div className="mt-4 text-center">
+              <p className="text-blue-600 font-semibold text-lg">
+                {isRecording ? "🔴 Recording... Tap again to stop" : 
+                 isProcessing ? "🔄 Processing your voice..." :
+                 isPlaying ? "🎵 Playing..." :
+                 "Tap to answer"}
+              </p>
+              {retryCount > 0 && (
+                <p className="text-sm text-purple-600 mt-2">
+                  Attempt {retryCount + 1} of 2
                 </p>
-                {retryCount > 0 && (
-                  <p className="text-sm text-purple-600 mt-2">
-                    Attempt {retryCount + 1} of 2
-                  </p>
-                )}
+              )}
               </div>
             </div>
           </div>
