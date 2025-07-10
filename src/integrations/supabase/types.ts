@@ -129,6 +129,47 @@ export type Database = {
         }
         Relationships: []
       }
+      lessons: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          question_type: Database["public"]["Enums"]["question_type_enum"]
+          difficulty_level: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          question_type: Database["public"]["Enums"]["question_type_enum"]
+          difficulty_level: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          question_type?: Database["public"]["Enums"]["question_type_enum"]
+          difficulty_level?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_lesson_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["lesson_id"]
+          }
+        ]
+      }
       questions: {
         Row: {
           answer: string
@@ -136,6 +177,7 @@ export type Database = {
           created_by: string | null
           id: string
           image_name: string | null
+          lesson_id: string | null
           question: string
           question_type: Database["public"]["Enums"]["question_type_enum"]
           updated_at: string | null
@@ -146,6 +188,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           image_name?: string | null
+          lesson_id?: string | null
           question: string
           question_type?: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string | null
@@ -156,11 +199,20 @@ export type Database = {
           created_by?: string | null
           id?: string
           image_name?: string | null
+          lesson_id?: string | null
           question?: string
           question_type?: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "questions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       tts_settings: {
         Row: {

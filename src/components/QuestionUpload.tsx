@@ -1,11 +1,26 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Upload, FileText, Image, Trash2, Tag } from 'lucide-react';
+import { Upload, FileText, Image, Trash2, Tag, BookOpen } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type QuestionType = Database['public']['Enums']['question_type_enum'];
+
+interface Lesson {
+  id: string;
+  name: string;
+  description: string | null;
+  question_type: QuestionType;
+  difficulty_level: string;
+  is_active: boolean;
+}
 
 interface Question {
   id: string;
@@ -16,21 +31,80 @@ interface Question {
 }
 
 interface QuestionUploadProps {
-  onQuestionsUploaded: (questions: Question[], images: File[], questionType: string) => void;
+  onQuestionsUploaded?: (questions: Question[], images: File[], questionType: string) => void;
 }
 
 const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [images, setImages] = useState<File[]>([]);
-  const [selectedQuestionType, setSelectedQuestionType] = useState<string>('question_time');
+  const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType>('question_time');
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [selectedLesson, setSelectedLesson] = useState<string>('');
+  const [isNewLesson, setIsNewLesson] = useState(false);
+  const [enableLessonMode, setEnableLessonMode] = useState(false);
+  
+  // New lesson fields
+  const [newLessonName, setNewLessonName] = useState('');
+  const [newLessonDescription, setNewLessonDescription] = useState('');
+  const [newLessonDifficulty, setNewLessonDifficulty] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
+  
   const { toast } = useToast();
 
   const questionTypes = [
-    { value: 'first_words', label: 'First Words' },
-    { value: 'question_time', label: 'Question Time' },
-    { value: 'build_sentence', label: 'Build a Sentence' },
-    { value: 'lets_chat', label: 'Lets Chat' }
+    { value: 'first_words' as QuestionType, label: 'First Words' },
+    { value: 'question_time' as QuestionType, label: 'Question Time' },
+    { value: 'build_sentence' as QuestionType, label: 'Build a Sentence' },
+    { value: 'lets_chat' as QuestionType, label: 'Lets Chat' }
   ];
+
+  const difficultyLevels = [
+    { value: 'beginner', label: 'Beginner' },
+    { value: 'intermediate', label: 'Intermediate' },
+    { value: 'advanced', label: 'Advanced' }
+  ];
+
+  // Fetch lessons when activity type changes
+  useEffect(() => {
+    if (selectedQuestionType && enableLessonMode) {
+      fetchLessons(selectedQuestionType);
+    } else {
+      setLessons([]);
+      setSelectedLesson('');
+    }
+  }, [selectedQuestionType, enableLessonMode]);
+
+  // Reset lesson selection when switching to new lesson
+  useEffect(() => {
+    if (isNewLesson) {
+      setSelectedLesson('new');
+    }
+  }, [isNewLesson]);
+
+
+
+
+
+  const fetchLessons = async (activityType: QuestionType) => {
+    try {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('question_type', activityType)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) {
+        // Table doesn't exist yet - this is expected before migration
+        setLessons([]);
+        return;
+      }
+
+      setLessons(data || []);
+    } catch (error) {
+      // Table doesn't exist yet - this is expected before migration
+      setLessons([]);
+    }
+  };
 
   const handleJsonUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -78,7 +152,7 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (questions.length === 0) {
       toast({
         title: "Error",
@@ -97,11 +171,196 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
       return;
     }
 
-    onQuestionsUploaded(questions, images, selectedQuestionType);
-    toast({
-      title: "Success",
-      description: "Questions and images uploaded successfully!",
-    });
+    // If lesson mode is enabled, validate lesson selection
+    if (enableLessonMode) {
+      if (!selectedLesson) {
+        toast({
+          title: "Error",
+          description: "Please select a lesson or create a new one",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (isNewLesson && !newLessonName.trim()) {
+        toast({
+          title: "Error",
+          description: "Please enter a lesson name",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    try {
+      let lessonId: string | null = null;
+
+      // If creating a new lesson
+      if (enableLessonMode && isNewLesson) {
+        try {
+          const { data: newLesson, error: lessonError } = await supabase
+            .from('lessons')
+            .insert({
+              name: newLessonName.trim(),
+              description: newLessonDescription.trim() || null,
+              question_type: selectedQuestionType,
+              difficulty_level: newLessonDifficulty,
+              is_active: true
+            })
+            .select()
+            .single();
+
+          if (lessonError) {
+            toast({
+              title: "Info",
+              description: "Lesson creation failed (database table may not exist). Questions will be uploaded without lesson assignment.",
+            });
+            // Continue without lesson assignment
+          } else {
+            lessonId = newLesson.id;
+            toast({
+              title: "Success",
+              description: `Created new lesson: ${newLessonName}`,
+            });
+          }
+        } catch (error) {
+          toast({
+            title: "Info",
+            description: "Lesson creation failed (database table may not exist). Questions will be uploaded without lesson assignment.",
+          });
+        }
+      } else if (enableLessonMode && selectedLesson !== 'new') {
+        // Using existing lesson
+        lessonId = selectedLesson;
+      }
+
+      // Upload images first
+      const imageUploadPromises = images.map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('question-images')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          throw uploadError;
+        }
+
+        return { originalName: file.name, storageName: fileName };
+      });
+
+      const uploadedImages = await Promise.all(imageUploadPromises);
+      
+      // Create a mapping from original names to storage names
+      const imageNameMap = uploadedImages.reduce((acc, img) => {
+        acc[img.originalName] = img.storageName;
+        return acc;
+      }, {} as Record<string, string>);
+
+      // Prepare questions with lesson_id
+      const questionsToInsert = questions.map(q => ({
+        question: q.question,
+        answer: q.answer,
+        image_name: q.imageName ? imageNameMap[q.imageName] : null,
+        question_type: selectedQuestionType,
+        lesson_id: lessonId // This is the key fix - include lesson_id
+      }));
+
+      // Insert questions with lesson assignment
+      const { error: dbError } = await supabase
+        .from('questions')
+        .insert(questionsToInsert);
+
+      if (dbError) {
+        console.error('Error saving questions:', dbError);
+        throw dbError;
+      }
+
+      // Show success message
+      if (lessonId) {
+        toast({
+          title: "Success",
+          description: `Uploaded ${questions.length} questions and ${images.length} images with lesson assignment!`,
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Uploaded ${questions.length} questions and ${images.length} images to Supabase`,
+        });
+      }
+
+      // Reset lesson fields if creating new lesson
+      if (isNewLesson) {
+        setNewLessonName('');
+        setNewLessonDescription('');
+        setNewLessonDifficulty('beginner');
+        setIsNewLesson(false);
+        setSelectedLesson('');
+      }
+
+    } catch (error) {
+      console.error('Error in lesson handling:', error);
+      // Fall back to original upload without lesson assignment
+      try {
+        // Upload images first
+        const imageUploadPromises = images.map(async (file) => {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('question-images')
+            .upload(fileName, file);
+
+          if (uploadError) {
+            console.error('Error uploading image:', uploadError);
+            throw uploadError;
+          }
+
+          return { originalName: file.name, storageName: fileName };
+        });
+
+        const uploadedImages = await Promise.all(imageUploadPromises);
+        
+        // Create a mapping from original names to storage names
+        const imageNameMap = uploadedImages.reduce((acc, img) => {
+          acc[img.originalName] = img.storageName;
+          return acc;
+        }, {} as Record<string, string>);
+
+        // Prepare questions without lesson_id
+        const questionsToInsert = questions.map(q => ({
+          question: q.question,
+          answer: q.answer,
+          image_name: q.imageName ? imageNameMap[q.imageName] : null,
+          question_type: selectedQuestionType,
+          lesson_id: null // No lesson assignment
+        }));
+
+        // Insert questions
+        const { error: dbError } = await supabase
+          .from('questions')
+          .insert(questionsToInsert);
+
+        if (dbError) {
+          console.error('Error saving questions:', dbError);
+          throw dbError;
+        }
+
+        toast({
+          title: "Success",
+          description: `Uploaded ${questions.length} questions and ${images.length} images (lesson assignment failed)`,
+        });
+      } catch (fallbackError) {
+        console.error('Fallback upload failed:', fallbackError);
+        toast({
+          title: "Error",
+          description: "Failed to upload questions and images",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   return (
@@ -151,7 +410,7 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
             <Tag className="w-4 h-4 inline mr-1" />
             Question Type
           </label>
-          <Select value={selectedQuestionType} onValueChange={setSelectedQuestionType}>
+          <Select value={selectedQuestionType} onValueChange={(value) => setSelectedQuestionType(value as QuestionType)}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select question type" />
             </SelectTrigger>
@@ -164,6 +423,111 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
             </SelectContent>
           </Select>
         </div>
+
+        {/* Lesson Mode Toggle */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="lesson-mode"
+              checked={enableLessonMode}
+              onChange={(e) => setEnableLessonMode(e.target.checked)}
+              className="rounded"
+            />
+            <Label htmlFor="lesson-mode" className="text-sm font-medium flex items-center gap-1">
+              <BookOpen className="w-4 h-4" />
+              Organize by Lessons
+            </Label>
+          </div>
+          <p className="text-xs text-gray-600">
+            Enable to organize questions into specific lessons within the activity type
+          </p>
+          
+
+        </div>
+
+        {/* Lesson Selection */}
+        {enableLessonMode && selectedQuestionType && (
+          <div className="space-y-2">
+            <Label htmlFor="lesson">Lesson</Label>
+            <Select 
+              value={selectedLesson} 
+              onValueChange={(value) => {
+                setSelectedLesson(value);
+                if (value === 'new') {
+                  setIsNewLesson(true);
+                } else {
+                  setIsNewLesson(false);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select lesson or create new" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">
+                  + Create New Lesson
+                </SelectItem>
+                {lessons.map((lesson) => (
+                  <SelectItem key={lesson.id} value={lesson.id}>
+                    {lesson.name} ({lesson.difficulty_level})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Info message when no lessons exist */}
+            {lessons.length === 0 && (
+              <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                No existing lessons found. You can create a new lesson or run the database migration first.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* New Lesson Fields */}
+        {enableLessonMode && isNewLesson && selectedQuestionType && (
+          <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+            <h4 className="font-medium text-gray-900">New Lesson Details</h4>
+            
+            <div className="space-y-2">
+              <Label htmlFor="lesson-name">Lesson Name *</Label>
+              <Input
+                id="lesson-name"
+                value={newLessonName}
+                onChange={(e) => setNewLessonName(e.target.value)}
+                placeholder="Enter lesson name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lesson-description">Description</Label>
+              <Textarea
+                id="lesson-description"
+                value={newLessonDescription}
+                onChange={(e) => setNewLessonDescription(e.target.value)}
+                placeholder="Enter lesson description (optional)"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="difficulty">Difficulty Level</Label>
+              <Select value={newLessonDifficulty} onValueChange={(value) => setNewLessonDifficulty(value as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {difficultyLevels.map((level) => (
+                    <SelectItem key={level.value} value={level.value}>
+                      {level.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
 
         {/* Loaded Questions Preview */}
         {questions.length > 0 && (
