@@ -12,6 +12,7 @@ import ProgressCharacter from '../components/ProgressCharacter';
 import IntroductionScreen from '../components/IntroductionScreen';
 import SingleQuestionView from '../components/SingleQuestionView';
 import MiniCelebration from '../components/MiniCelebration';
+import LessonSelection from '../components/LessonSelection';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -21,6 +22,13 @@ interface Question {
   answer: string;
   imageName?: string;
   questionType?: QuestionType;
+  lessonId?: string | null;
+  lesson?: {
+    id: string;
+    name: string;
+    description: string | null;
+    difficulty_level: string;
+  } | null;
 }
 
 const OpenAIChatPage = () => {
@@ -34,7 +42,7 @@ const OpenAIChatPage = () => {
   const [therapistName, setTherapistName] = useState('Laura');
   
   // Updated state for better question management
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'introduction' | 'question' | 'celebration' | 'complete'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'lesson-selection' | 'introduction' | 'question' | 'celebration' | 'complete'>('home');
   const [availableQuestions, setAvailableQuestions] = useState<Question[]>([]);
   const [askedQuestionIds, setAskedQuestionIds] = useState<Set<string>>(new Set());
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
@@ -42,6 +50,7 @@ const OpenAIChatPage = () => {
   const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const [sessionQuestionCount, setSessionQuestionCount] = useState(0);
   const [comingFromCelebration, setComingFromCelebration] = useState(false);
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const maxQuestionsPerSession = 5;
 
   // Set childName from profile (fallback to 'friend' if not available)
@@ -85,10 +94,18 @@ const OpenAIChatPage = () => {
   useEffect(() => {
     const loadQuestionsAndImages = async () => {
       try {
-        // Load questions from Supabase
+        // Load questions from Supabase with lesson information
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
-          .select('*')
+          .select(`
+            *,
+            lessons (
+              id,
+              name,
+              description,
+              difficulty_level
+            )
+          `)
           .order('created_at', { ascending: false });
 
         if (questionsError) {
@@ -102,7 +119,9 @@ const OpenAIChatPage = () => {
             question: q.question,
             answer: q.answer,
             imageName: q.image_name,
-            questionType: q.question_type
+            questionType: q.question_type,
+            lessonId: q.lesson_id,
+            lesson: q.lessons
           }));
           
           setQuestions(formattedQuestions);
@@ -193,13 +212,39 @@ const OpenAIChatPage = () => {
     setSpeechDelayMode(false);
     setSessionQuestionCount(0);
     setAskedQuestionIds(new Set());
+    setSelectedLessonId(null);
     
-    // Filter questions by selected type and shuffle them
-    const filteredQuestions = questions.filter(q => q.questionType === questionType);
-    console.log('🎯 Available questions for type:', filteredQuestions.length);
+    // Move to lesson selection screen
+    setCurrentScreen('lesson-selection');
+  };
+
+  const handleLessonSelect = (lessonId: string | null) => {
+    console.log('📚 Selected lesson:', lessonId);
+    setSelectedLessonId(lessonId);
+    
+    // Filter questions based on lesson selection
+    let filteredQuestions: Question[];
+    
+    if (lessonId) {
+      // Filter by specific lesson
+      filteredQuestions = questions.filter(q => 
+        q.questionType === selectedQuestionType && 
+        q.lessonId === lessonId
+      );
+      console.log('🎯 Questions for specific lesson:', filteredQuestions.length);
+    } else {
+      // Filter by question type only (all questions for this type)
+      filteredQuestions = questions.filter(q => q.questionType === selectedQuestionType);
+      console.log('🎯 All questions for type:', filteredQuestions.length);
+    }
     
     setAvailableQuestions(filteredQuestions);
     setCurrentScreen('introduction');
+  };
+
+  const handleBackToQuestionTypes = () => {
+    setCurrentScreen('home');
+    setShowQuestionTypes(true);
   };
 
   const handleStartQuestions = () => {
@@ -401,6 +446,7 @@ const OpenAIChatPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto justify-items-center">
                 {questionTypes.map((type) => {
                   const questionsOfType = questions.filter(q => q.questionType === type.value).length;
+                  const lessonsOfType = questions.filter(q => q.questionType === type.value && q.lessonId).length;
                   const IconComponent = type.icon;
                   
                   return (
@@ -418,10 +464,15 @@ const OpenAIChatPage = () => {
                       </div>
                       
                       {questionsOfType > 0 ? (
-                        <div className="mt-4 text-center">
-                          <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm">
+                        <div className="mt-4 text-center space-y-1">
+                          <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm block">
                             🎯 {questionsOfType} questions ready!
                           </span>
+                          {lessonsOfType > 0 && (
+                            <span className="bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium shadow-sm block">
+                              📚 Organized in lessons
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <div className="mt-4 text-center">
@@ -444,6 +495,16 @@ const OpenAIChatPage = () => {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* Lesson Selection Screen */}
+          {currentScreen === 'lesson-selection' && selectedQuestionType && (
+            <LessonSelection
+              selectedQuestionType={selectedQuestionType}
+              therapistName={therapistName}
+              onLessonSelect={handleLessonSelect}
+              onBack={handleBackToQuestionTypes}
+            />
           )}
 
           {/* Introduction Screen */}
