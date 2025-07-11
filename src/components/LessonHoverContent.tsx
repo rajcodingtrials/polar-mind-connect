@@ -38,28 +38,28 @@ const LessonHoverContent: React.FC<LessonHoverContentProps> = ({
   const getActivityColor = (type: string) => {
     switch (type) {
       case 'first_words':
-        return 'from-emerald-50 to-emerald-100 border-emerald-200';
+        return 'from-blue-50 to-blue-100 border-blue-200 text-blue-800';
       case 'question_time':
-        return 'from-blue-50 to-blue-100 border-blue-200';
+        return 'from-amber-50 to-amber-100 border-amber-200 text-amber-800';
       case 'build_sentence':
-        return 'from-purple-50 to-purple-100 border-purple-200';
+        return 'from-emerald-50 to-emerald-100 border-emerald-200 text-emerald-800';
       case 'lets_chat':
-        return 'from-orange-50 to-orange-100 border-orange-200';
+        return 'from-orange-50 to-orange-100 border-orange-200 text-orange-800';
       default:
-        return 'from-slate-50 to-slate-100 border-slate-200';
+        return 'from-slate-50 to-slate-100 border-slate-200 text-slate-800';
     }
   };
 
   const getDifficultyColor = (level: string) => {
     switch (level.toLowerCase()) {
       case 'easy':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-50 text-green-700 border-green-200';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       case 'hard':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-50 text-red-700 border-red-200';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-slate-50 text-slate-700 border-slate-200';
     }
   };
 
@@ -79,43 +79,43 @@ const LessonHoverContent: React.FC<LessonHoverContentProps> = ({
   };
 
   return (
-    <Card className={`w-80 bg-gradient-to-br ${getActivityColor(activityType)} shadow-lg border-2`}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-bold text-center flex items-center justify-center gap-2">
+    <Card className={`w-80 bg-gradient-to-br ${getActivityColor(activityType)} shadow-2xl border-2 rounded-3xl overflow-hidden`}>
+      <CardHeader className="pb-4 text-center">
+        <CardTitle className="text-lg font-bold flex items-center justify-center gap-2">
           <BookOpen className="h-5 w-5" />
           {getActivityTitle(activityType)}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 max-h-64 overflow-y-auto">
+      <CardContent className="space-y-3 max-h-60 overflow-y-auto px-6 pb-6">
         {lessons.map((lesson) => (
           <div
             key={lesson.id}
-            className="p-3 bg-white/70 backdrop-blur-sm rounded-lg border border-white/50 hover:bg-white/90 transition-all duration-200"
+            className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 border border-white/50 hover:bg-white hover:shadow-lg transition-all duration-200 group"
           >
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="font-semibold text-sm text-slate-800 line-clamp-1">
+            <div className="flex justify-between items-start mb-3">
+              <h4 className="font-bold text-sm line-clamp-1 flex-1 pr-2">
                 {lesson.name}
               </h4>
-              <Badge className={`text-xs ${getDifficultyColor(lesson.difficulty_level)}`}>
+              <Badge className={`text-xs font-medium border ${getDifficultyColor(lesson.difficulty_level)}`}>
                 {lesson.difficulty_level}
               </Badge>
             </div>
             
             {lesson.description && (
-              <p className="text-xs text-slate-600 mb-2 line-clamp-2">
+              <p className="text-xs opacity-75 mb-3 line-clamp-2">
                 {lesson.description}
               </p>
             )}
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-xs text-slate-500">
+              <div className="flex items-center gap-3 text-xs opacity-70">
                 <span className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
-                  {questionCounts[lesson.id] || 0} questions
+                  {questionCounts[lesson.id] || 0}
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  ~{Math.max(5, (questionCounts[lesson.id] || 0) * 2)} min
+                  ~{Math.max(5, (questionCounts[lesson.id] || 0) * 2)}min
                 </span>
               </div>
               
@@ -126,17 +126,17 @@ const LessonHoverContent: React.FC<LessonHoverContentProps> = ({
                   e.stopPropagation();
                   onLessonSelect(lesson);
                 }}
-                className="h-7 px-3 text-xs bg-primary hover:bg-primary/90"
+                className="h-8 px-4 text-xs font-semibold bg-white/20 hover:bg-white/40 border border-white/30 hover:border-white/50 backdrop-blur-sm transition-all duration-200 group-hover:bg-opacity-100"
               >
-                Start
+                Start →
               </Button>
             </div>
           </div>
         ))}
         
         {lessons.length > 3 && (
-          <div className="text-center pt-2 border-t border-white/30">
-            <p className="text-xs text-slate-500">
+          <div className="text-center pt-3 border-t border-white/20">
+            <p className="text-xs opacity-70 font-medium">
               {lessons.length} lessons available
             </p>
           </div>
