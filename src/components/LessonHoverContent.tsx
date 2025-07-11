@@ -79,14 +79,14 @@ const LessonHoverContent: React.FC<LessonHoverContentProps> = ({
   };
 
   return (
-    <Card className={`w-72 max-w-[85vw] bg-gradient-to-br ${getActivityColor(activityType)} shadow-2xl border-2 rounded-3xl overflow-hidden`}>
-      <CardHeader className="pb-4 text-center">
+    <Card className={`w-80 max-w-[90vw] bg-gradient-to-br ${getActivityColor(activityType)} shadow-2xl border-2 rounded-2xl overflow-hidden`}>
+      <CardHeader className="pb-3 text-center bg-white/20 backdrop-blur-sm">
         <CardTitle className="text-lg font-bold flex items-center justify-center gap-2">
           <BookOpen className="h-5 w-5" />
           {getActivityTitle(activityType)}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 max-h-60 overflow-y-auto px-6 pb-6">
+      <CardContent className="space-y-3 max-h-[50vh] overflow-y-auto px-4 pb-4 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
         {lessons.map((lesson) => (
           <div
             key={lesson.id}
