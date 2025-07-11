@@ -53,6 +53,11 @@ const OpenAIChatPage = () => {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const maxQuestionsPerSession = 5;
 
+  // New state for enhanced activity selection
+  const [hoveredActivityType, setHoveredActivityType] = useState<QuestionType | null>(null);
+  const [lessons, setLessons] = useState<any[]>([]);
+  const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
+
   // Set childName from profile (fallback to 'friend' if not available)
   const childName = profile?.name || profile?.username || 'friend';
 
@@ -150,6 +155,31 @@ const OpenAIChatPage = () => {
           setImageUrls(imageUrlMap);
           console.log('Loaded image URLs:', Object.keys(imageUrlMap).length);
         }
+
+        // Load all lessons
+        const { data: lessonsData, error: lessonsError } = await supabase
+          .from('lessons')
+          .select('*')
+          .eq('is_active', true)
+          .order('name');
+
+        if (!lessonsError && lessonsData) {
+          setLessons(lessonsData);
+          
+          // Fetch question counts for each lesson
+          const counts: Record<string, number> = {};
+          for (const lesson of lessonsData) {
+            const { count, error: countError } = await supabase
+              .from('questions')
+              .select('*', { count: 'exact', head: true })
+              .eq('lesson_id', lesson.id);
+            
+            if (!countError) {
+              counts[lesson.id] = count || 0;
+            }
+          }
+          setQuestionCounts(counts);
+        }
       } catch (error) {
         console.error('Error loading data from Supabase:', error);
       }
@@ -216,6 +246,35 @@ const OpenAIChatPage = () => {
     
     // Move to lesson selection screen
     setCurrentScreen('lesson-selection');
+  };
+
+  const handleDirectLessonSelect = (lessonId: string | null, questionType: QuestionType) => {
+    console.log('📚 Direct lesson select:', lessonId, questionType);
+    setSelectedQuestionType(questionType);
+    setSelectedLessonId(lessonId);
+    setShowQuestionTypes(false);
+    setCorrectAnswers(0);
+    setRetryCount(0);
+    setSpeechDelayMode(false);
+    setSessionQuestionCount(0);
+    setAskedQuestionIds(new Set());
+    
+    // Filter questions based on lesson selection
+    let filteredQuestions: Question[];
+    
+    if (lessonId) {
+      // Filter by specific lesson
+      filteredQuestions = questions.filter(q => 
+        q.questionType === questionType && 
+        q.lessonId === lessonId
+      );
+    } else {
+      // Filter by question type only (all questions for this type)
+      filteredQuestions = questions.filter(q => q.questionType === questionType);
+    }
+    
+    setAvailableQuestions(filteredQuestions);
+    setCurrentScreen('introduction');
   };
 
   const handleLessonSelect = (lessonId: string | null) => {
@@ -433,62 +492,167 @@ const OpenAIChatPage = () => {
             </>
           )}
 
-          {/* Question Type Selection Screen */}
+          {/* Enhanced Activity Selection Screen */}
           {showQuestionTypes && currentScreen === 'home' && (
             <div className="mb-8 flex flex-col items-center">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-black mb-4">
                   Choose Your Learning Adventure with {therapistName}!
                 </h2>
-                <p className="text-gray-600 text-lg">Select the type of questions you'd like to practice today</p>
+                <p className="text-gray-600 text-lg">
+                  {hoveredActivityType ? 'Choose a lesson or practice all questions' : 'Hover over an activity to see available lessons'}
+                </p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto justify-items-center">
-                {questionTypes.map((type) => {
-                  const questionsOfType = questions.filter(q => q.questionType === type.value).length;
-                  const lessonsOfType = questions.filter(q => q.questionType === type.value && q.lessonId).length;
-                  const IconComponent = type.icon;
-                  
-                  return (
-                    <div
-                      key={type.value}
-                      className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer hover:shadow-xl hover:scale-105 transition-all duration-300 min-h-[250px] flex flex-col justify-between border-3 hover:border-white`}
-                      onClick={() => handleQuestionTypeSelect(type.value)}
-                    >
-                      <div className="flex flex-col items-center text-center">
-                        <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
-                          <IconComponent className={`w-8 h-8 ${type.textColor}`} />
-                        </div>
-                        <h3 className="font-bold text-xl mb-3">{type.label}</h3>
-                        <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
-                      </div>
+              <div className="flex max-w-7xl mx-auto gap-8 min-h-[500px]">
+                {/* Activity Cards Section */}
+                <div className={`transition-all duration-500 ${hoveredActivityType ? 'w-2/5' : 'w-full'}`}>
+                  <div className={`grid gap-8 ${hoveredActivityType ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'} justify-items-center`}>
+                    {questionTypes.map((type) => {
+                      const questionsOfType = questions.filter(q => q.questionType === type.value).length;
+                      const lessonsOfType = questions.filter(q => q.questionType === type.value && q.lessonId).length;
+                      const IconComponent = type.icon;
+                      const isHovered = hoveredActivityType === type.value;
+                      const isOtherHovered = hoveredActivityType && hoveredActivityType !== type.value;
                       
-                      {questionsOfType > 0 ? (
-                        <div className="mt-4 text-center space-y-1">
-                          <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm block">
-                            🎯 {questionsOfType} questions ready!
-                          </span>
-                          {lessonsOfType > 0 && (
-                            <span className="bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium shadow-sm block">
-                              📚 Organized in lessons
-                            </span>
+                      return (
+                        <div
+                          key={type.value}
+                          className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-500 min-h-[250px] flex flex-col justify-between ${
+                            isOtherHovered 
+                              ? 'opacity-30 scale-95 hover:opacity-50' 
+                              : isHovered 
+                                ? 'shadow-2xl border-white transform -translate-x-4 scale-105' 
+                                : 'hover:shadow-xl hover:scale-105 hover:border-white'
+                          } ${hoveredActivityType ? 'w-80' : 'w-full max-w-80'}`}
+                          onMouseEnter={() => setHoveredActivityType(type.value)}
+                          onMouseLeave={() => setHoveredActivityType(null)}
+                          onClick={() => hoveredActivityType ? null : handleQuestionTypeSelect(type.value)}
+                        >
+                          <div className="flex flex-col items-center text-center">
+                            <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
+                              <IconComponent className={`w-8 h-8 ${type.textColor}`} />
+                            </div>
+                            <h3 className="font-bold text-xl mb-3">{type.label}</h3>
+                            <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
+                          </div>
+                          
+                          {questionsOfType > 0 ? (
+                            <div className="mt-4 text-center space-y-1">
+                              <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm block">
+                                🎯 {questionsOfType} questions ready!
+                              </span>
+                              {lessonsOfType > 0 && (
+                                <span className="bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium shadow-sm block">
+                                  📚 Organized in lessons
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="mt-4 text-center">
+                              <span className="bg-white bg-opacity-60 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
+                                ✨ AI-generated content
+                              </span>
+                            </div>
                           )}
                         </div>
-                      ) : (
-                        <div className="mt-4 text-center">
-                          <span className="bg-white bg-opacity-60 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
-                            ✨ AI-generated content
-                          </span>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Lessons Panel */}
+                <div className={`transition-all duration-500 overflow-hidden ${hoveredActivityType ? 'w-3/5 opacity-100' : 'w-0 opacity-0'}`}>
+                  {hoveredActivityType && (
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 h-full">
+                      <div className="mb-6">
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                          {questionTypes.find(t => t.value === hoveredActivityType)?.label} Lessons
+                        </h3>
+                        <p className="text-gray-600">Choose a specific lesson or practice with all questions</p>
+                      </div>
+                      
+                      <div className="space-y-4 max-h-96 overflow-y-auto">
+                        {/* Practice All Questions Option */}
+                        <div
+                          className="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md"
+                          onClick={() => handleDirectLessonSelect(null, hoveredActivityType)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="bg-gray-200 rounded-full p-2">
+                              <BookOpen className="w-5 h-5 text-gray-600" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-800">Practice All Questions</h4>
+                              <p className="text-sm text-gray-600">Mix of all difficulty levels</p>
+                            </div>
+                            <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                              {questions.filter(q => q.questionType === hoveredActivityType).length} questions
+                            </span>
+                          </div>
                         </div>
-                      )}
+
+                        {/* Individual Lessons */}
+                        {lessons
+                          .filter(lesson => lesson.question_type === hoveredActivityType)
+                          .map((lesson, idx) => {
+                            const lessonColors = [
+                              'bg-blue-50 hover:bg-blue-100 border-blue-200',
+                              'bg-green-50 hover:bg-green-100 border-green-200',
+                              'bg-purple-50 hover:bg-purple-100 border-purple-200',
+                              'bg-orange-50 hover:bg-orange-100 border-orange-200',
+                              'bg-pink-50 hover:bg-pink-100 border-pink-200',
+                            ];
+                            const colorClass = lessonColors[idx % lessonColors.length];
+                            const difficultyIcons = { beginner: '⭐', intermediate: '⭐⭐', advanced: '⭐⭐⭐' };
+
+                            return (
+                              <div
+                                key={lesson.id}
+                                className={`${colorClass} border rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md`}
+                                onClick={() => handleDirectLessonSelect(lesson.id, hoveredActivityType)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="bg-white rounded-full p-2">
+                                    <BookOpen className="w-5 h-5 text-blue-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-800">{lesson.name}</h4>
+                                    {lesson.description && (
+                                      <p className="text-sm text-gray-600">{lesson.description}</p>
+                                    )}
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-xs text-gray-500">
+                                        {difficultyIcons[lesson.difficulty_level as keyof typeof difficultyIcons] || '⭐'} {lesson.difficulty_level}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <span className="bg-white text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                                    {questionCounts[lesson.id] || 0} questions
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        
+                        {lessons.filter(lesson => lesson.question_type === hoveredActivityType).length === 0 && (
+                          <div className="text-center text-gray-500 py-8">
+                            <p>No specific lessons available yet.</p>
+                            <p className="text-sm">You can practice with all available questions!</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
               
               <div className="mt-8 text-center">
                 <button
-                  onClick={() => setShowQuestionTypes(false)}
+                  onClick={() => {
+                    setShowQuestionTypes(false);
+                    setHoveredActivityType(null);
+                  }}
                   className="text-gray-600 hover:text-gray-800 text-lg font-medium bg-white px-6 py-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   ← Back to Therapists
