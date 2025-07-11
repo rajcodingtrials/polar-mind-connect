@@ -526,33 +526,29 @@ const OpenAIChatPage = () => {
               
               <div className="flex max-w-7xl mx-auto gap-8 min-h-[500px]">
                 {/* Activity Cards Section */}
-                <div className={`transition-all duration-300 ease-out ${hoveredActivityType ? 'w-2/5' : 'w-full'}`}>
-                  <div className={`grid gap-8 ${hoveredActivityType ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'} justify-items-center`}>
-                    {questionTypes.map((type) => {
-                      const questionsOfType = questions.filter(q => q.questionType === type.value).length;
-                      const lessonsOfType = questions.filter(q => q.questionType === type.value && q.lessonId).length;
-                      const IconComponent = type.icon;
-                      const isHovered = hoveredActivityType === type.value;
-                      const isOtherHovered = hoveredActivityType && hoveredActivityType !== type.value;
+                <div className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-2/5' : 'w-full'}`}>
+                  <div className={`grid gap-8 ${showLessonsPanel ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'} justify-items-center`}>
+                    {/* Show selected activity first when panel is open */}
+                    {showLessonsPanel && hoveredActivityType && (() => {
+                      const selectedType = questionTypes.find(type => type.value === hoveredActivityType);
+                      if (!selectedType) return null;
+                      
+                      const questionsOfType = questions.filter(q => q.questionType === selectedType.value).length;
+                      const lessonsOfType = questions.filter(q => q.questionType === selectedType.value && q.lessonId).length;
+                      const IconComponent = selectedType.icon;
                       
                       return (
                         <div
-                          key={type.value}
-                          className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[250px] flex flex-col justify-between ${
-                            isOtherHovered 
-                              ? 'opacity-20 scale-95' 
-                              : isHovered 
-                                ? 'shadow-2xl border-white scale-105' 
-                                : 'hover:shadow-xl hover:scale-105 hover:border-white'
-                          } ${hoveredActivityType ? 'w-80' : 'w-full max-w-80'}`}
-                          onClick={() => handleActivityClick(type.value)}
+                          key={`selected-${selectedType.value}`}
+                          className={`${selectedType.color} ${selectedType.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[250px] flex flex-col justify-between shadow-2xl border-white scale-105 w-80 ring-4 ring-blue-300`}
+                          onClick={() => handleActivityClick(selectedType.value)}
                         >
                           <div className="flex flex-col items-center text-center">
                             <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
-                              <IconComponent className={`w-8 h-8 ${type.textColor}`} />
+                              <IconComponent className={`w-8 h-8 ${selectedType.textColor}`} />
                             </div>
-                            <h3 className="font-bold text-xl mb-3">{type.label}</h3>
-                            <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
+                            <h3 className="font-bold text-xl mb-3">{selectedType.label} ✨</h3>
+                            <p className="text-sm opacity-90 leading-relaxed">{selectedType.description}</p>
                           </div>
                           
                           {questionsOfType > 0 ? (
@@ -575,7 +571,56 @@ const OpenAIChatPage = () => {
                           )}
                         </div>
                       );
-                    })}
+                    })()}
+                    
+                    {/* Show other activities */}
+                    {questionTypes
+                      .filter(type => !showLessonsPanel || type.value !== hoveredActivityType)
+                      .map((type) => {
+                        const questionsOfType = questions.filter(q => q.questionType === type.value).length;
+                        const lessonsOfType = questions.filter(q => q.questionType === type.value && q.lessonId).length;
+                        const IconComponent = type.icon;
+                        const isOtherHovered = showLessonsPanel && hoveredActivityType && hoveredActivityType !== type.value;
+                        
+                        return (
+                          <div
+                            key={type.value}
+                            className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[250px] flex flex-col justify-between ${
+                              isOtherHovered 
+                                ? 'opacity-40 scale-95' 
+                                : 'hover:shadow-xl hover:scale-105 hover:border-white'
+                            } ${showLessonsPanel ? 'w-80' : 'w-full max-w-80'}`}
+                            onClick={() => handleActivityClick(type.value)}
+                          >
+                            <div className="flex flex-col items-center text-center">
+                              <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
+                                <IconComponent className={`w-8 h-8 ${type.textColor}`} />
+                              </div>
+                              <h3 className="font-bold text-xl mb-3">{type.label}</h3>
+                              <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
+                            </div>
+                            
+                            {questionsOfType > 0 ? (
+                              <div className="mt-4 text-center space-y-1">
+                                <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm block">
+                                  🎯 {questionsOfType} questions ready!
+                                </span>
+                                {lessonsOfType > 0 && (
+                                  <span className="bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium shadow-sm block">
+                                    📚 Organized in lessons
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="mt-4 text-center">
+                                <span className="bg-white bg-opacity-60 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
+                                  ✨ AI-generated content
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                   </div>
                 </div>
 
