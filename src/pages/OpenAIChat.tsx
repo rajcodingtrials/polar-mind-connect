@@ -506,7 +506,7 @@ const OpenAIChatPage = () => {
               
               <div className="flex max-w-7xl mx-auto gap-8 min-h-[500px]">
                 {/* Activity Cards Section */}
-                <div className={`transition-all duration-500 ${hoveredActivityType ? 'w-2/5' : 'w-full'}`}>
+                <div className={`transition-all duration-300 ease-out ${hoveredActivityType ? 'w-2/5' : 'w-full'}`}>
                   <div className={`grid gap-8 ${hoveredActivityType ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'} justify-items-center`}>
                     {questionTypes.map((type) => {
                       const questionsOfType = questions.filter(q => q.questionType === type.value).length;
@@ -518,15 +518,15 @@ const OpenAIChatPage = () => {
                       return (
                         <div
                           key={type.value}
-                          className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-500 min-h-[250px] flex flex-col justify-between ${
+                          className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[250px] flex flex-col justify-between ${
                             isOtherHovered 
-                              ? 'opacity-30 scale-95 hover:opacity-50' 
+                              ? 'opacity-20 scale-95' 
                               : isHovered 
-                                ? 'shadow-2xl border-white transform -translate-x-4 scale-105' 
+                                ? 'shadow-2xl border-white scale-105' 
                                 : 'hover:shadow-xl hover:scale-105 hover:border-white'
                           } ${hoveredActivityType ? 'w-80' : 'w-full max-w-80'}`}
-                          onMouseEnter={() => setHoveredActivityType(type.value)}
-                          onMouseLeave={() => setHoveredActivityType(null)}
+                          onMouseEnter={() => !hoveredActivityType && setHoveredActivityType(type.value)}
+                          onMouseLeave={() => {}}
                           onClick={() => hoveredActivityType ? null : handleQuestionTypeSelect(type.value)}
                         >
                           <div className="flex flex-col items-center text-center">
@@ -562,7 +562,10 @@ const OpenAIChatPage = () => {
                 </div>
 
                 {/* Lessons Panel */}
-                <div className={`transition-all duration-500 overflow-hidden ${hoveredActivityType ? 'w-3/5 opacity-100' : 'w-0 opacity-0'}`}>
+                <div 
+                  className={`transition-all duration-300 ease-out overflow-hidden ${hoveredActivityType ? 'w-3/5 opacity-100' : 'w-0 opacity-0'}`}
+                  onMouseLeave={() => setHoveredActivityType(null)}
+                >
                   {hoveredActivityType && (
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 h-full">
                       <div className="mb-6">
