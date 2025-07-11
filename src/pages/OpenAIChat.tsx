@@ -430,7 +430,7 @@ const OpenAIChatPage = () => {
     const timeout = setTimeout(() => {
       setHoveredActivityType(questionType);
       setShowLessonsPanel(true);
-    }, 400); // 400ms delay
+    }, 700); // 700ms delay
     
     setHoverTimeout(timeout);
   };
@@ -598,7 +598,7 @@ const OpenAIChatPage = () => {
 
                 {/* Lessons Panel */}
                 <div 
-                  className={`transition-all duration-600 ease-out overflow-hidden ${showLessonsPanel ? 'w-3/5 opacity-100' : 'w-0 opacity-0'}`}
+                  className={`transition-all duration-800 ease-out overflow-hidden ${showLessonsPanel ? 'w-3/5 opacity-100' : 'w-0 opacity-0'}`}
                   onMouseLeave={handlePanelLeave}
                 >
                   {showLessonsPanel && hoveredActivityType && (
