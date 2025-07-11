@@ -561,13 +561,14 @@ const OpenAIChatPage = () => {
                         </div>
                       </HoverCardTrigger>
                       <HoverCardContent 
-                        side="top" 
+                        side="bottom" 
                         align="center" 
-                        className="p-0 border-0 shadow-2xl z-50" 
-                        sideOffset={10}
+                        className="p-0 border-0 shadow-2xl z-50 max-w-[90vw]" 
+                        sideOffset={15}
                         alignOffset={0}
                         avoidCollisions={true}
-                        collisionPadding={20}
+                        collisionPadding={30}
+                        sticky="always"
                       >
                         <LessonHoverContent
                           lessons={lessonsForType}

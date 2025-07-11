@@ -79,7 +79,7 @@ const LessonHoverContent: React.FC<LessonHoverContentProps> = ({
   };
 
   return (
-    <Card className={`w-80 bg-gradient-to-br ${getActivityColor(activityType)} shadow-2xl border-2 rounded-3xl overflow-hidden`}>
+    <Card className={`w-72 max-w-[85vw] bg-gradient-to-br ${getActivityColor(activityType)} shadow-2xl border-2 rounded-3xl overflow-hidden`}>
       <CardHeader className="pb-4 text-center">
         <CardTitle className="text-lg font-bold flex items-center justify-center gap-2">
           <BookOpen className="h-5 w-5" />
