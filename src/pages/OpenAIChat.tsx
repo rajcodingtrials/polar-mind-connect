@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart } from 'lucide-react';
@@ -13,8 +14,10 @@ import IntroductionScreen from '../components/IntroductionScreen';
 import SingleQuestionView from '../components/SingleQuestionView';
 import MiniCelebration from '../components/MiniCelebration';
 import LessonSelection from '../components/LessonSelection';
+import LessonHoverContent from '../components/LessonHoverContent';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
+type Lesson = Database['public']['Tables']['lessons']['Row'];
 
 interface Question {
   id: string;
@@ -51,6 +54,8 @@ const OpenAIChatPage = () => {
   const [sessionQuestionCount, setSessionQuestionCount] = useState(0);
   const [comingFromCelebration, setComingFromCelebration] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
   const maxQuestionsPerSession = 5;
 
   // Set childName from profile (fallback to 'friend' if not available)
@@ -156,6 +161,48 @@ const OpenAIChatPage = () => {
     };
 
     loadQuestionsAndImages();
+  }, []);
+
+  // Load lessons and question counts for hover functionality
+  useEffect(() => {
+    const loadLessons = async () => {
+      try {
+        const { data: lessonsData, error: lessonsError } = await supabase
+          .from('lessons')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: true });
+
+        if (lessonsError) {
+          console.error('Error loading lessons:', lessonsError);
+          return;
+        }
+
+        setLessons(lessonsData || []);
+
+        // Load question counts for each lesson
+        const questionCountPromises = lessonsData?.map(async (lesson) => {
+          const { count } = await supabase
+            .from('questions')
+            .select('*', { count: 'exact' })
+            .eq('lesson_id', lesson.id);
+          
+          return { lessonId: lesson.id, count: count || 0 };
+        }) || [];
+
+        const questionCountResults = await Promise.all(questionCountPromises);
+        const questionCountsMap = questionCountResults.reduce((acc, { lessonId, count }) => {
+          acc[lessonId] = count;
+          return acc;
+        }, {} as Record<string, number>);
+
+        setQuestionCounts(questionCountsMap);
+      } catch (error) {
+        console.error('Error loading lessons:', error);
+      }
+    };
+
+    loadLessons();
   }, []);
 
   useEffect(() => {
@@ -358,6 +405,33 @@ const OpenAIChatPage = () => {
     setCurrentScreen('home');
   };
 
+  // Handle direct lesson selection from hover card
+  const handleHoverLessonSelect = (lesson: Lesson) => {
+    console.log('📚 Direct lesson selected from hover:', lesson);
+    setSelectedQuestionType(lesson.question_type);
+    setSelectedLessonId(lesson.id);
+    setShowQuestionTypes(false);
+    setCorrectAnswers(0);
+    setRetryCount(0);
+    setSpeechDelayMode(false);
+    setSessionQuestionCount(0);
+    setAskedQuestionIds(new Set());
+    
+    // Filter questions for the selected lesson
+    const filteredQuestions = questions.filter(q => 
+      q.questionType === lesson.question_type && 
+      q.lessonId === lesson.id
+    );
+    
+    setAvailableQuestions(filteredQuestions);
+    setCurrentScreen('introduction');
+  };
+
+  // Get lessons for specific activity type
+  const getLessonsForActivityType = (activityType: QuestionType) => {
+    return lessons.filter(lesson => lesson.question_type === activityType);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
@@ -449,39 +523,52 @@ const OpenAIChatPage = () => {
                   const lessonsOfType = questions.filter(q => q.questionType === type.value && q.lessonId).length;
                   const IconComponent = type.icon;
                   
+                  const lessonsForType = getLessonsForActivityType(type.value);
+                  
                   return (
-                    <div
-                      key={type.value}
-                      className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer hover:shadow-xl hover:scale-105 transition-all duration-300 min-h-[250px] flex flex-col justify-between border-3 hover:border-white`}
-                      onClick={() => handleQuestionTypeSelect(type.value)}
-                    >
-                      <div className="flex flex-col items-center text-center">
-                        <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
-                          <IconComponent className={`w-8 h-8 ${type.textColor}`} />
-                        </div>
-                        <h3 className="font-bold text-xl mb-3">{type.label}</h3>
-                        <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
-                      </div>
-                      
-                      {questionsOfType > 0 ? (
-                        <div className="mt-4 text-center space-y-1">
-                          <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm block">
-                            🎯 {questionsOfType} questions ready!
-                          </span>
-                          {lessonsOfType > 0 && (
-                            <span className="bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium shadow-sm block">
-                              📚 Organized in lessons
-                            </span>
+                    <HoverCard key={type.value} openDelay={300} closeDelay={200}>
+                      <HoverCardTrigger asChild>
+                        <div
+                          className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer hover:shadow-xl hover:scale-105 transition-all duration-300 min-h-[250px] flex flex-col justify-between border-3 hover:border-white`}
+                          onClick={() => handleQuestionTypeSelect(type.value)}
+                        >
+                          <div className="flex flex-col items-center text-center">
+                            <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
+                              <IconComponent className={`w-8 h-8 ${type.textColor}`} />
+                            </div>
+                            <h3 className="font-bold text-xl mb-3">{type.label}</h3>
+                            <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
+                          </div>
+                          
+                          {questionsOfType > 0 ? (
+                            <div className="mt-4 text-center space-y-1">
+                              <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm block">
+                                🎯 {questionsOfType} questions ready!
+                              </span>
+                              {lessonsOfType > 0 && (
+                                <span className="bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium shadow-sm block">
+                                  📚 Organized in lessons
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="mt-4 text-center">
+                              <span className="bg-white bg-opacity-60 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
+                                ✨ AI-generated content
+                              </span>
+                            </div>
                           )}
                         </div>
-                      ) : (
-                        <div className="mt-4 text-center">
-                          <span className="bg-white bg-opacity-60 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
-                            ✨ AI-generated content
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                      </HoverCardTrigger>
+                      <HoverCardContent side="top" align="center" className="p-0 border-0 shadow-2xl">
+                        <LessonHoverContent
+                          lessons={lessonsForType}
+                          questionCounts={questionCounts}
+                          onLessonSelect={handleHoverLessonSelect}
+                          activityType={type.value}
+                        />
+                      </HoverCardContent>
+                    </HoverCard>
                   );
                 })}
               </div>
