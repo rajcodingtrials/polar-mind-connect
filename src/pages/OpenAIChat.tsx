@@ -55,8 +55,10 @@ const OpenAIChatPage = () => {
 
   // New state for enhanced activity selection
   const [hoveredActivityType, setHoveredActivityType] = useState<QuestionType | null>(null);
+  const [showLessonsPanel, setShowLessonsPanel] = useState(false);
   const [lessons, setLessons] = useState<any[]>([]);
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Set childName from profile (fallback to 'friend' if not available)
   const childName = profile?.name || profile?.username || 'friend';
@@ -417,6 +419,39 @@ const OpenAIChatPage = () => {
     setCurrentScreen('home');
   };
 
+  // Hover handlers with delay
+  const handleActivityHover = (questionType: QuestionType) => {
+    // Clear any existing timeout
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+    }
+    
+    // Set a delay before showing lessons panel
+    const timeout = setTimeout(() => {
+      setHoveredActivityType(questionType);
+      setShowLessonsPanel(true);
+    }, 400); // 400ms delay
+    
+    setHoverTimeout(timeout);
+  };
+
+  const handleActivityLeave = () => {
+    // Clear timeout if user leaves before delay completes
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+      setHoverTimeout(null);
+    }
+  };
+
+  const handlePanelLeave = () => {
+    setHoveredActivityType(null);
+    setShowLessonsPanel(false);
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+      setHoverTimeout(null);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
@@ -525,9 +560,9 @@ const OpenAIChatPage = () => {
                                 ? 'shadow-2xl border-white scale-105' 
                                 : 'hover:shadow-xl hover:scale-105 hover:border-white'
                           } ${hoveredActivityType ? 'w-80' : 'w-full max-w-80'}`}
-                          onMouseEnter={() => !hoveredActivityType && setHoveredActivityType(type.value)}
-                          onMouseLeave={() => {}}
-                          onClick={() => hoveredActivityType ? null : handleQuestionTypeSelect(type.value)}
+                          onMouseEnter={() => handleActivityHover(type.value)}
+                          onMouseLeave={handleActivityLeave}
+                          onClick={() => showLessonsPanel ? null : handleQuestionTypeSelect(type.value)}
                         >
                           <div className="flex flex-col items-center text-center">
                             <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
@@ -563,10 +598,10 @@ const OpenAIChatPage = () => {
 
                 {/* Lessons Panel */}
                 <div 
-                  className={`transition-all duration-300 ease-out overflow-hidden ${hoveredActivityType ? 'w-3/5 opacity-100' : 'w-0 opacity-0'}`}
-                  onMouseLeave={() => setHoveredActivityType(null)}
+                  className={`transition-all duration-600 ease-out overflow-hidden ${showLessonsPanel ? 'w-3/5 opacity-100' : 'w-0 opacity-0'}`}
+                  onMouseLeave={handlePanelLeave}
                 >
-                  {hoveredActivityType && (
+                  {showLessonsPanel && hoveredActivityType && (
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 h-full">
                       <div className="mb-6">
                         <h3 className="text-2xl font-bold text-gray-800 mb-2">
