@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Send, X, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,10 +15,8 @@ import ChatMessage from './chat/ChatMessage';
 import { calculateSimilarity } from './chat/fuzzyMatching';
 import type { Message, Question, ChatMessageProps, VoiceRecorderProps } from './chat/types';
 import type { Database } from '@/integrations/supabase/types';
-import LessonHoverContent from './LessonHoverContent';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
-type Lesson = Database['public']['Tables']['lessons']['Row'];
 
 interface OpenAIChatProps {
   onClose: () => void;
@@ -31,7 +28,6 @@ interface OpenAIChatProps {
   onCorrectAnswer: () => void;
   therapistName: string;
   childName: string;
-  onLessonSelect?: (lesson: Lesson) => void;
 }
 
 // Custom Microphone Icon component
@@ -51,8 +47,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   selectedQuestionType,
   onCorrectAnswer,
   therapistName,
-  childName,
-  onLessonSelect
+  childName
 }) => {
   console.log('🎯 === OPENAI CHAT COMPONENT LOADED ===');
   console.log('OpenAIChat received questions:', questions.length);
@@ -70,8 +65,6 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
@@ -158,48 +151,6 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
 
     loadTTSSettings();
   }, [therapistName]);
-
-  // Load lessons and question counts
-  useEffect(() => {
-    const loadLessons = async () => {
-      try {
-        const { data: lessonsData, error: lessonsError } = await supabase
-          .from('lessons')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: true });
-
-        if (lessonsError) {
-          console.error('Error loading lessons:', lessonsError);
-          return;
-        }
-
-        setLessons(lessonsData || []);
-
-        // Load question counts for each lesson
-        const questionCountPromises = lessonsData?.map(async (lesson) => {
-          const { count } = await supabase
-            .from('questions')
-            .select('*', { count: 'exact' })
-            .eq('lesson_id', lesson.id);
-          
-          return { lessonId: lesson.id, count: count || 0 };
-        }) || [];
-
-        const questionCountResults = await Promise.all(questionCountPromises);
-        const questionCountsMap = questionCountResults.reduce((acc, { lessonId, count }) => {
-          acc[lessonId] = count;
-          return acc;
-        }, {} as Record<string, number>);
-
-        setQuestionCounts(questionCountsMap);
-      } catch (error) {
-        console.error('Error loading lessons:', error);
-      }
-    };
-
-    loadLessons();
-  }, []);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -549,13 +500,6 @@ Make it all flow naturally as one cohesive message.`;
 
   const currentQuestion = getCurrentQuestion();
 
-  const handleLessonSelect = (lesson: Lesson) => {
-    console.log('Lesson selected:', lesson);
-    if (onLessonSelect) {
-      onLessonSelect(lesson);
-    }
-  };
-
   const handleClose = () => {
     console.log('Closing chat, stopping all audio...');
     setIsClosing(true);
@@ -571,11 +515,6 @@ Make it all flow naturally as one cohesive message.`;
       console.log('Closing chat window...');
       onClose();
     }, 100);
-  };
-
-  // Get lessons for specific activity type
-  const getLessonsForActivityType = (activityType: QuestionType) => {
-    return lessons.filter(lesson => lesson.question_type === activityType);
   };
 
   return (
