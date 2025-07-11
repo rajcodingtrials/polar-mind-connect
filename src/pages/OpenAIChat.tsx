@@ -58,7 +58,7 @@ const OpenAIChatPage = () => {
   const [showLessonsPanel, setShowLessonsPanel] = useState(false);
   const [lessons, setLessons] = useState<any[]>([]);
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
-  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  
 
   // Set childName from profile (fallback to 'friend' if not available)
   const childName = profile?.name || profile?.username || 'friend';
@@ -419,37 +419,22 @@ const OpenAIChatPage = () => {
     setCurrentScreen('home');
   };
 
-  // Hover handlers with delay
-  const handleActivityHover = (questionType: QuestionType) => {
-    // Clear any existing timeout
-    if (hoverTimeout) {
-      clearTimeout(hoverTimeout);
-    }
-    
-    // Set a delay before showing lessons panel
-    const timeout = setTimeout(() => {
+  // Click handlers for activity selection
+  const handleActivityClick = (questionType: QuestionType) => {
+    if (hoveredActivityType === questionType && showLessonsPanel) {
+      // If clicking the same activity that's already open, close the panel
+      setHoveredActivityType(null);
+      setShowLessonsPanel(false);
+    } else {
+      // Show lessons for the clicked activity
       setHoveredActivityType(questionType);
       setShowLessonsPanel(true);
-    }, 700); // 700ms delay
-    
-    setHoverTimeout(timeout);
-  };
-
-  const handleActivityLeave = () => {
-    // Clear timeout if user leaves before delay completes
-    if (hoverTimeout) {
-      clearTimeout(hoverTimeout);
-      setHoverTimeout(null);
     }
   };
 
-  const handlePanelLeave = () => {
+  const handleCloseLessons = () => {
     setHoveredActivityType(null);
     setShowLessonsPanel(false);
-    if (hoverTimeout) {
-      clearTimeout(hoverTimeout);
-      setHoverTimeout(null);
-    }
   };
 
   return (
@@ -535,7 +520,7 @@ const OpenAIChatPage = () => {
                   Choose Your Learning Adventure with {therapistName}!
                 </h2>
                 <p className="text-gray-600 text-lg">
-                  {hoveredActivityType ? 'Choose a lesson or practice all questions' : 'Hover over an activity to see available lessons'}
+                  {showLessonsPanel ? 'Choose a lesson or practice all questions' : 'Click on an activity to see available lessons'}
                 </p>
               </div>
               
@@ -560,9 +545,7 @@ const OpenAIChatPage = () => {
                                 ? 'shadow-2xl border-white scale-105' 
                                 : 'hover:shadow-xl hover:scale-105 hover:border-white'
                           } ${hoveredActivityType ? 'w-80' : 'w-full max-w-80'}`}
-                          onMouseEnter={() => handleActivityHover(type.value)}
-                          onMouseLeave={handleActivityLeave}
-                          onClick={() => showLessonsPanel ? null : handleQuestionTypeSelect(type.value)}
+                          onClick={() => handleActivityClick(type.value)}
                         >
                           <div className="flex flex-col items-center text-center">
                             <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
@@ -599,10 +582,16 @@ const OpenAIChatPage = () => {
                 {/* Lessons Panel */}
                 <div 
                   className={`transition-all duration-800 ease-out overflow-hidden ${showLessonsPanel ? 'w-3/5 opacity-100' : 'w-0 opacity-0'}`}
-                  onMouseLeave={handlePanelLeave}
                 >
                   {showLessonsPanel && hoveredActivityType && (
-                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 h-full">
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 h-full relative">
+                      {/* Close button */}
+                      <button
+                        onClick={handleCloseLessons}
+                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        ✕
+                      </button>
                       <div className="mb-6">
                         <h3 className="text-2xl font-bold text-gray-800 mb-2">
                           {questionTypes.find(t => t.value === hoveredActivityType)?.label} Lessons
