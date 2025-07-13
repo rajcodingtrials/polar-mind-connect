@@ -9,7 +9,6 @@ import { calculateSimilarity } from '@/components/chat/fuzzyMatching';
 import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 import { getCelebrationMessage, calculateProgressLevel } from '@/utils/celebrationMessages';
 import type { Database } from '@/integrations/supabase/types';
-import MicInputDisplay from './MicInputDisplay';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -427,13 +426,10 @@ const SingleQuestionView = ({
           </div>
         )}
 
-        {showMicInput && lastMicInput && (
-          <MicInputDisplay
-            micInput={lastMicInput}
-            onClear={() => setLastMicInput('')}
-            timestamp={new Date()}
-            isProcessing={isProcessing}
-          />
+        {showMicInput && (
+          <div className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded text-yellow-900 text-sm">
+            <strong>Mic Input:</strong> {lastMicInput || 'No input yet'}
+          </div>
         )}
 
         {/* Fixed Microphone Button */}
