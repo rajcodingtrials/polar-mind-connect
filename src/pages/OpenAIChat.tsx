@@ -59,6 +59,30 @@ const OpenAIChatPage = () => {
   const [lessons, setLessons] = useState<any[]>([]);
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
   
+  // Admin settings state
+  const [adminSettings, setAdminSettings] = useState<{ skip_introduction: boolean; show_mic_input: boolean } | null>(null);
+  const [adminSettingsLoading, setAdminSettingsLoading] = useState(true);
+
+  // Fetch admin settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setAdminSettingsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('admin_settings')
+          .select('skip_introduction, show_mic_input')
+          .limit(1)
+          .single();
+        if (error) throw error;
+        setAdminSettings(data);
+      } catch (err) {
+        setAdminSettings({ skip_introduction: false, show_mic_input: false });
+      } finally {
+        setAdminSettingsLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Set childName from profile (fallback to 'friend' if not available)
   const childName = profile?.name || profile?.username || 'friend';
@@ -279,6 +303,7 @@ const OpenAIChatPage = () => {
     setCurrentScreen('introduction');
   };
 
+  // When lesson is selected, skip intro if admin setting is on
   const handleLessonSelect = (lessonId: string | null) => {
     console.log('📚 Selected lesson:', lessonId);
     setSelectedLessonId(lessonId);
@@ -300,7 +325,12 @@ const OpenAIChatPage = () => {
     }
     
     setAvailableQuestions(filteredQuestions);
-    setCurrentScreen('introduction');
+    // If skip_introduction is true, go straight to question
+    if (adminSettings && adminSettings.skip_introduction) {
+      handleStartQuestions();
+    } else {
+      setCurrentScreen('introduction');
+    }
   };
 
   const handleBackToQuestionTypes = () => {
@@ -775,6 +805,7 @@ const OpenAIChatPage = () => {
               onRetryCountChange={setRetryCount}
               onSpeechDelayModeChange={setSpeechDelayMode}
               comingFromCelebration={comingFromCelebration}
+              showMicInput={!!(adminSettings && adminSettings.show_mic_input)}
             />
           )}
 

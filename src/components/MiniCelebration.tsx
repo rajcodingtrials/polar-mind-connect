@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useCartoonCharacters } from '@/hooks/useCartoonCharacters';
 import { useTTSSettings } from '@/hooks/useTTSSettings';
 import { supabase } from '@/integrations/supabase/client';
+import { getCelebrationMessage, calculateProgressLevel } from '@/utils/celebrationMessages';
 
 import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 
@@ -17,6 +18,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
   const [isRolling, setIsRolling] = useState(true);
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
   const [hasStartedCelebration, setHasStartedCelebration] = useState(false);
+  const [celebrationMessage, setCelebrationMessage] = useState('🎉 Amazing! 🎉');
   
   const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist, callTTS } = useTTSSettings(therapistName);
   
@@ -38,7 +40,21 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
     
     const runCelebration = async () => {
       console.log('🎊 Starting celebration TTS - TTS settings loaded');
+      console.log('🎊 TTS Settings:', ttsSettings);
       setHasStartedCelebration(true);
+      
+      // Get personalized celebration messages
+      const progressLevel = calculateProgressLevel(correctAnswers);
+      
+      // Get visual celebration message
+      const visualMessage = await getCelebrationMessage({
+        messageType: 'celebration_visual',
+        therapistName,
+        messageCategory: 'correct_answer',
+        progressLevel,
+        childName: 'friend'
+      });
+      setCelebrationMessage(visualMessage);
       
       // Immediately stop any existing audio
       stopAllAudio();
@@ -53,6 +69,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
       try {
         setIsPlayingTTS(true);
         console.log(`🎊 Playing celebration with ${therapistName}'s voice: ${ttsSettings.voice}`);
+        console.log(`🎊 TTS Provider: ${ttsSettings.provider || 'openai'}`);
         
         // Stop any previous audio
         stopGlobalAudio();
@@ -60,9 +77,22 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
         // Use the new TTS hook to call the appropriate provider
         console.log(`🎯 Celebration TTS for ${therapistName}: voice=${ttsSettings.voice}, provider=${ttsSettings.provider || 'openai'}`);
         
-        const response = await callTTS('Amazing work! That was perfect!', ttsSettings.voice, ttsSettings.speed);
+        // Use the same celebration_visual message for both visual and audio
+        const ttsMessage = visualMessage;
+        
+        console.log(`🎊 TTS Message to play: "${ttsMessage}"`);
+        
+        const response = await callTTS(ttsMessage, ttsSettings.voice, ttsSettings.speed);
+
+        console.log(`🎊 TTS Response:`, {
+          success: !response.error,
+          hasAudioContent: !!response.data?.audioContent,
+          audioLength: response.data?.audioContent?.length || 0,
+          error: response.error
+        });
 
         if (response.data?.audioContent) {
+          console.log(`🎊 Playing TTS audio with length: ${response.data.audioContent.length}`);
           await playGlobalTTS(response.data.audioContent, 'MiniCelebration');
           
           // Wait for TTS to completely finish before proceeding
@@ -75,6 +105,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
               }, 1000);
           }, 3000); // Standard delay for celebration TTS
         } else {
+          console.warn('🎊 No TTS audio content received, proceeding without audio');
           // If no TTS, proceed after standard delay
           setTimeout(() => {
             setIsPlayingTTS(false);
@@ -82,23 +113,17 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
           }, 3000);
         }
       } catch (error) {
-        console.error('TTS error in celebration:', error);
+        console.error('🎊 TTS error in celebration:', error);
         // If TTS fails, proceed after standard delay
         setTimeout(() => {
           setIsPlayingTTS(false);
           onCompleteRef.current();
         }, 3000);
       }
-
-      // Cleanup timers
-      return () => {
-        clearTimeout(confettiTimer);
-        clearTimeout(rollingTimer);
-      };
     };
 
     runCelebration();
-  }, [ttsSettingsLoaded, hasStartedCelebration, therapistName, ttsSettings]);
+  }, [ttsSettingsLoaded, hasStartedCelebration, correctAnswers, therapistName, ttsSettings, callTTS]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 p-6">
@@ -172,7 +197,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
       {/* Celebration Message */}
       <div className="text-center animate-fade-in">
         <h2 className="text-4xl font-bold text-emerald-600 mb-4 animate-pulse">
-          🎉 Amazing! 🎉
+          {celebrationMessage}
         </h2>
         <p className="text-xl text-emerald-700 font-semibold mb-2">
           That was perfect!

@@ -268,6 +268,88 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_settings: {
+        Row: {
+          id: string;
+          skip_introduction: boolean;
+          show_mic_input: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          skip_introduction?: boolean;
+          show_mic_input?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          skip_introduction?: boolean;
+          show_mic_input?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_settings_updated_by_fkey",
+            columns: ["updated_by"],
+            isOneToOne: false,
+            referencedRelation: "users",
+            referencedColumns: ["id"]
+          }
+        ];
+      };
+      celebration_messages: {
+        Row: {
+          id: string;
+          message_type: string;
+          therapist_name: string;
+          message_category: string;
+          progress_level: number;
+          content: string;
+          is_active: boolean;
+          priority: number;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          message_type: string;
+          therapist_name: string;
+          message_category: string;
+          progress_level?: number;
+          content: string;
+          is_active?: boolean;
+          priority?: number;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          message_type?: string;
+          therapist_name?: string;
+          message_category?: string;
+          progress_level?: number;
+          content?: string;
+          is_active?: boolean;
+          priority?: number;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "celebration_messages_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "users",
+            referencedColumns: ["id"]
+          }
+        ];
+      };
     }
     Views: {
       [_ in never]: never

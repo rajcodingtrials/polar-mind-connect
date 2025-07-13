@@ -120,7 +120,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
           });
         } else {
           // Fallback: Set default voice based on therapist name
-          const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
+          const defaultVoice = therapistName === 'Lawrence' ? 'en-US-Neural2-I' : 'en-US-Neural2-J';
           setTtsSettings({
             voice: defaultVoice,
             speed: 1.0,
@@ -135,7 +135,7 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
       } catch (error) {
         console.error('Error loading TTS settings:', error);
         // Fallback: Set default voice based on therapist name
-        const defaultVoice = therapistName === 'Lawrence' ? 'echo' : 'nova';
+        const defaultVoice = therapistName === 'Lawrence' ? 'en-US-Neural2-I' : 'en-US-Neural2-J';
         setTtsSettings({
           voice: defaultVoice,
           speed: 1.0,

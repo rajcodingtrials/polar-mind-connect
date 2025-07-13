@@ -5,6 +5,7 @@ import QuestionUpload from '../components/QuestionUpload';
 import TTSConfiguration from '../components/TTSConfiguration';
 import GoogleTTSConfiguration from '../components/GoogleTTSConfiguration';
 import PromptConfiguration from '../components/PromptConfiguration';
+import CelebrationMessageManager from '../components/CelebrationMessageManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -29,6 +30,55 @@ const Admin = () => {
   const { role, loading } = useUserRole();
   const [defaultChatMode, setDefaultChatMode] = useState('free');
   const { toast } = useToast();
+
+  // Admin settings state
+  const [adminSettings, setAdminSettings] = useState<Database['public']['Tables']['admin_settings']['Row'] | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+
+  // Fetch admin settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setSettingsLoading(true);
+      setSettingsError(null);
+      try {
+        const { data, error } = await supabase
+          .from('admin_settings')
+          .select('*')
+          .limit(1)
+          .single();
+        if (error) throw error;
+        setAdminSettings(data);
+      } catch (err: any) {
+        setSettingsError('Failed to load admin settings');
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // Update admin settings in Supabase
+  const updateSetting = async (key: 'skip_introduction' | 'show_mic_input', value: boolean) => {
+    if (!adminSettings) return;
+    setSettingsSaving(true);
+    try {
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .update({ [key]: value })
+        .eq('id', adminSettings.id)
+        .select()
+        .single();
+      if (error) throw error;
+      setAdminSettings(data);
+      toast({ title: 'Admin setting updated', description: `${key.replace('_', ' ')} set to ${value}` });
+    } catch (err: any) {
+      toast({ title: 'Error', description: 'Failed to update admin setting', variant: 'destructive' });
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
 
   useEffect(() => {
     const savedMode = localStorage.getItem('defaultChatMode');
@@ -204,6 +254,37 @@ const Admin = () => {
             <p className="text-gray-600">Manage questions, images, prompts, TTS settings, and chat configuration</p>
           </div>
 
+          {/* Admin Toggles */}
+          <div className="mb-8 p-4 bg-gray-50 rounded-xl border flex flex-col gap-6">
+            <h2 className="text-xl font-bold mb-2">Admin Feature Toggles</h2>
+            {settingsLoading ? (
+              <div className="text-blue-600">Loading admin settings...</div>
+            ) : settingsError ? (
+              <div className="text-red-600">{settingsError}</div>
+            ) : adminSettings && (
+              <>
+                <div className="flex items-center gap-4">
+                  <Switch
+                    id="skip-intro-toggle"
+                    checked={adminSettings.skip_introduction}
+                    onCheckedChange={v => updateSetting('skip_introduction', v)}
+                    disabled={settingsSaving}
+                  />
+                  <Label htmlFor="skip-intro-toggle" className="text-base">Skip Introduction (Testing Only)</Label>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Switch
+                    id="show-mic-toggle"
+                    checked={adminSettings.show_mic_input}
+                    onCheckedChange={v => updateSetting('show_mic_input', v)}
+                    disabled={settingsSaving}
+                  />
+                  <Label htmlFor="show-mic-toggle" className="text-base">Show Mic Input on Question Screen</Label>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Settings Card */}
           <Card>
             <CardHeader>
@@ -251,6 +332,16 @@ const Admin = () => {
 
           {/* Google TTS Configuration */}
           <GoogleTTSConfiguration />
+
+          {/* Celebration Messages Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Celebration Messages</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CelebrationMessageManager />
+            </CardContent>
+          </Card>
 
           {/* Upload Section */}
           <QuestionUpload onQuestionsUploaded={handleQuestionsUploaded} />

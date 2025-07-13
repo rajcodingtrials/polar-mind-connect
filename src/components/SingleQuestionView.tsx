@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { calculateSimilarity } from '@/components/chat/fuzzyMatching';
 import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
+import { getCelebrationMessage, calculateProgressLevel } from '@/utils/celebrationMessages';
 import type { Database } from '@/integrations/supabase/types';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
@@ -34,6 +35,7 @@ interface SingleQuestionViewProps {
   onRetryCountChange: (count: number) => void;
   onSpeechDelayModeChange: (enabled: boolean) => void;
   comingFromCelebration?: boolean;
+  showMicInput?: boolean;
 }
 
 // Custom Microphone Icon component
@@ -58,7 +60,8 @@ const SingleQuestionView = ({
   retryCount,
   onRetryCountChange,
   onSpeechDelayModeChange,
-  comingFromCelebration = false
+  comingFromCelebration = false,
+  showMicInput = false
 }: SingleQuestionViewProps) => {
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(true);
   const [currentResponse, setCurrentResponse] = useState('');
@@ -73,6 +76,7 @@ const SingleQuestionView = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasUserAttemptedAnswer, setHasUserAttemptedAnswer] = useState(false);
   const [hasReadQuestion, setHasReadQuestion] = useState(false);
+  const [lastMicInput, setLastMicInput] = useState('');
   
   const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist, callTTS } = useTTSSettings(therapistName);
   
@@ -104,6 +108,7 @@ const SingleQuestionView = ({
     setIsUserInteracting(false);
     setHasUserAttemptedAnswer(false);
     setHasReadQuestion(false);
+    setLastMicInput(''); // Reset mic input for new question
     
     // Reset retry count when question changes (but not when retry count changes)
     if (!comingFromCelebration) {
@@ -179,6 +184,7 @@ const SingleQuestionView = ({
         }
 
         if (data?.text && data.text.trim()) {
+          setLastMicInput(data.text.trim());
           await processAnswer(data.text.trim());
         } else {
           toast({
@@ -259,7 +265,17 @@ const SingleQuestionView = ({
     });
 
     if (similarity > acceptanceThreshold) {
-      setCurrentResponse(`Amazing work, ${childName}! That's exactly right! The answer is "${question.answer}" 🎉`);
+      // Get personalized celebration message
+      const progressLevel = calculateProgressLevel(questionNumber);
+      const celebrationMessage = await getCelebrationMessage({
+        messageType: 'question_feedback',
+        therapistName,
+        messageCategory: 'correct_answer',
+        progressLevel,
+        childName
+      });
+      
+      setCurrentResponse(celebrationMessage);
       setShowFeedback(true);
       
       // Don't play TTS here - let MiniCelebration handle it
@@ -268,7 +284,10 @@ const SingleQuestionView = ({
       if (!hasCalledCorrectAnswer) {
         setHasCalledCorrectAnswer(true);
         console.log('🎉 Calling onCorrectAnswer for question:', questionNumber);
-        onCorrectAnswer();
+        // Add delay to allow user to see their transcribed input
+        setTimeout(() => {
+          onCorrectAnswer();
+        }, 2000); // 2 second delay to show the transcribed input
       }
       
       setTimeout(() => {
@@ -404,6 +423,12 @@ const SingleQuestionView = ({
             <p className="text-lg text-center text-green-800 font-medium">
               {currentResponse}
             </p>
+          </div>
+        )}
+
+        {showMicInput && (
+          <div className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded text-yellow-900 text-sm">
+            <strong>Mic Input:</strong> {lastMicInput || 'No input yet'}
           </div>
         )}
 
