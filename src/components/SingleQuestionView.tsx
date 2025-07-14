@@ -522,7 +522,7 @@ const SingleQuestionView = ({
                 <span className="text-sm font-semibold text-gray-700">Voice Input:</span>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="bg-white bg-opacity-60 rounded-lg p-3 border border-gray-200 shadow-sm">
+                <div className="bg-white bg-opacity-60 rounded-lg p-3 border border-blue-300 shadow-sm">
                   <p className="text-gray-800 text-sm leading-relaxed">
                     {lastMicInput || (
                       <span className="text-gray-500 italic">Listening for your response...</span>
