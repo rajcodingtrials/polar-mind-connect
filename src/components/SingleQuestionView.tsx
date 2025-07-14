@@ -8,6 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { calculateSimilarity } from '@/components/chat/fuzzyMatching';
 import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 import { getCelebrationMessage, calculateProgressLevel } from '@/utils/celebrationMessages';
+import SoundFeedbackDisplay from './SoundFeedbackDisplay';
+import { soundFeedbackManager } from '@/utils/soundFeedback';
 import type { Database } from '@/integrations/supabase/types';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
@@ -77,6 +79,7 @@ const SingleQuestionView = ({
   const [hasUserAttemptedAnswer, setHasUserAttemptedAnswer] = useState(false);
   const [hasReadQuestion, setHasReadQuestion] = useState(false);
   const [lastMicInput, setLastMicInput] = useState('');
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
   
   const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist, callTTS } = useTTSSettings(therapistName);
   
@@ -109,6 +112,7 @@ const SingleQuestionView = ({
     setHasUserAttemptedAnswer(false);
     setHasReadQuestion(false);
     setLastMicInput(''); // Reset mic input for new question
+    setIsAnswerCorrect(null); // Reset answer correctness for new question
     
     // Reset retry count when question changes (but not when retry count changes)
     if (!comingFromCelebration) {
@@ -165,14 +169,18 @@ const SingleQuestionView = ({
     if (isRecording) {
       setIsProcessing(true);
       setIsUserInteracting(true);
-      
       try {
+        // 1. After recording stops, before STT
+        const recordingStopped = new Date();
+        console.log('[DEBUG] Recording stopped at', recordingStopped.toISOString());
         const base64Audio = await stopRecording();
-        
+        // 2. Before STT call
+        console.log('[DEBUG] Calling STT at', new Date().toISOString());
         const { data, error } = await supabase.functions.invoke('openai-stt', {
           body: { audio: base64Audio }
         });
-
+        // 3. After STT returns
+        console.log('[DEBUG] STT transcript received at', new Date().toISOString());
         if (error) {
           console.error('Speech-to-text error:', error);
           toast({
@@ -182,9 +190,10 @@ const SingleQuestionView = ({
           });
           return;
         }
-
         if (data?.text && data.text.trim()) {
           setLastMicInput(data.text.trim());
+          // 4. Before answer evaluation
+          console.log('[DEBUG] Starting answer evaluation at', new Date().toISOString());
           await processAnswer(data.text.trim());
         } else {
           toast({
@@ -203,23 +212,7 @@ const SingleQuestionView = ({
         setIsProcessing(false);
       }
     } else {
-      // Set user interacting immediately when they start recording
-      setIsUserInteracting(true);
-      console.log('🎤 User started recording - stopping any question TTS and setting interaction flag');
-      // Stop any currently playing question TTS immediately
-      stopGlobalAudio();
-      try {
-        await startRecording();
-      } catch (error) {
-        console.error('Error starting recording:', error);
-        toast({
-          title: "Microphone Error",
-          description: "Failed to access microphone. Please check permissions.",
-          variant: "destructive",
-        });
-        // Reset the flag if recording fails
-        setIsUserInteracting(false);
-      }
+      startRecording();
     }
   };
 
@@ -265,6 +258,59 @@ const SingleQuestionView = ({
     });
 
     if (similarity > acceptanceThreshold) {
+      setIsAnswerCorrect(true);
+      let ttsPlayed = false;
+      let feedbackForScreen = '';
+      // Generate and play sound feedback TTS (and show on screen)
+      if (userAnswer && question.answer) {
+        await soundFeedbackManager.initialize();
+        const { targetSound, confidence } = soundFeedbackManager.detectTargetSound(userAnswer);
+        console.log('[TTS DEBUG] Detected target sound:', targetSound, 'Confidence:', confidence);
+        if (targetSound && confidence > 0.6) {
+          console.log('[DEBUG] Generating sound feedback prompt at', new Date().toISOString());
+          const feedback = await soundFeedbackManager.generateSoundFeedback({
+            target_sound: targetSound.sound,
+            user_attempt: userAnswer,
+            therapistName,
+            childName,
+            question: question.question,
+            correct_answer: question.answer
+          }, 'correct');
+          console.log('[DEBUG] Sound feedback prompt generated at', new Date().toISOString());
+          console.log('[TTS DEBUG] Generated feedback:', feedback);
+          if (feedback) {
+            feedbackForScreen = feedback;
+            setCurrentResponse(feedbackForScreen);
+            setShowFeedback(true);
+            try {
+              const ttsStart = new Date();
+              console.log('[TTS DEBUG] Starting TTS request at', ttsStart.toISOString());
+              const { data, error } = await callTTS(feedback, ttsSettings.voice, ttsSettings.speed);
+              const ttsEnd = new Date();
+              console.log('[TTS DEBUG] TTS response at', ttsEnd.toISOString(), 'Duration (ms):', ttsEnd.getTime() - ttsStart.getTime());
+              console.log('[TTS DEBUG] TTS response:', data, 'Error:', error);
+              if (data?.audioContent) {
+                ttsPlayed = true;
+                const playStart = new Date();
+                console.log('[TTS DEBUG] Playing audio at', playStart.toISOString());
+                await playGlobalTTS(data.audioContent, 'SoundFeedback-Correct'); // Wait for TTS to finish
+                const playEnd = new Date();
+                console.log('[TTS DEBUG] Audio playback finished at', playEnd.toISOString(), 'Duration (ms):', playEnd.getTime() - playStart.getTime());
+              } else {
+                console.warn('[TTS DEBUG] No audioContent in TTS response');
+              }
+            } catch (e) { console.error('TTS error (sound feedback correct):', e); }
+          } else {
+            console.warn('[TTS DEBUG] No feedback generated');
+            setCurrentResponse('Great work!');
+            setShowFeedback(true);
+          }
+        } else {
+          console.warn('[TTS DEBUG] No target sound detected or confidence too low');
+          setCurrentResponse('Great work!');
+          setShowFeedback(true);
+        }
+      }
       // Get personalized celebration message
       const progressLevel = calculateProgressLevel(questionNumber);
       const celebrationMessage = await getCelebrationMessage({
@@ -274,29 +320,46 @@ const SingleQuestionView = ({
         progressLevel,
         childName
       });
-      
       setCurrentResponse(celebrationMessage);
       setShowFeedback(true);
-      
       // Don't play TTS here - let MiniCelebration handle it
       console.log(`✅ Correct answer! Moving to celebration - TTS will be handled by MiniCelebration`);
-      
       if (!hasCalledCorrectAnswer) {
         setHasCalledCorrectAnswer(true);
-        console.log('🎉 Calling onCorrectAnswer for question:', questionNumber);
-        // Add delay to allow user to see their transcribed input
-        setTimeout(() => {
-          onCorrectAnswer();
-        }, 2000); // 2 second delay to show the transcribed input
+        // Only transition after TTS feedback is done
+        onCorrectAnswer();
       }
-      
       setTimeout(() => {
         setIsProcessingAnswer(false);
         setIsUserInteracting(false);
       }, 500);
       
     } else if (newRetryCount >= 2 && hasUserAttemptedAnswer && userAnswer.trim()) {
-      // Only skip to next question if user has actually attempted to answer multiple times
+      setIsAnswerCorrect(false);
+      // Generate and play sound feedback TTS (do not show on screen)
+      if (userAnswer && question.answer) {
+        await soundFeedbackManager.initialize();
+        const { targetSound, confidence } = soundFeedbackManager.detectTargetSound(question.answer);
+        if (targetSound && confidence > 0.6) {
+          const feedback = await soundFeedbackManager.generateSoundFeedback({
+            target_sound: targetSound.sound,
+            user_attempt: userAnswer,
+            therapistName,
+            childName,
+            question: question.question,
+            correct_answer: question.answer
+          }, 'instruction');
+          if (feedback) {
+            try {
+              const { data, error } = await callTTS(feedback, ttsSettings.voice, ttsSettings.speed);
+              if (data?.audioContent) {
+                await playGlobalTTS(data.audioContent, 'SoundFeedback-Incorrect');
+              }
+            } catch (e) { console.error('TTS error (sound feedback incorrect):', e); }
+          }
+        }
+      }
+      
       console.log(`🔄 Max retries reached (${newRetryCount}) with user answer: "${userAnswer}" and hasUserAttemptedAnswer: ${hasUserAttemptedAnswer} - moving to next question`);
       console.log(`📊 Retry details: currentRetryCount=${retryCount}, newRetryCount=${newRetryCount}, threshold=2`);
       onRetryCountChange(newRetryCount);
@@ -327,6 +390,31 @@ const SingleQuestionView = ({
       }, 1000);
       
     } else {
+      setIsAnswerCorrect(false);
+      // Generate and play sound feedback TTS (do not show on screen)
+      if (userAnswer && question.answer) {
+        await soundFeedbackManager.initialize();
+        const { targetSound, confidence } = soundFeedbackManager.detectTargetSound(question.answer);
+        if (targetSound && confidence > 0.6) {
+          const feedback = await soundFeedbackManager.generateSoundFeedback({
+            target_sound: targetSound.sound,
+            user_attempt: userAnswer,
+            therapistName,
+            childName,
+            question: question.question,
+            correct_answer: question.answer
+          }, 'instruction');
+          if (feedback) {
+            try {
+              const { data, error } = await callTTS(feedback, ttsSettings.voice, ttsSettings.speed);
+              if (data?.audioContent) {
+                await playGlobalTTS(data.audioContent, 'SoundFeedback-Incorrect');
+              }
+            } catch (e) { console.error('TTS error (sound feedback incorrect):', e); }
+          }
+        }
+      }
+      
       console.log(`🔄 Retry attempt ${newRetryCount} - giving another chance`);
       console.log(`📊 Retry details: currentRetryCount=${retryCount}, newRetryCount=${newRetryCount}, threshold=2, willSkip=${newRetryCount >= 2}`);
       onRetryCountChange(newRetryCount);
@@ -426,9 +514,14 @@ const SingleQuestionView = ({
           </div>
         )}
 
+        {/* Debug Display Area */}
         {showMicInput && (
-          <div className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded text-yellow-900 text-sm">
-            <strong>Mic Input:</strong> {lastMicInput || 'No input yet'}
+          <div className="mt-4 space-y-3 max-w-2xl mx-auto w-full">
+            {/* Original Mic Input Display */}
+            <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded text-yellow-900 text-sm">
+              <strong>Mic Input:</strong> {lastMicInput || 'No input yet'}
+            </div>
+            {/* SoundFeedbackDisplay removed: feedback will be TTS only */}
           </div>
         )}
 

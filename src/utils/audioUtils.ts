@@ -50,92 +50,93 @@ export const stopAllAudio = () => {
 
 // Global TTS player that ensures only one TTS plays at a time
 export const playGlobalTTS = async (base64Audio: string, componentName: string): Promise<void> => {
-  try {
-    console.log(`🔊 [${componentName}] Requesting to play TTS...`);
-    
-    // Allow question TTS to override other TTS (but not vice versa)
-    if (isProcessingTTS && componentName !== 'SingleQuestionView') {
-      console.log(`⏳ [${componentName}] Another TTS is being processed, waiting...`);
-      return;
-    }
-    
-    // If SingleQuestionView is requesting TTS, always allow it
-    if (componentName === 'SingleQuestionView') {
-      console.log(`🎯 [${componentName}] Question TTS requested - overriding any existing TTS`);
-    }
-    
-    isProcessingTTS = true;
-    
-    // Always stop any currently playing audio, regardless of state
-    if (globalAudioElement) {
-      console.log(`🛑 [${componentName}] Stopping previous TTS...`);
-      globalAudioElement.pause();
-      globalAudioElement.currentTime = 0;
-      globalAudioElement = null;
-      isGlobalAudioPlaying = false;
-      // Small delay to ensure cleanup
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-    
-    // Also stop any other audio elements that might be playing
-    const audioElements = document.querySelectorAll('audio');
-    audioElements.forEach(audio => {
-      if (!audio.paused) {
-        console.log(`🛑 [${componentName}] Stopping other audio element...`);
-        audio.pause();
-        audio.currentTime = 0;
+  return new Promise<void>((resolve, reject) => {
+    try {
+      console.log(`🔊 [${componentName}] Requesting to play TTS...`);
+
+      // Allow question TTS to override other TTS (but not vice versa)
+      if (isProcessingTTS && componentName !== 'SingleQuestionView') {
+        console.log(`⏳ [${componentName}] Another TTS is being processed, waiting...`);
+        resolve();
+        return;
       }
-    });
-    
-    // Convert base64 to blob
-    const binaryString = atob(base64Audio);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    
-    const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
-    const audioUrl = URL.createObjectURL(audioBlob);
-    
-    // Create new audio element
-    globalAudioElement = new Audio(audioUrl);
-    isGlobalAudioPlaying = true;
-    
-    console.log(`🎵 [${componentName}] Starting TTS playback...`);
-    
-    // Set up event handlers
-    globalAudioElement.onended = () => {
-      console.log(`✅ [${componentName}] TTS finished playing`);
+
+      // If SingleQuestionView is requesting TTS, always allow it
+      if (componentName === 'SingleQuestionView') {
+        console.log(`🎯 [${componentName}] Question TTS requested - overriding any existing TTS`);
+      }
+
+      isProcessingTTS = true;
+
+      // Always stop any currently playing audio, regardless of state
+      if (globalAudioElement) {
+        console.log(`🛑 [${componentName}] Stopping previous TTS...`);
+        globalAudioElement.pause();
+        globalAudioElement.currentTime = 0;
+        globalAudioElement = null;
+        isGlobalAudioPlaying = false;
+      }
+
+      // Also stop any other audio elements that might be playing
+      const audioElements = document.querySelectorAll('audio');
+      audioElements.forEach(audio => {
+        if (!audio.paused) {
+          console.log(`🛑 [${componentName}] Stopping other audio element...`);
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      });
+
+      // Convert base64 to blob
+      const binaryString = atob(base64Audio);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      globalAudioElement = new Audio(audioUrl);
+      isGlobalAudioPlaying = true;
+
+      console.log(`🎵 [${componentName}] Starting TTS playback...`);
+
+      globalAudioElement.onended = () => {
+        console.log(`✅ [${componentName}] TTS finished playing`);
+        isGlobalAudioPlaying = false;
+        isProcessingTTS = false;
+        if (globalAudioElement) {
+          URL.revokeObjectURL(audioUrl);
+          globalAudioElement = null;
+        }
+        resolve(); // Only resolve when playback ends
+      };
+
+      globalAudioElement.onerror = (e) => {
+        console.error(`❌ [${componentName}] TTS playback error`, e);
+        isGlobalAudioPlaying = false;
+        isProcessingTTS = false;
+        if (globalAudioElement) {
+          URL.revokeObjectURL(audioUrl);
+          globalAudioElement = null;
+        }
+        reject(e); // Reject on error
+      };
+
+      globalAudioElement.play().catch((e) => {
+        globalAudioElement.onerror?.(e);
+      });
+
+    } catch (error) {
+      console.error(`❌ [${componentName}] Error playing TTS:`, error);
       isGlobalAudioPlaying = false;
       isProcessingTTS = false;
       if (globalAudioElement) {
-        URL.revokeObjectURL(audioUrl);
         globalAudioElement = null;
       }
-    };
-    
-    globalAudioElement.onerror = () => {
-      console.error(`❌ [${componentName}] TTS playback error`);
-      isGlobalAudioPlaying = false;
-      isProcessingTTS = false;
-      if (globalAudioElement) {
-        URL.revokeObjectURL(audioUrl);
-        globalAudioElement = null;
-      }
-    };
-    
-    // Play the audio
-    await globalAudioElement.play();
-    
-  } catch (error) {
-    console.error(`❌ [${componentName}] Error playing TTS:`, error);
-    isGlobalAudioPlaying = false;
-    isProcessingTTS = false;
-    if (globalAudioElement) {
-      globalAudioElement = null;
+      reject(error);
     }
-    throw error;
-  }
+  });
 };
 
 // Check if global audio is currently playing
