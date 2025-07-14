@@ -516,10 +516,10 @@ const SingleQuestionView = ({
 
         {/* Simplified Mic Input Display */}
         {showMicInput && (
-          <div className="mt-6 max-w-2xl mx-auto w-full animate-fade-in">
+          <div className="mt-6 max-w-2xl mx-auto animate-fade-in">
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <span className="text-sm font-semibold text-gray-700">Voice Input:</span>
+                <span className="text-sm font-semibold text-blue-600">Voice Input:</span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="bg-white bg-opacity-60 rounded-lg p-3 border border-blue-300 shadow-sm">
@@ -544,7 +544,7 @@ const SingleQuestionView = ({
                 className={`w-32 h-32 rounded-full border-4 shadow-xl transition-all duration-300 flex items-center justify-center ${
                   isRecording 
                     ? 'bg-red-300 border-red-200 text-white transform scale-105' 
-                    : 'bg-slate-200 hover:bg-slate-300 border-slate-100 text-slate-600 hover:scale-105'
+                    : 'bg-blue-100 hover:bg-blue-200 border-blue-200 text-blue-600 hover:scale-105'
                 } ${(isProcessing || isPlaying || isProcessingAnswer) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <MicrophoneIcon isRecording={isRecording} size={64} />
