@@ -514,14 +514,38 @@ const SingleQuestionView = ({
           </div>
         )}
 
-        {/* Debug Display Area */}
+        {/* Enhanced Mic Input Display */}
         {showMicInput && (
-          <div className="mt-4 space-y-3 max-w-2xl mx-auto w-full">
-            {/* Original Mic Input Display */}
-            <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded text-yellow-900 text-sm">
-              <strong>Mic Input:</strong> {lastMicInput || 'No input yet'}
+          <div className="mt-6 max-w-2xl mx-auto w-full animate-fade-in">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-sm font-semibold text-blue-900">Voice Input</h4>
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  </div>
+                  <div className="bg-white bg-opacity-60 rounded-lg p-3 border border-blue-100">
+                    <p className="text-gray-800 text-sm leading-relaxed">
+                      {lastMicInput || (
+                        <span className="text-gray-500 italic">Listening for your response...</span>
+                      )}
+                    </p>
+                  </div>
+                  {lastMicInput && (
+                    <div className="mt-2 text-xs text-blue-600">
+                      <span>✓ Voice input captured</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            {/* SoundFeedbackDisplay removed: feedback will be TTS only */}
           </div>
         )}
 
