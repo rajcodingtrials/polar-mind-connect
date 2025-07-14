@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          id: string
+          show_mic_input: boolean
+          skip_introduction: boolean
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          show_mic_input?: boolean
+          skip_introduction?: boolean
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          show_mic_input?: boolean
+          skip_introduction?: boolean
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       cartoon_characters: {
         Row: {
           animal_type: string
@@ -35,6 +59,48 @@ export type Database = {
           id?: string
           name?: string
           storage_path?: string
+        }
+        Relationships: []
+      }
+      celebration_messages: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          message_category: string
+          message_type: string
+          priority: number
+          progress_level: number
+          therapist_name: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          message_category: string
+          message_type: string
+          priority?: number
+          progress_level?: number
+          therapist_name: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          message_category?: string
+          message_type?: string
+          priority?: number
+          progress_level?: number
+          therapist_name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -268,88 +334,6 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_settings: {
-        Row: {
-          id: string;
-          skip_introduction: boolean;
-          show_mic_input: boolean;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          id?: string;
-          skip_introduction?: boolean;
-          show_mic_input?: boolean;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          id?: string;
-          skip_introduction?: boolean;
-          show_mic_input?: boolean;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "admin_settings_updated_by_fkey",
-            columns: ["updated_by"],
-            isOneToOne: false,
-            referencedRelation: "users",
-            referencedColumns: ["id"]
-          }
-        ];
-      };
-      celebration_messages: {
-        Row: {
-          id: string;
-          message_type: string;
-          therapist_name: string;
-          message_category: string;
-          progress_level: number;
-          content: string;
-          is_active: boolean;
-          priority: number;
-          created_at: string;
-          updated_at: string;
-          created_by: string | null;
-        };
-        Insert: {
-          id?: string;
-          message_type: string;
-          therapist_name: string;
-          message_category: string;
-          progress_level?: number;
-          content: string;
-          is_active?: boolean;
-          priority?: number;
-          created_at?: string;
-          updated_at?: string;
-          created_by?: string | null;
-        };
-        Update: {
-          id?: string;
-          message_type?: string;
-          therapist_name?: string;
-          message_category?: string;
-          progress_level?: number;
-          content?: string;
-          is_active?: boolean;
-          priority?: number;
-          created_at?: string;
-          updated_at?: string;
-          created_by?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "celebration_messages_created_by_fkey",
-            columns: ["created_by"],
-            isOneToOne: false,
-            referencedRelation: "users",
-            referencedColumns: ["id"]
-          }
-        ];
-      };
     }
     Views: {
       [_ in never]: never

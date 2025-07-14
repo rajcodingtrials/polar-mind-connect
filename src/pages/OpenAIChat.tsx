@@ -663,11 +663,11 @@ const OpenAIChatPage = () => {
                     if (!selectedType) return null;
                     
                     return (
-                      <div className={`${selectedType.color.replace('hover:bg-', 'bg-').replace('border-', '')} rounded-2xl shadow-xl border-3 border-white p-6 h-full relative`}>
+                      <div className={`${selectedType.color.replace('hover:bg-', 'bg-').replace('border-', '')} rounded-2xl shadow-xl border-3 border-white p-6 h-full relative overflow-y-auto`}>
                         {/* Close button */}
                         <button
                           onClick={handleCloseLessons}
-                          className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors bg-white rounded-full p-1 shadow-md"
+                          className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors bg-white rounded-full p-1 shadow-md z-10"
                         >
                           ✕
                         </button>
@@ -678,7 +678,7 @@ const OpenAIChatPage = () => {
                           <p className={`${selectedType.textColor} opacity-80`}>Choose a specific lesson or practice with all questions</p>
                         </div>
                         
-                        <div className="space-y-4 max-h-96 overflow-y-auto">
+                        <div className="space-y-4">
                           {/* Practice All Questions Option */}
                           <div
                             className="bg-white bg-opacity-70 hover:bg-opacity-90 border border-white border-opacity-50 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md"
