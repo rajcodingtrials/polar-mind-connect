@@ -32,9 +32,10 @@ interface Question {
 
 interface QuestionUploadProps {
   onQuestionsUploaded?: (questions: Question[], images: File[], questionType: string) => void;
+  clearTrigger?: boolean;
 }
 
-const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
+const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadProps) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType>('question_time');
@@ -49,6 +50,28 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
   const [newLessonDifficulty, setNewLessonDifficulty] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
   
   const { toast } = useToast();
+
+  // Clear all form state
+  const clearForm = () => {
+    setQuestions([]);
+    setImages([]);
+    setSelectedQuestionType('question_time');
+    setLessons([]);
+    setSelectedLesson('');
+    setIsNewLesson(false);
+    setEnableLessonMode(false);
+    setNewLessonName('');
+    setNewLessonDescription('');
+    setNewLessonDifficulty('beginner');
+  };
+
+  // Effect to clear form when clearTrigger changes
+  useEffect(() => {
+    if (clearTrigger) {
+      clearForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearTrigger]);
 
   const questionTypes = [
     { value: 'first_words' as QuestionType, label: 'First Words' },
@@ -299,7 +322,8 @@ const QuestionUpload = ({ onQuestionsUploaded }: QuestionUploadProps) => {
         setIsNewLesson(false);
         setSelectedLesson('');
       }
-
+      // Clear all form state after successful upload
+      clearForm();
     } catch (error) {
       console.error('Error in lesson handling:', error);
       // Fall back to original upload without lesson assignment

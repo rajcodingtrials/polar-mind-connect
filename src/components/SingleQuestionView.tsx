@@ -38,6 +38,8 @@ interface SingleQuestionViewProps {
   onSpeechDelayModeChange: (enabled: boolean) => void;
   comingFromCelebration?: boolean;
   showMicInput?: boolean;
+  amplifyMic?: boolean;
+  micGain?: number;
 }
 
 // Custom Microphone Icon component
@@ -63,7 +65,9 @@ const SingleQuestionView = ({
   onRetryCountChange,
   onSpeechDelayModeChange,
   comingFromCelebration = false,
-  showMicInput = false
+  showMicInput = false,
+  amplifyMic,
+  micGain
 }: SingleQuestionViewProps) => {
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(true);
   const [currentResponse, setCurrentResponse] = useState('');
@@ -83,7 +87,25 @@ const SingleQuestionView = ({
   
   const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist, callTTS } = useTTSSettings(therapistName);
   
-  const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
+  const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording, audioLevel, lastAudioBlob } = useAudioRecorder(amplifyMic ?? false, micGain ?? 1.0);
+  const [isPlayingBack, setIsPlayingBack] = useState(false);
+  const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
+
+  // Playback handler
+  const handlePlayback = () => {
+    if (lastAudioBlob) {
+      const url = URL.createObjectURL(lastAudioBlob);
+      if (audioPlaybackRef.current) {
+        audioPlaybackRef.current.src = url;
+        audioPlaybackRef.current.play();
+        setIsPlayingBack(true);
+        audioPlaybackRef.current.onended = () => {
+          setIsPlayingBack(false);
+          URL.revokeObjectURL(url);
+        };
+      }
+    }
+  };
   const { toast } = useToast();
   const mainContentRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
@@ -334,9 +356,10 @@ const SingleQuestionView = ({
         setIsUserInteracting(false);
       }, 500);
       
-    } else if (newRetryCount >= 2 && hasUserAttemptedAnswer && userAnswer.trim()) {
+    } else if (similarity <= acceptanceThreshold) {
       setIsAnswerCorrect(false);
-      // Generate and play sound feedback TTS (do not show on screen)
+      let feedbackForScreen = '';
+      // Generate and play sound feedback TTS (and show on screen)
       if (userAnswer && question.answer) {
         await soundFeedbackManager.initialize();
         const { targetSound, confidence } = soundFeedbackManager.detectTargetSound(question.answer);
@@ -350,6 +373,9 @@ const SingleQuestionView = ({
             correct_answer: question.answer
           }, 'instruction');
           if (feedback) {
+            feedbackForScreen = feedback;
+            setCurrentResponse(feedbackForScreen);
+            setShowFeedback(true);
             try {
               const { data, error } = await callTTS(feedback, ttsSettings.voice, ttsSettings.speed);
               if (data?.audioContent) {
@@ -359,81 +385,8 @@ const SingleQuestionView = ({
           }
         }
       }
-      
-      console.log(`🔄 Max retries reached (${newRetryCount}) with user answer: "${userAnswer}" and hasUserAttemptedAnswer: ${hasUserAttemptedAnswer} - moving to next question`);
-      console.log(`📊 Retry details: currentRetryCount=${retryCount}, newRetryCount=${newRetryCount}, threshold=2`);
-      onRetryCountChange(newRetryCount);
-      setCurrentResponse(`Good try, ${childName}! The correct answer is "${question.answer}". We'll practice that more later! 🌟`);
-      setShowFeedback(true);
-      
-      try {
-        console.log(`🔊 Playing final feedback with ${therapistName}'s voice: ${ttsSettings.voice}`);
-        stopGlobalAudio(); // Stop any previous audio
-        
-        const { data, error } = await callTTS(`Good try, ${childName}! The correct answer is "${question.answer}". We'll practice that more later!`, ttsSettings.voice, ttsSettings.speed);
-
-        if (data?.audioContent) {
-          await playGlobalTTS(data.audioContent, 'SingleQuestionView-Final');
-        }
-      } catch (error) {
-        console.error('TTS error:', error);
-      }
-
-      setTimeout(() => {
-        if (questionNumber < totalQuestions) {
-          onNextQuestion();
-        } else {
-          onComplete();
-        }
-        setIsProcessingAnswer(false);
-        setIsUserInteracting(false);
-      }, 1000);
-      
-    } else {
-      setIsAnswerCorrect(false);
-      // Generate and play sound feedback TTS (do not show on screen)
-      if (userAnswer && question.answer) {
-        await soundFeedbackManager.initialize();
-        const { targetSound, confidence } = soundFeedbackManager.detectTargetSound(question.answer);
-        if (targetSound && confidence > 0.6) {
-          const feedback = await soundFeedbackManager.generateSoundFeedback({
-            target_sound: targetSound.sound,
-            user_attempt: userAnswer,
-            therapistName,
-            childName,
-            question: question.question,
-            correct_answer: question.answer
-          }, 'instruction');
-          if (feedback) {
-            try {
-              const { data, error } = await callTTS(feedback, ttsSettings.voice, ttsSettings.speed);
-              if (data?.audioContent) {
-                await playGlobalTTS(data.audioContent, 'SoundFeedback-Incorrect');
-              }
-            } catch (e) { console.error('TTS error (sound feedback incorrect):', e); }
-          }
-        }
-      }
-      
-      console.log(`🔄 Retry attempt ${newRetryCount} - giving another chance`);
-      console.log(`📊 Retry details: currentRetryCount=${retryCount}, newRetryCount=${newRetryCount}, threshold=2, willSkip=${newRetryCount >= 2}`);
-      onRetryCountChange(newRetryCount);
-      setCurrentResponse(`Good try! The correct answer is "${question.answer}". Look at the picture carefully and try again! 🤔`);
-      setShowFeedback(true);
-      
-      try {
-        console.log(`🔊 Playing retry feedback with ${therapistName}'s voice: ${ttsSettings.voice}`);
-        stopGlobalAudio(); // Stop any previous audio
-        
-        const { data, error } = await callTTS(`Good try! The correct answer is "${question.answer}". Look carefully and try again!`, ttsSettings.voice, ttsSettings.speed);
-
-        if (data?.audioContent) {
-          await playGlobalTTS(data.audioContent, 'SingleQuestionView-Retry');
-        }
-      } catch (error) {
-        console.error('TTS error:', error);
-      }
-
+      // After feedback, proceed to retry or next logic
+      onRetryCountChange(retryCount + 1);
       setTimeout(() => {
         setShowFeedback(false);
         setIsWaitingForAnswer(true);
@@ -516,7 +469,7 @@ const SingleQuestionView = ({
 
         {/* Simplified Mic Input Display */}
         {showMicInput && (
-          <div className="mt-6 max-w-2xl mx-auto animate-fade-in">
+          <div className="mt-6 max-w-2xl mx-auto animate-fade-in mb-8">
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
                 <span className="text-sm font-semibold text-blue-600">Voice Input:</span>
@@ -549,20 +502,50 @@ const SingleQuestionView = ({
               >
                 <MicrophoneIcon isRecording={isRecording} size={64} />
               </button>
+              {/* Volume meter and playback only if amplification is on */}
+              {amplifyMic && (
+                <>
+                  {/* Volume Meter */}
+                  <div className="w-32 h-3 bg-gray-200 rounded-full mt-4 overflow-hidden">
+                    <div
+                      className="h-3 bg-blue-400 rounded-full transition-all duration-100"
+                      style={{ width: `${Math.min(100, Math.round(audioLevel * 100 * 2))}%` }}
+                    />
+                  </div>
+                  {/* Playback Button */}
+                  {lastAudioBlob && (
+                    <div className="mt-2">
+                      <button
+                        onClick={handlePlayback}
+                        disabled={isPlayingBack}
+                        className="px-4 py-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold shadow hover:from-purple-600 hover:to-blue-600 transition-all"
+                      >
+                        {isPlayingBack ? 'Playing...' : 'Play Back Recording'}
+                      </button>
+                      <audio ref={audioPlaybackRef} hidden />
+                    </div>
+                  )}
+                </>
+              )}
             
             <div className="mt-4 text-center">
-              <p className="text-blue-600 font-semibold text-lg">
-                {isRecording ? "🔴 Recording... Tap again to stop" : 
-                 isProcessing ? "🔄 Processing your voice..." :
-                 isPlaying ? "🎵 Playing..." :
-                 "Tap to answer"}
-              </p>
+              {isRecording ? (
+                <p className="text-blue-600 font-normal text-base mt-2">🔴 Recording... Tap again to stop</p>
+              ) : isProcessing ? (
+                <p className="text-blue-600 font-normal text-base mt-2">🔄 Processing your voice...</p>
+              ) : isPlaying ? (
+                <p className="text-blue-600 font-normal text-base mt-2">🎵 Playing...</p>
+              ) : null}
+              {/* Tap to answer styled and positioned below mic button */}
+              {!(isRecording || isProcessing || isPlaying) && (
+                <p className="text-blue-400 italic text-sm mt-2">Tap to answer</p>
+              )}
               {retryCount > 0 && (
                 <p className="text-sm text-purple-600 mt-2">
                   Attempt {retryCount + 1} of 2
                 </p>
               )}
-              </div>
+            </div>
             </div>
           </div>
         )}

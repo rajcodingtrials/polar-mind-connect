@@ -21,6 +21,8 @@ export type Database = {
           skip_introduction: boolean
           updated_at: string | null
           updated_by: string | null
+          amplify_mic: boolean
+          mic_gain: number
         }
         Insert: {
           id?: string
@@ -28,6 +30,8 @@ export type Database = {
           skip_introduction?: boolean
           updated_at?: string | null
           updated_by?: string | null
+          amplify_mic?: boolean
+          mic_gain?: number
         }
         Update: {
           id?: string
@@ -35,6 +39,8 @@ export type Database = {
           skip_introduction?: boolean
           updated_at?: string | null
           updated_by?: string | null
+          amplify_mic?: boolean
+          mic_gain?: number
         }
         Relationships: []
       }

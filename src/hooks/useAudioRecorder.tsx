@@ -1,14 +1,20 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-export const useAudioRecorder = () => {
+export const useAudioRecorder = (amplifyMic: boolean = false, micGain: number = 1.0) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [lastAudioBlob, setLastAudioBlob] = useState<Blob | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const stopPromiseRef = useRef<{ resolve: (value: string) => void; reject: (error: Error) => void } | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -18,6 +24,13 @@ export const useAudioRecorder = () => {
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
   }, []);
@@ -47,8 +60,27 @@ export const useAudioRecorder = () => {
       } else if (MediaRecorder.isTypeSupported('audio/webm')) {
         options.mimeType = 'audio/webm';
       }
-      
-      mediaRecorderRef.current = new MediaRecorder(stream, options);
+
+      // --- Amplification using GainNode ---
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = audioContext;
+      const source = audioContext.createMediaStreamSource(stream);
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = amplifyMic ? micGain : 1.0;
+      gainNodeRef.current = gainNode;
+      // Add analyser node for volume meter
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyserRef.current = analyser;
+      // Connect: source -> gain -> analyser -> destination
+      source.connect(gainNode);
+      gainNode.connect(analyser);
+      const destination = audioContext.createMediaStreamDestination();
+      analyser.connect(destination);
+      // Use destination.stream for MediaRecorder
+      const amplifiedStream = destination.stream;
+
+      mediaRecorderRef.current = new MediaRecorder(amplifiedStream, options);
       
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -58,6 +90,23 @@ export const useAudioRecorder = () => {
       
       mediaRecorderRef.current.onstart = () => {
         setIsRecording(true);
+        // Start volume meter animation
+        const updateVolume = () => {
+          if (analyserRef.current) {
+            const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+            analyserRef.current.getByteTimeDomainData(dataArray);
+            // Calculate RMS (root mean square) for volume
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+              const val = (dataArray[i] - 128) / 128;
+              sum += val * val;
+            }
+            const rms = Math.sqrt(sum / dataArray.length);
+            setAudioLevel(rms);
+          }
+          animationFrameRef.current = requestAnimationFrame(updateVolume);
+        };
+        updateVolume();
       };
       
       mediaRecorderRef.current.onerror = (event) => {
@@ -67,10 +116,16 @@ export const useAudioRecorder = () => {
           stopPromiseRef.current.reject(new Error('MediaRecorder error'));
           stopPromiseRef.current = null;
         }
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
       };
       
       mediaRecorderRef.current.onstop = async () => {
         setIsRecording(false);
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
         
         if (stopPromiseRef.current) {
           try {
@@ -81,6 +136,7 @@ export const useAudioRecorder = () => {
             
             const mimeType = chunksRef.current[0]?.type || 'audio/webm';
             const audioBlob = new Blob(chunksRef.current, { type: mimeType });
+            setLastAudioBlob(audioBlob);
             
             if (audioBlob.size === 0) {
               stopPromiseRef.current.reject(new Error('Empty audio recording'));
@@ -96,6 +152,10 @@ export const useAudioRecorder = () => {
                 if (streamRef.current) {
                   streamRef.current.getTracks().forEach(track => track.stop());
                   streamRef.current = null;
+                }
+                if (audioContextRef.current) {
+                  audioContextRef.current.close();
+                  audioContextRef.current = null;
                 }
                 
                 if (stopPromiseRef.current) {
@@ -139,6 +199,13 @@ export const useAudioRecorder = () => {
     } catch (error) {
       console.error('Error starting recording:', error);
       setIsRecording(false);
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       throw error;
     }
   }, []);
@@ -166,5 +233,7 @@ export const useAudioRecorder = () => {
     setIsProcessing,
     startRecording,
     stopRecording,
+    audioLevel,
+    lastAudioBlob,
   };
 };

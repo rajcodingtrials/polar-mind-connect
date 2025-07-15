@@ -10,11 +10,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@radix-ui/react-slider';
 import { useUserRole } from '../hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -60,7 +62,7 @@ const Admin = () => {
   }, []);
 
   // Update admin settings in Supabase
-  const updateSetting = async (key: 'skip_introduction' | 'show_mic_input', value: boolean) => {
+  const updateSetting = async (key: string, value: boolean | number) => {
     if (!adminSettings) return;
     setSettingsSaving(true);
     try {
@@ -86,6 +88,9 @@ const Admin = () => {
       setDefaultChatMode(savedMode);
     }
   }, []);
+
+  const [clearUploadForm, setClearUploadForm] = useState(false);
+  const [showCelebrationBlock, setShowCelebrationBlock] = useState(false);
 
   const handleQuestionsUploaded = async (questions: Question[], images: File[], questionType: string) => {
     try {
@@ -140,6 +145,9 @@ const Admin = () => {
       });
 
       console.log('Successfully uploaded to Supabase:', questions.length, 'questions,', images.length, 'images');
+      // Trigger clearing the upload form
+      setClearUploadForm(true);
+      setTimeout(() => setClearUploadForm(false), 100); // Reset trigger
     } catch (error) {
       console.error('Error uploading to Supabase:', error);
       toast({
@@ -281,6 +289,30 @@ const Admin = () => {
                   />
                   <Label htmlFor="show-mic-toggle" className="text-base">Show Mic Input on Question Screen</Label>
                 </div>
+                <div className="flex items-center gap-4">
+                  <Switch
+                    id="amplify-mic-toggle"
+                    checked={!!adminSettings.amplify_mic}
+                    onCheckedChange={v => updateSetting('amplify_mic', v)}
+                    disabled={settingsSaving}
+                  />
+                  <Label htmlFor="amplify-mic-toggle" className="text-base">Amplify Microphone Input</Label>
+                </div>
+                <div className="flex items-center gap-4 pl-8">
+                  <Label htmlFor="mic-gain-slider" className="text-base">Microphone Gain</Label>
+                  <input
+                    id="mic-gain-slider"
+                    type="range"
+                    min={1}
+                    max={5}
+                    step={0.1}
+                    value={adminSettings.mic_gain ?? 1.0}
+                    onChange={e => updateSetting('mic_gain', parseFloat(e.target.value))}
+                    disabled={!adminSettings.amplify_mic || settingsSaving}
+                    style={{ width: 200 }}
+                  />
+                  <span className="ml-2 text-blue-700 font-mono">{(adminSettings.mic_gain ?? 1.0).toFixed(1)}x</span>
+                </div>
               </>
             )}
           </div>
@@ -335,16 +367,21 @@ const Admin = () => {
 
           {/* Celebration Messages Management */}
           <Card>
-            <CardHeader>
-              <CardTitle>Celebration Messages</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between cursor-pointer select-none" onClick={() => setShowCelebrationBlock(v => !v)}>
+              <div className="flex items-center gap-2">
+                {showCelebrationBlock ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                <CardTitle>Celebration Messages</CardTitle>
+              </div>
             </CardHeader>
-            <CardContent>
-              <CelebrationMessageManager />
-            </CardContent>
+            {showCelebrationBlock && (
+              <CardContent>
+                <CelebrationMessageManager />
+              </CardContent>
+            )}
           </Card>
 
           {/* Upload Section */}
-          <QuestionUpload onQuestionsUploaded={handleQuestionsUploaded} />
+          <QuestionUpload onQuestionsUploaded={handleQuestionsUploaded} clearTrigger={clearUploadForm} />
         </div>
       </main>
     </div>

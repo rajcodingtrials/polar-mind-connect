@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { SkipForward, ChevronsRight } from 'lucide-react';
 
 import { supabase } from '@/integrations/supabase/client';
 import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
@@ -121,7 +122,21 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
   }, [isLoading, introMessage, isLoaded, ttsSettings, therapistName]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-6 animate-fade-in">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-6 animate-fade-in relative">
+      {/* Skip Button - Top Right Corner */}
+      <div className="absolute top-6 right-6 z-10">
+        <button
+          onClick={onStartQuestions}
+          className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white text-lg font-bold shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none"
+          title="Skip introduction"
+        >
+          <span>Skip</span>
+          <span className="flex items-center">
+            <ChevronsRight className="h-6 w-6 text-white" />
+          </span>
+        </button>
+      </div>
+
       <div className="flex-grow flex flex-col items-center justify-center max-w-4xl mx-auto">
         {/* Therapist Avatar */}
         <div className="mb-8 animate-scale-in">

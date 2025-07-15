@@ -60,7 +60,7 @@ const OpenAIChatPage = () => {
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
   
   // Admin settings state
-  const [adminSettings, setAdminSettings] = useState<{ skip_introduction: boolean; show_mic_input: boolean } | null>(null);
+  const [adminSettings, setAdminSettings] = useState<{ skip_introduction: boolean; show_mic_input: boolean; amplify_mic: boolean; mic_gain: number } | null>(null);
   const [adminSettingsLoading, setAdminSettingsLoading] = useState(true);
 
   // Fetch admin settings on mount
@@ -70,13 +70,13 @@ const OpenAIChatPage = () => {
       try {
         const { data, error } = await supabase
           .from('admin_settings')
-          .select('skip_introduction, show_mic_input')
+          .select('skip_introduction, show_mic_input, amplify_mic, mic_gain')
           .limit(1)
           .single();
         if (error) throw error;
         setAdminSettings(data);
       } catch (err) {
-        setAdminSettings({ skip_introduction: false, show_mic_input: false });
+        setAdminSettings({ skip_introduction: false, show_mic_input: false, amplify_mic: false, mic_gain: 1.0 });
       } finally {
         setAdminSettingsLoading(false);
       }
@@ -806,6 +806,8 @@ const OpenAIChatPage = () => {
               onSpeechDelayModeChange={setSpeechDelayMode}
               comingFromCelebration={comingFromCelebration}
               showMicInput={!!(adminSettings && adminSettings.show_mic_input)}
+              amplifyMic={!!(adminSettings && adminSettings.amplify_mic)}
+              micGain={adminSettings?.mic_gain ?? 1.0}
             />
           )}
 
