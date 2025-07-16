@@ -11,6 +11,8 @@ import { getCelebrationMessage, calculateProgressLevel } from '@/utils/celebrati
 import SoundFeedbackDisplay from './SoundFeedbackDisplay';
 import { soundFeedbackManager } from '@/utils/soundFeedback';
 import type { Database } from '@/integrations/supabase/types';
+import AnimatedMicButton from './AnimatedMicButton';
+import { Clock } from 'lucide-react';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -413,16 +415,18 @@ const SingleQuestionView = ({
         </div>
 
         <div className="flex items-center gap-6">
-          <Button
-            variant="outline"
-            size="lg"
+          <button
             onClick={() => onSpeechDelayModeChange(!speechDelayMode)}
-            className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm px-6 py-3 text-lg font-semibold transition-all ${
-              speechDelayMode ? "bg-purple-200 border-purple-400 text-purple-800" : "bg-white"
-            }`}
+            className={`flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition`}
+            title={speechDelayMode ? 'Speech Delay: ON' : 'Speech Delay: OFF'}
+            aria-label="Toggle Speech Delay Mode"
           >
-            Speech Delay Mode: {speechDelayMode ? "ON" : "OFF"}
-          </Button>
+            <Clock className="w-5 h-5" />
+            <span>Speech Delay</span>
+            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${speechDelayMode ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+              {speechDelayMode ? 'ON' : 'OFF'}
+            </span>
+          </button>
           
           <div className="text-center">
             <p className="text-xl font-bold text-purple-800">
@@ -491,41 +495,23 @@ const SingleQuestionView = ({
         {isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
           <div className="text-center animate-fade-in">
             <div className="flex flex-col items-center">
-              <button
-              onClick={handleVoiceRecording}
-              disabled={isProcessing || isPlaying || isProcessingAnswer}
-                className={`w-32 h-32 rounded-full border-4 shadow-xl transition-all duration-300 flex items-center justify-center ${
-                  isRecording 
-                    ? 'bg-red-300 border-red-200 text-white transform scale-105' 
-                    : 'bg-blue-100 hover:bg-blue-200 border-blue-200 text-blue-600 hover:scale-105'
-                } ${(isProcessing || isPlaying || isProcessingAnswer) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                <MicrophoneIcon isRecording={isRecording} size={64} />
-              </button>
-              {/* Volume meter and playback only if amplification is on */}
-              {amplifyMic && (
-                <>
-                  {/* Volume Meter */}
-                  <div className="w-32 h-3 bg-gray-200 rounded-full mt-4 overflow-hidden">
-                    <div
-                      className="h-3 bg-blue-400 rounded-full transition-all duration-100"
-                      style={{ width: `${Math.min(100, Math.round(audioLevel * 100 * 2))}%` }}
-                    />
-                  </div>
-                  {/* Playback Button */}
-                  {lastAudioBlob && (
-                    <div className="mt-2">
-                      <button
-                        onClick={handlePlayback}
-                        disabled={isPlayingBack}
-                        className="px-4 py-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold shadow hover:from-purple-600 hover:to-blue-600 transition-all"
-                      >
-                        {isPlayingBack ? 'Playing...' : 'Play Back Recording'}
-                      </button>
-                      <audio ref={audioPlaybackRef} hidden />
-                    </div>
-                  )}
-                </>
+              <AnimatedMicButton
+                isRecording={isRecording}
+                onClick={handleVoiceRecording}
+                audioLevel={audioLevel}
+                label={isRecording ? 'Recording...' : ''}
+              />
+              {amplifyMic && lastAudioBlob && (
+                <div className="mt-2">
+                  <button
+                    onClick={handlePlayback}
+                    disabled={isPlayingBack}
+                    className="px-4 py-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold shadow hover:from-purple-600 hover:to-blue-600 transition-all"
+                  >
+                    {isPlayingBack ? 'Playing...' : 'Play Back Recording'}
+                  </button>
+                  <audio ref={audioPlaybackRef} hidden />
+                </div>
               )}
             
             <div className="mt-4 text-center">
@@ -538,7 +524,7 @@ const SingleQuestionView = ({
               ) : null}
               {/* Tap to answer styled and positioned below mic button */}
               {!(isRecording || isProcessing || isPlaying) && (
-                <p className="text-blue-400 italic text-sm mt-2">Tap to answer</p>
+                <p className="text-blue-400 italic text-base mt-2">Tap to answer</p>
               )}
               {retryCount > 0 && (
                 <p className="text-sm text-purple-600 mt-2">
@@ -553,5 +539,24 @@ const SingleQuestionView = ({
     </div>
   );
 };
+
+// Floating Action Button for Speech Delay Toggle
+const SpeechDelayFAB = ({ speechDelayMode, onToggle }: { speechDelayMode: boolean; onToggle: () => void }) => (
+  <div className="fixed bottom-8 right-8 z-50 flex flex-col items-center">
+    <button
+      onClick={onToggle}
+      className={`w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-all duration-200
+        bg-gradient-to-br from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white
+        hover:scale-105 active:scale-95 focus:outline-none`}
+      title={speechDelayMode ? 'Speech Delay: ON' : 'Speech Delay: OFF'}
+      aria-label="Toggle Speech Delay Mode"
+    >
+      <Clock className="w-8 h-8" />
+    </button>
+    <span className="mt-2 text-xs font-medium text-blue-700 bg-white/80 px-2 py-1 rounded shadow">
+      Speech Delay
+    </span>
+  </div>
+);
 
 export default SingleQuestionView;
