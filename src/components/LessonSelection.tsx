@@ -256,7 +256,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
             const IconComponent = BookOpen;
             return (
               <div
-                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[340px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-300 select-none ${
+                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[420px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-300 select-none ${
                   selectedLesson === 'all' ? 'ring-4 ring-purple-300' : ''
                 }`}
                 onClick={() => handleLessonSelect('all')}
@@ -266,14 +266,12 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
                     <IconComponent className={`w-8 h-8 ${color.iconColor}`} />
                   </div>
                   <h3 className="font-bold text-xl mb-2">Practice All Questions</h3>
-                  <p className="text-sm opacity-90 leading-relaxed mb-2">
+                  <p className="text-sm opacity-90 leading-relaxed mb-2 mt-4">
                     Practice with all available questions for this activity type
                   </p>
                 </div>
                 <div className="w-full flex flex-col items-center gap-2 mt-2">
-                  <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm">
-                    Mixed difficulty levels
-                  </span>
+                  {/* Removed question count and difficulty info */}
                 </div>
               </div>
             );
@@ -287,7 +285,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
             return (
               <div
                 key={lesson.id}
-                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[340px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-300 select-none ${
+                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[420px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-300 select-none ${
                   selectedLesson === lesson.id ? 'ring-4 ring-purple-300' : ''
                 }`}
                 onClick={() => handleLessonSelect(lesson.id)}
@@ -298,18 +296,13 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
                   </div>
                   <h3 className="font-bold text-xl mb-2">{lesson.name}</h3>
                   {lesson.description && (
-                    <p className="text-sm opacity-90 leading-relaxed mb-2">
+                    <p className="text-sm opacity-90 leading-relaxed mb-2 mt-4">
                       {lesson.description}
                     </p>
                   )}
                 </div>
                 <div className="w-full flex flex-col items-center gap-2 mt-2">
-                  <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm">
-                    {questionCounts[lesson.id] || 0} questions
-                  </span>
-                  <span className={`bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium shadow-sm ${difficultyColors[lesson.difficulty_level as keyof typeof difficultyColors]}`}> 
-                    {difficultyIcons[lesson.difficulty_level as keyof typeof difficultyIcons]} {lesson.difficulty_level}
-                  </span>
+                  {/* Removed question count and difficulty info */}
                 </div>
               </div>
             );

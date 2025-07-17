@@ -570,7 +570,7 @@ const OpenAIChatPage = () => {
                       return (
                         <div
                           key={`selected-${selectedType.value}`}
-                          className={`${selectedType.color} ${selectedType.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[250px] flex flex-col justify-between shadow-2xl border-white scale-105 w-80 ring-4 ring-blue-300`}
+                          className={`${selectedType.color} ${selectedType.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[360px] flex flex-col justify-between shadow-2xl border-white scale-105 w-80 ring-4 ring-blue-300`}
                           onClick={() => handleActivityClick(selectedType.value)}
                         >
                           <div className="flex flex-col items-center text-center">
@@ -578,27 +578,10 @@ const OpenAIChatPage = () => {
                               <IconComponent className={`w-8 h-8 ${selectedType.textColor}`} />
                             </div>
                             <h3 className="font-bold text-xl mb-3">{selectedType.label} ✨</h3>
-                            <p className="text-sm opacity-90 leading-relaxed">{selectedType.description}</p>
+                            <p className="text-sm opacity-90 leading-relaxed mt-4">{selectedType.description}</p>
                           </div>
                           
-                          {questionsOfType > 0 ? (
-                            <div className="mt-4 text-center space-y-1">
-                              <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm block">
-                                🎯 {questionsOfType} questions ready!
-                              </span>
-                              {lessonsOfType > 0 && (
-                                <span className="bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium shadow-sm block">
-                                  📚 Organized in lessons
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="mt-4 text-center">
-                              <span className="bg-white bg-opacity-60 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
-                                ✨ AI-generated content
-                              </span>
-                            </div>
-                          )}
+                          {/* Remove question/lesson/AI info from activity card */}
                         </div>
                       );
                     })()}
@@ -615,7 +598,7 @@ const OpenAIChatPage = () => {
                         return (
                           <div
                             key={type.value}
-                            className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[250px] flex flex-col justify-between ${
+                            className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[360px] flex flex-col justify-between ${
                               isOtherHovered 
                                 ? 'opacity-40 scale-95' 
                                 : 'hover:shadow-xl hover:scale-105 hover:border-white'
@@ -627,27 +610,10 @@ const OpenAIChatPage = () => {
                                 <IconComponent className={`w-8 h-8 ${type.textColor}`} />
                               </div>
                               <h3 className="font-bold text-xl mb-3">{type.label}</h3>
-                              <p className="text-sm opacity-90 leading-relaxed">{type.description}</p>
+                              <p className="text-sm opacity-90 leading-relaxed mt-4">{type.description}</p>
                             </div>
                             
-                            {questionsOfType > 0 ? (
-                              <div className="mt-4 text-center space-y-1">
-                                <span className="bg-white bg-opacity-90 px-4 py-2 rounded-full text-sm font-semibold shadow-sm block">
-                                  🎯 {questionsOfType} questions ready!
-                                </span>
-                                {lessonsOfType > 0 && (
-                                  <span className="bg-white bg-opacity-80 px-3 py-1 rounded-full text-xs font-medium shadow-sm block">
-                                    📚 Organized in lessons
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="mt-4 text-center">
-                                <span className="bg-white bg-opacity-60 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
-                                  ✨ AI-generated content
-                                </span>
-                              </div>
-                            )}
+                            {/* Remove question/lesson/AI info from activity card */}
                           </div>
                         );
                       })}
