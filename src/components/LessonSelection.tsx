@@ -256,7 +256,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
             const IconComponent = BookOpen;
             return (
               <div
-                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[420px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-700 select-none ${
+                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[420px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-[1.2s] select-none ${
                   selectedLesson === 'all' ? 'ring-4 ring-purple-300' : ''
                 }`}
                 onClick={() => handleLessonSelect('all')}
@@ -285,7 +285,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
             return (
               <div
                 key={lesson.id}
-                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[420px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-700 select-none ${
+                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[420px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-[1.2s] select-none ${
                   selectedLesson === lesson.id ? 'ring-4 ring-purple-300' : ''
                 }`}
                 onClick={() => handleLessonSelect(lesson.id)}
