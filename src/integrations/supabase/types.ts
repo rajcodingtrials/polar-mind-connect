@@ -16,31 +16,31 @@ export type Database = {
     Tables: {
       admin_settings: {
         Row: {
+          amplify_mic: boolean
           id: string
+          mic_gain: number
           show_mic_input: boolean
           skip_introduction: boolean
           updated_at: string | null
           updated_by: string | null
-          amplify_mic: boolean
-          mic_gain: number
         }
         Insert: {
+          amplify_mic?: boolean
           id?: string
+          mic_gain?: number
           show_mic_input?: boolean
           skip_introduction?: boolean
           updated_at?: string | null
           updated_by?: string | null
-          amplify_mic?: boolean
-          mic_gain?: number
         }
         Update: {
+          amplify_mic?: boolean
           id?: string
+          mic_gain?: number
           show_mic_input?: boolean
           skip_introduction?: boolean
           updated_at?: string | null
           updated_by?: string | null
-          amplify_mic?: boolean
-          mic_gain?: number
         }
         Relationships: []
       }
