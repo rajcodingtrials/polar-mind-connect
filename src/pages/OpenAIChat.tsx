@@ -63,6 +63,11 @@ const OpenAIChatPage = () => {
   const [adminSettings, setAdminSettings] = useState<{ skip_introduction: boolean; show_mic_input: boolean; amplify_mic: boolean; mic_gain: number } | null>(null);
   const [adminSettingsLoading, setAdminSettingsLoading] = useState(true);
 
+  // State for reward video and confetti
+  const [showRewardVideo, setShowRewardVideo] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [hasPlayedChime, setHasPlayedChime] = useState(false);
+
   // Fetch admin settings on mount
   useEffect(() => {
     const fetchSettings = async () => {
@@ -247,6 +252,26 @@ const OpenAIChatPage = () => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  useEffect(() => {
+    if (currentScreen === 'complete' && !showRewardVideo) {
+      // Show cartoon for 2.5s, then show video
+      const timer = setTimeout(() => {
+        setShowRewardVideo(true);
+        setShowConfetti(true);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentScreen, showRewardVideo]);
+
+  useEffect(() => {
+    if (showRewardVideo && !hasPlayedChime) {
+      const confettiSound = "https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa1c82.mp3";
+      const audio = new Audio(confettiSound);
+      audio.play();
+      setHasPlayedChime(true);
+    }
+  }, [showRewardVideo, hasPlayedChime]);
 
   const handleLauraClick = () => {
     setTherapistName('Laura');
@@ -809,21 +834,88 @@ const OpenAIChatPage = () => {
 
           {/* Complete Session with Progress Character */}
           {currentScreen === 'complete' && (
-            <div className="flex flex-col items-center justify-center min-h-[80vh]">
-              <ProgressCharacter 
-                correctAnswers={correctAnswers}
-                totalQuestions={Math.min(maxQuestionsPerSession, availableQuestions.length)}
-                questionType={selectedQuestionType}
-              />
-              <div className="mt-8">
-                <Button
-                  onClick={handleCompleteSession}
-                  size="lg"
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
-                >
-                  Continue Learning! 🚀
-                </Button>
-              </div>
+            <div className="flex flex-col items-center justify-center min-h-[80vh] relative">
+              {/* Step 1: Show cartoon/progress character celebration */}
+              {!showRewardVideo && (
+                <div className="fade-in-out">
+                  <ProgressCharacter 
+                    correctAnswers={correctAnswers}
+                    totalQuestions={Math.min(maxQuestionsPerSession, availableQuestions.length)}
+                    questionType={selectedQuestionType}
+                  />
+                  <div className="text-2xl font-bold mt-6 mb-2 text-emerald-600 animate-pulse">You did it!</div>
+                  {/* Optionally, reuse confetti from MiniCelebration */}
+                  {showConfetti && (
+                    <div className="fixed inset-0 pointer-events-none z-50">
+                      {Array.from({ length: 30 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="absolute w-2 h-2 opacity-90"
+                          style={{
+                            left: `${40 + Math.random() * 20}%`,
+                            top: `${30 + Math.random() * 20}%`,
+                            backgroundColor: ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#F59E0B', '#FBBF24'][Math.floor(Math.random() * 6)],
+                            animation: `mini-confetti-fall ${1.5 + Math.random() * 1}s linear forwards`,
+                            animationDelay: `${Math.random() * 0.5}s`,
+                            transform: `rotate(${Math.random() * 360}deg)`,
+                            borderRadius: Math.random() > 0.5 ? '50%' : '0%'
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <style>{`
+                    @keyframes mini-confetti-fall {
+                      0% {
+                        transform: translateY(-20px) rotate(0deg) scale(1);
+                        opacity: 1;
+                      }
+                      100% {
+                        transform: translateY(100px) rotate(360deg) scale(0.5);
+                        opacity: 0;
+                      }
+                    }
+                  `}</style>
+                </div>
+              )}
+              {/* Step 2: Fade in video reward with confetti and chime */}
+              {showRewardVideo && (() => {
+                const selectedLesson = lessons.find(lesson => lesson.id === selectedLessonId);
+                if (selectedLesson?.youtube_video_id) {
+                  return (
+                    <div className="fade-in flex flex-col items-center">
+                      <h3 className="text-2xl font-bold mb-4">🎵 Surprise! Here’s a special song as your reward!</h3>
+                      <iframe
+                        width="800"
+                        height="450"
+                        src={`https://www.youtube.com/embed/${selectedLesson.youtube_video_id}?autoplay=1&rel=0`}
+                        title="Lesson Song"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="rounded-lg shadow-lg"
+                      />
+                      <div className="flex gap-6 mt-6">
+                        <Button
+                          onClick={handleCompleteSession}
+                          size="lg"
+                          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
+                        >
+                          Continue Learning! 🚀
+                        </Button>
+                        <Button
+                          onClick={handleCompleteSession}
+                          size="lg"
+                          variant="outline"
+                          className="px-8 py-4 text-lg font-bold rounded-full shadow-xl border-2 border-blue-400 hover:bg-blue-50"
+                        >
+                          Skip Video
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           )}
         </div>
