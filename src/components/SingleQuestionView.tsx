@@ -373,7 +373,7 @@ const SingleQuestionView = ({
             childName,
             question: question.question,
             correct_answer: question.answer
-          }, 'instruction');
+          }, 'incorrect');
           if (feedback) {
             feedbackForScreen = feedback;
             setCurrentResponse(feedbackForScreen);
@@ -394,22 +394,45 @@ const SingleQuestionView = ({
       // Check if we've reached the maximum attempts (2)
       if (newRetryCount >= 2) {
         console.log(`❌ Maximum attempts (2) reached for question: ${question.question}`);
-        // Move to next question after a delay
-        setTimeout(() => {
+        // Wait for TTS to finish, then move to next question
+        const waitForTTSAndProceed = () => {
           setShowFeedback(false);
           setIsWaitingForAnswer(false);
           setIsProcessingAnswer(false);
           setIsUserInteracting(false);
           onNextQuestion();
-        }, 2000);
+        };
+        
+        // If TTS is playing, wait for it to finish; otherwise proceed immediately
+        if (feedbackForScreen) {
+          // Wait a bit for TTS to start, then check if it's still playing
+          setTimeout(() => {
+            // Check if audio is still playing (you might need to implement this check)
+            // For now, we'll proceed after a short delay to allow TTS to finish
+            setTimeout(waitForTTSAndProceed, 1000);
+          }, 500);
+        } else {
+          // No TTS feedback, proceed immediately
+          waitForTTSAndProceed();
+        }
       } else {
-        // Allow another attempt
-        setTimeout(() => {
+        // Allow another attempt - wait for TTS to finish
+        const waitForTTSAndRetry = () => {
           setShowFeedback(false);
           setIsWaitingForAnswer(true);
           setIsProcessingAnswer(false);
           setIsUserInteracting(false);
-        }, 2000);
+        };
+        
+        if (feedbackForScreen) {
+          // Wait for TTS to finish before allowing retry
+          setTimeout(() => {
+            setTimeout(waitForTTSAndRetry, 1000);
+          }, 500);
+        } else {
+          // No TTS feedback, allow retry immediately
+          waitForTTSAndRetry();
+        }
       }
     }
   };

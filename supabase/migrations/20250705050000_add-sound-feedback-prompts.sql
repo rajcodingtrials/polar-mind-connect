@@ -30,7 +30,7 @@ Your response should:
 - Keep it brief (2-3 sentences)
 - Use emojis to keep it positive
 
-Example: "Great trying! I heard you say ''{user_attempt}'. Let''s practice the ''{target_sound}'' sound together. Try saying it like this: [simple instruction] 🎯"
+Example: "Great trying! I heard you say ''{user_attempt}'. The ''{target_sound}'' sound is made like this: [simple instruction] 🎯"
 
 Remember: Focus on encouragement and simple, actionable guidance. Never make the child feel bad about their attempt.'),
 

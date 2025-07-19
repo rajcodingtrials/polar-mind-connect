@@ -33,9 +33,9 @@ Your response should:
 - Keep it brief (2-3 sentences)
 - Use emojis to keep it positive
 
-Example: "Great trying! The answer is ''{correct_answer}''. Let''s practice the ''{target_sound}'' sound in that word. Try saying it like this: [simple instruction] 🎯"
+Example: "Great trying! The answer is ''{correct_answer}''. The ''{target_sound}'' sound in that word is made like this: [simple instruction] 🎯"
 
-Remember: Focus on helping them say the correct answer with proper pronunciation, not just the sound in isolation.'
+Remember: Focus on helping them say the correct answer with proper pronunciation, not just the sound in isolation. Be encouraging and provide clear, simple guidance.'
 WHERE prompt_type = 'sound_feedback_instruction';
 
 -- Update encouragement to be more context-aware
