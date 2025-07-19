@@ -38,6 +38,8 @@ interface SingleQuestionViewProps {
   retryCount: number;
   onRetryCountChange: (count: number) => void;
   onSpeechDelayModeChange: (enabled: boolean) => void;
+  onAmplifyMicChange?: (enabled: boolean) => void;
+  onMicGainChange?: (gain: number) => void;
   comingFromCelebration?: boolean;
   showMicInput?: boolean;
   amplifyMic?: boolean;
@@ -66,6 +68,8 @@ const SingleQuestionView = ({
   retryCount,
   onRetryCountChange,
   onSpeechDelayModeChange,
+  onAmplifyMicChange,
+  onMicGainChange,
   comingFromCelebration = false,
   showMicInput = false,
   amplifyMic,
@@ -466,6 +470,57 @@ const SingleQuestionView = ({
               {speechDelayMode ? 'ON' : 'OFF'}
             </span>
           </button>
+
+          {/* Mic Amplification Control */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                const newAmplifyMic = !amplifyMic;
+                if (onAmplifyMicChange) {
+                  onAmplifyMicChange(newAmplifyMic);
+                }
+              }}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition`}
+              title={amplifyMic ? 'Mic Amplification: ON' : 'Mic Amplification: OFF'}
+              aria-label="Toggle Mic Amplification"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+              <span>Mic Boost</span>
+              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${amplifyMic ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                {amplifyMic ? 'ON' : 'OFF'}
+              </span>
+            </button>
+
+            {/* Mic Gain Slider - only show when amplification is on */}
+            {amplifyMic && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-blue-700">Gain:</span>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="0.5"
+                  value={micGain || 1}
+                  onChange={(e) => {
+                    const newGain = parseFloat(e.target.value);
+                    if (onMicGainChange) {
+                      onMicGainChange(newGain);
+                    }
+                  }}
+                  className="w-20 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer slider"
+                  style={{
+                    background: 'linear-gradient(to right, #93c5fd 0%, #93c5fd 50%, #dbeafe 50%, #dbeafe 100%)'
+                  }}
+                  title={`Mic Gain: ${micGain || 1}x`}
+                />
+                <span className="text-xs font-medium text-blue-700 w-8">
+                  {micGain || 1}x
+                </span>
+              </div>
+            )}
+          </div>
           
           <div className="text-center">
             <p className="text-xl font-bold text-purple-800">
@@ -540,6 +595,7 @@ const SingleQuestionView = ({
                 audioLevel={audioLevel}
                 label={isRecording ? 'Recording...' : ''}
               />
+
               {amplifyMic && lastAudioBlob && (
                 <div className="mt-2">
                   <button
@@ -571,6 +627,23 @@ const SingleQuestionView = ({
                 </p>
               )}
             </div>
+            </div>
+          </div>
+        )}
+
+        {/* Processing State - Show when processing answer but no feedback yet */}
+        {isProcessingAnswer && !showFeedback && (
+          <div className="text-center animate-fade-in">
+            <div className="flex flex-col items-center">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 flex items-center justify-center mb-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+              <p className="text-blue-600 font-normal text-lg">🔄 Processing your answer...</p>
+              {lastMicInput && (
+                <p className="text-gray-600 text-sm mt-2 italic">
+                  "I heard: {lastMicInput}"
+                </p>
+              )}
             </div>
           </div>
         )}

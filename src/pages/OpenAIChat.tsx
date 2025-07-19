@@ -68,6 +68,10 @@ const OpenAIChatPage = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [hasPlayedChime, setHasPlayedChime] = useState(false);
 
+  // Local mic amplification state (overrides admin settings)
+  const [localAmplifyMic, setLocalAmplifyMic] = useState(false);
+  const [localMicGain, setLocalMicGain] = useState(1.0);
+
   // Fetch admin settings on mount
   useEffect(() => {
     const fetchSettings = async () => {
@@ -492,6 +496,15 @@ const OpenAIChatPage = () => {
     setShowLessonsPanel(false);
   };
 
+  // Mic amplification handlers
+  const handleAmplifyMicChange = (enabled: boolean) => {
+    setLocalAmplifyMic(enabled);
+  };
+
+  const handleMicGainChange = (gain: number) => {
+    setLocalMicGain(gain);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
@@ -816,10 +829,12 @@ const OpenAIChatPage = () => {
               retryCount={retryCount}
               onRetryCountChange={setRetryCount}
               onSpeechDelayModeChange={setSpeechDelayMode}
+              onAmplifyMicChange={handleAmplifyMicChange}
+              onMicGainChange={handleMicGainChange}
               comingFromCelebration={comingFromCelebration}
               showMicInput={!!(adminSettings && adminSettings.show_mic_input)}
-              amplifyMic={!!(adminSettings && adminSettings.amplify_mic)}
-              micGain={adminSettings?.mic_gain ?? 1.0}
+              amplifyMic={localAmplifyMic}
+              micGain={localMicGain}
             />
           )}
 
