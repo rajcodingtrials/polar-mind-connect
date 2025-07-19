@@ -388,13 +388,29 @@ const SingleQuestionView = ({
         }
       }
       // After feedback, proceed to retry or next logic
-      onRetryCountChange(retryCount + 1);
-      setTimeout(() => {
-        setShowFeedback(false);
-        setIsWaitingForAnswer(true);
-        setIsProcessingAnswer(false);
-        setIsUserInteracting(false);
-      }, 2000);
+      const newRetryCount = retryCount + 1;
+      onRetryCountChange(newRetryCount);
+      
+      // Check if we've reached the maximum attempts (2)
+      if (newRetryCount >= 2) {
+        console.log(`❌ Maximum attempts (2) reached for question: ${question.question}`);
+        // Move to next question after a delay
+        setTimeout(() => {
+          setShowFeedback(false);
+          setIsWaitingForAnswer(false);
+          setIsProcessingAnswer(false);
+          setIsUserInteracting(false);
+          onNextQuestion();
+        }, 2000);
+      } else {
+        // Allow another attempt
+        setTimeout(() => {
+          setShowFeedback(false);
+          setIsWaitingForAnswer(true);
+          setIsProcessingAnswer(false);
+          setIsUserInteracting(false);
+        }, 2000);
+      }
     }
   };
 
