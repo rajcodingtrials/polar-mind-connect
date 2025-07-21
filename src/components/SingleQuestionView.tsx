@@ -395,9 +395,9 @@ const SingleQuestionView = ({
       const newRetryCount = retryCount + 1;
       onRetryCountChange(newRetryCount);
       
-      // Check if we've reached the maximum attempts (2)
-      if (newRetryCount >= 2) {
-        console.log(`❌ Maximum attempts (2) reached for question: ${question.question}`);
+      // Check if we've reached the maximum attempts (1)
+      if (newRetryCount >= 1) {
+        console.log(`❌ Maximum attempts (1) reached for question: ${question.question}`);
         // Wait for TTS to finish, then move to next question
         const waitForTTSAndProceed = () => {
           setShowFeedback(false);
