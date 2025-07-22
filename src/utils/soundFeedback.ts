@@ -158,7 +158,14 @@ export class SoundFeedbackManager {
     if (!this.soundConfig) return null;
 
     const sound = this.soundConfig.sounds.find(s => s.sound === targetSound);
-    return sound?.instruction || null;
+    if (!sound) return null;
+    const { instruction } = sound;
+    if (Array.isArray(instruction)) {
+      // Randomly select one instruction from the array
+      const idx = Math.floor(Math.random() * instruction.length);
+      return instruction[idx];
+    }
+    return instruction || null;
   }
 
   getSoundEmoji(targetSound: string): string | null {

@@ -49,7 +49,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
           body: {
             messages: [{
               role: 'user',
-              content: `Create a warm, encouraging introduction for ${childName} starting a ${activityName} activity. Keep it short (2-3 sentences), friendly, and exciting for a child. End with something like "Let's begin!" or "Are you ready?"`
+              content: `Create a warm, encouraging introduction for ${childName} starting a ${activityName} activity. The first sentence MUST start with "Hello, ${childName}!" or "Hi, ${childName}!" Keep it short (2-3 sentences), friendly, and exciting for a child. End with something like "Let's begin!" or "Are you ready?"`
             }],
             activityType: selectedQuestionType,
             customInstructions: `You are ${therapistName}, a warm and encouraging AI speech therapy assistant. Speak directly to ${childName} in a friendly, upbeat tone.`,
