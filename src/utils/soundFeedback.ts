@@ -55,7 +55,8 @@ export class SoundFeedbackManager {
           'sound_feedback_correct',
           'sound_feedback_incorrect',
           'sound_feedback_encouragement',
-          'sound_feedback_instruction'
+          'sound_feedback_instruction',
+          'sound_feedback_correct_speech_delay' // <-- Added new prompt type
         ])
         .eq('is_active', true);
 
@@ -110,10 +111,12 @@ export class SoundFeedbackManager {
 
   async generateSoundFeedback(
     context: SoundFeedbackContext,
-    feedbackType: 'correct' | 'incorrect' | 'encouragement' | 'instruction'
+    feedbackType: 'correct' | 'incorrect' | 'encouragement' | 'instruction' | 'correct_speech_delay'
   ): Promise<string | null> {
     try {
-      const promptKey = `sound_feedback_${feedbackType}`;
+      const promptKey = feedbackType === 'correct_speech_delay'
+        ? 'sound_feedback_correct_speech_delay'
+        : `sound_feedback_${feedbackType}`;
       const basePrompt = this.feedbackPrompts[promptKey];
 
       if (!basePrompt) {

@@ -296,14 +296,16 @@ const SingleQuestionView = ({
         console.log('[TTS DEBUG] Detected target sound:', targetSound, 'Confidence:', confidence);
         if (targetSound && confidence > 0.6) {
           console.log('[DEBUG] Generating sound feedback prompt at', new Date().toISOString());
+          // Use the new prompt type for speech delay mode
+          const feedbackType = speechDelayMode ? 'correct_speech_delay' : 'correct';
           const feedback = await soundFeedbackManager.generateSoundFeedback({
-            target_sound: targetSound.sound,
+            target_sound: question.answer, // Always use the target answer for the instruction tip
             user_attempt: userAnswer,
             therapistName,
             childName,
             question: question.question,
             correct_answer: question.answer
-          }, 'correct');
+          }, feedbackType);
           console.log('[DEBUG] Sound feedback prompt generated at', new Date().toISOString());
           console.log('[TTS DEBUG] Generated feedback:', feedback);
           if (feedback) {
