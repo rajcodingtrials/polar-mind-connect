@@ -175,11 +175,11 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name">First Name</Label>
                   <Input
                     id="name"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder="Enter your first name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required

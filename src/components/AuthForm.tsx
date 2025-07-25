@@ -8,7 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 
 const AuthForm = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -20,7 +20,7 @@ const AuthForm = () => {
     setIsLoading(true);
     
     try {
-      const result = await login(username, password);
+      const result = await login(email, password);
       
       if (!result.error) {
         // Successfully logged in, navigate to home and scroll to top
@@ -52,12 +52,13 @@ const AuthForm = () => {
       <CardContent className="pb-2">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="username"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
