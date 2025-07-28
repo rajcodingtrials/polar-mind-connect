@@ -120,6 +120,7 @@ export type Database = {
           name: string
           question_type: Database["public"]["Enums"]["question_type_enum"]
           updated_at: string | null
+          youtube_video_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -130,6 +131,7 @@ export type Database = {
           name: string
           question_type: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string | null
+          youtube_video_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -140,6 +142,7 @@ export type Database = {
           name?: string
           question_type?: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string | null
+          youtube_video_id?: string | null
         }
         Relationships: []
       }
@@ -149,6 +152,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          speech_delay_mode: boolean
           updated_at: string
           username: string
         }
@@ -157,6 +161,7 @@ export type Database = {
           created_at?: string
           id: string
           name: string
+          speech_delay_mode?: boolean
           updated_at?: string
           username: string
         }
@@ -165,6 +170,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          speech_delay_mode?: boolean
           updated_at?: string
           username?: string
         }

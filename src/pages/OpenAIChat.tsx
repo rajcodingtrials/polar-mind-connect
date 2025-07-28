@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useUserPreferences } from '../hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
@@ -33,6 +34,7 @@ interface Question {
 
 const OpenAIChatPage = () => {
   const { profile } = useUserProfile();
+  const { preferences, updateSpeechDelayMode } = useUserPreferences();
   const [showChat, setShowChat] = useState(false);
   const [showQuestionTypes, setShowQuestionTypes] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -47,7 +49,6 @@ const OpenAIChatPage = () => {
   const [askedQuestionIds, setAskedQuestionIds] = useState<Set<string>>(new Set());
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const [sessionQuestionCount, setSessionQuestionCount] = useState(0);
   const [comingFromCelebration, setComingFromCelebration] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
@@ -294,7 +295,7 @@ const OpenAIChatPage = () => {
     setShowQuestionTypes(false);
     setCorrectAnswers(0);
     setRetryCount(0);
-    setSpeechDelayMode(false);
+    // Speech delay mode persists across sessions
     setSessionQuestionCount(0);
     setAskedQuestionIds(new Set());
     setSelectedLessonId(null);
@@ -310,7 +311,7 @@ const OpenAIChatPage = () => {
     setShowQuestionTypes(false);
     setCorrectAnswers(0);
     setRetryCount(0);
-    setSpeechDelayMode(false);
+    // Speech delay mode persists across sessions
     setSessionQuestionCount(0);
     setAskedQuestionIds(new Set());
     
@@ -459,7 +460,7 @@ const OpenAIChatPage = () => {
     setSelectedQuestionType(null);
     setCorrectAnswers(0);
     setRetryCount(0);
-    setSpeechDelayMode(false);
+    // Speech delay mode persists across sessions
     setTherapistName('Laura');
     setCurrentQuestion(null);
     setAvailableQuestions([]);
@@ -822,13 +823,13 @@ const OpenAIChatPage = () => {
               totalQuestions={Math.min(maxQuestionsPerSession, availableQuestions.length)}
               therapistName={therapistName}
               childName={childName}
-              speechDelayMode={speechDelayMode}
+              // speechDelayMode now handled internally by SingleQuestionView
               onCorrectAnswer={handleCorrectAnswer}
               onNextQuestion={handleNextQuestion}
               onComplete={() => setCurrentScreen('complete')}
               retryCount={retryCount}
               onRetryCountChange={setRetryCount}
-              onSpeechDelayModeChange={setSpeechDelayMode}
+              // onSpeechDelayModeChange now handled internally by SingleQuestionView
               onAmplifyMicChange={handleAmplifyMicChange}
               onMicGainChange={handleMicGainChange}
               comingFromCelebration={comingFromCelebration}

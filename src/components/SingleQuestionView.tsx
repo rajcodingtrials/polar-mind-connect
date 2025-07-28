@@ -3,6 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useTTSSettings } from '@/hooks/useTTSSettings';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { calculateSimilarity } from '@/components/chat/fuzzyMatching';
@@ -31,13 +32,11 @@ interface SingleQuestionViewProps {
   totalQuestions: number;
   therapistName: string;
   childName: string;
-  speechDelayMode: boolean;
   onCorrectAnswer: () => void;
   onNextQuestion: () => void;
   onComplete: () => void;
   retryCount: number;
   onRetryCountChange: (count: number) => void;
-  onSpeechDelayModeChange: (enabled: boolean) => void;
   onAmplifyMicChange?: (enabled: boolean) => void;
   onMicGainChange?: (gain: number) => void;
   comingFromCelebration?: boolean;
@@ -61,13 +60,11 @@ const SingleQuestionView = ({
   totalQuestions,
   therapistName,
   childName,
-  speechDelayMode,
   onCorrectAnswer,
   onNextQuestion,
   onComplete,
   retryCount,
   onRetryCountChange,
-  onSpeechDelayModeChange,
   onAmplifyMicChange,
   onMicGainChange,
   comingFromCelebration = false,
@@ -92,6 +89,7 @@ const SingleQuestionView = ({
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
   
   const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist, callTTS } = useTTSSettings(therapistName);
+  const { preferences, updateSpeechDelayMode } = useUserPreferences();
   
   const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording, audioLevel, lastAudioBlob } = useAudioRecorder(amplifyMic ?? false, micGain ?? 1.0);
   const [isPlayingBack, setIsPlayingBack] = useState(false);
@@ -257,8 +255,8 @@ const SingleQuestionView = ({
       expectedAnswer: question.answer,
       userAnswer,
       similarity: calculateSimilarity(userAnswer, question.answer, {
-        speechDelayMode,
-        threshold: speechDelayMode ? 0.3 : 0.6
+        speechDelayMode: preferences.speechDelayMode,
+        threshold: preferences.speechDelayMode ? 0.3 : 0.6
       })
     });
     
@@ -269,11 +267,11 @@ const SingleQuestionView = ({
     stopGlobalAudio();
     
     const similarity = calculateSimilarity(userAnswer, question.answer, {
-      speechDelayMode,
-      threshold: speechDelayMode ? 0.3 : 0.6
+      speechDelayMode: preferences.speechDelayMode,
+      threshold: preferences.speechDelayMode ? 0.3 : 0.6
     });
 
-    const acceptanceThreshold = speechDelayMode ? 0.3 : 0.7;
+    const acceptanceThreshold = preferences.speechDelayMode ? 0.3 : 0.7;
     const newRetryCount = retryCount + 1;
     
     console.log(`🎯 Answer processing details:`, {
@@ -297,7 +295,7 @@ const SingleQuestionView = ({
         if (targetSound && confidence > 0.6) {
           console.log('[DEBUG] Generating sound feedback prompt at', new Date().toISOString());
           // Use the new prompt type for speech delay mode
-          const feedbackType = speechDelayMode ? 'correct_speech_delay' : 'correct';
+          const feedbackType = preferences.speechDelayMode ? 'correct_speech_delay' : 'correct';
           const feedback = await soundFeedbackManager.generateSoundFeedback({
             target_sound: question.answer, // Always use the target answer for the instruction tip
             user_attempt: userAnswer,
@@ -461,15 +459,15 @@ const SingleQuestionView = ({
 
         <div className="flex items-center gap-6">
           <button
-            onClick={() => onSpeechDelayModeChange(!speechDelayMode)}
+            onClick={() => updateSpeechDelayMode(!preferences.speechDelayMode)}
             className={`flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition`}
-            title={speechDelayMode ? 'Speech Delay: ON' : 'Speech Delay: OFF'}
+            title={preferences.speechDelayMode ? 'Speech Delay: ON' : 'Speech Delay: OFF'}
             aria-label="Toggle Speech Delay Mode"
           >
             <Clock className="w-5 h-5" />
             <span>Speech Delay</span>
-            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${speechDelayMode ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-              {speechDelayMode ? 'ON' : 'OFF'}
+            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${preferences.speechDelayMode ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+              {preferences.speechDelayMode ? 'ON' : 'OFF'}
             </span>
           </button>
 

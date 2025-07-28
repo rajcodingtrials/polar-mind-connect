@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { stopAllAudio } from '@/utils/audioUtils';
 import VoiceRecorder from './chat/VoiceRecorder';
 import ChatMessage from './chat/ChatMessage';
@@ -61,13 +62,13 @@ const OpenAIChat: React.FC<OpenAIChatProps> = ({
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(false);
   const [ttsSettings, setTtsSettings] = useState({ voice: 'nova', speed: 1, enableSSML: false });
   const [autoPlayTTS, setAutoPlayTTS] = useState(true);
-  const [speechDelayMode, setSpeechDelayMode] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isPlaying, stopAudio } = useAudioPlayer();
+  const { preferences, updateSpeechDelayMode } = useUserPreferences();
   
   const { isRecording, isProcessing, setIsProcessing, startRecording, stopRecording } = useAudioRecorder();
 
@@ -377,15 +378,15 @@ Make it all flow naturally as one cohesive message.`;
         const currentQuestion = questions[currentQuestionIndex];
         
         const similarity = calculateSimilarity(messageContent, currentQuestion.answer, {
-          speechDelayMode,
-          threshold: speechDelayMode ? 0.3 : 0.6
+          speechDelayMode: preferences.speechDelayMode,
+          threshold: preferences.speechDelayMode ? 0.3 : 0.6
         });
         
-        console.log(`Similarity score: ${similarity} (Speech delay mode: ${speechDelayMode})`);
+        console.log(`Similarity score: ${similarity} (Speech delay mode: ${preferences.speechDelayMode})`);
         
         let responseMessage: Message;
         
-        const acceptanceThreshold = speechDelayMode ? 0.3 : 0.7;
+        const acceptanceThreshold = preferences.speechDelayMode ? 0.3 : 0.7;
         
         if (similarity > acceptanceThreshold) {
           onCorrectAnswer();
@@ -538,7 +539,7 @@ Make it all flow naturally as one cohesive message.`;
               {useStructuredMode && (
                 <p className="text-blue-600 text-xs">
                   Q&A Mode: {currentQuestionIndex + 1}/{questions.length}
-                  {speechDelayMode && <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">Speech Delay Mode</span>}
+                  {preferences.speechDelayMode && <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">Speech Delay Mode</span>}
                 </p>
               )}
               {(isRecording || isProcessing) && (
@@ -553,13 +554,13 @@ Make it all flow naturally as one cohesive message.`;
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setSpeechDelayMode(!speechDelayMode)}
+                onClick={() => updateSpeechDelayMode(!preferences.speechDelayMode)}
                 className={`border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300 shadow-sm ${
-                  speechDelayMode ? "bg-purple-100 border-purple-300" : ""
+                  preferences.speechDelayMode ? "bg-purple-100 border-purple-300" : ""
                 }`}
-                title={speechDelayMode ? "Speech Delay Mode ON" : "Speech Delay Mode OFF"}
+                title={preferences.speechDelayMode ? "Speech Delay Mode ON" : "Speech Delay Mode OFF"}
               >
-                {speechDelayMode ? "🧠 ON" : "🧠 OFF"}
+                {preferences.speechDelayMode ? "🧠 ON" : "🧠 OFF"}
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={handleClose}>
