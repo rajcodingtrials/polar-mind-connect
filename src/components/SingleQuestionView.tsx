@@ -294,8 +294,18 @@ const SingleQuestionView = ({
         console.log('[TTS DEBUG] Detected target sound:', targetSound, 'Confidence:', confidence);
         if (targetSound && confidence > 0.6) {
           console.log('[DEBUG] Generating sound feedback prompt at', new Date().toISOString());
-          // Use the new prompt type for speech delay mode
-          const feedbackType = preferences.speechDelayMode ? 'correct_speech_delay' : 'correct';
+          // Use appropriate feedback type based on similarity and speech delay mode
+          let feedbackType: 'correct' | 'correct_speech_delay';
+          if (similarity >= 0.95) {
+            // For exact or very close matches, use regular correct feedback
+            feedbackType = 'correct';
+          } else if (preferences.speechDelayMode) {
+            // For approximations in speech delay mode, use speech delay feedback
+            feedbackType = 'correct_speech_delay';
+          } else {
+            // For regular mode, use standard correct feedback
+            feedbackType = 'correct';
+          }
           const feedback = await soundFeedbackManager.generateSoundFeedback({
             target_sound: question.answer, // Always use the target answer for the instruction tip
             user_attempt: userAnswer,
