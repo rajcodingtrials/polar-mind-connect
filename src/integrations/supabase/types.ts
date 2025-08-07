@@ -289,6 +289,200 @@ export type Database = {
           },
         ]
       }
+      therapist_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          start_time: string
+          therapist_id: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean
+          start_time: string
+          therapist_id: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          therapist_id?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapist_availability_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "therapists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      therapist_specializations: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      therapists: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          certification: string | null
+          created_at: string
+          hourly_rate_30min: number | null
+          hourly_rate_60min: number | null
+          id: string
+          is_active: boolean
+          is_verified: boolean
+          name: string
+          specializations: string[] | null
+          timezone: string | null
+          updated_at: string
+          user_id: string
+          years_experience: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          certification?: string | null
+          created_at?: string
+          hourly_rate_30min?: number | null
+          hourly_rate_60min?: number | null
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          name: string
+          specializations?: string[] | null
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+          years_experience?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          certification?: string | null
+          created_at?: string
+          hourly_rate_30min?: number | null
+          hourly_rate_60min?: number | null
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          name?: string
+          specializations?: string[] | null
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
+      therapy_sessions: {
+        Row: {
+          client_id: string
+          client_notes: string | null
+          created_at: string
+          currency: string | null
+          duration_minutes: number
+          end_time: string
+          id: string
+          payment_status: string
+          price_paid: number | null
+          session_date: string
+          session_type: string
+          start_time: string
+          status: string
+          therapist_id: string
+          therapist_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          client_notes?: string | null
+          created_at?: string
+          currency?: string | null
+          duration_minutes?: number
+          end_time: string
+          id?: string
+          payment_status?: string
+          price_paid?: number | null
+          session_date: string
+          session_type?: string
+          start_time: string
+          status?: string
+          therapist_id: string
+          therapist_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          client_notes?: string | null
+          created_at?: string
+          currency?: string | null
+          duration_minutes?: number
+          end_time?: string
+          id?: string
+          payment_status?: string
+          price_paid?: number | null
+          session_date?: string
+          session_type?: string
+          start_time?: string
+          status?: string
+          therapist_id?: string
+          therapist_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "therapy_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "therapy_sessions_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "therapists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tts_settings: {
         Row: {
           created_at: string
