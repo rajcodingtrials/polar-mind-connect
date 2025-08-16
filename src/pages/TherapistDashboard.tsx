@@ -226,14 +226,14 @@ const TherapistDashboard = () => {
               <CardContent className="space-y-6">
                 {/* Profile Photo Display */}
                 <div className="flex items-center space-x-6 p-4 bg-muted/50 rounded-lg">
-                  <Avatar className="h-32 w-32 border-2 border-border">
+                  <Avatar className="h-40 w-40 border-2 border-border">
                     <AvatarImage 
                       src={therapistProfile?.avatar_url} 
                       alt="Profile photo" 
                       className="object-cover object-center w-full h-full"
                     />
                     <AvatarFallback className="text-lg">
-                      <User className="h-16 w-16" />
+                      <User className="h-20 w-20" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-1">
