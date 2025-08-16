@@ -13,10 +13,6 @@ interface ProfessionalDetailsProps {
     hourly_rate_30min?: number;
     hourly_rate_60min?: number;
     specializations: string[];
-    certification?: string;
-    licenses?: string;
-    education?: string;
-    languages?: string[];
   };
   editedProfile: any;
   setEditedProfile: (profile: any) => void;
@@ -107,58 +103,6 @@ export const ProfessionalDetails = ({
             />
           ) : (
             <p className="text-foreground leading-relaxed">{therapistProfile.bio || 'No bio provided'}</p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-1">
-            <Label className="text-sm font-medium text-muted-foreground">Certifications & Licenses</Label>
-            {isEditing ? (
-              <Textarea
-                value={editedProfile?.licenses || ''}
-                onChange={(e) => setEditedProfile(prev => prev ? {...prev, licenses: e.target.value} : null)}
-                placeholder="Enter your certifications and licenses"
-                rows={3}
-              />
-            ) : (
-              <p className="text-foreground">{therapistProfile.licenses || 'Not specified'}</p>
-            )}
-          </div>
-          
-          <div className="space-y-1">
-            <Label className="text-sm font-medium text-muted-foreground">Education</Label>
-            {isEditing ? (
-              <Textarea
-                value={editedProfile?.education || ''}
-                onChange={(e) => setEditedProfile(prev => prev ? {...prev, education: e.target.value} : null)}
-                placeholder="Enter your education background"
-                rows={3}
-              />
-            ) : (
-              <p className="text-foreground">{therapistProfile.education || 'Not specified'}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <Label className="text-sm font-medium text-muted-foreground">Languages</Label>
-          {isEditing ? (
-            <Input
-              value={editedProfile?.languages ? editedProfile.languages.join(', ') : ''}
-              onChange={(e) => setEditedProfile(prev => prev ? {...prev, languages: e.target.value.split(', ').filter(lang => lang.trim())} : null)}
-              placeholder="Enter languages (comma separated)"
-            />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {(therapistProfile.languages || []).map((lang, index) => (
-                <Badge key={index} variant="secondary" className="text-xs">
-                  {lang}
-                </Badge>
-              ))}
-              {(!therapistProfile.languages || therapistProfile.languages.length === 0) && (
-                <p className="text-muted-foreground text-sm">No languages specified</p>
-              )}
-            </div>
           )}
         </div>
 
