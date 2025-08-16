@@ -223,140 +223,141 @@ const TherapistDashboard = () => {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Profile Photo Display */}
-                <div className="flex items-center space-x-6 p-4 bg-muted/50 rounded-lg">
-                  <Avatar className="h-40 w-40 border-2 border-border">
+              <CardContent className="space-y-8">
+                {/* Profile Header Section */}
+                <div className="flex items-start space-x-6 pb-6 border-b border-border">
+                  <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
                     <AvatarImage 
                       src={therapistProfile?.avatar_url} 
                       alt="Profile photo" 
-                      className="object-cover w-full h-full"
+                      className="object-cover"
                     />
-                    <AvatarFallback className="text-lg">
-                      <User className="h-20 w-20" />
+                    <AvatarFallback className="text-2xl bg-muted">
+                      <User className="h-16 w-16" />
                     </AvatarFallback>
                   </Avatar>
-                  <div className="space-y-1">
-                    <h3 className="font-medium">Profile Photo</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {therapistProfile?.avatar_url ? 'Photo uploaded successfully' : 'No photo uploaded yet'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Go to "Photos & Docs" tab to upload or change your photo
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Professional Name</Label>
+                  <div className="flex-1 space-y-2">
                     {isEditing ? (
                       <Input
-                        id="name"
                         value={editedProfile?.name || ''}
                         onChange={(e) => setEditedProfile(prev => prev ? {...prev, name: e.target.value} : null)}
+                        className="text-2xl font-bold border-none p-0 h-auto bg-transparent"
+                        placeholder="Professional Name"
                       />
                     ) : (
-                      <p className="text-sm text-gray-900">{therapistProfile.name}</p>
+                      <h2 className="text-2xl font-bold text-foreground">{therapistProfile.name}</h2>
                     )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="experience">Years of Experience</Label>
-                    {isEditing ? (
-                      <Input
-                        id="experience"
-                        type="number"
-                        value={editedProfile?.years_experience || 0}
-                        onChange={(e) => setEditedProfile(prev => prev ? {...prev, years_experience: parseInt(e.target.value) || 0} : null)}
-                      />
-                    ) : (
-                      <p className="text-sm text-gray-900">{therapistProfile.years_experience} years</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Professional Bio</Label>
-                  {isEditing ? (
-                    <Textarea
-                      id="bio"
-                      value={editedProfile?.bio || ''}
-                      onChange={(e) => setEditedProfile(prev => prev ? {...prev, bio: e.target.value} : null)}
-                      rows={4}
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-900">{therapistProfile.bio || 'No bio provided'}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="certification">Certifications</Label>
-                  {isEditing ? (
-                    <Input
-                      id="certification"
-                      value={editedProfile?.certification || ''}
-                      onChange={(e) => setEditedProfile(prev => prev ? {...prev, certification: e.target.value} : null)}
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-900">{therapistProfile.certification || 'No certifications listed'}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="rate30">30-minute Session Rate</Label>
-                    {isEditing ? (
-                      <Input
-                        id="rate30"
-                        type="number"
-                        step="0.01"
-                        value={editedProfile?.hourly_rate_30min || ''}
-                        onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_30min: parseFloat(e.target.value) || null} : null)}
-                      />
-                    ) : (
-                      <p className="text-sm text-gray-900">
-                        ${therapistProfile.hourly_rate_30min || 'Not set'}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="rate60">60-minute Session Rate</Label>
-                    {isEditing ? (
-                      <Input
-                        id="rate60"
-                        type="number"
-                        step="0.01"
-                        value={editedProfile?.hourly_rate_60min || ''}
-                        onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_60min: parseFloat(e.target.value) || null} : null)}
-                      />
-                    ) : (
-                      <p className="text-sm text-gray-900">
-                        ${therapistProfile.hourly_rate_60min || 'Not set'}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Specializations</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {therapistProfile.specializations.map((spec, index) => (
-                      <Badge key={index} variant="secondary">
-                        {spec}
+                    <p className="text-muted-foreground">Licensed Therapist</p>
+                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <span>{therapistProfile.years_experience} years experience</span>
+                      {therapistProfile.certification && (
+                        <span>• {therapistProfile.certification}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2 pt-2">
+                      <Badge variant={therapistProfile.is_verified ? "default" : "secondary"}>
+                        {therapistProfile.is_verified ? "Verified" : "Pending Verification"}
                       </Badge>
-                    ))}
+                      <Badge variant={therapistProfile.is_active ? "default" : "destructive"}>
+                        {therapistProfile.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {therapistProfile?.avatar_url ? '' : 'Go to "Photos & Docs" tab to upload photo'}
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Badge variant={therapistProfile.is_verified ? "default" : "secondary"}>
-                    {therapistProfile.is_verified ? "Verified" : "Pending Verification"}
-                  </Badge>
-                  <Badge variant={therapistProfile.is_active ? "default" : "destructive"}>
-                    {therapistProfile.is_active ? "Active" : "Inactive"}
-                  </Badge>
+                {/* Professional Information Section */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-foreground">Professional Information</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium text-muted-foreground">Years of Experience</Label>
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            value={editedProfile?.years_experience || 0}
+                            onChange={(e) => setEditedProfile(prev => prev ? {...prev, years_experience: parseInt(e.target.value) || 0} : null)}
+                          />
+                        ) : (
+                          <p className="text-foreground font-medium">{therapistProfile.years_experience} years</p>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium text-muted-foreground">30-min Session Rate</Label>
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={editedProfile?.hourly_rate_30min || ''}
+                            onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_30min: parseFloat(e.target.value) || null} : null)}
+                          />
+                        ) : (
+                          <p className="text-foreground font-medium">
+                            ${therapistProfile.hourly_rate_30min || 'Not set'}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium text-muted-foreground">60-min Session Rate</Label>
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={editedProfile?.hourly_rate_60min || ''}
+                            onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_60min: parseFloat(e.target.value) || null} : null)}
+                          />
+                        ) : (
+                          <p className="text-foreground font-medium">
+                            ${therapistProfile.hourly_rate_60min || 'Not set'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-muted-foreground">Certifications</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedProfile?.certification || ''}
+                        onChange={(e) => setEditedProfile(prev => prev ? {...prev, certification: e.target.value} : null)}
+                        placeholder="Enter your certifications"
+                      />
+                    ) : (
+                      <p className="text-foreground">{therapistProfile.certification || 'No certifications listed'}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-muted-foreground">Professional Bio</Label>
+                    {isEditing ? (
+                      <Textarea
+                        value={editedProfile?.bio || ''}
+                        onChange={(e) => setEditedProfile(prev => prev ? {...prev, bio: e.target.value} : null)}
+                        rows={4}
+                        placeholder="Tell clients about your background and approach..."
+                      />
+                    ) : (
+                      <p className="text-foreground leading-relaxed">{therapistProfile.bio || 'No bio provided'}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-muted-foreground">Specializations</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {therapistProfile.specializations.map((spec, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {spec}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
