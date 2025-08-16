@@ -148,31 +148,34 @@ export type Database = {
       }
       profiles: {
         Row: {
-          age: number
+          age: number | null
           created_at: string
+          email: string | null
           id: string
-          name: string
+          name: string | null
           speech_delay_mode: boolean
           updated_at: string
-          username: string
+          username: string | null
         }
         Insert: {
-          age: number
+          age?: number | null
           created_at?: string
+          email?: string | null
           id: string
-          name: string
+          name?: string | null
           speech_delay_mode?: boolean
           updated_at?: string
-          username: string
+          username?: string | null
         }
         Update: {
-          age?: number
+          age?: number | null
           created_at?: string
+          email?: string | null
           id?: string
-          name?: string
+          name?: string | null
           speech_delay_mode?: boolean
           updated_at?: string
-          username?: string
+          username?: string | null
         }
         Relationships: []
       }
