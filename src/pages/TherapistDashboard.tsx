@@ -25,6 +25,7 @@ import {
   Upload,
   FileText
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TherapistAvailabilityCalendar } from "@/components/TherapistAvailabilityCalendar";
 import { TherapistFileUpload } from "@/components/TherapistFileUpload";
 
@@ -223,6 +224,25 @@ const TherapistDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Profile Photo Display */}
+                <div className="flex items-center space-x-6 p-4 bg-muted/50 rounded-lg">
+                  <Avatar className="h-24 w-24 border-2 border-border">
+                    <AvatarImage src={therapistProfile?.avatar_url} alt="Profile photo" />
+                    <AvatarFallback className="text-lg">
+                      <User className="h-12 w-12" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-1">
+                    <h3 className="font-medium">Profile Photo</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {therapistProfile?.avatar_url ? 'Photo uploaded successfully' : 'No photo uploaded yet'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Go to "Photos & Docs" tab to upload or change your photo
+                    </p>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="name">Professional Name</Label>
