@@ -13,6 +13,9 @@ interface ProfessionalDetailsProps {
     hourly_rate_30min?: number;
     hourly_rate_60min?: number;
     specializations: string[];
+    certification?: string;
+    education?: string;
+    languages?: string[];
   };
   editedProfile: any;
   setEditedProfile: (profile: any) => void;
@@ -104,6 +107,49 @@ export const ProfessionalDetails = ({
           ) : (
             <p className="text-foreground leading-relaxed">{therapistProfile.bio || 'No bio provided'}</p>
           )}
+        </div>
+
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-muted-foreground">Certifications & Licenses</Label>
+          {isEditing ? (
+            <Textarea
+              value={editedProfile?.certification || ''}
+              onChange={(e) => setEditedProfile(prev => prev ? {...prev, certification: e.target.value} : null)}
+              rows={3}
+              placeholder="List your certifications and licenses..."
+            />
+          ) : (
+            <p className="text-foreground leading-relaxed">{therapistProfile.certification || 'Not specified'}</p>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-muted-foreground">Education</Label>
+          {isEditing ? (
+            <Textarea
+              value={editedProfile?.education || ''}
+              onChange={(e) => setEditedProfile(prev => prev ? {...prev, education: e.target.value} : null)}
+              rows={3}
+              placeholder="Describe your educational background..."
+            />
+          ) : (
+            <p className="text-foreground leading-relaxed">{therapistProfile.education || 'Not specified'}</p>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-muted-foreground">Languages</Label>
+          <div className="flex flex-wrap gap-2">
+            {therapistProfile.languages && therapistProfile.languages.length > 0 ? (
+              therapistProfile.languages.map((lang, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {lang}
+                </Badge>
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm">Not specified</p>
+            )}
+          </div>
         </div>
 
         <div className="space-y-3">

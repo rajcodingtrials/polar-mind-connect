@@ -365,13 +365,21 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           certification: string | null
+          country: string | null
           created_at: string
+          date_of_birth: string | null
+          education: string | null
+          email: string | null
+          first_name: string | null
           hourly_rate_30min: number | null
           hourly_rate_60min: number | null
           id: string
           is_active: boolean
           is_verified: boolean
-          name: string
+          languages: string[] | null
+          last_name: string | null
+          name: string | null
+          phone: string | null
           specializations: string[] | null
           timezone: string | null
           updated_at: string
@@ -382,13 +390,21 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           certification?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          education?: string | null
+          email?: string | null
+          first_name?: string | null
           hourly_rate_30min?: number | null
           hourly_rate_60min?: number | null
           id?: string
           is_active?: boolean
           is_verified?: boolean
-          name: string
+          languages?: string[] | null
+          last_name?: string | null
+          name?: string | null
+          phone?: string | null
           specializations?: string[] | null
           timezone?: string | null
           updated_at?: string
@@ -399,13 +415,21 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           certification?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
+          education?: string | null
+          email?: string | null
+          first_name?: string | null
           hourly_rate_30min?: number | null
           hourly_rate_60min?: number | null
           id?: string
           is_active?: boolean
           is_verified?: boolean
-          name?: string
+          languages?: string[] | null
+          last_name?: string | null
+          name?: string | null
+          phone?: string | null
           specializations?: string[] | null
           timezone?: string | null
           updated_at?: string

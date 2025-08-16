@@ -7,6 +7,12 @@ import { Edit, Save, X } from "lucide-react";
 
 interface PersonalInformationProps {
   therapistProfile: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    date_of_birth?: string;
+    phone?: string;
+    country?: string;
     name: string;
     years_experience: number;
     certification?: string;
@@ -53,43 +59,86 @@ export const PersonalInformation = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-1">
-            <Label className="text-sm font-medium text-muted-foreground">Professional Name</Label>
+            <Label className="text-sm font-medium text-muted-foreground">First Name</Label>
             {isEditing ? (
               <Input
-                value={editedProfile?.name || ''}
-                onChange={(e) => setEditedProfile(prev => prev ? {...prev, name: e.target.value} : null)}
-                placeholder="Enter your professional name"
+                value={editedProfile?.first_name || ''}
+                onChange={(e) => setEditedProfile(prev => prev ? {...prev, first_name: e.target.value} : null)}
+                placeholder="Enter your first name"
               />
             ) : (
-              <p className="text-foreground font-medium">{therapistProfile.name}</p>
+              <p className="text-foreground font-medium">{therapistProfile.first_name || 'Not specified'}</p>
             )}
           </div>
           
           <div className="space-y-1">
-            <Label className="text-sm font-medium text-muted-foreground">Years of Experience</Label>
+            <Label className="text-sm font-medium text-muted-foreground">Last Name</Label>
             {isEditing ? (
               <Input
-                type="number"
-                value={editedProfile?.years_experience || 0}
-                onChange={(e) => setEditedProfile(prev => prev ? {...prev, years_experience: parseInt(e.target.value) || 0} : null)}
+                value={editedProfile?.last_name || ''}
+                onChange={(e) => setEditedProfile(prev => prev ? {...prev, last_name: e.target.value} : null)}
+                placeholder="Enter your last name"
               />
             ) : (
-              <p className="text-foreground font-medium">{therapistProfile.years_experience} years</p>
+              <p className="text-foreground font-medium">{therapistProfile.last_name || 'Not specified'}</p>
             )}
           </div>
           
           <div className="space-y-1">
-            <Label className="text-sm font-medium text-muted-foreground">Certifications</Label>
+            <Label className="text-sm font-medium text-muted-foreground">Email Address</Label>
             {isEditing ? (
               <Input
-                value={editedProfile?.certification || ''}
-                onChange={(e) => setEditedProfile(prev => prev ? {...prev, certification: e.target.value} : null)}
-                placeholder="Enter your certifications"
+                type="email"
+                value={editedProfile?.email || ''}
+                onChange={(e) => setEditedProfile(prev => prev ? {...prev, email: e.target.value} : null)}
+                placeholder="Enter your email"
               />
             ) : (
-              <p className="text-foreground font-medium">{therapistProfile.certification || 'Not specified'}</p>
+              <p className="text-foreground font-medium">{therapistProfile.email || 'Not specified'}</p>
+            )}
+          </div>
+          
+          <div className="space-y-1">
+            <Label className="text-sm font-medium text-muted-foreground">Date of Birth</Label>
+            {isEditing ? (
+              <Input
+                type="date"
+                value={editedProfile?.date_of_birth || ''}
+                onChange={(e) => setEditedProfile(prev => prev ? {...prev, date_of_birth: e.target.value} : null)}
+              />
+            ) : (
+              <p className="text-foreground font-medium">
+                {therapistProfile.date_of_birth ? new Date(therapistProfile.date_of_birth).toLocaleDateString() : 'Not specified'}
+              </p>
+            )}
+          </div>
+          
+          <div className="space-y-1">
+            <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
+            {isEditing ? (
+              <Input
+                type="tel"
+                value={editedProfile?.phone || ''}
+                onChange={(e) => setEditedProfile(prev => prev ? {...prev, phone: e.target.value} : null)}
+                placeholder="Enter your phone number"
+              />
+            ) : (
+              <p className="text-foreground font-medium">{therapistProfile.phone || 'Not specified'}</p>
+            )}
+          </div>
+          
+          <div className="space-y-1">
+            <Label className="text-sm font-medium text-muted-foreground">Country</Label>
+            {isEditing ? (
+              <Input
+                value={editedProfile?.country || ''}
+                onChange={(e) => setEditedProfile(prev => prev ? {...prev, country: e.target.value} : null)}
+                placeholder="Enter your country"
+              />
+            ) : (
+              <p className="text-foreground font-medium">{therapistProfile.country || 'Not specified'}</p>
             )}
           </div>
         </div>

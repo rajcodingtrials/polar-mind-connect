@@ -18,9 +18,9 @@ const TherapistAuth = () => {
   const [showCreateProfile, setShowCreateProfile] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   
   // Therapist profile fields
   const [therapistName, setTherapistName] = useState("");
@@ -30,6 +30,10 @@ const TherapistAuth = () => {
   const [rate30min, setRate30min] = useState("");
   const [rate60min, setRate60min] = useState("");
   const [specializations, setSpecializations] = useState<string[]>([]);
+  const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState("");
+  const [education, setEducation] = useState("");
+  const [languages, setLanguages] = useState<string[]>([]);
   
   const [loading, setLoading] = useState(false);
   const { user, signIn, signUp } = useAuth();
@@ -80,17 +84,20 @@ const TherapistAuth = () => {
           }
         }
       } else {
-        const ageNum = parseInt(age);
-        if (isNaN(ageNum) || ageNum < 18) {
+        const birthDate = new Date(dateOfBirth);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        
+        if (age < 18 || isNaN(birthDate.getTime())) {
           toast({
             variant: "destructive",
-            title: "Invalid Age",
+            title: "Invalid Date of Birth",
             description: "Therapists must be at least 18 years old.",
           });
           return;
         }
 
-        const { error } = await signUp(email, password, username, name, ageNum);
+        const { error } = await signUp(email, password, firstName, `${firstName} ${lastName}`, age);
         if (error) {
           toast({
             variant: "destructive",
@@ -122,10 +129,18 @@ const TherapistAuth = () => {
 
     try {
       const profileData = {
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        date_of_birth: dateOfBirth,
+        phone: phone || null,
+        country: country || null,
         name: therapistName,
         bio,
         years_experience: parseInt(yearsExperience) || 0,
         certification,
+        education: education || null,
+        languages: languages.length > 0 ? languages : null,
         hourly_rate_30min: parseFloat(rate30min) || null,
         hourly_rate_60min: parseFloat(rate60min) || null,
         specializations,
@@ -350,35 +365,32 @@ const TherapistAuth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    id="username"
-                    placeholder="Choose a username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    id="firstName"
+                    placeholder="Enter your first name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="lastName">Last Name</Label>
                   <Input
-                    id="name"
-                    placeholder="Enter your full name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    id="lastName"
+                    placeholder="Enter your last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="age">Age</Label>
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
                   <Input
-                    id="age"
-                    type="number"
-                    placeholder="Enter your age"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    min="18"
-                    max="120"
+                    id="dateOfBirth"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
                     required
                   />
                 </div>

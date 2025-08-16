@@ -6,6 +6,12 @@ import { useToast } from '@/components/ui/use-toast';
 interface TherapistProfile {
   id: string;
   user_id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  date_of_birth?: string;
+  phone?: string;
+  country?: string;
   name: string;
   bio?: string;
   specializations: string[];
@@ -14,6 +20,8 @@ interface TherapistProfile {
   avatar_url?: string;
   years_experience: number;
   certification?: string;
+  education?: string;
+  languages?: string[];
   timezone: string;
   is_verified: boolean;
   is_active: boolean;
@@ -79,6 +87,12 @@ export const useTherapistAuth = () => {
         .from('therapists')
         .insert({
           user_id: user.id,
+          first_name: profileData.first_name || null,
+          last_name: profileData.last_name || null,
+          email: profileData.email || null,
+          date_of_birth: profileData.date_of_birth || null,
+          phone: profileData.phone || null,
+          country: profileData.country || null,
           name: profileData.name || '',
           bio: profileData.bio || null,
           specializations: profileData.specializations || [],
@@ -87,6 +101,8 @@ export const useTherapistAuth = () => {
           avatar_url: profileData.avatar_url || null,
           years_experience: profileData.years_experience || 0,
           certification: profileData.certification || null,
+          education: profileData.education || null,
+          languages: profileData.languages || null,
           timezone: profileData.timezone || 'UTC',
           is_verified: false,
           is_active: true,
