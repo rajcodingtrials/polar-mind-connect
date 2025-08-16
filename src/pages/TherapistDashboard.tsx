@@ -21,8 +21,12 @@ import {
   Save,
   X,
   User,
-  LogOut
+  LogOut,
+  Upload,
+  FileText
 } from "lucide-react";
+import { TherapistAvailabilityCalendar } from "@/components/TherapistAvailabilityCalendar";
+import { TherapistFileUpload } from "@/components/TherapistFileUpload";
 
 const TherapistDashboard = () => {
   const { user, signOut } = useAuth();
@@ -64,6 +68,7 @@ const TherapistDashboard = () => {
       hourly_rate_30min: editedProfile.hourly_rate_30min,
       hourly_rate_60min: editedProfile.hourly_rate_60min,
       specializations: editedProfile.specializations,
+      avatar_url: editedProfile.avatar_url,
     };
 
     const { error } = await updateTherapistProfile(updates);
@@ -180,8 +185,9 @@ const TherapistDashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="files">Photos & Docs</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
             <TabsTrigger value="earnings">Earnings</TabsTrigger>
@@ -332,27 +338,18 @@ const TherapistDashboard = () => {
             </Card>
           </TabsContent>
           
+          <TabsContent value="files">
+            <TherapistFileUpload 
+              therapistId={therapistProfile.id}
+              currentAvatarUrl={therapistProfile.avatar_url}
+              onAvatarUpdate={(url) => {
+                setEditedProfile(prev => prev ? {...prev, avatar_url: url} : null);
+              }}
+            />
+          </TabsContent>
+          
           <TabsContent value="schedule">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Availability & Schedule
-                </CardTitle>
-                <CardDescription>
-                  Manage your availability and view upcoming appointments
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Schedule management coming soon</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Set your availability and manage appointments
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <TherapistAvailabilityCalendar therapistId={therapistProfile.id} />
           </TabsContent>
           
           <TabsContent value="sessions">
