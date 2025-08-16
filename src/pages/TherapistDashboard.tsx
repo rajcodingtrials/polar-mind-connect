@@ -227,9 +227,13 @@ const TherapistDashboard = () => {
                 {/* Profile Photo Display */}
                 <div className="flex items-center space-x-6 p-4 bg-muted/50 rounded-lg">
                   <Avatar className="h-32 w-32 border-2 border-border">
-                    <AvatarImage src={therapistProfile?.avatar_url} alt="Profile photo" />
+                    <AvatarImage 
+                      src={therapistProfile?.avatar_url} 
+                      alt="Profile photo" 
+                      className="object-cover"
+                    />
                     <AvatarFallback className="text-lg">
-                      <User className="h-12 w-12" />
+                      <User className="h-16 w-16" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-1">
