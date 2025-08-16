@@ -230,7 +230,7 @@ const TherapistDashboard = () => {
                     <AvatarImage 
                       src={therapistProfile?.avatar_url} 
                       alt="Profile photo" 
-                      className="object-contain object-center w-full h-full"
+                      className="object-cover w-full h-full"
                     />
                     <AvatarFallback className="text-lg">
                       <User className="h-20 w-20" />
