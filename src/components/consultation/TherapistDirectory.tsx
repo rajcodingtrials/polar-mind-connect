@@ -214,7 +214,7 @@ const TherapistDirectory = () => {
               {/* Header with Avatar and Basic Info */}
               <div className="relative p-0 bg-gradient-to-br from-primary/5 to-primary/10 flex">
                 {/* Left side - Picture */}
-                <div className="w-1/2 h-48">
+                <div className="w-1/2 h-full">
                   <div className="relative h-full w-full">
                     <img 
                       src={therapist.avatar_url} 
