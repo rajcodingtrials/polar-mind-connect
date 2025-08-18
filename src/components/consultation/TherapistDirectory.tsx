@@ -234,43 +234,42 @@ const TherapistDirectory = () => {
 
                 {/* Right side - Info */}
                 <div className="flex-1 p-6">
-                  <div className="flex flex-col justify-between h-full">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-bold text-foreground mb-2">
-                          {therapist.first_name} {therapist.last_name}
-                        </h3>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium">5.0</span>
-                            <span className="ml-1">({Math.floor(Math.random() * 100) + 20} reviews)</span>
-                          </div>
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground mb-1">
+                        {therapist.first_name} {therapist.last_name}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium">5.0</span>
+                          <span className="ml-1">({Math.floor(Math.random() * 100) + 20} reviews)</span>
                         </div>
-                        {therapist.country && (
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <MapPin className="h-3 w-3 mr-1" />
-                            <span>{therapist.country}</span>
-                          </div>
-                        )}
                       </div>
-                      
-                      {therapist.is_verified && (
-                        <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-                          Verified
-                        </Badge>
+                      {therapist.country && (
+                        <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          <span>{therapist.country}</span>
+                          {/* Country flag could be added here based on country name */}
+                        </div>
                       )}
                     </div>
-
-                    {/* Specialization Tag */}
-                    {therapist.specializations && therapist.specializations.length > 0 && (
-                      <div className="mt-auto">
-                        <Badge variant="secondary" className="text-xs font-medium">
-                          {therapist.specializations[0]}
-                        </Badge>
-                      </div>
+                    
+                    {therapist.is_verified && (
+                      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                        Verified
+                      </Badge>
                     )}
                   </div>
+
+                  {/* Specialization Tag */}
+                  {therapist.specializations && therapist.specializations.length > 0 && (
+                    <div className="mb-3">
+                      <Badge variant="secondary" className="text-xs font-medium">
+                        {therapist.specializations[0]}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               </div>
 
