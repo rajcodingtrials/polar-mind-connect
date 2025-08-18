@@ -212,7 +212,7 @@ const TherapistDirectory = () => {
           <Card key={therapist.id} className="hover:shadow-lg transition-all duration-300 cursor-pointer border-0 shadow-md">
             <CardContent className="p-0 relative overflow-hidden">
               {/* Header with Avatar and Basic Info */}
-              <div className="relative p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100">
+              <div className="relative p-6 bg-gradient-to-br from-primary/5 to-primary/10">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-16 w-16 border-2 border-white shadow-lg">
