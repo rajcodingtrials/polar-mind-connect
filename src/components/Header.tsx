@@ -29,7 +29,9 @@ const Header = () => {
           <Link to="/" className="text-white hover:text-white/80 transition-colors font-medium">Home</Link>
           <Link to="/our-story" className="text-white hover:text-white/80 transition-colors font-medium">Our Story</Link>
           <Link to="/meet-the-team" className="text-white hover:text-white/80 transition-colors font-medium">Meet the Team</Link>
-          <Link to="/consultation" className="text-white hover:text-white/80 transition-colors font-medium">Coaches</Link>
+          {isAuthenticated && (
+            <Link to="/consultation" className="text-white hover:text-white/80 transition-colors font-medium">Coaches</Link>
+          )}
           <Link to="/therapist-auth" className="text-white hover:text-white/80 transition-colors font-medium">Therapists</Link>
           {isAuthenticated && (
             <>
