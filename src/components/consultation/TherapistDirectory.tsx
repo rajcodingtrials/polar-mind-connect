@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Star, Clock, DollarSign, MapPin } from "lucide-react";
+import { Search, Filter, Star, Clock, DollarSign } from "lucide-react";
 import TherapistProfileModal from "./TherapistProfileModal";
 import { useToast } from "@/hooks/use-toast";
+import { getCountryFlag } from "@/utils/countryFlags";
 
 interface Therapist {
   id: string;
@@ -209,7 +210,7 @@ const TherapistDirectory = () => {
       {/* Results */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTherapists.map((therapist) => (
-          <Card key={therapist.id} className="hover:shadow-lg transition-all duration-300 cursor-pointer border-0 shadow-md">
+          <Card key={therapist.id} className="hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer border-0 shadow-md hover:scale-[1.02] group">
             <CardContent className="p-0 relative overflow-hidden">
               {/* Header with Avatar and Basic Info */}
               <div className="relative p-0 bg-gradient-to-br from-primary/5 to-primary/10 flex">
@@ -244,11 +245,10 @@ const TherapistDirectory = () => {
                         <span className="font-medium">5.0</span>
                         <span className="ml-1">({Math.floor(Math.random() * 100) + 20} reviews)</span>
                       </div>
-                      {therapist.country && (
+                       {therapist.country && (
                         <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                          <MapPin className="h-3 w-3 mr-1" />
+                          <span className="text-lg mr-2">{getCountryFlag(therapist.country)}</span>
                           <span>{therapist.country}</span>
-                          {/* Country flag could be added here based on country name */}
                         </div>
                       )}
                     </div>
