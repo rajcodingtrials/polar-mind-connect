@@ -49,13 +49,18 @@ const TherapistDirectory = () => {
 
   const fetchTherapists = async () => {
     try {
+      console.log("Fetching therapists...");
       const { data, error } = await supabase
         .from("therapists")
         .select("*")
-        .eq("is_active", true)
-        .eq("is_verified", true);
+        .eq("is_active", true);
+        // Removed .eq("is_verified", true) to show all active therapists
 
-      if (error) throw error;
+      console.log("Therapists data:", data);
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
       setTherapists(data || []);
     } catch (error) {
       console.error("Error fetching therapists:", error);
@@ -221,9 +226,13 @@ const TherapistDirectory = () => {
                     {therapist.years_experience || 0} years experience
                   </div>
                 </div>
-                {therapist.is_verified && (
+                {therapist.is_verified ? (
                   <Badge variant="secondary" className="text-xs">
                     Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    Pending
                   </Badge>
                 )}
               </div>
