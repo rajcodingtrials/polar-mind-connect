@@ -215,7 +215,7 @@ const TherapistDirectory = () => {
               <div className="relative p-6 bg-gradient-to-br from-primary/5 to-primary/10">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-4">
-                    <div className="relative h-20 w-20 rounded-lg overflow-hidden border-2 border-white shadow-lg">
+                    <div className="relative h-32 w-32 rounded-lg overflow-hidden border-2 border-white shadow-lg">
                       <img 
                         src={therapist.avatar_url} 
                         alt={`${therapist.first_name} ${therapist.last_name}`}
