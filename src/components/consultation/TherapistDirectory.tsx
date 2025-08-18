@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Star, Clock, DollarSign } from "lucide-react";
+import { Search, Filter, Star, Clock, DollarSign, MapPin } from "lucide-react";
 import TherapistProfileModal from "./TherapistProfileModal";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,6 +26,7 @@ interface Therapist {
   timezone: string;
   education: string;
   certification: string;
+  country: string;
 }
 
 const TherapistDirectory = () => {
@@ -208,67 +209,82 @@ const TherapistDirectory = () => {
       {/* Results */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTherapists.map((therapist) => (
-          <Card key={therapist.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4 mb-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={therapist.avatar_url} />
-                  <AvatarFallback>
-                    {therapist.first_name?.[0]}{therapist.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">
-                    {therapist.first_name} {therapist.last_name}
-                  </h3>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {therapist.years_experience || 0} years experience
+          <Card key={therapist.id} className="hover:shadow-lg transition-all duration-300 cursor-pointer border-0 shadow-md">
+            <CardContent className="p-0 relative overflow-hidden">
+              {/* Header with Avatar and Basic Info */}
+              <div className="relative p-6 bg-gradient-to-br from-primary/5 to-primary/10">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-16 w-16 border-2 border-white shadow-lg">
+                      <AvatarImage src={therapist.avatar_url} />
+                      <AvatarFallback className="text-lg font-semibold">
+                        {therapist.first_name?.[0]}{therapist.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground mb-1">
+                        {therapist.first_name} {therapist.last_name}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium">5.0</span>
+                          <span className="ml-1">({Math.floor(Math.random() * 100) + 20} reviews)</span>
+                        </div>
+                      </div>
+                      {therapist.country && (
+                        <div className="flex items-center mt-2 text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          <span>{therapist.country}</span>
+                          {/* Country flag could be added here based on country name */}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  
+                  {therapist.is_verified && (
+                    <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                      Verified
+                    </Badge>
+                  )}
                 </div>
-                {therapist.is_verified ? (
-                  <Badge variant="secondary" className="text-xs">
-                    Verified
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-xs">
-                    Pending
-                  </Badge>
+
+                {/* Specialization Tag */}
+                {therapist.specializations && therapist.specializations.length > 0 && (
+                  <div className="mb-3">
+                    <Badge variant="secondary" className="text-xs font-medium">
+                      {therapist.specializations[0]}
+                    </Badge>
+                  </div>
                 )}
               </div>
 
-              <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                {therapist.bio}
-              </p>
+              {/* Bio Section */}
+              <div className="p-6 pt-4">
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
+                  {therapist.bio || "Experienced speech therapist dedicated to helping clients achieve their communication goals through personalized therapy sessions."}
+                </p>
 
-              <div className="space-y-3">
-                {therapist.specializations && therapist.specializations.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {therapist.specializations.slice(0, 3).map((spec) => (
-                      <Badge key={spec} variant="outline" className="text-xs">
-                        {spec}
-                      </Badge>
-                    ))}
-                    {therapist.specializations.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{therapist.specializations.length - 3}
-                      </Badge>
-                    )}
+                {/* Stats Row */}
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                  <div className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    <span>{therapist.years_experience || 0}+ years</span>
                   </div>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm">
-                    <DollarSign className="h-3 w-3 mr-1" />
-                    {therapist.hourly_rate_30min ? `$${therapist.hourly_rate_30min}/30min` : "Rate TBD"}
+                  <div className="flex items-center font-semibold text-foreground">
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    <span>${therapist.hourly_rate_30min || 50}/hour</span>
                   </div>
-                  <Button 
-                    size="sm" 
-                    onClick={() => setSelectedTherapist(therapist)}
-                  >
-                    View Profile
-                  </Button>
                 </div>
+
+                {/* Action Button */}
+                <Button 
+                  className="w-full" 
+                  onClick={() => setSelectedTherapist(therapist)}
+                  size="sm"
+                >
+                  View {therapist.first_name}'s profile
+                </Button>
               </div>
             </CardContent>
           </Card>

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Save, X } from "lucide-react";
 
 interface ProfessionalDetailsProps {
@@ -59,42 +60,6 @@ export const ProfessionalDetails = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-1">
-            <Label className="text-sm font-medium text-muted-foreground">30-min Session Rate</Label>
-            {isEditing ? (
-              <Input
-                type="number"
-                step="0.01"
-                value={editedProfile?.hourly_rate_30min || ''}
-                onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_30min: parseFloat(e.target.value) || null} : null)}
-                placeholder="0.00"
-              />
-            ) : (
-              <p className="text-foreground font-medium">
-                ${therapistProfile.hourly_rate_30min || 'Not set'}
-              </p>
-            )}
-          </div>
-          
-          <div className="space-y-1">
-            <Label className="text-sm font-medium text-muted-foreground">60-min Session Rate</Label>
-            {isEditing ? (
-              <Input
-                type="number"
-                step="0.01"
-                value={editedProfile?.hourly_rate_60min || ''}
-                onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_60min: parseFloat(e.target.value) || null} : null)}
-                placeholder="0.00"
-              />
-            ) : (
-              <p className="text-foreground font-medium">
-                ${therapistProfile.hourly_rate_60min || 'Not set'}
-              </p>
-            )}
-          </div>
-        </div>
-
         <div className="space-y-3">
           <Label className="text-sm font-medium text-muted-foreground">Professional Bio</Label>
           {isEditing ? (
@@ -154,12 +119,97 @@ export const ProfessionalDetails = ({
 
         <div className="space-y-3">
           <Label className="text-sm font-medium text-muted-foreground">Specializations</Label>
-          <div className="flex flex-wrap gap-2">
-            {therapistProfile.specializations.map((spec, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {spec}
-              </Badge>
-            ))}
+          {isEditing ? (
+            <div className="space-y-2">
+              <Select 
+                value="" 
+                onValueChange={(value) => {
+                  if (value && !editedProfile?.specializations?.includes(value)) {
+                    setEditedProfile(prev => prev ? {
+                      ...prev, 
+                      specializations: [...(prev.specializations || []), value]
+                    } : null);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Add specialization" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Speech Therapy">Speech Therapy</SelectItem>
+                  <SelectItem value="Language Therapy">Language Therapy</SelectItem>
+                  <SelectItem value="Articulation">Articulation</SelectItem>
+                  <SelectItem value="Fluency">Fluency</SelectItem>
+                  <SelectItem value="Voice Therapy">Voice Therapy</SelectItem>
+                  <SelectItem value="Swallowing">Swallowing</SelectItem>
+                  <SelectItem value="Cognitive Communication">Cognitive Communication</SelectItem>
+                  <SelectItem value="Accent Modification">Accent Modification</SelectItem>
+                  <SelectItem value="Public Speaking">Public Speaking</SelectItem>
+                  <SelectItem value="Stuttering">Stuttering</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex flex-wrap gap-2">
+                {(editedProfile?.specializations || []).map((spec, index) => (
+                  <Badge 
+                    key={index} 
+                    variant="secondary" 
+                    className="text-xs cursor-pointer hover:bg-destructive"
+                    onClick={() => {
+                      setEditedProfile(prev => prev ? {
+                        ...prev,
+                        specializations: prev.specializations?.filter((_, i) => i !== index) || []
+                      } : null);
+                    }}
+                  >
+                    {spec} ×
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {therapistProfile.specializations.map((spec, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {spec}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1">
+            <Label className="text-sm font-medium text-muted-foreground">30-min Session Rate</Label>
+            {isEditing ? (
+              <Input
+                type="number"
+                step="0.01"
+                value={editedProfile?.hourly_rate_30min || ''}
+                onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_30min: parseFloat(e.target.value) || null} : null)}
+                placeholder="0.00"
+              />
+            ) : (
+              <p className="text-foreground font-medium">
+                ${therapistProfile.hourly_rate_30min || 'Not set'}
+              </p>
+            )}
+          </div>
+          
+          <div className="space-y-1">
+            <Label className="text-sm font-medium text-muted-foreground">60-min Session Rate</Label>
+            {isEditing ? (
+              <Input
+                type="number"
+                step="0.01"
+                value={editedProfile?.hourly_rate_60min || ''}
+                onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_60min: parseFloat(e.target.value) || null} : null)}
+                placeholder="0.00"
+              />
+            ) : (
+              <p className="text-foreground font-medium">
+                ${therapistProfile.hourly_rate_60min || 'Not set'}
+              </p>
+            )}
           </div>
         </div>
       </CardContent>
