@@ -16,7 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarIcon, Clock, DollarSign } from "lucide-react";
-import { format, addDays, isBefore, startOfDay } from "date-fns";
+import { format, addDays, isBefore, startOfDay, getDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import PaymentIntegration from "./PaymentIntegration";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +41,14 @@ interface TimeSlot {
   available: boolean;
 }
 
+interface TherapistAvailability {
+  id: string;
+  day_of_week: number; // 0 = Sunday, 1 = Monday, etc.
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+}
+
 const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -51,32 +59,81 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
   const [sessionType, setSessionType] = useState("consultation");
   const [clientNotes, setClientNotes] = useState("");
   const [availability, setAvailability] = useState<TimeSlot[]>([]);
+  const [therapistAvailability, setTherapistAvailability] = useState<TherapistAvailability[]>([]);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [sessionId, setSessionId] = useState<string>();
 
   const sessionPrice = duration === "30" ? therapist.hourly_rate_30min : therapist.hourly_rate_60min;
 
-  // Generate time slots for a day (9 AM to 5 PM)
-  const generateTimeSlots = (): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    for (let hour = 9; hour < 17; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        slots.push({ time, available: true }); // In a real app, check actual availability
+  // Fetch therapist's availability schedule
+  useEffect(() => {
+    const fetchTherapistAvailability = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("therapist_availability")
+          .select("*")
+          .eq("therapist_id", therapist.id)
+          .eq("is_available", true);
+
+        if (error) throw error;
+        console.log("Therapist availability:", data);
+        setTherapistAvailability(data || []);
+      } catch (error) {
+        console.error("Error fetching availability:", error);
       }
-    }
-    return slots;
+    };
+
+    fetchTherapistAvailability();
+  }, [therapist.id]);
+
+  // Generate time slots based on therapist's actual availability
+  const generateTimeSlotsForDay = (dayOfWeek: number): TimeSlot[] => {
+    const dayAvailability = therapistAvailability.filter(av => av.day_of_week === dayOfWeek);
+    
+    if (dayAvailability.length === 0) return [];
+
+    const slots: TimeSlot[] = [];
+    
+    dayAvailability.forEach(availability => {
+      const startTime = availability.start_time;
+      const endTime = availability.end_time;
+      
+      // Parse start and end times
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = endTime.split(':').map(Number);
+      
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      
+      // Generate 30-minute slots
+      for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
+        const hour = Math.floor(minutes / 60);
+        const min = minutes % 60;
+        const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+        slots.push({ time, available: true });
+      }
+    });
+    
+    return slots.sort((a, b) => a.time.localeCompare(b.time));
+  };
+
+  // Check if a date is available based on therapist's schedule
+  const isDateAvailable = (date: Date): boolean => {
+    const dayOfWeek = getDay(date); // 0 = Sunday, 1 = Monday, etc.
+    return therapistAvailability.some(av => av.day_of_week === dayOfWeek);
   };
 
   useEffect(() => {
-    if (selectedDate) {
-      setAvailability(generateTimeSlots());
+    if (selectedDate && therapistAvailability.length > 0) {
+      const dayOfWeek = getDay(selectedDate);
+      setAvailability(generateTimeSlotsForDay(dayOfWeek));
     }
-  }, [selectedDate]);
+  }, [selectedDate, therapistAvailability]);
 
   const handleDateSelect = (date: Date | undefined) => {
-    if (date && !isBefore(date, startOfDay(new Date()))) {
+    if (date && !isBefore(date, startOfDay(new Date())) && isDateAvailable(date)) {
       setSelectedDate(date);
+      setSelectedTime(""); // Reset selected time when date changes
     }
   };
 
@@ -167,7 +224,10 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleDateSelect}
-                  disabled={(date) => isBefore(date, startOfDay(new Date()))}
+                  disabled={(date) => 
+                    isBefore(date, startOfDay(new Date())) || 
+                    !isDateAvailable(date)
+                  }
                   initialFocus
                 />
               </PopoverContent>
@@ -192,7 +252,7 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
           </div>
         </div>
 
-        {selectedDate && (
+        {selectedDate && availability.length > 0 && (
           <div className="mt-6">
             <Label className="text-sm font-medium mb-2 block">Available Times</Label>
             <div className="grid grid-cols-4 gap-2">
@@ -209,6 +269,11 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
                 </Button>
               ))}
             </div>
+            {availability.length === 0 && selectedDate && (
+              <p className="text-sm text-muted-foreground">
+                No availability on this day. Please select a different date.
+              </p>
+            )}
           </div>
         )}
       </div>
