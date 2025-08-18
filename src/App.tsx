@@ -20,6 +20,7 @@ import OpenAIChatPage from "./pages/OpenAIChat";
 import Admin from "./pages/Admin";
 import TherapistAuth from "./pages/TherapistAuth";
 import TherapistDashboard from "./pages/TherapistDashboard";
+import Consultation from "./pages/Consultation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,6 +80,7 @@ function App() {
               <Route path="/admin" element={<Admin />} />
               <Route path="/therapist-auth" element={<TherapistAuth />} />
               <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
+              <Route path="/consultation" element={<Consultation />} />
             </Routes>
           </TooltipProvider>
         </AuthProvider>
