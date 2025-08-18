@@ -33,8 +33,8 @@ const TherapistDirectory = () => {
   const [filteredTherapists, setFilteredTherapists] = useState<Therapist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSpecialization, setSelectedSpecialization] = useState("");
-  const [priceRange, setPriceRange] = useState("");
+  const [selectedSpecialization, setSelectedSpecialization] = useState("all");
+  const [priceRange, setPriceRange] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
   const { toast } = useToast();
@@ -82,14 +82,14 @@ const TherapistDirectory = () => {
     }
 
     // Specialization filter
-    if (selectedSpecialization) {
+    if (selectedSpecialization && selectedSpecialization !== "all") {
       filtered = filtered.filter(therapist => 
         therapist.specializations?.includes(selectedSpecialization)
       );
     }
 
     // Price range filter
-    if (priceRange) {
+    if (priceRange && priceRange !== "all") {
       const [min, max] = priceRange.split("-").map(Number);
       filtered = filtered.filter(therapist => {
         const rate = therapist.hourly_rate_30min || 0;
@@ -165,7 +165,7 @@ const TherapistDirectory = () => {
                 <SelectValue placeholder="Specialization" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Specializations</SelectItem>
+                <SelectItem value="all">All Specializations</SelectItem>
                 {getUniqueSpecializations().map(spec => (
                   <SelectItem key={spec} value={spec}>{spec}</SelectItem>
                 ))}
@@ -177,7 +177,7 @@ const TherapistDirectory = () => {
                 <SelectValue placeholder="Price Range" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Prices</SelectItem>
+                <SelectItem value="all">All Prices</SelectItem>
                 <SelectItem value="0-50">$0 - $50</SelectItem>
                 <SelectItem value="50-100">$50 - $100</SelectItem>
                 <SelectItem value="100-150">$100 - $150</SelectItem>
