@@ -212,24 +212,29 @@ const TherapistDirectory = () => {
           <Card key={therapist.id} className="hover:shadow-lg transition-all duration-300 cursor-pointer border-0 shadow-md">
             <CardContent className="p-0 relative overflow-hidden">
               {/* Header with Avatar and Basic Info */}
-              <div className="relative p-6 bg-gradient-to-br from-primary/5 to-primary/10">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative h-32 w-32 rounded-lg overflow-hidden border-2 border-white shadow-lg">
-                      <img 
-                        src={therapist.avatar_url} 
-                        alt={`${therapist.first_name} ${therapist.last_name}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                      <div className="hidden w-full h-full bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground">
-                        {therapist.first_name?.[0]}{therapist.last_name?.[0]}
-                      </div>
+              <div className="relative p-0 bg-gradient-to-br from-primary/5 to-primary/10 flex">
+                {/* Left side - Picture */}
+                <div className="w-1/3 h-48">
+                  <div className="relative h-full w-full">
+                    <img 
+                      src={therapist.avatar_url} 
+                      alt={`${therapist.first_name} ${therapist.last_name}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="hidden w-full h-full bg-muted flex items-center justify-center text-2xl font-semibold text-muted-foreground">
+                      {therapist.first_name?.[0]}{therapist.last_name?.[0]}
                     </div>
+                  </div>
+                </div>
+
+                {/* Right side - Info */}
+                <div className="flex-1 p-6">
+                  <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-bold text-foreground mb-1">
                         {therapist.first_name} {therapist.last_name}
@@ -249,23 +254,23 @@ const TherapistDirectory = () => {
                         </div>
                       )}
                     </div>
+                    
+                    {therapist.is_verified && (
+                      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                        Verified
+                      </Badge>
+                    )}
                   </div>
-                  
-                  {therapist.is_verified && (
-                    <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-                      Verified
-                    </Badge>
+
+                  {/* Specialization Tag */}
+                  {therapist.specializations && therapist.specializations.length > 0 && (
+                    <div className="mb-3">
+                      <Badge variant="secondary" className="text-xs font-medium">
+                        {therapist.specializations[0]}
+                      </Badge>
+                    </div>
                   )}
                 </div>
-
-                {/* Specialization Tag */}
-                {therapist.specializations && therapist.specializations.length > 0 && (
-                  <div className="mb-3">
-                    <Badge variant="secondary" className="text-xs font-medium">
-                      {therapist.specializations[0]}
-                    </Badge>
-                  </div>
-                )}
               </div>
 
               {/* Bio Section */}
