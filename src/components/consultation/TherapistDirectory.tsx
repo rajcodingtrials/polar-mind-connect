@@ -215,12 +215,21 @@ const TherapistDirectory = () => {
               <div className="relative p-6 bg-gradient-to-br from-primary/5 to-primary/10">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-4">
-                    <Avatar className="h-20 w-20 border-2 border-white shadow-lg">
-                      <AvatarImage src={therapist.avatar_url} />
-                      <AvatarFallback className="text-lg font-semibold">
+                    <div className="relative h-20 w-20 rounded-lg overflow-hidden border-2 border-white shadow-lg">
+                      <img 
+                        src={therapist.avatar_url} 
+                        alt={`${therapist.first_name} ${therapist.last_name}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                      <div className="hidden w-full h-full bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground">
                         {therapist.first_name?.[0]}{therapist.last_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
+                      </div>
+                    </div>
                     <div>
                       <h3 className="text-lg font-bold text-foreground mb-1">
                         {therapist.first_name} {therapist.last_name}
