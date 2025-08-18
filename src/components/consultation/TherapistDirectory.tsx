@@ -239,12 +239,10 @@ const TherapistDirectory = () => {
                       <h3 className="text-lg font-bold text-foreground mb-1">
                         {therapist.first_name} {therapist.last_name}
                       </h3>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
-                          <span className="font-medium">5.0</span>
-                          <span className="ml-1">({Math.floor(Math.random() * 100) + 20} reviews)</span>
-                        </div>
+                      <div className="flex items-center text-sm text-muted-foreground mt-1">
+                        <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
+                        <span className="font-medium">5.0</span>
+                        <span className="ml-1">({Math.floor(Math.random() * 100) + 20} reviews)</span>
                       </div>
                       {therapist.country && (
                         <div className="flex items-center mt-2 text-sm text-muted-foreground">
