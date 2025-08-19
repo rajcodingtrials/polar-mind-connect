@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 220 65% 55%;
+    --primary: 0 0% 0%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
@@ -23,8 +23,8 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 270 75% 85%;
-    --accent-foreground: 270 50% 20%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -32,13 +32,6 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
-
-    /* Custom therapist card colors */
-    --card-gradient-start: 220 65% 55%;
-    --card-gradient-end: 270 75% 65%;
-    --card-accent: 50 100% 80%;
-    --verified-bg: 120 60% 85%;
-    --verified-text: 120 60% 20%;
 
     --radius: 0.5rem;
   }

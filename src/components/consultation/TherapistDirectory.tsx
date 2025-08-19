@@ -210,10 +210,10 @@ const TherapistDirectory = () => {
       {/* Results */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTherapists.map((therapist) => (
-          <Card key={therapist.id} className="hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2 transition-all duration-500 cursor-pointer border-0 shadow-lg hover:scale-[1.03] group rounded-2xl overflow-hidden bg-gradient-to-br from-white via-accent/10 to-primary/5">
+          <Card key={therapist.id} className="hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer border-0 shadow-md hover:scale-[1.02] group rounded-t-2xl overflow-hidden">
             <CardContent className="p-0 relative overflow-hidden">
               {/* Header with Avatar and Basic Info */}
-              <div className="relative p-0 bg-gradient-to-br from-primary/10 via-accent/20 to-primary/15 flex">
+              <div className="relative p-0 bg-gradient-to-br from-primary/5 to-primary/10 flex">
                 {/* Left side - Picture */}
                 <div className="w-1/2 h-full">
                   <div className="relative h-full w-full">
@@ -254,8 +254,8 @@ const TherapistDirectory = () => {
                     </div>
                     
                     {therapist.is_verified && (
-                      <Badge variant="default" className="bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 border-emerald-200 shadow-sm">
-                        ✓ Verified
+                      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                        Verified
                       </Badge>
                     )}
                   </div>
@@ -263,7 +263,7 @@ const TherapistDirectory = () => {
                   {/* Specialization Tag */}
                   {therapist.specializations && therapist.specializations.length > 0 && (
                     <div className="mb-3">
-                      <Badge variant="secondary" className="text-xs font-medium bg-gradient-to-r from-primary/10 to-accent/20 text-primary border-primary/20">
+                      <Badge variant="secondary" className="text-xs font-medium">
                         {therapist.specializations[0]}
                       </Badge>
                     </div>
@@ -272,18 +272,18 @@ const TherapistDirectory = () => {
               </div>
 
               {/* Bio Section */}
-              <div className="p-6 pt-4 bg-gradient-to-b from-transparent to-primary/5">
+              <div className="p-6 pt-4">
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
                   {therapist.bio || "Experienced speech therapist dedicated to helping clients achieve their communication goals through personalized therapy sessions."}
                 </p>
 
                 {/* Stats Row */}
-                <div className="flex items-center justify-between text-sm mb-4 p-3 bg-white/50 rounded-lg border border-primary/10">
-                  <div className="flex items-center text-muted-foreground">
-                    <Clock className="h-3 w-3 mr-1 text-primary" />
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                  <div className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
                     <span>{therapist.years_experience || 0}+ years</span>
                   </div>
-                  <div className="flex items-center font-semibold text-primary">
+                  <div className="flex items-center font-semibold text-foreground">
                     <DollarSign className="h-4 w-4 mr-1" />
                     <span>${therapist.hourly_rate_30min || 50}/hour</span>
                   </div>
@@ -291,7 +291,7 @@ const TherapistDirectory = () => {
 
                 {/* Action Button */}
                 <Button 
-                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium shadow-md hover:shadow-lg transition-all duration-300" 
+                  className="w-full" 
                   onClick={() => setSelectedTherapist(therapist)}
                   size="sm"
                 >
