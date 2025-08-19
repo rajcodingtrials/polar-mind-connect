@@ -210,7 +210,7 @@ const TherapistDirectory = () => {
       {/* Results */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTherapists.map((therapist) => (
-          <Card key={therapist.id} className="hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer border-0 shadow-md hover:scale-[1.02] group rounded-t-2xl">
+          <Card key={therapist.id} className="hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer border-0 shadow-md hover:scale-[1.02] group rounded-t-2xl overflow-hidden">
             <CardContent className="p-0 relative overflow-hidden">
               {/* Header with Avatar and Basic Info */}
               <div className="relative p-0 bg-gradient-to-br from-primary/5 to-primary/10 flex">
