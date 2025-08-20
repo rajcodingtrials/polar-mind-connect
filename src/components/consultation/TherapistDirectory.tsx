@@ -210,13 +210,13 @@ const TherapistDirectory = () => {
       {/* Results */}
       <div className="grid grid-cols-1 gap-6">
         {filteredTherapists.map((therapist) => (
-          <Card key={therapist.id} className="hover:shadow-lg transition-all duration-300 cursor-pointer">
-            <CardContent className="p-6">
-              <div className="flex gap-6">
-                {/* Left Column */}
-                <div className="flex flex-col items-center space-y-4 min-w-[200px]">
+          <div key={therapist.id} className="flex gap-6">
+            {/* Left Card - Therapist Profile */}
+            <Card className="w-[200px] hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-4">
+                <div className="flex flex-col items-center space-y-3">
                   {/* Avatar */}
-                  <Avatar className="h-20 w-20">
+                  <Avatar className="h-16 w-16">
                     <AvatarImage 
                       src={therapist.avatar_url} 
                       alt={`${therapist.first_name} ${therapist.last_name}`}
@@ -226,104 +226,88 @@ const TherapistDirectory = () => {
                     </AvatarFallback>
                   </Avatar>
 
-                  {/* Country Flag */}
-                  {therapist.country && (
-                    <div className="flex items-center text-sm">
-                      <span className="text-xl mr-2">{getCountryFlag(therapist.country)}</span>
-                      <span className="text-muted-foreground">Language</span>
-                    </div>
-                  )}
+                  {/* Language Flag */}
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    {therapist.country && (
+                      <>
+                        <span className="text-base mr-1">{getCountryFlag(therapist.country)}</span>
+                        <span>English Language</span>
+                      </>
+                    )}
+                  </div>
 
                   {/* Rating */}
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
 
                   {/* Sessions Count */}
                   <div className="text-center">
-                    <div className="text-sm font-medium">{Math.floor(Math.random() * 500) + 100} Sessions</div>
+                    <div className="text-xs text-muted-foreground">{Math.floor(Math.random() * 500) + 100} Lessons</div>
                   </div>
 
                   {/* Book Trial Button */}
                   <Button 
-                    className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                    className="w-full bg-pink-500 hover:bg-pink-600 text-white text-xs py-1.5"
                     onClick={() => setSelectedTherapist(therapist)}
                     size="sm"
                   >
                     Book Trial
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
 
-                {/* Right Column */}
-                <div className="flex-1 space-y-4">
-                  {/* Name */}
-                  <div>
-                    <h3 className="text-xl font-semibold text-foreground">
-                      {therapist.first_name} {therapist.last_name}
-                    </h3>
-                    {therapist.country && (
-                      <p className="text-sm text-muted-foreground">
-                        Native Speech Therapist from the {therapist.country}
-                      </p>
-                    )}
-                  </div>
+            {/* Right Content - Therapist Details */}
+            <div className="flex-1 space-y-3">
+              {/* Name */}
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {therapist.first_name} {therapist.last_name}
+                </h3>
+                {therapist.country && (
+                  <p className="text-sm text-muted-foreground">
+                    Native English Teacher from the {therapist.country}, consectetur adipiscing elit, sed do eiusmod tempor et dolore ut magna aliqua... [+]
+                  </p>
+                )}
+              </div>
 
-                  {/* Specializations */}
-                  {therapist.specializations && therapist.specializations.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-foreground mb-1">SPEAKS:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {therapist.specializations.slice(0, 3).map((spec, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {spec}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Rates */}
-                  <div>
-                    <p className="text-sm font-medium text-foreground mb-1">HOURLY RATE FROM:</p>
-                    <div className="space-y-1">
-                      {therapist.hourly_rate_30min && (
-                        <p className="text-sm">USD ${therapist.hourly_rate_30min} (30 min)</p>
-                      )}
-                      {therapist.hourly_rate_60min && (
-                        <p className="text-sm">USD ${therapist.hourly_rate_60min} (60 min)</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Trial Info */}
-                  <div>
-                    <p className="text-sm font-medium text-foreground mb-1">TRIAL:</p>
-                    <p className="text-sm">USD {Math.floor((therapist.hourly_rate_30min || 50) * 0.5)}.50</p>
-                  </div>
-
-                  {/* Bio */}
-                  <div>
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                      {therapist.bio || "Experienced speech therapist dedicated to helping clients achieve their communication goals through personalized therapy sessions."}
-                    </p>
-                  </div>
-
-                  {/* Experience */}
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>{therapist.years_experience || 0}+ years experience</span>
-                    {therapist.is_verified && (
-                      <Badge variant="default" className="ml-4 bg-green-100 text-green-800 border-green-200">
-                        Verified
+              {/* Specializations */}
+              {therapist.specializations && therapist.specializations.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-foreground mb-1">SPEAKS:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {therapist.specializations.slice(0, 3).map((spec, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs px-2 py-0.5">
+                        {spec}
                       </Badge>
-                    )}
+                    ))}
                   </div>
                 </div>
+              )}
+
+              {/* Rates */}
+              <div>
+                <p className="text-xs font-medium text-foreground mb-1">HOURLY RATE FROM:</p>
+                <div className="space-y-0.5">
+                  {therapist.hourly_rate_30min && (
+                    <p className="text-sm">USD ${therapist.hourly_rate_30min}.00</p>
+                  )}
+                  {therapist.hourly_rate_60min && (
+                    <p className="text-sm">USD ${therapist.hourly_rate_60min}.00</p>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Trial Info */}
+              <div>
+                <p className="text-xs font-medium text-foreground mb-1">TRIAL:</p>
+                <p className="text-sm">USD {Math.floor((therapist.hourly_rate_30min || 50) * 0.5)}.50</p>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
 
