@@ -258,12 +258,12 @@ const TherapistDirectory = () => {
                       </div>
                     </div>
 
-                    {/* Book Trial Button */}
+                    {/* More Details Button */}
                     <Button 
-                      className="w-full bg-pink-500 hover:bg-pink-600 text-white border-0"
+                      className="w-full bg-black hover:bg-black/90 text-white border-0"
                       onClick={() => setSelectedTherapist(therapist)}
                     >
-                      Book Trial
+                      More Details
                     </Button>
                   </div>
                 </div>
@@ -284,7 +284,7 @@ const TherapistDirectory = () => {
 
               {/* Specializations */}
               <div>
-                <h3 className="text-sm font-bold text-foreground mb-2">SPEAKS:</h3>
+                <h3 className="text-sm font-bold text-foreground mb-2">SPECIALIZATION:</h3>
                 <div className="flex gap-2">
                   {therapist.specializations?.map((spec, index) => (
                     <Badge key={index} variant="outline" className="px-3 py-1">
@@ -299,22 +299,8 @@ const TherapistDirectory = () => {
 
               {/* Hourly Rate */}
               <div>
-                <h3 className="text-sm font-bold text-foreground mb-2">HOURLY RATE FROM:</h3>
-                <div className="space-y-1">
-                  <div className="text-foreground font-medium">
-                    USD ${therapist.hourly_rate_30min || 10}.00
-                  </div>
-                  <div className="text-foreground font-medium">
-                    USD ${therapist.hourly_rate_60min || 20}.00
-                  </div>
-                </div>
-              </div>
-
-              {/* Trial Rate */}
-              <div>
-                <h3 className="text-sm font-bold text-foreground mb-2">TRIAL:</h3>
                 <div className="text-foreground font-medium">
-                  USD ${Math.round((therapist.hourly_rate_30min || 10) * 0.55)}.50
+                  $25/hr
                 </div>
               </div>
             </div>
