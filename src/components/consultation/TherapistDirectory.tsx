@@ -211,61 +211,52 @@ const TherapistDirectory = () => {
       <div className="space-y-6">
         {filteredTherapists.map((therapist) => (
           <div key={therapist.id} className="flex gap-6 hover:shadow-lg transition-all duration-300">
-            {/* Left Card - Therapist Photo with Info */}
+            {/* Left Card - Therapist Photo with separate info section */}
             <Card className="w-80 overflow-hidden">
-              <CardContent className="p-0 relative h-96">
-                {/* Background Image */}
-                <div className="absolute inset-0">
-                  <img 
-                    src={therapist.avatar_url} 
+              <CardContent className="p-0">
+                {/* Photo section */}
+                <div className="w-full h-64">
+                  <img
+                    src={therapist.avatar_url}
                     alt={`${therapist.first_name} ${therapist.last_name}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
-                      target.nextElementSibling?.classList.remove('hidden');
+                      (target.nextElementSibling as HTMLElement)?.classList.remove('hidden');
                     }}
                   />
+                  {/* Fallback when image fails */}
                   <div className="hidden w-full h-full bg-muted flex items-center justify-center text-4xl font-semibold text-muted-foreground">
                     {therapist.first_name?.[0]}{therapist.last_name?.[0]}
                   </div>
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/20"></div>
                 </div>
 
-                {/* Content Overlay */}
-                <div className="relative z-10 p-4 h-full flex flex-col justify-end text-white">
-                  {/* Bottom Section */}
-                  <div className="space-y-4">
-                    {/* Name, Country, Rating */}
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold">
-                        {therapist.first_name} {therapist.last_name}
-                      </h3>
-                      {therapist.country && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-lg">{getCountryFlag(therapist.country)}</span>
-                          <span>{therapist.country}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        ))}
-                        <span className="ml-2 text-sm">
-                          {Math.floor(Math.random() * 100) + 20} Lessons
-                        </span>
-                      </div>
+                {/* Info section under the photo (white space) */}
+                <div className="p-4 bg-card">
+                  {therapist.country && (
+                    <div className="flex items-center gap-2 text-sm text-foreground">
+                      <span className="text-lg">{getCountryFlag(therapist.country)}</span>
+                      <span>{therapist.country}</span>
                     </div>
+                  )}
 
-                    {/* More Details Button */}
-                    <Button 
-                      className="w-full bg-black hover:bg-black/90 text-white border-0"
-                      onClick={() => setSelectedTherapist(therapist)}
-                    >
-                      More Details
-                    </Button>
+                  <div className="mt-2 flex items-center gap-1 text-muted-foreground">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                    <span className="ml-2 text-sm">
+                      {Math.floor(Math.random() * 100) + 20} Lessons
+                    </span>
                   </div>
+
+                  {/* More Details Button */}
+                  <Button
+                    className="mt-4 w-full bg-foreground hover:bg-foreground/90 text-background border-0"
+                    onClick={() => setSelectedTherapist(therapist)}
+                  >
+                    More Details
+                  </Button>
                 </div>
               </CardContent>
             </Card>
