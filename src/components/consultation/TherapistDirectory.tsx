@@ -208,98 +208,127 @@ const TherapistDirectory = () => {
       </Card>
 
       {/* Results */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         {filteredTherapists.map((therapist) => (
-          <Card key={therapist.id} className="hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer border-0 shadow-md hover:scale-[1.02] group rounded-t-2xl overflow-hidden">
-            <CardContent className="p-0 relative overflow-hidden">
-              {/* Header with Avatar and Basic Info */}
-              <div className="relative p-0 bg-gradient-to-br from-primary/5 to-primary/10 flex">
-                {/* Left side - Picture */}
-                <div className="w-1/2 h-full">
-                  <div className="relative h-full w-full">
-                    <img 
-                      src={therapist.avatar_url} 
-                      alt={`${therapist.first_name} ${therapist.last_name}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                    <div className="hidden w-full h-full bg-muted flex items-center justify-center text-2xl font-semibold text-muted-foreground">
-                      {therapist.first_name?.[0]}{therapist.last_name?.[0]}
-                    </div>
+          <div key={therapist.id} className="flex gap-6 hover:shadow-lg transition-all duration-300">
+            {/* Left Card - Therapist Photo with Info */}
+            <Card className="w-80 overflow-hidden">
+              <CardContent className="p-0 relative h-96">
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                  <img 
+                    src={therapist.avatar_url} 
+                    alt={`${therapist.first_name} ${therapist.last_name}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="hidden w-full h-full bg-muted flex items-center justify-center text-4xl font-semibold text-muted-foreground">
+                    {therapist.first_name?.[0]}{therapist.last_name?.[0]}
                   </div>
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-black/20"></div>
                 </div>
 
-                {/* Right side - Info */}
-                <div className="flex-1 p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-foreground mb-1">
+                {/* Content Overlay */}
+                <div className="relative z-10 p-4 h-full flex flex-col justify-between text-white">
+                  {/* Top - Language */}
+                  <div className="flex items-center gap-2">
+                    {therapist.country && (
+                      <span className="text-2xl">{getCountryFlag(therapist.country)}</span>
+                    )}
+                    <span className="text-sm font-medium">
+                      {therapist.languages?.[0] || 'English'} Language
+                    </span>
+                  </div>
+
+                  {/* Bottom Section */}
+                  <div className="space-y-4">
+                    {/* Name, Country, Rating */}
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-bold">
                         {therapist.first_name} {therapist.last_name}
                       </h3>
-                      <div className="flex items-center text-sm text-muted-foreground mt-1">
-                        <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">5.0</span>
-                        <span className="ml-1">({Math.floor(Math.random() * 100) + 20} reviews)</span>
-                      </div>
-                       {therapist.country && (
-                        <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                          <span className="text-lg mr-2">{getCountryFlag(therapist.country)}</span>
+                      {therapist.country && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-lg">{getCountryFlag(therapist.country)}</span>
                           <span>{therapist.country}</span>
                         </div>
                       )}
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                        <span className="ml-2 text-sm">
+                          {Math.floor(Math.random() * 100) + 20} Lessons
+                        </span>
+                      </div>
                     </div>
-                    
-                    {therapist.is_verified && (
-                      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-                        Verified
-                      </Badge>
-                    )}
-                  </div>
 
-                  {/* Specialization Tag */}
-                  {therapist.specializations && therapist.specializations.length > 0 && (
-                    <div className="mb-3">
-                      <Badge variant="secondary" className="text-xs font-medium">
-                        {therapist.specializations[0]}
-                      </Badge>
-                    </div>
-                  )}
+                    {/* Book Trial Button */}
+                    <Button 
+                      className="w-full bg-pink-500 hover:bg-pink-600 text-white border-0"
+                      onClick={() => setSelectedTherapist(therapist)}
+                    >
+                      Book Trial
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Right Section - Bio and Details */}
+            <div className="flex-1 space-y-4">
+              {/* Name */}
+              <h2 className="text-2xl font-bold text-foreground">
+                {therapist.first_name} {therapist.last_name}
+              </h2>
+
+              {/* Bio */}
+              <p className="text-muted-foreground leading-relaxed">
+                {therapist.bio || "Native English Teacher from the India, consectetur adipiscing elit, sed do eiusmod tempor et dolore ut magna aliqua... [+]"}
+              </p>
+
+              {/* Specializations */}
+              <div>
+                <h3 className="text-sm font-bold text-foreground mb-2">SPEAKS:</h3>
+                <div className="flex gap-2">
+                  {therapist.specializations?.map((spec, index) => (
+                    <Badge key={index} variant="outline" className="px-3 py-1">
+                      {spec}
+                    </Badge>
+                  )) || [
+                    <Badge key="voice" variant="outline" className="px-3 py-1">Voice Therapy</Badge>,
+                    <Badge key="articulation" variant="outline" className="px-3 py-1">Articulation Therapy</Badge>
+                  ]}
                 </div>
               </div>
 
-              {/* Bio Section */}
-              <div className="p-6 pt-4">
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
-                  {therapist.bio || "Experienced speech therapist dedicated to helping clients achieve their communication goals through personalized therapy sessions."}
-                </p>
-
-                {/* Stats Row */}
-                <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center">
-                    <Clock className="h-3 w-3 mr-1" />
-                    <span>{therapist.years_experience || 0}+ years</span>
+              {/* Hourly Rate */}
+              <div>
+                <h3 className="text-sm font-bold text-foreground mb-2">HOURLY RATE FROM:</h3>
+                <div className="space-y-1">
+                  <div className="text-foreground font-medium">
+                    USD ${therapist.hourly_rate_30min || 10}.00
                   </div>
-                  <div className="flex items-center font-semibold text-foreground">
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    <span>${therapist.hourly_rate_30min || 50}/hour</span>
+                  <div className="text-foreground font-medium">
+                    USD ${therapist.hourly_rate_60min || 20}.00
                   </div>
                 </div>
-
-                {/* Action Button */}
-                <Button 
-                  className="w-full" 
-                  onClick={() => setSelectedTherapist(therapist)}
-                  size="sm"
-                >
-                  View {therapist.first_name}'s profile
-                </Button>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Trial Rate */}
+              <div>
+                <h3 className="text-sm font-bold text-foreground mb-2">TRIAL:</h3>
+                <div className="text-foreground font-medium">
+                  USD ${Math.round((therapist.hourly_rate_30min || 10) * 0.55)}.50
+                </div>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
 
