@@ -211,11 +211,11 @@ const TherapistDirectory = () => {
       <div className="space-y-6">
         {filteredTherapists.map((therapist) => (
           <div key={therapist.id} className="flex gap-6 hover:shadow-lg transition-all duration-300">
-            {/* Left Card - Therapist Photo with separate info section */}
-            <Card className="w-80 overflow-hidden">
+            {/* Therapist Card */}
+            <Card className="w-80 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
                 {/* Photo section */}
-                <div className="w-full h-64">
+                <div className="relative w-full h-64">
                   <img
                     src={therapist.avatar_url}
                     alt={`${therapist.first_name} ${therapist.last_name}`}
@@ -232,27 +232,29 @@ const TherapistDirectory = () => {
                   </div>
                 </div>
 
-                {/* Info section under the photo (white space) */}
-                <div className="p-4 bg-card">
+                {/* Card Info Section */}
+                <div className="p-4 bg-card space-y-3">
+                  {/* Country */}
                   {therapist.country && (
-                    <div className="flex items-center gap-2 text-sm text-foreground">
+                    <div className="flex items-center gap-2 text-sm text-foreground font-medium">
                       <span className="text-lg">{getCountryFlag(therapist.country)}</span>
                       <span>{therapist.country}</span>
                     </div>
                   )}
 
-                  <div className="mt-2 flex items-center gap-1 text-muted-foreground">
+                  {/* Rating */}
+                  <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     ))}
-                    <span className="ml-2 text-sm">
+                    <span className="ml-2 text-sm text-muted-foreground">
                       {Math.floor(Math.random() * 100) + 20} Lessons
                     </span>
                   </div>
 
                   {/* More Details Button */}
                   <Button
-                    className="mt-4 w-full bg-foreground hover:bg-foreground/90 text-background border-0"
+                    className="w-full bg-foreground hover:bg-foreground/90 text-background"
                     onClick={() => setSelectedTherapist(therapist)}
                   >
                     More Details
