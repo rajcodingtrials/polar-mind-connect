@@ -212,14 +212,14 @@ const TherapistDirectory = () => {
         {filteredTherapists.map((therapist) => (
           <div key={therapist.id} className="flex gap-6 hover:shadow-lg transition-all duration-300">
             {/* Therapist Card */}
-            <Card className="w-80 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+            <Card className="w-72 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
                 {/* Photo section */}
                 <div className="relative w-full h-64">
                   <img
                     src={therapist.avatar_url}
                     alt={`${therapist.first_name} ${therapist.last_name}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-top"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
