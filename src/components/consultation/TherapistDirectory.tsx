@@ -234,17 +234,7 @@ const TherapistDirectory = () => {
                 </div>
 
                 {/* Content Overlay */}
-                <div className="relative z-10 p-4 h-full flex flex-col justify-between text-white">
-                  {/* Top - Language */}
-                  <div className="flex items-center gap-2">
-                    {therapist.country && (
-                      <span className="text-2xl">{getCountryFlag(therapist.country)}</span>
-                    )}
-                    <span className="text-sm font-medium">
-                      {therapist.languages?.[0] || 'English'} Language
-                    </span>
-                  </div>
-
+                <div className="relative z-10 p-4 h-full flex flex-col justify-end text-white">
                   {/* Bottom Section */}
                   <div className="space-y-4">
                     {/* Name, Country, Rating */}
