@@ -210,7 +210,7 @@ const TherapistDirectory = () => {
       {/* Results */}
       <div className="space-y-6">
         {filteredTherapists.map((therapist) => (
-          <div key={therapist.id} className="flex gap-8 hover:shadow-lg transition-all duration-300">
+          <div key={therapist.id} className="flex gap-8 hover:shadow-lg transition-all duration-300 justify-center max-w-6xl mx-auto">
             {/* Therapist Card */}
             <Card className="w-72 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
@@ -248,7 +248,7 @@ const TherapistDirectory = () => {
                       <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     ))}
                     <span className="ml-2 text-sm text-muted-foreground">
-                      {Math.floor(Math.random() * 100) + 20} Lessons
+                      {(Math.random() * 1.5 + 4).toFixed(1)} ({Math.floor(Math.random() * 200) + 50})
                     </span>
                   </div>
 
