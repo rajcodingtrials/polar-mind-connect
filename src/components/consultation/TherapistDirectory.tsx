@@ -210,12 +210,12 @@ const TherapistDirectory = () => {
       {/* Results */}
       <div className="space-y-6">
         {filteredTherapists.map((therapist) => (
-          <div key={therapist.id} className="flex gap-8 hover:shadow-lg transition-all duration-300">
-            {/* Therapist Card */}
-            <Card className="w-72 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
+          <Card key={therapist.id} className="p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer border-2 hover:border-primary/20">
+            <div className="flex gap-8">
+              {/* Left Section - Photo and Basic Info */}
+              <div className="w-72 space-y-4">
                 {/* Photo section */}
-                <div className="relative w-full h-64">
+                <div className="relative w-full h-64 rounded-lg overflow-hidden">
                   <img
                     src={therapist.avatar_url}
                     alt={`${therapist.first_name} ${therapist.last_name}`}
@@ -227,77 +227,77 @@ const TherapistDirectory = () => {
                     }}
                   />
                   {/* Fallback when image fails */}
-                  <div className="hidden w-full h-full bg-muted flex items-center justify-center text-4xl font-semibold text-muted-foreground">
+                  <div className="hidden w-full h-full bg-muted flex items-center justify-center text-4xl font-semibold text-muted-foreground rounded-lg">
                     {therapist.first_name?.[0]}{therapist.last_name?.[0]}
                   </div>
                 </div>
 
-                {/* Card Info Section */}
-                <div className="p-4 bg-card space-y-3">
-                  {/* Country */}
-                  {therapist.country && (
-                    <div className="flex items-center gap-2 text-sm text-foreground font-medium">
-                      <span className="text-lg">{getCountryFlag(therapist.country)}</span>
-                      <span>{therapist.country}</span>
-                    </div>
-                  )}
-
-                  {/* Rating */}
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      {Math.floor(Math.random() * 100) + 20} Lessons
-                    </span>
+                {/* Country */}
+                {therapist.country && (
+                  <div className="flex items-center gap-2 text-sm text-foreground font-medium">
+                    <span className="text-lg">{getCountryFlag(therapist.country)}</span>
+                    <span>{therapist.country}</span>
                   </div>
+                )}
 
-                  {/* More Details Button */}
-                  <Button
-                    className="w-full bg-foreground hover:bg-foreground/90 text-background"
-                    onClick={() => setSelectedTherapist(therapist)}
-                  >
-                    More Details
-                  </Button>
+                {/* Rating */}
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    {(4.5 + Math.random() * 0.5).toFixed(1)} ({Math.floor(Math.random() * 100) + 20})
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Right Section - Bio and Details */}
-            <div className="flex-1 space-y-4">
-              {/* Name */}
-              <h2 className="text-2xl font-bold text-foreground">
-                {therapist.first_name} {therapist.last_name}
-              </h2>
-
-              {/* Bio */}
-              <p className="text-muted-foreground leading-relaxed">
-                {therapist.bio || "Native English Teacher from the India, consectetur adipiscing elit, sed do eiusmod tempor et dolore ut magna aliqua... [+]"}
-              </p>
-
-              {/* Specializations */}
-              <div>
-                <h3 className="text-sm font-bold text-foreground mb-2">SPECIALIZATION:</h3>
-                <div className="flex gap-2">
-                  {therapist.specializations?.map((spec, index) => (
-                    <Badge key={index} variant="outline" className="px-3 py-1">
-                      {spec}
-                    </Badge>
-                  )) || [
-                    <Badge key="voice" variant="outline" className="px-3 py-1">Voice Therapy</Badge>,
-                    <Badge key="articulation" variant="outline" className="px-3 py-1">Articulation Therapy</Badge>
-                  ]}
-                </div>
+                {/* More Details Button */}
+                <Button
+                  className="w-full bg-foreground hover:bg-foreground/90 text-background"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedTherapist(therapist);
+                  }}
+                >
+                  More Details
+                </Button>
               </div>
 
-              {/* Hourly Rate */}
-              <div>
-                <div className="text-foreground font-medium">
-                  $25/hr
+              {/* Right Section - Bio and Details */}
+              <div className="flex-1 space-y-4">
+                {/* Name */}
+                <h2 className="text-2xl font-bold text-foreground">
+                  {therapist.first_name} {therapist.last_name}
+                </h2>
+
+                {/* Bio */}
+                <p className="text-muted-foreground leading-relaxed">
+                  {therapist.bio || "Native English Teacher from the India, consectetur adipiscing elit, sed do eiusmod tempor et dolore ut magna aliqua... [+]"}
+                </p>
+
+                {/* Specializations */}
+                <div>
+                  <h3 className="text-sm font-bold text-foreground mb-2">SPECIALIZATION:</h3>
+                  <div className="flex gap-2 flex-wrap">
+                    {therapist.specializations?.map((spec, index) => (
+                      <Badge key={index} variant="outline" className="px-3 py-1">
+                        {spec}
+                      </Badge>
+                    )) || [
+                      <Badge key="voice" variant="outline" className="px-3 py-1">Voice Therapy</Badge>,
+                      <Badge key="articulation" variant="outline" className="px-3 py-1">Articulation Therapy</Badge>
+                    ]}
+                  </div>
+                </div>
+
+                {/* Hourly Rate */}
+                <div>
+                  <div className="text-foreground font-medium text-lg">
+                    ${therapist.hourly_rate_30min || 25}/hr
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
