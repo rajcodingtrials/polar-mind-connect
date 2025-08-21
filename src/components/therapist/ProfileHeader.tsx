@@ -43,10 +43,7 @@ export const ProfileHeader = ({ therapistProfile }: ProfileHeaderProps) => {
         )}
         <div className="flex items-center space-x-2 pt-2">
           <Badge variant={therapistProfile.is_verified ? "default" : "secondary"}>
-            {therapistProfile.is_verified ? "Verified" : "Pending Verification"}
-          </Badge>
-          <Badge variant={therapistProfile.is_active ? "default" : "destructive"}>
-            {therapistProfile.is_active ? "Active" : "Inactive"}
+            {therapistProfile.is_verified ? "Active" : "Pending Verification"}
           </Badge>
         </div>
       </div>
