@@ -210,7 +210,7 @@ const TherapistDirectory = () => {
       {/* Results */}
       <div className="space-y-6">
         {filteredTherapists.map((therapist) => (
-          <div key={therapist.id} className="flex gap-6 hover:shadow-lg transition-all duration-300">
+          <div key={therapist.id} className="flex gap-8 hover:shadow-lg transition-all duration-300">
             {/* Therapist Card */}
             <Card className="w-72 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
