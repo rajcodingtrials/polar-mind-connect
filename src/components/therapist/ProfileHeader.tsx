@@ -41,7 +41,7 @@ export const ProfileHeader = ({ therapistProfile }: ProfileHeaderProps) => {
         {therapistProfile.certification && (
           <p className="text-sm text-muted-foreground">{therapistProfile.certification}</p>
         )}
-        <div className="flex items-center space-x-2 pt-2">
+        <div className="flex items-center space-x-2">
           <Badge variant={therapistProfile.is_verified ? "default" : "secondary"}>
             {therapistProfile.is_verified ? "Active" : "Pending Verification"}
           </Badge>

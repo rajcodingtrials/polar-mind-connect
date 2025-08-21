@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "../context/AuthContext";
 import { useTherapistAuth } from "../hooks/useTherapistAuth";
+import { useTherapistSessions } from "../hooks/useTherapistSessions";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   Calendar, 
@@ -35,6 +36,7 @@ import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails"
 const TherapistDashboard = () => {
   const { user, signOut } = useAuth();
   const { therapistProfile, updateTherapistProfile, loading } = useTherapistAuth();
+  const { todaySessions, totalSessions, loading: sessionsLoading } = useTherapistSessions(therapistProfile?.id || null);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -147,7 +149,9 @@ const TherapistDashboard = () => {
                 <Calendar className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Today's Sessions</p>
-                  <p className="text-2xl font-bold text-gray-900">3</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {sessionsLoading ? "..." : todaySessions}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -158,8 +162,10 @@ const TherapistDashboard = () => {
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active Clients</p>
-                  <p className="text-2xl font-bold text-gray-900">12</p>
+                  <p className="text-sm font-medium text-gray-600">Total Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {sessionsLoading ? "..." : totalSessions}
+                  </p>
                 </div>
               </div>
             </CardContent>
