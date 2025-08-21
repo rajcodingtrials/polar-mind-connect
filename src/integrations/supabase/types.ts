@@ -371,6 +371,7 @@ export type Database = {
           education: string | null
           email: string | null
           first_name: string | null
+          headline: string | null
           hourly_rate_30min: number | null
           hourly_rate_60min: number | null
           id: string
@@ -396,6 +397,7 @@ export type Database = {
           education?: string | null
           email?: string | null
           first_name?: string | null
+          headline?: string | null
           hourly_rate_30min?: number | null
           hourly_rate_60min?: number | null
           id?: string
@@ -421,6 +423,7 @@ export type Database = {
           education?: string | null
           email?: string | null
           first_name?: string | null
+          headline?: string | null
           hourly_rate_30min?: number | null
           hourly_rate_60min?: number | null
           id?: string

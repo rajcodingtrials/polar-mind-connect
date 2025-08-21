@@ -66,9 +66,12 @@ const TherapistDashboard = () => {
 
     const updates = {
       name: editedProfile.name,
+      headline: editedProfile.headline,
       bio: editedProfile.bio,
       years_experience: editedProfile.years_experience,
       certification: editedProfile.certification,
+      education: editedProfile.education,
+      languages: editedProfile.languages,
       hourly_rate_30min: editedProfile.hourly_rate_30min,
       hourly_rate_60min: editedProfile.hourly_rate_60min,
       specializations: editedProfile.specializations,

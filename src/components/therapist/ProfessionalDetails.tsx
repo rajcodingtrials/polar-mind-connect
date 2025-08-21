@@ -10,6 +10,7 @@ import { Edit, Save, X } from "lucide-react";
 
 interface ProfessionalDetailsProps {
   therapistProfile: {
+    headline?: string;
     bio?: string;
     hourly_rate_30min?: number;
     hourly_rate_60min?: number;
@@ -61,6 +62,19 @@ export const ProfessionalDetails = ({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
+          <Label className="text-sm font-medium text-muted-foreground">Professional Headline</Label>
+          {isEditing ? (
+            <Input
+              value={editedProfile?.headline || ''}
+              onChange={(e) => setEditedProfile(prev => prev ? {...prev, headline: e.target.value} : null)}
+              placeholder="e.g., Speech and Language Therapist"
+            />
+          ) : (
+            <p className="text-foreground leading-relaxed">{therapistProfile.headline || 'Not specified'}</p>
+          )}
+        </div>
+
+        <div className="space-y-3">
           <Label className="text-sm font-medium text-muted-foreground">Professional Bio</Label>
           {isEditing ? (
             <Textarea
@@ -75,13 +89,13 @@ export const ProfessionalDetails = ({
         </div>
 
         <div className="space-y-3">
-          <Label className="text-sm font-medium text-muted-foreground">Certifications & Licenses</Label>
+          <Label className="text-sm font-medium text-muted-foreground">Degree and License</Label>
           {isEditing ? (
             <Textarea
               value={editedProfile?.certification || ''}
               onChange={(e) => setEditedProfile(prev => prev ? {...prev, certification: e.target.value} : null)}
               rows={3}
-              placeholder="List your certifications and licenses..."
+              placeholder="List your degrees and licenses..."
             />
           ) : (
             <p className="text-foreground leading-relaxed">{therapistProfile.certification || 'Not specified'}</p>
@@ -103,18 +117,29 @@ export const ProfessionalDetails = ({
         </div>
 
         <div className="space-y-3">
-          <Label className="text-sm font-medium text-muted-foreground">Languages</Label>
-          <div className="flex flex-wrap gap-2">
-            {therapistProfile.languages && therapistProfile.languages.length > 0 ? (
-              therapistProfile.languages.map((lang, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {lang}
-                </Badge>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-sm">Not specified</p>
-            )}
-          </div>
+          <Label className="text-sm font-medium text-muted-foreground">Languages Spoken</Label>
+          {isEditing ? (
+            <Input
+              value={(editedProfile?.languages || []).join(', ')}
+              onChange={(e) => {
+                const languagesArray = e.target.value.split(',').map(lang => lang.trim()).filter(lang => lang);
+                setEditedProfile(prev => prev ? {...prev, languages: languagesArray} : null);
+              }}
+              placeholder="e.g., English, Spanish, French (comma-separated)"
+            />
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {therapistProfile.languages && therapistProfile.languages.length > 0 ? (
+                therapistProfile.languages.map((lang, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {lang}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">Not specified</p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">

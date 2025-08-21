@@ -13,6 +13,7 @@ interface TherapistProfile {
   phone?: string;
   country?: string;
   name: string;
+  headline?: string;
   bio?: string;
   specializations: string[];
   hourly_rate_30min?: number;
