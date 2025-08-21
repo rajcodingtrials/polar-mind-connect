@@ -7,7 +7,7 @@ interface ProfileHeaderProps {
   therapistProfile: {
     avatar_url?: string;
     name: string;
-    years_experience: number;
+    headline?: string;
     certification?: string;
     is_verified: boolean;
     is_active: boolean;
@@ -29,13 +29,12 @@ export const ProfileHeader = ({ therapistProfile }: ProfileHeaderProps) => {
       </Avatar>
       <div className="flex-1 space-y-2">
         <h2 className="text-2xl font-bold text-foreground">{therapistProfile.name}</h2>
-        <p className="text-muted-foreground">Licensed Therapist</p>
-        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-          <span>{therapistProfile.years_experience} years experience</span>
-          {therapistProfile.certification && (
-            <span>• {therapistProfile.certification}</span>
-          )}
-        </div>
+        {therapistProfile.headline && (
+          <p className="text-lg text-muted-foreground font-medium">{therapistProfile.headline}</p>
+        )}
+        {therapistProfile.certification && (
+          <p className="text-sm text-muted-foreground">{therapistProfile.certification}</p>
+        )}
         <div className="flex items-center space-x-2 pt-2">
           <Badge variant={therapistProfile.is_verified ? "default" : "secondary"}>
             {therapistProfile.is_verified ? "Verified" : "Pending Verification"}
