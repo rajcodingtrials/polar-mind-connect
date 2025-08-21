@@ -6,7 +6,9 @@ import { User } from "lucide-react";
 interface ProfileHeaderProps {
   therapistProfile: {
     avatar_url?: string;
-    name: string;
+    first_name?: string;
+    last_name?: string;
+    name?: string;
     headline?: string;
     certification?: string;
     is_verified: boolean;
@@ -28,7 +30,11 @@ export const ProfileHeader = ({ therapistProfile }: ProfileHeaderProps) => {
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">{therapistProfile.name}</h2>
+        <h2 className="text-2xl font-bold text-foreground">
+          {therapistProfile.first_name && therapistProfile.last_name 
+            ? `${therapistProfile.first_name} ${therapistProfile.last_name}`
+            : therapistProfile.name || 'Unnamed Therapist'}
+        </h2>
         {therapistProfile.headline && (
           <p className="text-lg text-muted-foreground font-medium">{therapistProfile.headline}</p>
         )}
