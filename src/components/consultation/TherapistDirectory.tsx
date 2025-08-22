@@ -148,61 +148,61 @@ const TherapistDirectory = () => {
   return (
     <div className="space-y-8">
       {/* Filters Section */}
-      <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+      <Card className="bg-surface-elevated/80 backdrop-blur-sm border-border/50 shadow-sm">
         <CardContent className="p-8">
           <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-foreground mb-2">Find Your Perfect Therapist</h2>
-              <p className="text-sm text-muted-foreground">
-                Use the filters below to find therapists that match your needs
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-emphasis-high">Find Your Perfect Therapist</h2>
+              <p className="text-sm text-emphasis-medium">
+                Use the filters below to find therapists that match your needs and preferences
               </p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-emphasis-medium" />
                 <Input
                   placeholder="Search by name or specialty..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-background/50"
+                  className="pl-10 bg-card border-border/50 focus:border-primary focus:ring-primary/20"
                 />
               </div>
               
               <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
-                <SelectTrigger className="bg-background/50">
+                <SelectTrigger className="bg-card border-border/50 focus:border-primary">
                   <SelectValue placeholder="All Specializations" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Specializations</SelectItem>
+                <SelectContent className="bg-card border-border/50">
+                  <SelectItem value="all" className="focus:bg-surface-elevated">All Specializations</SelectItem>
                   {getUniqueSpecializations().map(spec => (
-                    <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                    <SelectItem key={spec} value={spec} className="focus:bg-surface-elevated">{spec}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={priceRange} onValueChange={setPriceRange}>
-                <SelectTrigger className="bg-background/50">
+                <SelectTrigger className="bg-card border-border/50 focus:border-primary">
                   <SelectValue placeholder="All Price Ranges" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Prices</SelectItem>
-                  <SelectItem value="0-50">$0 - $50/session</SelectItem>
-                  <SelectItem value="50-100">$50 - $100/session</SelectItem>
-                  <SelectItem value="100-150">$100 - $150/session</SelectItem>
-                  <SelectItem value="150">$150+/session</SelectItem>
+                <SelectContent className="bg-card border-border/50">
+                  <SelectItem value="all" className="focus:bg-surface-elevated">All Prices</SelectItem>
+                  <SelectItem value="0-50" className="focus:bg-surface-elevated">$0 - $50/session</SelectItem>
+                  <SelectItem value="50-100" className="focus:bg-surface-elevated">$50 - $100/session</SelectItem>
+                  <SelectItem value="100-150" className="focus:bg-surface-elevated">$100 - $150/session</SelectItem>
+                  <SelectItem value="150" className="focus:bg-surface-elevated">$150+/session</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="bg-background/50">
+                <SelectTrigger className="bg-card border-border/50 focus:border-primary">
                   <SelectValue placeholder="Sort By" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name (A-Z)</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="experience">Most Experienced</SelectItem>
+                <SelectContent className="bg-card border-border/50">
+                  <SelectItem value="name" className="focus:bg-surface-elevated">Name (A-Z)</SelectItem>
+                  <SelectItem value="price-low" className="focus:bg-surface-elevated">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high" className="focus:bg-surface-elevated">Price: High to Low</SelectItem>
+                  <SelectItem value="experience" className="focus:bg-surface-elevated">Most Experienced</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -213,14 +213,14 @@ const TherapistDirectory = () => {
       {/* Results Section */}
       <div className="space-y-6">
         {filteredTherapists.length > 0 && (
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing {filteredTherapists.length} therapist{filteredTherapists.length !== 1 ? 's' : ''}
+          <div className="flex items-center justify-between p-4 bg-surface-elevated/50 rounded-lg border border-border/30">
+            <p className="text-sm text-emphasis-medium font-medium">
+              Showing <span className="text-emphasis-high font-bold">{filteredTherapists.length}</span> therapist{filteredTherapists.length !== 1 ? 's' : ''}
             </p>
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
-                className="text-sm text-primary hover:text-primary/80 font-medium"
+                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors duration-200 underline-offset-4 hover:underline"
               >
                 Clear all filters
               </button>
