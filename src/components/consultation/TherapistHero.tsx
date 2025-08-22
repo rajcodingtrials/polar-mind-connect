@@ -4,9 +4,10 @@ import { Star, CheckCircle, Users, ArrowRight } from "lucide-react";
 
 interface TherapistHeroProps {
   therapistCount?: number;
+  onBrowseTherapists?: () => void;
 }
 
-const TherapistHero = ({ therapistCount = 150 }: TherapistHeroProps) => {
+const TherapistHero = ({ therapistCount = 150, onBrowseTherapists }: TherapistHeroProps) => {
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10">
@@ -32,13 +33,14 @@ const TherapistHero = ({ therapistCount = 150 }: TherapistHeroProps) => {
           </div>
 
           {/* Call to Action */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in">
-            <Button size="lg" className="text-base px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center justify-center animate-fade-in">
+            <Button 
+              size="lg" 
+              className="text-base px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={onBrowseTherapists}
+            >
               Browse Therapists
               <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button variant="outline" size="lg" className="text-base px-8 py-6 h-auto">
-              Learn More
             </Button>
           </div>
 

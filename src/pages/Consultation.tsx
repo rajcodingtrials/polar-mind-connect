@@ -10,6 +10,13 @@ const Consultation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const handleBrowseTherapists = () => {
+    const directorySection = document.getElementById('therapist-directory');
+    if (directorySection) {
+      directorySection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -36,10 +43,10 @@ const Consultation = () => {
       <Header />
       
       {/* Hero Section */}
-      <TherapistHero therapistCount={150} />
+      <TherapistHero therapistCount={150} onBrowseTherapists={handleBrowseTherapists} />
       
       {/* Directory Section */}
-      <div className="container mx-auto px-4 py-20 lg:py-24">
+      <div id="therapist-directory" className="container mx-auto px-4 py-20 lg:py-24">
         <TherapistDirectory />
       </div>
     </div>
