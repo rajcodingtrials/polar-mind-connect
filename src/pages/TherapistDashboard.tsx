@@ -108,20 +108,20 @@ const TherapistDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-mesh">
-      {/* Enhanced Header with Glass Morphism */}
-      <header className="glass-card border-b border-white/10">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-white drop-shadow-lg">Therapist Dashboard</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Therapist Dashboard</h1>
             </div>
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-3 bg-white/10 rounded-full px-4 py-2 backdrop-blur-sm">
-                <User className="h-5 w-5 text-white" />
-                <span className="text-sm font-medium text-white">{therapistProfile.name}</span>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <User className="h-4 w-4" />
+                <span className="text-sm text-gray-700">{therapistProfile.name}</span>
               </div>
-              <Button onClick={handleSignOut} variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm">
+              <Button onClick={handleSignOut} variant="outline" size="sm">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
@@ -130,198 +130,145 @@ const TherapistDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Enhanced Welcome Section */}
-        <div className="mb-12 text-center">
-          <h2 className="text-4xl font-bold text-white mb-4 drop-shadow-lg animate-fade-in">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Welcome back, {therapistProfile.name}!
           </h2>
-          <p className="text-white/80 text-lg max-w-2xl mx-auto leading-relaxed">
-            Manage your practice, schedule, and client sessions from your personalized dashboard.
+          <p className="text-gray-600">
+            Manage your practice, schedule, and client sessions from your dashboard.
           </p>
         </div>
 
-        {/* Enhanced Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card className="glass-card stats-card-hover group animate-scale-in border-0">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-white/70">Today's Sessions</p>
-                  <p className="text-3xl font-bold text-white">
-                    {sessionsLoading ? (
-                      <div className="shimmer bg-white/20 rounded w-12 h-8"></div>
-                    ) : (
-                      todaySessions
-                    )}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Calendar className="h-8 w-8 text-blue-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Today's Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {sessionsLoading ? "..." : todaySessions}
                   </p>
                 </div>
-                <div className="p-3 bg-gradient-to-br from-info to-info/80 rounded-xl group-hover:animate-float">
-                  <Calendar className="h-8 w-8 text-white" />
-                </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="glass-card stats-card-hover group animate-scale-in border-0" style={{ animationDelay: '0.1s' }}>
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-white/70">Total Sessions</p>
-                  <p className="text-3xl font-bold text-white">
-                    {sessionsLoading ? (
-                      <div className="shimmer bg-white/20 rounded w-12 h-8"></div>
-                    ) : (
-                      totalSessions
-                    )}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Users className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {sessionsLoading ? "..." : totalSessions}
                   </p>
                 </div>
-                <div className="p-3 bg-gradient-to-br from-success to-success/80 rounded-xl group-hover:animate-float">
-                  <Users className="h-8 w-8 text-white" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <DollarSign className="h-8 w-8 text-yellow-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">This Month</p>
+                  <p className="text-2xl font-bold text-gray-900">$2,400</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="glass-card stats-card-hover group animate-scale-in border-0" style={{ animationDelay: '0.2s' }}>
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-white/70">This Month</p>
-                  <p className="text-3xl font-bold text-white">$2,400</p>
-                </div>
-                <div className="p-3 bg-gradient-to-br from-warning to-warning/80 rounded-xl group-hover:animate-float">
-                  <DollarSign className="h-8 w-8 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="glass-card stats-card-hover group animate-scale-in border-0" style={{ animationDelay: '0.3s' }}>
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-white/70">Rating</p>
-                  <p className="text-3xl font-bold text-white">4.9</p>
-                </div>
-                <div className="p-3 bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl group-hover:animate-float">
-                  <Star className="h-8 w-8 text-white" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Star className="h-8 w-8 text-purple-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Rating</p>
+                  <p className="text-2xl font-bold text-gray-900">4.9</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Enhanced Main Content Tabs */}
-        <Tabs defaultValue="profile" className="space-y-8">
-          <TabsList className="glass-card grid w-full grid-cols-5 p-2 h-14 border-0">
-            <TabsTrigger 
-              value="profile" 
-              className="text-white/70 data-[state=active]:bg-white/20 data-[state=active]:text-white data-[state=active]:shadow-lg font-medium transition-all duration-300 hover:text-white hover:bg-white/10"
-            >
-              Profile
-            </TabsTrigger>
-            <TabsTrigger 
-              value="files" 
-              className="text-white/70 data-[state=active]:bg-white/20 data-[state=active]:text-white data-[state=active]:shadow-lg font-medium transition-all duration-300 hover:text-white hover:bg-white/10"
-            >
-              Photos & Docs
-            </TabsTrigger>
-            <TabsTrigger 
-              value="schedule" 
-              className="text-white/70 data-[state=active]:bg-white/20 data-[state=active]:text-white data-[state=active]:shadow-lg font-medium transition-all duration-300 hover:text-white hover:bg-white/10"
-            >
-              Schedule
-            </TabsTrigger>
-            <TabsTrigger 
-              value="sessions" 
-              className="text-white/70 data-[state=active]:bg-white/20 data-[state=active]:text-white data-[state=active]:shadow-lg font-medium transition-all duration-300 hover:text-white hover:bg-white/10"
-            >
-              Sessions
-            </TabsTrigger>
-            <TabsTrigger 
-              value="earnings" 
-              className="text-white/70 data-[state=active]:bg-white/20 data-[state=active]:text-white data-[state=active]:shadow-lg font-medium transition-all duration-300 hover:text-white hover:bg-white/10"
-            >
-              Earnings
-            </TabsTrigger>
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="files">Photos & Docs</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="sessions">Sessions</TabsTrigger>
+            <TabsTrigger value="earnings">Earnings</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="profile" className="animate-fade-in">
-            <div className="space-y-8">
-              {/* Enhanced Profile Header */}
-              <Card className="glass-card border-0 overflow-hidden">
-                <CardContent className="pt-8">
+          <TabsContent value="profile">
+            <div className="space-y-6">
+              {/* Profile Header */}
+              <Card>
+                <CardContent className="pt-6">
                   <ProfileHeader therapistProfile={therapistProfile} />
                 </CardContent>
               </Card>
 
-              {/* Enhanced Personal Information */}
-              <div className="glass-card rounded-xl p-1">
-                <PersonalInformation
-                  therapistProfile={therapistProfile}
-                  editedProfile={editedProfile}
-                  setEditedProfile={setEditedProfile}
-                  isEditing={isEditing}
-                  onEdit={() => setIsEditing(true)}
-                  onSave={handleSaveProfile}
-                  onCancel={handleCancelEdit}
-                />
-              </div>
+              {/* Personal Information */}
+              <PersonalInformation
+                therapistProfile={therapistProfile}
+                editedProfile={editedProfile}
+                setEditedProfile={setEditedProfile}
+                isEditing={isEditing}
+                onEdit={() => setIsEditing(true)}
+                onSave={handleSaveProfile}
+                onCancel={handleCancelEdit}
+              />
 
-              {/* Enhanced Professional Details */}
-              <div className="glass-card rounded-xl p-1">
-                <ProfessionalDetails
-                  therapistProfile={therapistProfile}
-                  editedProfile={editedProfile}
-                  setEditedProfile={setEditedProfile}
-                  isEditing={isEditing}
-                  onEdit={() => setIsEditing(true)}
-                  onSave={handleSaveProfile}
-                  onCancel={handleCancelEdit}
-                />
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="files" className="animate-fade-in">
-            <div className="glass-card rounded-xl p-8 border-0">
-              <TherapistFileUpload 
-                therapistId={therapistProfile.id}
-                currentAvatarUrl={therapistProfile.avatar_url}
-                onAvatarUpdate={(url) => {
-                  setEditedProfile(prev => prev ? {...prev, avatar_url: url} : null);
-                }}
+              {/* Professional Details */}
+              <ProfessionalDetails
+                therapistProfile={therapistProfile}
+                editedProfile={editedProfile}
+                setEditedProfile={setEditedProfile}
+                isEditing={isEditing}
+                onEdit={() => setIsEditing(true)}
+                onSave={handleSaveProfile}
+                onCancel={handleCancelEdit}
               />
             </div>
           </TabsContent>
           
-          <TabsContent value="schedule" className="animate-fade-in">
-            <div className="glass-card rounded-xl p-8 border-0">
-              <TherapistAvailabilityCalendar therapistId={therapistProfile.id} />
-            </div>
+          <TabsContent value="files">
+            <TherapistFileUpload 
+              therapistId={therapistProfile.id}
+              currentAvatarUrl={therapistProfile.avatar_url}
+              onAvatarUpdate={(url) => {
+                setEditedProfile(prev => prev ? {...prev, avatar_url: url} : null);
+              }}
+            />
           </TabsContent>
           
-          <TabsContent value="sessions" className="animate-fade-in">
-            <Card className="glass-card border-0">
-              <CardHeader className="pb-8">
-                <CardTitle className="flex items-center gap-3 text-white text-xl">
-                  <div className="p-2 bg-gradient-to-br from-info to-info/80 rounded-lg">
-                    <Users className="h-6 w-6 text-white" />
-                  </div>
+          <TabsContent value="schedule">
+            <TherapistAvailabilityCalendar therapistId={therapistProfile.id} />
+          </TabsContent>
+          
+          <TabsContent value="sessions">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
                   Session History
                 </CardTitle>
-                <CardDescription className="text-white/70 text-base">
+                <CardDescription>
                   View and manage your therapy sessions
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-16">
-                  <div className="p-4 bg-white/10 rounded-full w-fit mx-auto mb-6">
-                    <Users className="h-16 w-16 text-white/60" />
-                  </div>
-                  <p className="text-white/80 text-lg font-medium">No sessions yet</p>
-                  <p className="text-white/60 mt-2">
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No sessions yet</p>
+                  <p className="text-sm text-gray-400 mt-2">
                     Your session history will appear here
                   </p>
                 </div>
@@ -329,26 +276,22 @@ const TherapistDashboard = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="earnings" className="animate-fade-in">
-            <Card className="glass-card border-0">
-              <CardHeader className="pb-8">
-                <CardTitle className="flex items-center gap-3 text-white text-xl">
-                  <div className="p-2 bg-gradient-to-br from-warning to-warning/80 rounded-lg">
-                    <DollarSign className="h-6 w-6 text-white" />
-                  </div>
+          <TabsContent value="earnings">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
                   Earnings & Payments
                 </CardTitle>
-                <CardDescription className="text-white/70 text-base">
+                <CardDescription>
                   Track your earnings and payment history
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-16">
-                  <div className="p-4 bg-white/10 rounded-full w-fit mx-auto mb-6">
-                    <DollarSign className="h-16 w-16 text-white/60" />
-                  </div>
-                  <p className="text-white/80 text-lg font-medium">No earnings data available</p>
-                  <p className="text-white/60 mt-2">
+                <div className="text-center py-12">
+                  <DollarSign className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No earnings data available</p>
+                  <p className="text-sm text-gray-400 mt-2">
                     Your earnings will be tracked here
                   </p>
                 </div>
