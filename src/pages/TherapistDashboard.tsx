@@ -149,13 +149,15 @@ const TherapistDashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="backdrop-blur-md bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-white/15 hover:via-white/8 hover:to-white/5">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Calendar className="h-8 w-8 text-blue-600" />
+                <div className="p-2 rounded-lg bg-blue-500/20 backdrop-blur-sm">
+                  <Calendar className="h-8 w-8 text-blue-300" />
+                </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Today's Sessions</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-white/70">Today's Sessions</p>
+                  <p className="text-2xl font-bold text-white">
                     {sessionsLoading ? "..." : todaySessions}
                   </p>
                 </div>
@@ -163,13 +165,15 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="backdrop-blur-md bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-white/15 hover:via-white/8 hover:to-white/5">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Users className="h-8 w-8 text-green-600" />
+                <div className="p-2 rounded-lg bg-green-500/20 backdrop-blur-sm">
+                  <Users className="h-8 w-8 text-green-300" />
+                </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Sessions</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-white/70">Total Sessions</p>
+                  <p className="text-2xl font-bold text-white">
                     {sessionsLoading ? "..." : totalSessions}
                   </p>
                 </div>
@@ -177,25 +181,29 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="backdrop-blur-md bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-white/15 hover:via-white/8 hover:to-white/5">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <DollarSign className="h-8 w-8 text-yellow-600" />
+                <div className="p-2 rounded-lg bg-yellow-500/20 backdrop-blur-sm">
+                  <DollarSign className="h-8 w-8 text-yellow-300" />
+                </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">$2,400</p>
+                  <p className="text-sm font-medium text-white/70">This Month</p>
+                  <p className="text-2xl font-bold text-white">$2,400</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="backdrop-blur-md bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-white/15 hover:via-white/8 hover:to-white/5">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Star className="h-8 w-8 text-purple-600" />
+                <div className="p-2 rounded-lg bg-purple-500/20 backdrop-blur-sm">
+                  <Star className="h-8 w-8 text-purple-300" />
+                </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Rating</p>
-                  <p className="text-2xl font-bold text-gray-900">4.9</p>
+                  <p className="text-sm font-medium text-white/70">Rating</p>
+                  <p className="text-2xl font-bold text-white">4.9</p>
                 </div>
               </div>
             </CardContent>
