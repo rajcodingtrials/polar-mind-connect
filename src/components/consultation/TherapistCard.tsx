@@ -43,7 +43,7 @@ const TherapistCard = ({ therapist, onViewProfile }: TherapistCardProps) => {
             <img
               src={therapist.avatar_url}
               alt={`${therapist.first_name} ${therapist.last_name}`}
-              className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-full object-cover object-[50%_30%] transition-transform duration-300 group-hover:scale-105"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
