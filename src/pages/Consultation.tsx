@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import TherapistDirectory from "@/components/consultation/TherapistDirectory";
+import TherapistHero from "@/components/consultation/TherapistHero";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 const Consultation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [heroSearchQuery, setHeroSearchQuery] = useState("");
 
   if (!user) {
     return (
@@ -34,14 +36,17 @@ const Consultation = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Find Your Therapist</h1>
-          <p className="text-muted-foreground">
-            Browse our directory of qualified speech therapists and book your consultation.
-          </p>
-        </div>
-        <TherapistDirectory />
+      
+      {/* Hero Section */}
+      <TherapistHero 
+        searchQuery={heroSearchQuery}
+        onSearchChange={setHeroSearchQuery}
+        therapistCount={150}
+      />
+      
+      {/* Directory Section */}
+      <div className="container mx-auto px-4 py-16">
+        <TherapistDirectory initialSearchQuery={heroSearchQuery} />
       </div>
     </div>
   );
