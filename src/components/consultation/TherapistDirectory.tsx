@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Star, Clock, DollarSign } from "lucide-react";
+import { Search } from "lucide-react";
 import TherapistProfileModal from "./TherapistProfileModal";
+import TherapistCard from "./TherapistCard";
+import TherapistSkeleton from "./TherapistSkeleton";
+import EmptyState from "./EmptyState";
 import { useToast } from "@/hooks/use-toast";
-import { getCountryFlag } from "@/utils/countryFlags";
 
 interface Therapist {
   id: string;
@@ -127,189 +126,124 @@ const TherapistDirectory = () => {
     return [...new Set(allSpecs)];
   };
 
+  const hasActiveFilters = searchQuery || selectedSpecialization !== "all" || priceRange !== "all";
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setSelectedSpecialization("all");
+    setPriceRange("all");
+    setSortBy("name");
+  };
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-muted rounded-full"></div>
-                <div className="space-y-2 flex-1">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="h-3 bg-muted rounded"></div>
-                <div className="h-3 bg-muted rounded w-5/6"></div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="space-y-8">
+        {[...Array(3)].map((_, i) => (
+          <TherapistSkeleton key={i} />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search therapists..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+    <div className="space-y-8">
+      {/* Filters Section */}
+      <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+        <CardContent className="p-8">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-foreground mb-2">Find Your Perfect Therapist</h2>
+              <p className="text-sm text-muted-foreground">
+                Use the filters below to find therapists that match your needs
+              </p>
             </div>
             
-            <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
-              <SelectTrigger>
-                <SelectValue placeholder="Specialization" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Specializations</SelectItem>
-                {getUniqueSpecializations().map(spec => (
-                  <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or specialty..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-background/50"
+                />
+              </div>
+              
+              <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
+                <SelectTrigger className="bg-background/50">
+                  <SelectValue placeholder="All Specializations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Specializations</SelectItem>
+                  {getUniqueSpecializations().map(spec => (
+                    <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={priceRange} onValueChange={setPriceRange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Price Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="0-50">$0 - $50</SelectItem>
-                <SelectItem value="50-100">$50 - $100</SelectItem>
-                <SelectItem value="100-150">$100 - $150</SelectItem>
-                <SelectItem value="150">$150+</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={priceRange} onValueChange={setPriceRange}>
+                <SelectTrigger className="bg-background/50">
+                  <SelectValue placeholder="All Price Ranges" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Prices</SelectItem>
+                  <SelectItem value="0-50">$0 - $50/session</SelectItem>
+                  <SelectItem value="50-100">$50 - $100/session</SelectItem>
+                  <SelectItem value="100-150">$100 - $150/session</SelectItem>
+                  <SelectItem value="150">$150+/session</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort By" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-                <SelectItem value="experience">Experience</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="bg-background/50">
+                  <SelectValue placeholder="Sort By" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name (A-Z)</SelectItem>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="experience">Most Experienced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Results */}
+      {/* Results Section */}
       <div className="space-y-6">
-        {filteredTherapists.map((therapist) => (
-          <div key={therapist.id} className="flex gap-8 hover:shadow-lg transition-all duration-300 justify-center max-w-6xl mx-auto">
-            {/* Therapist Card */}
-            <Card className="w-72 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                {/* Photo section */}
-                <div className="relative w-full h-64">
-                  <img
-                    src={therapist.avatar_url}
-                    alt={`${therapist.first_name} ${therapist.last_name}`}
-                    className="w-full h-full object-cover object-top"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      (target.nextElementSibling as HTMLElement)?.classList.remove('hidden');
-                    }}
-                  />
-                  {/* Fallback when image fails */}
-                  <div className="hidden w-full h-full bg-muted flex items-center justify-center text-4xl font-semibold text-muted-foreground">
-                    {therapist.first_name?.[0]}{therapist.last_name?.[0]}
-                  </div>
-                </div>
-
-                {/* Card Info Section */}
-                <div className="p-4 bg-card space-y-3">
-                  {/* Country */}
-                  {therapist.country && (
-                    <div className="flex items-center gap-2 text-sm text-foreground font-medium">
-                      <span className="text-lg">{getCountryFlag(therapist.country)}</span>
-                      <span>{therapist.country}</span>
-                    </div>
-                  )}
-
-                  {/* Rating */}
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      {(Math.random() * 1.5 + 4).toFixed(1)} ({Math.floor(Math.random() * 200) + 50})
-                    </span>
-                  </div>
-
-                  {/* More Details Button */}
-                  <Button
-                    className="w-full bg-foreground hover:bg-foreground/90 text-background"
-                    onClick={() => setSelectedTherapist(therapist)}
-                  >
-                    More Details
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Right Section - Bio and Details */}
-            <div className="flex-1 space-y-4">
-              {/* Name */}
-              <h2 className="text-2xl font-bold text-foreground">
-                {therapist.first_name} {therapist.last_name}
-              </h2>
-
-              {/* Bio */}
-              <p className="text-muted-foreground leading-relaxed">
-                {therapist.bio || "Native English Teacher from the India, consectetur adipiscing elit, sed do eiusmod tempor et dolore ut magna aliqua... [+]"}
-              </p>
-
-              {/* Specializations */}
-              <div>
-                <h3 className="text-sm font-bold text-foreground mb-2">SPECIALIZATION:</h3>
-                <div className="flex gap-2">
-                  {therapist.specializations?.map((spec, index) => (
-                    <Badge key={index} variant="outline" className="px-3 py-1">
-                      {spec}
-                    </Badge>
-                  )) || [
-                    <Badge key="voice" variant="outline" className="px-3 py-1">Voice Therapy</Badge>,
-                    <Badge key="articulation" variant="outline" className="px-3 py-1">Articulation Therapy</Badge>
-                  ]}
-                </div>
-              </div>
-
-              {/* Hourly Rate */}
-              <div>
-                <div className="text-foreground font-medium">
-                  $25/hr
-                </div>
-              </div>
-            </div>
+        {filteredTherapists.length > 0 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredTherapists.length} therapist{filteredTherapists.length !== 1 ? 's' : ''}
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="text-sm text-primary hover:text-primary/80 font-medium"
+              >
+                Clear all filters
+              </button>
+            )}
           </div>
-        ))}
+        )}
+
+        <div className="space-y-8">
+          {filteredTherapists.map((therapist) => (
+            <TherapistCard
+              key={therapist.id}
+              therapist={therapist}
+              onViewProfile={(t) => setSelectedTherapist(t)}
+            />
+          ))}
+        </div>
       </div>
 
       {filteredTherapists.length === 0 && !loading && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <h3 className="text-lg font-semibold mb-2">No therapists found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search criteria or filters.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState 
+          hasFilters={Boolean(hasActiveFilters)}
+          onClearFilters={clearAllFilters}
+        />
       )}
 
       {selectedTherapist && (
