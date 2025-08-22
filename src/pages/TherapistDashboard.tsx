@@ -136,9 +136,9 @@ const TherapistDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
         {/* Welcome Section */}
-        <div className="mb-12">
+        <div className="mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">
             Welcome back, {therapistProfile.name}!
           </h2>
@@ -148,7 +148,7 @@ const TherapistDashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
           <Card className="bg-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-slate-100">
             <CardContent className="p-6">
               <div className="flex items-center">
