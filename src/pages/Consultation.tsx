@@ -39,7 +39,7 @@ const Consultation = () => {
       <TherapistHero therapistCount={150} />
       
       {/* Directory Section */}
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-20 lg:py-24">
         <TherapistDirectory />
       </div>
     </div>

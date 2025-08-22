@@ -148,62 +148,62 @@ const TherapistDirectory = () => {
 
   return (
     <div className="space-y-8">
-      {/* Filters Section */}
-      <Card className="bg-surface-elevated/80 backdrop-blur-sm border-border/50 shadow-sm">
-        <CardContent className="p-8">
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold text-emphasis-high">Find Your Perfect Therapist</h2>
-              <p className="text-sm text-emphasis-medium">
-                Use the filters below to find therapists that match your needs and preferences
+      {/* Enhanced Filters Section */}
+      <Card className="bg-gradient-to-r from-surface-elevated/90 to-surface-elevated/70 backdrop-blur-lg border-border/30 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardContent className="p-8 lg:p-10">
+          <div className="space-y-8">
+            <div className="space-y-3 text-center lg:text-left">
+              <h2 className="text-2xl lg:text-3xl font-bold text-emphasis-high">Find Your Perfect Therapist</h2>
+              <p className="text-base text-emphasis-medium leading-relaxed">
+                Use the filters below to find therapists that match your needs and preferences. Discover qualified professionals ready to help you.
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-emphasis-medium" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-emphasis-medium group-focus-within:text-primary transition-colors" />
                 <Input
                   placeholder="Search by name or specialty..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-card border-border/50 focus:border-primary focus:ring-primary/20"
+                  className="pl-12 h-12 bg-card/80 backdrop-blur-sm border-border/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 rounded-xl shadow-sm hover:shadow-md"
                 />
               </div>
               
               <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
-                <SelectTrigger className="bg-card border-border/50 focus:border-primary">
+                <SelectTrigger className="h-12 bg-card/80 backdrop-blur-sm border-border/40 focus:border-primary rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                   <SelectValue placeholder="All Specializations" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border/50">
-                  <SelectItem value="all" className="focus:bg-surface-elevated">All Specializations</SelectItem>
+                <SelectContent className="bg-card/95 backdrop-blur-lg border-border/30 rounded-xl shadow-xl">
+                  <SelectItem value="all" className="focus:bg-surface-elevated rounded-lg">All Specializations</SelectItem>
                   {getUniqueSpecializations().map(spec => (
-                    <SelectItem key={spec} value={spec} className="focus:bg-surface-elevated">{spec}</SelectItem>
+                    <SelectItem key={spec} value={spec} className="focus:bg-surface-elevated rounded-lg">{spec}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={priceRange} onValueChange={setPriceRange}>
-                <SelectTrigger className="bg-card border-border/50 focus:border-primary">
+                <SelectTrigger className="h-12 bg-card/80 backdrop-blur-sm border-border/40 focus:border-primary rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                   <SelectValue placeholder="All Price Ranges" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border/50">
-                  <SelectItem value="all" className="focus:bg-surface-elevated">All Prices</SelectItem>
-                  <SelectItem value="0-50" className="focus:bg-surface-elevated">$0 - $50/session</SelectItem>
-                  <SelectItem value="50-100" className="focus:bg-surface-elevated">$50 - $100/session</SelectItem>
-                  <SelectItem value="100-150" className="focus:bg-surface-elevated">$100 - $150/session</SelectItem>
-                  <SelectItem value="150" className="focus:bg-surface-elevated">$150+/session</SelectItem>
+                <SelectContent className="bg-card/95 backdrop-blur-lg border-border/30 rounded-xl shadow-xl">
+                  <SelectItem value="all" className="focus:bg-surface-elevated rounded-lg">All Prices</SelectItem>
+                  <SelectItem value="0-50" className="focus:bg-surface-elevated rounded-lg">$0 - $50/session</SelectItem>
+                  <SelectItem value="50-100" className="focus:bg-surface-elevated rounded-lg">$50 - $100/session</SelectItem>
+                  <SelectItem value="100-150" className="focus:bg-surface-elevated rounded-lg">$100 - $150/session</SelectItem>
+                  <SelectItem value="150" className="focus:bg-surface-elevated rounded-lg">$150+/session</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="bg-card border-border/50 focus:border-primary">
+                <SelectTrigger className="h-12 bg-card/80 backdrop-blur-sm border-border/40 focus:border-primary rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                   <SelectValue placeholder="Sort By" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border/50">
-                  <SelectItem value="name" className="focus:bg-surface-elevated">Name (A-Z)</SelectItem>
-                  <SelectItem value="price-low" className="focus:bg-surface-elevated">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high" className="focus:bg-surface-elevated">Price: High to Low</SelectItem>
-                  <SelectItem value="experience" className="focus:bg-surface-elevated">Most Experienced</SelectItem>
+                <SelectContent className="bg-card/95 backdrop-blur-lg border-border/30 rounded-xl shadow-xl">
+                  <SelectItem value="name" className="focus:bg-surface-elevated rounded-lg">Name (A-Z)</SelectItem>
+                  <SelectItem value="price-low" className="focus:bg-surface-elevated rounded-lg">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high" className="focus:bg-surface-elevated rounded-lg">Price: High to Low</SelectItem>
+                  <SelectItem value="experience" className="focus:bg-surface-elevated rounded-lg">Most Experienced</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -211,17 +211,22 @@ const TherapistDirectory = () => {
         </CardContent>
       </Card>
 
-      {/* Results Section */}
-      <div className="space-y-6">
+      {/* Enhanced Results Section */}
+      <div className="space-y-8">
         {filteredTherapists.length > 0 && (
-          <div className="flex items-center justify-between p-4 bg-surface-elevated/50 rounded-lg border border-border/30">
-            <p className="text-sm text-emphasis-medium font-medium">
-              Showing <span className="text-emphasis-high font-bold">{filteredTherapists.length}</span> therapist{filteredTherapists.length !== 1 ? 's' : ''}
-            </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 bg-gradient-to-r from-surface-elevated/70 to-surface-elevated/50 backdrop-blur-sm rounded-2xl border border-border/20 shadow-sm">
+            <div className="space-y-1">
+              <p className="text-lg font-semibold text-emphasis-high">
+                {filteredTherapists.length} Therapist{filteredTherapists.length !== 1 ? 's' : ''} Found
+              </p>
+              <p className="text-sm text-emphasis-medium">
+                Discover qualified professionals ready to help you achieve your communication goals
+              </p>
+            </div>
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
-                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors duration-200 underline-offset-4 hover:underline"
+                className="text-sm text-primary hover:text-primary/80 font-medium transition-all duration-200 px-4 py-2 bg-primary/10 hover:bg-primary/20 rounded-lg border border-primary/20 hover:border-primary/30"
               >
                 Clear all filters
               </button>
@@ -229,13 +234,14 @@ const TherapistDirectory = () => {
           </div>
         )}
 
-        <div className="space-y-8">
-          {filteredTherapists.map((therapist) => (
-            <TherapistCard
-              key={therapist.id}
-              therapist={therapist}
-              onViewProfile={(t) => setSelectedTherapist(t)}
-            />
+        <div className="space-y-10">
+          {filteredTherapists.map((therapist, index) => (
+            <div key={therapist.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+              <TherapistCard
+                therapist={therapist}
+                onViewProfile={(t) => setSelectedTherapist(t)}
+              />
+            </div>
           ))}
         </div>
       </div>

@@ -8,56 +8,57 @@ interface TherapistHeroProps {
 const TherapistHero = ({ therapistCount = 150 }: TherapistHeroProps) => {
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-primary/5">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 stars-bg opacity-30"></div>
+    <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+      {/* Enhanced Background Pattern */}
+      <div className="absolute inset-0 stars-bg opacity-40"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-background/20"></div>
       
       {/* Content */}
-      <div className="relative container mx-auto px-4 py-24 lg:py-32">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
+      <div className="relative container mx-auto px-4 py-32 lg:py-40">
+        <div className="max-w-5xl mx-auto text-center space-y-12">
           {/* Hero Heading */}
-          <div className="space-y-4">
-            <h1 className="text-5xl lg:text-6xl font-bold text-foreground leading-tight">
+          <div className="space-y-6 animate-fade-in">
+            <h1 className="text-6xl lg:text-7xl font-bold text-emphasis-high leading-tight tracking-tight">
               Find Your Perfect
-              <span className="block text-transparent bg-gradient-to-r from-primary to-primary/80 bg-clip-text">
+              <span className="block text-transparent bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text">
                 Speech Therapist
               </span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl lg:text-2xl text-emphasis-medium max-w-3xl mx-auto leading-relaxed font-medium">
               Connect with verified, licensed speech therapists for personalized therapy sessions. 
               Start your journey to better communication today.
             </p>
           </div>
 
-          {/* Trust Indicators */}
-          <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-primary" />
-              <span>Verified Therapists</span>
+          {/* Enhanced Trust Indicators */}
+          <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-8">
+            <div className="flex items-center gap-3 bg-surface-elevated/80 backdrop-blur-sm px-4 py-3 rounded-full border border-border/30 shadow-sm">
+              <CheckCircle className="h-5 w-5 text-success" />
+              <span className="text-sm font-medium text-emphasis-high">Verified Therapists</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <span>{therapistCount}+ Professionals</span>
+            <div className="flex items-center gap-3 bg-surface-elevated/80 backdrop-blur-sm px-4 py-3 rounded-full border border-border/30 shadow-sm">
+              <Users className="h-5 w-5 text-info" />
+              <span className="text-sm font-medium text-emphasis-high">{therapistCount}+ Professionals</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500 fill-current" />
-              <span>4.9 Average Rating</span>
+            <div className="flex items-center gap-3 bg-surface-elevated/80 backdrop-blur-sm px-4 py-3 rounded-full border border-border/30 shadow-sm">
+              <Star className="h-5 w-5 text-warning fill-warning" />
+              <span className="text-sm font-medium text-emphasis-high">4.9 Average Rating</span>
             </div>
           </div>
 
-          {/* Stats Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto pt-8">
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-foreground">{therapistCount}+</div>
-              <div className="text-sm text-muted-foreground">Verified Therapists</div>
+          {/* Enhanced Stats Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto pt-12">
+            <div className="text-center space-y-3 p-6 rounded-2xl bg-surface-elevated/50 backdrop-blur-sm border border-border/20 hover:bg-surface-elevated/70 transition-all duration-300">
+              <div className="text-4xl lg:text-5xl font-bold text-emphasis-high">{therapistCount}+</div>
+              <div className="text-sm font-medium text-emphasis-medium uppercase tracking-wider">Verified Therapists</div>
             </div>
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-foreground">1,000+</div>
-              <div className="text-sm text-muted-foreground">Happy Clients</div>
+            <div className="text-center space-y-3 p-6 rounded-2xl bg-surface-elevated/50 backdrop-blur-sm border border-border/20 hover:bg-surface-elevated/70 transition-all duration-300">
+              <div className="text-4xl lg:text-5xl font-bold text-emphasis-high">1,000+</div>
+              <div className="text-sm font-medium text-emphasis-medium uppercase tracking-wider">Happy Clients</div>
             </div>
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-foreground">24/7</div>
-              <div className="text-sm text-muted-foreground">Support Available</div>
+            <div className="text-center space-y-3 p-6 rounded-2xl bg-surface-elevated/50 backdrop-blur-sm border border-border/20 hover:bg-surface-elevated/70 transition-all duration-300">
+              <div className="text-4xl lg:text-5xl font-bold text-emphasis-high">24/7</div>
+              <div className="text-sm font-medium text-emphasis-medium uppercase tracking-wider">Support Available</div>
             </div>
           </div>
         </div>

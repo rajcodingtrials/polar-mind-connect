@@ -35,9 +35,9 @@ const TherapistCard = ({ therapist, onViewProfile }: TherapistCardProps) => {
   const isOnline = Math.random() > 0.3; // 70% chance of being online
 
   return (
-    <div className="flex gap-8 group hover:bg-surface-elevated/50 rounded-xl p-6 transition-all duration-300 max-w-6xl mx-auto border border-border/20">
+    <div className="flex gap-10 group hover:bg-gradient-to-r hover:from-surface-elevated/70 hover:to-surface-elevated/40 rounded-2xl p-8 transition-all duration-500 max-w-7xl mx-auto border border-border/20 hover:border-border/40 hover:shadow-xl backdrop-blur-sm">
       {/* Therapist Photo Card */}
-      <Card className="w-80 flex-shrink-0 overflow-hidden transition-all duration-300 group-hover:shadow-lg group-hover:scale-[1.02] bg-surface-elevated border-border/30">
+      <Card className="w-80 flex-shrink-0 overflow-hidden transition-all duration-500 group-hover:shadow-2xl group-hover:scale-[1.03] bg-surface-elevated border-border/30 hover:border-border/50">
         <CardContent className="p-0">
           {/* Photo Section with 4:3 Aspect Ratio */}
           <div className="relative w-full aspect-[4/3] overflow-hidden bg-surface-sunken">
