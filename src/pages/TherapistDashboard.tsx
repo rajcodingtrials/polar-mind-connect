@@ -204,7 +204,7 @@ const TherapistDashboard = () => {
                   <p className="text-sm font-medium text-white/70">Rating</p>
                   <p className="text-3xl font-bold text-white">4.9</p>
                 </div>
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl group-hover:animate-float">
+                <div className="p-3 bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl group-hover:animate-float">
                   <Star className="h-8 w-8 text-white" />
                 </div>
               </div>
