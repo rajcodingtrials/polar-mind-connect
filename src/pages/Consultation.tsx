@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import TherapistDirectory from "@/components/consultation/TherapistDirectory";
@@ -10,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 const Consultation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [heroSearchQuery, setHeroSearchQuery] = useState("");
 
   if (!user) {
     return (
@@ -38,15 +36,11 @@ const Consultation = () => {
       <Header />
       
       {/* Hero Section */}
-      <TherapistHero 
-        searchQuery={heroSearchQuery}
-        onSearchChange={setHeroSearchQuery}
-        therapistCount={150}
-      />
+      <TherapistHero therapistCount={150} />
       
       {/* Directory Section */}
       <div className="container mx-auto px-4 py-16">
-        <TherapistDirectory initialSearchQuery={heroSearchQuery} />
+        <TherapistDirectory />
       </div>
     </div>
   );

@@ -30,15 +30,11 @@ interface Therapist {
   country: string;
 }
 
-interface TherapistDirectoryProps {
-  initialSearchQuery?: string;
-}
-
-const TherapistDirectory = ({ initialSearchQuery = "" }: TherapistDirectoryProps) => {
+const TherapistDirectory = () => {
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [filteredTherapists, setFilteredTherapists] = useState<Therapist[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialization, setSelectedSpecialization] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
   const [sortBy, setSortBy] = useState("name");
@@ -52,13 +48,6 @@ const TherapistDirectory = ({ initialSearchQuery = "" }: TherapistDirectoryProps
   useEffect(() => {
     filterAndSortTherapists();
   }, [therapists, searchQuery, selectedSpecialization, priceRange, sortBy]);
-
-  // Update search query when initialSearchQuery changes
-  useEffect(() => {
-    if (initialSearchQuery !== searchQuery) {
-      setSearchQuery(initialSearchQuery);
-    }
-  }, [initialSearchQuery]);
 
   const fetchTherapists = async () => {
     try {

@@ -1,26 +1,11 @@
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Star, CheckCircle, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Star, CheckCircle, Users } from "lucide-react";
 
 interface TherapistHeroProps {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
   therapistCount?: number;
 }
 
-const TherapistHero = ({ searchQuery, onSearchChange, therapistCount = 150 }: TherapistHeroProps) => {
-  const [isFocused, setIsFocused] = useState(false);
-
-  const popularSearches = [
-    "Voice Therapy",
-    "Articulation",
-    "Stuttering",
-    "Child Speech",
-    "Adult Therapy"
-  ];
+const TherapistHero = ({ therapistCount = 150 }: TherapistHeroProps) => {
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-primary/5">
@@ -57,45 +42,6 @@ const TherapistHero = ({ searchQuery, onSearchChange, therapistCount = 150 }: Th
             <div className="flex items-center gap-2">
               <Star className="h-5 w-5 text-yellow-500 fill-current" />
               <span>4.9 Average Rating</span>
-            </div>
-          </div>
-
-          {/* Search Section */}
-          <div className="max-w-2xl mx-auto space-y-6">
-            {/* Main Search Bar */}
-            <div className="relative">
-              <div className={cn(
-                "relative flex items-center bg-background rounded-2xl shadow-lg border-2 transition-all duration-300",
-                isFocused ? "border-primary shadow-xl shadow-primary/10" : "border-border"
-              )}>
-                <Search className="absolute left-6 h-5 w-5 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, specialization, or location..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  className="pl-14 pr-6 py-6 text-lg border-0 rounded-2xl bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-              </div>
-            </div>
-
-            {/* Popular Searches */}
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Popular searches:</p>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {popularSearches.map((search) => (
-                  <Button
-                    key={search}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onSearchChange(search)}
-                    className="rounded-full text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                  >
-                    {search}
-                  </Button>
-                ))}
-              </div>
             </div>
           </div>
 
