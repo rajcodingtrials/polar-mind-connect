@@ -16,8 +16,8 @@ const TherapistHero = ({ therapistCount = 150, onBrowseTherapists }: TherapistHe
       <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-background/20"></div>
       
       {/* Content */}
-      <div className="relative container mx-auto px-4 py-32 lg:py-40">
-        <div className="max-w-5xl mx-auto text-center space-y-12">
+      <div className="relative container mx-auto px-4 py-20 lg:py-24">
+        <div className="max-w-5xl mx-auto text-center space-y-8">
           {/* Hero Heading */}
           <div className="space-y-6 animate-fade-in">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-emphasis-high leading-tight tracking-tight">
@@ -57,22 +57,6 @@ const TherapistHero = ({ therapistCount = 150, onBrowseTherapists }: TherapistHe
             <div className="flex items-center gap-3 bg-surface-elevated/80 backdrop-blur-sm px-4 py-3 rounded-full border border-border/30 shadow-sm">
               <Star className="h-5 w-5 text-warning fill-warning" />
               <span className="text-sm font-medium text-emphasis-high">4.9 Average Rating</span>
-            </div>
-          </div>
-
-          {/* Enhanced Stats Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto pt-12">
-            <div className="text-center space-y-3 p-6 rounded-2xl bg-surface-elevated/50 backdrop-blur-sm border border-border/20 hover:bg-surface-elevated/70 transition-all duration-300">
-              <div className="text-4xl lg:text-5xl font-bold text-emphasis-high">{therapistCount}+</div>
-              <div className="text-sm font-medium text-emphasis-medium uppercase tracking-wider">Verified Therapists</div>
-            </div>
-            <div className="text-center space-y-3 p-6 rounded-2xl bg-surface-elevated/50 backdrop-blur-sm border border-border/20 hover:bg-surface-elevated/70 transition-all duration-300">
-              <div className="text-4xl lg:text-5xl font-bold text-emphasis-high">1,000+</div>
-              <div className="text-sm font-medium text-emphasis-medium uppercase tracking-wider">Happy Clients</div>
-            </div>
-            <div className="text-center space-y-3 p-6 rounded-2xl bg-surface-elevated/50 backdrop-blur-sm border border-border/20 hover:bg-surface-elevated/70 transition-all duration-300">
-              <div className="text-4xl lg:text-5xl font-bold text-emphasis-high">24/7</div>
-              <div className="text-sm font-medium text-emphasis-medium uppercase tracking-wider">Support Available</div>
             </div>
           </div>
         </div>
