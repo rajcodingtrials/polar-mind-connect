@@ -149,13 +149,15 @@ const TherapistDashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Calendar className="h-8 w-8 text-blue-600" />
+                <div className="p-2 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg">
+                  <Calendar className="h-6 w-6 text-white" />
+                </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Today's Sessions</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-white/80">Today's Sessions</p>
+                  <p className="text-2xl font-bold text-white">
                     {sessionsLoading ? "..." : todaySessions}
                   </p>
                 </div>
@@ -163,13 +165,15 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Users className="h-8 w-8 text-green-600" />
+                <div className="p-2 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Sessions</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-white/80">Total Sessions</p>
+                  <p className="text-2xl font-bold text-white">
                     {sessionsLoading ? "..." : totalSessions}
                   </p>
                 </div>
@@ -177,25 +181,29 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <DollarSign className="h-8 w-8 text-yellow-600" />
+                <div className="p-2 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg">
+                  <DollarSign className="h-6 w-6 text-white" />
+                </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">$2,400</p>
+                  <p className="text-sm font-medium text-white/80">This Month</p>
+                  <p className="text-2xl font-bold text-white">$2,400</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Star className="h-8 w-8 text-purple-600" />
+                <div className="p-2 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 shadow-lg">
+                  <Star className="h-6 w-6 text-white" />
+                </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Rating</p>
-                  <p className="text-2xl font-bold text-gray-900">4.9</p>
+                  <p className="text-sm font-medium text-white/80">Rating</p>
+                  <p className="text-2xl font-bold text-white">4.9</p>
                 </div>
               </div>
             </CardContent>
