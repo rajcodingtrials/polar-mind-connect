@@ -118,8 +118,7 @@ const TherapistDashboard = () => {
                 <Star className="h-5 w-5 text-black" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-white">Polariz Dashboard</h1>
-                <p className="text-xs text-white/70">Therapist Portal</p>
+                <h1 className="text-xl font-semibold text-white">Polariz</h1>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -135,6 +134,11 @@ const TherapistDashboard = () => {
           </div>
         </div>
       </header>
+
+      {/* Page Title Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+        <h1 className="text-3xl font-bold text-white mb-2">Therapist Dashboard</h1>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
         {/* Welcome Section */}
