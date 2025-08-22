@@ -128,7 +128,7 @@ const TherapistCard = ({ therapist, onViewProfile }: TherapistCardProps) => {
               <h2 className="text-3xl font-bold text-emphasis-high leading-tight">
                 {therapist.first_name} {therapist.last_name}
                 {therapist.certification && (
-                  <span className="text-lg font-medium text-emphasis-medium ml-2">
+                  <span className="text-base font-normal text-emphasis-medium ml-2">
                     {therapist.certification}
                   </span>
                 )}
@@ -136,7 +136,7 @@ const TherapistCard = ({ therapist, onViewProfile }: TherapistCardProps) => {
               
               {/* Professional Headline */}
               {therapist.headline && (
-                <p className="text-lg text-emphasis-medium font-medium italic">
+                <p className="text-base text-emphasis-medium leading-relaxed">
                   {therapist.headline}
                 </p>
               )}
