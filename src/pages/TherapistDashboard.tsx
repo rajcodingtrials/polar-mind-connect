@@ -110,18 +110,24 @@ const TherapistDashboard = () => {
   return (
     <div className="min-h-screen gradient-bg stars-bg">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="backdrop-blur-md bg-black/20 border-b border-white/10 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">Therapist Dashboard</h1>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                <Star className="h-5 w-5 text-black" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-white">Polariz Dashboard</h1>
+                <p className="text-xs text-white/70">Therapist Portal</p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <User className="h-4 w-4" />
-                <span className="text-sm text-gray-700">{therapistProfile.name}</span>
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
+                <User className="h-4 w-4 text-white" />
+                <span className="text-sm text-white">{therapistProfile.name}</span>
               </div>
-              <Button onClick={handleSignOut} variant="outline" size="sm">
+              <Button onClick={handleSignOut} variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10 hover:text-white">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
@@ -133,10 +139,10 @@ const TherapistDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-white mb-2">
             Welcome back, {therapistProfile.name}!
           </h2>
-          <p className="text-gray-600">
+          <p className="text-white/80">
             Manage your practice, schedule, and client sessions from your dashboard.
           </p>
         </div>
