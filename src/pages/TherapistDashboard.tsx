@@ -127,7 +127,7 @@ const TherapistDashboard = () => {
                 <User className="h-4 w-4 text-white" />
                 <span className="text-sm text-white">{therapistProfile.name}</span>
               </div>
-              <Button onClick={handleSignOut} variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10 hover:text-white">
+              <Button onClick={handleSignOut} variant="outline" size="sm" className="border-white/50 text-white hover:bg-white/20 hover:text-white bg-white/10">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
