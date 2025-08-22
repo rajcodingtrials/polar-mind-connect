@@ -110,7 +110,7 @@ const TherapistDashboard = () => {
   return (
     <div className="min-h-screen gradient-bg stars-bg">
       {/* Header */}
-      <header className="backdrop-blur-md bg-black/20 border-b border-white/10 shadow-lg">
+      <header className="backdrop-blur-md bg-black border-b border-white/10 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
