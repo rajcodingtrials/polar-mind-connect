@@ -149,7 +149,7 @@ const TherapistDashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-gray-50">
+          <Card className="bg-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-slate-100">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-blue-100">
@@ -165,7 +165,7 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-gray-50">
+          <Card className="bg-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-slate-100">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-green-100">
@@ -181,7 +181,7 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-gray-50">
+          <Card className="bg-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-slate-100">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-yellow-100">
@@ -195,7 +195,7 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-gray-50">
+          <Card className="bg-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-slate-100">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-purple-100">
