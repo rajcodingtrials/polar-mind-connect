@@ -27,6 +27,7 @@ interface Therapist {
   education: string;
   certification: string;
   country: string;
+  headline: string;
 }
 
 const TherapistDirectory = () => {

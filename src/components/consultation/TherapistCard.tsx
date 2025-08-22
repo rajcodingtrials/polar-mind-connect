@@ -21,6 +21,7 @@ interface Therapist {
   education: string;
   certification: string;
   country: string;
+  headline: string;
 }
 
 interface TherapistCardProps {
@@ -122,9 +123,36 @@ const TherapistCard = ({ therapist, onViewProfile }: TherapistCardProps) => {
       <div className="flex-1 space-y-6">
         {/* Header */}
         <div className="space-y-4 pb-4 border-b border-border/30">
-          <h2 className="text-3xl font-bold text-emphasis-high leading-tight">
-            {therapist.first_name} {therapist.last_name}
-          </h2>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold text-emphasis-high leading-tight">
+              {therapist.first_name} {therapist.last_name}
+            </h2>
+            
+            {/* Professional Details */}
+            <div className="space-y-1">
+              {therapist.headline && (
+                <p className="text-lg text-emphasis-medium font-medium italic">
+                  {therapist.headline}
+                </p>
+              )}
+              
+              <div className="flex flex-col gap-1 text-sm text-emphasis-medium">
+                {therapist.education && (
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-emphasis-high min-w-fit">Education:</span>
+                    <span>{therapist.education}</span>
+                  </div>
+                )}
+                
+                {therapist.certification && (
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-emphasis-high min-w-fit">Certification:</span>
+                    <span>{therapist.certification}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
           
           <div className="flex items-center gap-6">
             <div className="bg-surface-elevated p-4 rounded-lg border border-border/30">
