@@ -108,26 +108,20 @@ const TherapistDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-bg stars-bg">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <header className="backdrop-blur-md bg-black/20 border-b border-white/10 shadow-lg">
+      <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                <Star className="h-5 w-5 text-black" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-white">Polariz Dashboard</h1>
-                <p className="text-xs text-white/70">Therapist Portal</p>
-              </div>
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold text-gray-900">Therapist Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
-                <User className="h-4 w-4 text-white" />
-                <span className="text-sm text-white">{therapistProfile.name}</span>
+              <div className="flex items-center space-x-2">
+                <User className="h-4 w-4" />
+                <span className="text-sm text-gray-700">{therapistProfile.name}</span>
               </div>
-              <Button onClick={handleSignOut} variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10 hover:text-white">
+              <Button onClick={handleSignOut} variant="outline" size="sm">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
@@ -139,25 +133,23 @@ const TherapistDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Welcome back, {therapistProfile.name}!
           </h2>
-          <p className="text-white/80">
+          <p className="text-gray-600">
             Manage your practice, schedule, and client sessions from your dashboard.
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg">
-                  <Calendar className="h-6 w-6 text-white" />
-                </div>
+                <Calendar className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-white/80">Today's Sessions</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-sm font-medium text-gray-600">Today's Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">
                     {sessionsLoading ? "..." : todaySessions}
                   </p>
                 </div>
@@ -165,15 +157,13 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
+                <Users className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-white/80">Total Sessions</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-sm font-medium text-gray-600">Total Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">
                     {sessionsLoading ? "..." : totalSessions}
                   </p>
                 </div>
@@ -181,29 +171,25 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg">
-                  <DollarSign className="h-6 w-6 text-white" />
-                </div>
+                <DollarSign className="h-8 w-8 text-yellow-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-white/80">This Month</p>
-                  <p className="text-2xl font-bold text-white">$2,400</p>
+                  <p className="text-sm font-medium text-gray-600">This Month</p>
+                  <p className="text-2xl font-bold text-gray-900">$2,400</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+          <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 shadow-lg">
-                  <Star className="h-6 w-6 text-white" />
-                </div>
+                <Star className="h-8 w-8 text-purple-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-white/80">Rating</p>
-                  <p className="text-2xl font-bold text-white">4.9</p>
+                  <p className="text-sm font-medium text-gray-600">Rating</p>
+                  <p className="text-2xl font-bold text-gray-900">4.9</p>
                 </div>
               </div>
             </CardContent>
