@@ -154,21 +154,21 @@ const TherapistDirectory = () => {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <Card className="bg-card/80 backdrop-blur-sm border-white/10">
+      <Card>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-white/60" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search therapists..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-background/50 border-white/20 text-white placeholder:text-white/60"
+                className="pl-10"
               />
             </div>
             
             <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
-              <SelectTrigger className="bg-background/50 border-white/20 text-white">
+              <SelectTrigger>
                 <SelectValue placeholder="Specialization" />
               </SelectTrigger>
               <SelectContent>
@@ -180,7 +180,7 @@ const TherapistDirectory = () => {
             </Select>
 
             <Select value={priceRange} onValueChange={setPriceRange}>
-              <SelectTrigger className="bg-background/50 border-white/20 text-white">
+              <SelectTrigger>
                 <SelectValue placeholder="Price Range" />
               </SelectTrigger>
               <SelectContent>
@@ -193,7 +193,7 @@ const TherapistDirectory = () => {
             </Select>
 
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="bg-background/50 border-white/20 text-white">
+              <SelectTrigger>
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
@@ -212,7 +212,7 @@ const TherapistDirectory = () => {
         {filteredTherapists.map((therapist) => (
           <div key={therapist.id} className="flex gap-8 hover:shadow-lg transition-all duration-300 justify-center max-w-6xl mx-auto">
             {/* Therapist Card */}
-            <Card className="w-72 overflow-hidden shadow-md hover:shadow-lg transition-shadow bg-card/80 backdrop-blur-sm border-white/10">
+            <Card className="w-72 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
                 {/* Photo section */}
                 <div className="relative w-full h-64">
@@ -227,16 +227,16 @@ const TherapistDirectory = () => {
                     }}
                   />
                   {/* Fallback when image fails */}
-                  <div className="hidden w-full h-full bg-white/10 flex items-center justify-center text-4xl font-semibold text-white/80">
+                  <div className="hidden w-full h-full bg-muted flex items-center justify-center text-4xl font-semibold text-muted-foreground">
                     {therapist.first_name?.[0]}{therapist.last_name?.[0]}
                   </div>
                 </div>
 
                 {/* Card Info Section */}
-                <div className="p-4 bg-card/80 space-y-3">
+                <div className="p-4 bg-card space-y-3">
                   {/* Country */}
                   {therapist.country && (
-                    <div className="flex items-center gap-2 text-sm text-white font-medium">
+                    <div className="flex items-center gap-2 text-sm text-foreground font-medium">
                       <span className="text-lg">{getCountryFlag(therapist.country)}</span>
                       <span>{therapist.country}</span>
                     </div>
@@ -247,14 +247,14 @@ const TherapistDirectory = () => {
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     ))}
-                    <span className="ml-2 text-sm text-white/70">
+                    <span className="ml-2 text-sm text-muted-foreground">
                       {(Math.random() * 1.5 + 4).toFixed(1)} ({Math.floor(Math.random() * 200) + 50})
                     </span>
                   </div>
 
                   {/* More Details Button */}
                   <Button
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                    className="w-full bg-foreground hover:bg-foreground/90 text-background"
                     onClick={() => setSelectedTherapist(therapist)}
                   >
                     More Details
@@ -266,33 +266,33 @@ const TherapistDirectory = () => {
             {/* Right Section - Bio and Details */}
             <div className="flex-1 space-y-4">
               {/* Name */}
-              <h2 className="text-2xl font-bold text-white">
+              <h2 className="text-2xl font-bold text-foreground">
                 {therapist.first_name} {therapist.last_name}
               </h2>
 
               {/* Bio */}
-              <p className="text-white/80 leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 {therapist.bio || "Native English Teacher from the India, consectetur adipiscing elit, sed do eiusmod tempor et dolore ut magna aliqua... [+]"}
               </p>
 
               {/* Specializations */}
               <div>
-                <h3 className="text-sm font-bold text-white mb-2">SPECIALIZATION:</h3>
+                <h3 className="text-sm font-bold text-foreground mb-2">SPECIALIZATION:</h3>
                 <div className="flex gap-2">
                   {therapist.specializations?.map((spec, index) => (
-                    <Badge key={index} variant="outline" className="px-3 py-1 border-white/30 text-white/80">
+                    <Badge key={index} variant="outline" className="px-3 py-1">
                       {spec}
                     </Badge>
                   )) || [
-                    <Badge key="voice" variant="outline" className="px-3 py-1 border-white/30 text-white/80">Voice Therapy</Badge>,
-                    <Badge key="articulation" variant="outline" className="px-3 py-1 border-white/30 text-white/80">Articulation Therapy</Badge>
+                    <Badge key="voice" variant="outline" className="px-3 py-1">Voice Therapy</Badge>,
+                    <Badge key="articulation" variant="outline" className="px-3 py-1">Articulation Therapy</Badge>
                   ]}
                 </div>
               </div>
 
               {/* Hourly Rate */}
               <div>
-                <div className="text-white font-medium">
+                <div className="text-foreground font-medium">
                   $25/hr
                 </div>
               </div>
@@ -302,10 +302,10 @@ const TherapistDirectory = () => {
       </div>
 
       {filteredTherapists.length === 0 && !loading && (
-        <Card className="bg-card/80 backdrop-blur-sm border-white/10">
+        <Card>
           <CardContent className="p-8 text-center">
-            <h3 className="text-lg font-semibold mb-2 text-white">No therapists found</h3>
-            <p className="text-white/70">
+            <h3 className="text-lg font-semibold mb-2">No therapists found</h3>
+            <p className="text-muted-foreground">
               Try adjusting your search criteria or filters.
             </p>
           </CardContent>

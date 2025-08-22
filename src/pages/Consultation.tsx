@@ -32,7 +32,7 @@ const Consultation = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-bg stars-bg">
+    <div className="min-h-screen bg-background">
       <Header />
       
       {/* Hero Section */}
