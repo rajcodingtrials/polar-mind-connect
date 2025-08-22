@@ -143,6 +143,15 @@ const TherapistCard = ({ therapist, onViewProfile }: TherapistCardProps) => {
             </div>
           </div>
           
+          {/* Bio */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-emphasis-high">About</h3>
+            <p className="text-base text-emphasis-medium leading-relaxed line-clamp-3">
+              {therapist.bio || "Experienced speech therapist specializing in voice therapy and articulation improvement. Dedicated to helping clients achieve clear and confident communication through personalized treatment plans and evidence-based techniques."}
+            </p>
+          </div>
+
+          {/* Pricing */}
           <div className="flex items-center gap-6">
             <div className="bg-surface-elevated p-4 rounded-lg border border-border/30">
               <div className="text-2xl font-bold text-emphasis-high">
@@ -163,13 +172,6 @@ const TherapistCard = ({ therapist, onViewProfile }: TherapistCardProps) => {
           </div>
         </div>
 
-        {/* Bio */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-emphasis-high">About</h3>
-          <p className="text-base text-emphasis-medium leading-relaxed line-clamp-3">
-            {therapist.bio || "Experienced speech therapist specializing in voice therapy and articulation improvement. Dedicated to helping clients achieve clear and confident communication through personalized treatment plans and evidence-based techniques."}
-          </p>
-        </div>
 
         {/* Specializations */}
         <div className="space-y-3">
