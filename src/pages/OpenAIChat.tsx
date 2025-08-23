@@ -519,7 +519,7 @@ const OpenAIChatPage = () => {
               <div className="mb-8 relative">
                 <div className="flex items-center justify-between">
                   <Button
-                    onClick={() => window.open('https://lovable.dev/projects/', '_blank')}
+                    onClick={() => window.open('https://lovable.dev/projects/05a47a05-17ab-4712-bec6-6ed9f6ca63c3', '_blank')}
                     className="bg-black text-white hover:bg-gray-800 rounded-full p-3 shadow-lg"
                     size="icon"
                   >
