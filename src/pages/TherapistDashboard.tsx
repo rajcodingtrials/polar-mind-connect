@@ -135,22 +135,27 @@ const TherapistDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
-        {/* Main Heading */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Therapist Dashboard</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Heading - Properly styled and spaced */}
+        <div className="mb-8">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+            Therapist Dashboard
+          </h1>
+          <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
+        </div>
         
         {/* Welcome Section */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">
+        <div className="mb-10">
+          <h2 className="text-2xl font-bold text-white mb-3">
             Welcome back, {therapistProfile.name}!
           </h2>
-          <p className="text-white/80">
+          <p className="text-white/80 text-lg">
             Manage your practice, schedule, and client sessions from your dashboard.
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <Card className="bg-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-slate-100">
             <CardContent className="p-6">
               <div className="flex items-center">
