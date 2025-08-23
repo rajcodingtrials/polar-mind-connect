@@ -135,22 +135,18 @@ const TherapistDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
-        {/* Main Heading */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Therapist Dashboard</h1>
-        
-        {/* Welcome Section */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Welcome back, {therapistProfile.name}!
-          </h2>
-          <p className="text-white/80">
-            Manage your practice, schedule, and client sessions from your dashboard.
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Page Title */}
+        <div className="py-8">
+          <h1 className="text-4xl font-bold text-white mb-3">Therapist Dashboard</h1>
+          <p className="text-lg text-white/80">
+            Welcome back, {therapistProfile.name}! Manage your practice, schedule, and client sessions.
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <Card className="bg-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-slate-100">
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -213,108 +209,135 @@ const TherapistDashboard = () => {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="files">Photos & Docs</TabsTrigger>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
-            <TabsTrigger value="sessions">Sessions</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="profile">
-            <div className="space-y-6">
-              {/* Profile Header */}
-              <Card>
-                <CardContent className="pt-6">
-                  <ProfileHeader therapistProfile={therapistProfile} />
+        <div className="pb-12">
+          <Tabs defaultValue="profile" className="space-y-8">
+            <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-sm p-1 rounded-lg h-12">
+              <TabsTrigger 
+                value="profile" 
+                className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium transition-all"
+              >
+                Profile
+              </TabsTrigger>
+              <TabsTrigger 
+                value="files" 
+                className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium transition-all"
+              >
+                Photos & Docs
+              </TabsTrigger>
+              <TabsTrigger 
+                value="schedule" 
+                className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium transition-all"
+              >
+                Schedule
+              </TabsTrigger>
+              <TabsTrigger 
+                value="sessions" 
+                className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium transition-all"
+              >
+                Sessions
+              </TabsTrigger>
+              <TabsTrigger 
+                value="earnings" 
+                className="text-white data-[state=active]:bg-white data-[state=active]:text-gray-900 font-medium transition-all"
+              >
+                Earnings
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="profile" className="mt-8">
+              <div className="space-y-6">
+                {/* Profile Header */}
+                <Card className="shadow-lg">
+                  <CardContent className="pt-6">
+                    <ProfileHeader therapistProfile={therapistProfile} />
+                  </CardContent>
+                </Card>
+
+                {/* Personal Information */}
+                <PersonalInformation
+                  therapistProfile={therapistProfile}
+                  editedProfile={editedProfile}
+                  setEditedProfile={setEditedProfile}
+                  isEditing={isEditing}
+                  onEdit={() => setIsEditing(true)}
+                  onSave={handleSaveProfile}
+                  onCancel={handleCancelEdit}
+                />
+
+                {/* Professional Details */}
+                <ProfessionalDetails
+                  therapistProfile={therapistProfile}
+                  editedProfile={editedProfile}
+                  setEditedProfile={setEditedProfile}
+                  isEditing={isEditing}
+                  onEdit={() => setIsEditing(true)}
+                  onSave={handleSaveProfile}
+                  onCancel={handleCancelEdit}
+                />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="files" className="mt-8">
+              <TherapistFileUpload 
+                therapistId={therapistProfile.id}
+                currentAvatarUrl={therapistProfile.avatar_url}
+                onAvatarUpdate={(url) => {
+                  setEditedProfile(prev => prev ? {...prev, avatar_url: url} : null);
+                }}
+              />
+            </TabsContent>
+            
+            <TabsContent value="schedule" className="mt-8">
+              <TherapistAvailabilityCalendar therapistId={therapistProfile.id} />
+            </TabsContent>
+            
+            <TabsContent value="sessions" className="mt-8">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Session History
+                  </CardTitle>
+                  <CardDescription>
+                    View and manage your therapy sessions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12">
+                    <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No sessions yet</p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Your session history will appear here
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
-
-              {/* Personal Information */}
-              <PersonalInformation
-                therapistProfile={therapistProfile}
-                editedProfile={editedProfile}
-                setEditedProfile={setEditedProfile}
-                isEditing={isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={handleSaveProfile}
-                onCancel={handleCancelEdit}
-              />
-
-              {/* Professional Details */}
-              <ProfessionalDetails
-                therapistProfile={therapistProfile}
-                editedProfile={editedProfile}
-                setEditedProfile={setEditedProfile}
-                isEditing={isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={handleSaveProfile}
-                onCancel={handleCancelEdit}
-              />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="files">
-            <TherapistFileUpload 
-              therapistId={therapistProfile.id}
-              currentAvatarUrl={therapistProfile.avatar_url}
-              onAvatarUpdate={(url) => {
-                setEditedProfile(prev => prev ? {...prev, avatar_url: url} : null);
-              }}
-            />
-          </TabsContent>
-          
-          <TabsContent value="schedule">
-            <TherapistAvailabilityCalendar therapistId={therapistProfile.id} />
-          </TabsContent>
-          
-          <TabsContent value="sessions">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Session History
-                </CardTitle>
-                <CardDescription>
-                  View and manage your therapy sessions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No sessions yet</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Your session history will appear here
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="earnings">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Earnings & Payments
-                </CardTitle>
-                <CardDescription>
-                  Track your earnings and payment history
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <DollarSign className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No earnings data available</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Your earnings will be tracked here
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+            
+            <TabsContent value="earnings" className="mt-8">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5" />
+                    Earnings & Payments
+                  </CardTitle>
+                  <CardDescription>
+                    Track your earnings and payment history
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12">
+                    <DollarSign className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No earnings data available</p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Your earnings will be tracked here
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
