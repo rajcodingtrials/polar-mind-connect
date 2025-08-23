@@ -99,13 +99,20 @@ export const useClientSessions = (clientId: string | null) => {
         }
 
         // Separate upcoming and completed sessions
-        const upcoming = transformedSessions.filter(session => 
-          session.session_date >= today && ['confirmed', 'pending'].includes(session.status)
-        );
+const upcoming = transformedSessions
+  .filter(session => 
+    session.session_date >= today && ['confirmed', 'pending'].includes(session.status)
+  );
 
-        const completed = transformedSessions.filter(session => 
-          session.status === 'completed' || (session.session_date < today && session.status === 'pending')
-        );
+const completed = transformedSessions
+  .filter(session => 
+    session.status === 'completed' || (session.session_date < today && session.status === 'pending')
+  )
+  .map(session => 
+    (session.session_date < today && session.status === 'pending')
+      ? { ...session, status: 'completed' }
+      : session
+  );
 
         setStats({
           upcomingSessions: upcoming,
