@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
+import { BookOpen, MessageCircle, Building, Heart, User, LayoutDashboard } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import ProgressCharacter from '../components/ProgressCharacter';
 import IntroductionScreen from '../components/IntroductionScreen';
@@ -528,10 +528,19 @@ const OpenAIChatPage = () => {
           {/* Home Screen */}
           {currentScreen === 'home' && !showQuestionTypes && (
             <>
-              <div className="mb-8 text-center">
-                <h1 className="text-5xl font-bold mb-4 text-slate-700">
-                  Welcome, {profile?.name || 'User'}!
-                </h1>
+              <div className="mb-8 relative">
+                <div className="text-center">
+                  <h1 className="text-5xl font-bold mb-4 text-slate-700">
+                    Welcome, {profile?.name || 'User'}!
+                  </h1>
+                </div>
+                <Button
+                  onClick={() => window.open('/user-dashboard', '_blank')}
+                  className="absolute top-0 right-0 bg-black text-white hover:bg-gray-800 rounded-full p-3 shadow-lg"
+                  size="icon"
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                </Button>
               </div>
 
               {/* Affirmation for the day Section */}
