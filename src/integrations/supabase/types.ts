@@ -292,6 +292,42 @@ export type Database = {
           },
         ]
       }
+      session_ratings: {
+        Row: {
+          categories: string[] | null
+          client_id: string
+          created_at: string
+          feedback_text: string | null
+          id: string
+          rating: number
+          session_id: string
+          updated_at: string
+          would_recommend: boolean | null
+        }
+        Insert: {
+          categories?: string[] | null
+          client_id: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          rating: number
+          session_id: string
+          updated_at?: string
+          would_recommend?: boolean | null
+        }
+        Update: {
+          categories?: string[] | null
+          client_id?: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          rating?: number
+          session_id?: string
+          updated_at?: string
+          would_recommend?: boolean | null
+        }
+        Relationships: []
+      }
       therapist_availability: {
         Row: {
           created_at: string
