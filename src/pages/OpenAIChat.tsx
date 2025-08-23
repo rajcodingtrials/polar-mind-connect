@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, MessageCircle, Building, Heart } from 'lucide-react';
+import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import ProgressCharacter from '../components/ProgressCharacter';
 import IntroductionScreen from '../components/IntroductionScreen';
@@ -509,6 +509,20 @@ const OpenAIChatPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
+      
+      {/* Dashboard Button */}
+      <div className="absolute top-20 left-4 z-10">
+        <Button
+          onClick={() => window.location.href = '/user-dashboard'}
+          variant="outline"
+          size="icon"
+          className="bg-card/80 backdrop-blur-sm border-border/40 hover:bg-card/90 shadow-lg"
+          title="Go to Dashboard"
+        >
+          <User className="h-4 w-4" />
+        </Button>
+      </div>
+      
       <main className="flex-grow p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Home Screen */}

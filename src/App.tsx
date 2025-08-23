@@ -21,6 +21,7 @@ import Admin from "./pages/Admin";
 import TherapistAuth from "./pages/TherapistAuth";
 import TherapistDashboard from "./pages/TherapistDashboard";
 import Consultation from "./pages/Consultation";
+import UserDashboard from "./pages/UserDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,6 +82,7 @@ function App() {
               <Route path="/therapist-auth" element={<TherapistAuth />} />
               <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
               <Route path="/consultation" element={<Consultation />} />
+              <Route path="/user-dashboard" element={<UserDashboard />} />
             </Routes>
           </TooltipProvider>
         </AuthProvider>
