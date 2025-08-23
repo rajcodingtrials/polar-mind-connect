@@ -33,13 +33,13 @@ const UserDashboard = () => {
 
   if (profileLoading || loading) {
     return (
-      <div className="min-h-screen flex flex-col gradient-bg stars-bg">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <Header />
         <main className="flex-grow p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center">
-              <h1 className="text-2xl font-semibold mb-4 text-white">Loading...</h1>
-              <p className="text-white/80">Please wait while we load your dashboard.</p>
+              <h1 className="text-2xl font-semibold mb-4 text-slate-700">Loading...</h1>
+              <p className="text-slate-600">Please wait while we load your dashboard.</p>
             </div>
           </div>
         </main>
@@ -149,9 +149,9 @@ const UserDashboard = () => {
             </div>
 
             {/* Badges Section */}
-            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-slate-700 flex items-center">
                   <Award className="w-5 h-5 mr-2" />
                   Badges Earned
                 </CardTitle>
@@ -193,9 +193,9 @@ const UserDashboard = () => {
         return (
           <div className="space-y-6">
             {/* Upcoming Sessions */}
-            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-slate-700 flex items-center">
                   <Clock className="w-5 h-5 mr-2" />
                   Upcoming Sessions ({upcomingSessions.length})
                 </CardTitle>
@@ -203,7 +203,7 @@ const UserDashboard = () => {
               <CardContent>
                 {upcomingSessions.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-white/80 mb-4">No upcoming sessions scheduled.</p>
+                    <p className="text-slate-600 mb-4">No upcoming sessions scheduled.</p>
                     <Button onClick={() => window.location.href = '/consultation'}>
                       Book a Session
                     </Button>
@@ -213,7 +213,7 @@ const UserDashboard = () => {
                     {upcomingSessions.map((session) => {
                       const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                       return (
-                        <div key={session.id} className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20">
+                        <div key={session.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                           <div className="flex items-center space-x-4">
                             <Avatar>
                               <AvatarImage src={session.therapist.avatar_url} />
@@ -222,11 +222,11 @@ const UserDashboard = () => {
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <h3 className="font-medium text-white">
+                              <h3 className="font-medium">
                                 {session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`}
                               </h3>
-                              <p className="text-sm text-white/70">{date} at {time}</p>
-                              <p className="text-xs text-white/60">{session.duration_minutes} minutes</p>
+                              <p className="text-sm text-slate-500">{date} at {time}</p>
+                              <p className="text-xs text-slate-500">{session.duration_minutes} minutes</p>
                             </div>
                           </div>
                           <div className="text-right">
@@ -243,23 +243,23 @@ const UserDashboard = () => {
             </Card>
 
             {/* Session History */}
-            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-slate-700 flex items-center">
                   <FileText className="w-5 h-5 mr-2" />
                   Session History ({completedSessions.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {completedSessions.length === 0 ? (
-                  <p className="text-center text-white/80 py-8">No completed sessions yet.</p>
+                  <p className="text-center text-slate-600 py-8">No completed sessions yet.</p>
                 ) : (
                   <div className="space-y-4">
                     {completedSessions.slice(0, 10).map((session) => {
                       const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                       const rating = getSessionRating(session.id);
                       return (
-                        <div key={session.id} className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20">
+                        <div key={session.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                           <div className="flex items-center space-x-4">
                             <Avatar>
                               <AvatarImage src={session.therapist.avatar_url} />
@@ -268,11 +268,11 @@ const UserDashboard = () => {
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <h3 className="font-medium text-white">
+                              <h3 className="font-medium">
                                 {session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`}
                               </h3>
-                              <p className="text-sm text-white/70">{date} at {time}</p>
-                              <p className="text-xs text-white/60">{session.duration_minutes} minutes</p>
+                              <p className="text-sm text-slate-500">{date} at {time}</p>
+                              <p className="text-xs text-slate-500">{session.duration_minutes} minutes</p>
                             </div>
                           </div>
                           <div className="text-right space-y-2">
@@ -306,21 +306,21 @@ const UserDashboard = () => {
 
       case 'ratings':
         return (
-          <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-white">Your Session Ratings</CardTitle>
+              <CardTitle className="text-slate-700">Your Session Ratings</CardTitle>
             </CardHeader>
             <CardContent>
               {sessionRatings.length === 0 ? (
-                <p className="text-center text-white/80 py-8">No ratings submitted yet.</p>
+                <p className="text-center text-slate-600 py-8">No ratings submitted yet.</p>
               ) : (
                 <div className="space-y-4">
                   {sessionRatings.map((rating) => {
                     const session = completedSessions.find(s => s.id === rating.session_id);
                     return (
-                      <div key={rating.id} className="p-4 bg-white/10 rounded-lg border border-white/20">
+                      <div key={rating.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-medium text-white">
+                          <h3 className="font-medium">
                             {session ? (
                               session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`
                             ) : 'Unknown Therapist'}
@@ -337,9 +337,9 @@ const UserDashboard = () => {
                           </div>
                         </div>
                         {rating.feedback_text && (
-                          <p className="text-sm text-white/80 mb-2">{rating.feedback_text}</p>
+                          <p className="text-sm text-slate-600 mb-2">{rating.feedback_text}</p>
                         )}
-                        <p className="text-xs text-white/60">
+                        <p className="text-xs text-slate-500">
                           Submitted on {format(new Date(rating.created_at), 'MMM dd, yyyy')}
                         </p>
                       </div>
@@ -360,14 +360,14 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col gradient-bg stars-bg">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
       
       <div className="flex flex-1">
         {/* Sidebar */}
-        <div className="w-64 bg-white/10 backdrop-blur-md border-r border-white/20 shadow-lg">
+        <div className="w-64 bg-white border-r border-gray-200 shadow-sm">
           <div className="p-6">
-            <h2 className="text-lg font-semibold text-white mb-6">Dashboard</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">Dashboard</h2>
             <nav className="space-y-2">
               {sidebarItems.map((item) => {
                 const Icon = item.icon;
@@ -377,8 +377,8 @@ const UserDashboard = () => {
                     onClick={() => setActiveTab(item.id as any)}
                     className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       activeTab === item.id
-                        ? 'bg-white/20 text-white border border-white/30'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
                     <Icon className="w-5 h-5 mr-3" />
@@ -395,12 +395,13 @@ const UserDashboard = () => {
           <div className="p-6">
             {/* Welcome Header */}
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-2">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 Welcome {profile?.name || profile?.username || 'User'}
               </h1>
-              <p className="text-white/80">All systems are running smoothly! You have {upcomingSessions.length} upcoming sessions.</p>
-              <p className="text-sm text-white/60 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
+              <p className="text-gray-600">All systems are running smoothly! You have {upcomingSessions.length} upcoming sessions.</p>
+              <p className="text-sm text-gray-500 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
             </div>
+
 
             {/* Dynamic Content */}
             {renderContent()}
