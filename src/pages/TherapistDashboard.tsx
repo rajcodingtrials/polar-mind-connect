@@ -135,16 +135,20 @@ const TherapistDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Heading */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Therapist Dashboard</h1>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-black mb-4 tracking-tight">
+            Therapist Dashboard
+          </h1>
+        </div>
         
         {/* Welcome Section */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-white mb-3">
             Welcome back, {therapistProfile.name}!
           </h2>
-          <p className="text-white/80">
+          <p className="text-white/80 text-lg">
             Manage your practice, schedule, and client sessions from your dashboard.
           </p>
         </div>
