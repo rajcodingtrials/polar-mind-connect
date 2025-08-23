@@ -510,18 +510,6 @@ const OpenAIChatPage = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       
-      {/* Dashboard Button */}
-      <div className="absolute top-20 left-4 z-10">
-        <Button
-          onClick={() => window.location.href = '/user-dashboard'}
-          variant="outline"
-          size="icon"
-          className="bg-card/80 backdrop-blur-sm border-border/40 hover:bg-card/90 shadow-lg"
-          title="Go to Dashboard"
-        >
-          <User className="h-4 w-4" />
-        </Button>
-      </div>
       
       <main className="flex-grow p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
@@ -529,18 +517,19 @@ const OpenAIChatPage = () => {
           {currentScreen === 'home' && !showQuestionTypes && (
             <>
               <div className="mb-8 relative">
-                <div className="text-center">
-                  <h1 className="text-5xl font-bold mb-4 text-slate-700">
+                <div className="flex items-center justify-between">
+                  <Button
+                    onClick={() => window.open('/user-dashboard', '_blank')}
+                    className="bg-black text-white hover:bg-gray-800 rounded-full p-3 shadow-lg"
+                    size="icon"
+                  >
+                    <LayoutDashboard className="h-5 w-5" />
+                  </Button>
+                  <h1 className="text-5xl font-bold text-slate-700 flex-1 text-center">
                     Welcome, {profile?.name || 'User'}!
                   </h1>
+                  <div className="w-12"></div> {/* Spacer for balance */}
                 </div>
-                <Button
-                  onClick={() => window.open('/user-dashboard', '_blank')}
-                  className="absolute top-0 right-0 bg-black text-white hover:bg-gray-800 rounded-full p-3 shadow-lg"
-                  size="icon"
-                >
-                  <LayoutDashboard className="h-5 w-5" />
-                </Button>
               </div>
 
               {/* Affirmation for the day Section */}
