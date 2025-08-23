@@ -16,7 +16,9 @@ import {
   BookOpen,
   TrendingUp,
   Timer,
-  Flame
+  Flame,
+  LayoutDashboard,
+  Award
 } from "lucide-react";
 import { format } from "date-fns";
 import SessionRatingModal from "@/components/SessionRatingModal";
@@ -27,7 +29,7 @@ const UserDashboard = () => {
   const { profile, loading: profileLoading } = useUserProfile();
   const { upcomingSessions, completedSessions, sessionRatings, loading, submitRating } = useClientSessions(user?.id || null);
   const [selectedSessionForRating, setSelectedSessionForRating] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'sessions' | 'ratings' | 'profile'>('sessions');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'sessions' | 'ratings' | 'profile'>('dashboard');
 
   if (profileLoading || loading) {
     return (
@@ -80,6 +82,7 @@ const UserDashboard = () => {
     : 0;
 
   const sidebarItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'sessions', label: 'My Sessions', icon: Calendar },
     { id: 'ratings', label: 'Ratings & Feedback', icon: Star },
     { id: 'profile', label: 'My Profile', icon: User },
@@ -87,6 +90,105 @@ const UserDashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return (
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-100 text-sm font-medium">Progress Rating</p>
+                      <p className="text-3xl font-bold mt-2">{averageRating > 0 ? `${averageRating}/5` : 'N/A'}</p>
+                      <p className="text-blue-100 text-xs mt-1">Average rating</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-blue-200" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-purple-100 text-sm font-medium">Lessons Completed</p>
+                      <p className="text-3xl font-bold mt-2">{totalCompletedSessions}</p>
+                      <p className="text-purple-100 text-xs mt-1">Total sessions</p>
+                    </div>
+                    <BookOpen className="w-8 h-8 text-purple-200" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-orange-100 text-sm font-medium">Streak</p>
+                      <p className="text-3xl font-bold mt-2">{streakDays} days</p>
+                      <p className="text-orange-100 text-xs mt-1">Current streak</p>
+                    </div>
+                    <Flame className="w-8 h-8 text-orange-200" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-100 text-sm font-medium">Total Time</p>
+                      <p className="text-3xl font-bold mt-2">{totalTimeHours}h</p>
+                      <p className="text-green-100 text-xs mt-1">Hours completed</p>
+                    </div>
+                    <Timer className="w-8 h-8 text-green-200" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Badges Section */}
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-slate-700 flex items-center">
+                  <Award className="w-5 h-5 mr-2" />
+                  Badges Earned
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {/* Sample badges - replace with actual badge data */}
+                  <div className="flex flex-col items-center p-4 bg-gradient-to-br from-yellow-100 to-amber-100 rounded-lg border border-yellow-200">
+                    <Award className="w-8 h-8 text-amber-600 mb-2" />
+                    <p className="text-xs font-medium text-amber-800">First Session</p>
+                  </div>
+                  <div className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg border border-blue-200">
+                    <Flame className="w-8 h-8 text-blue-600 mb-2" />
+                    <p className="text-xs font-medium text-blue-800">5 Day Streak</p>
+                  </div>
+                  <div className="flex flex-col items-center p-4 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg border border-green-200">
+                    <BookOpen className="w-8 h-8 text-green-600 mb-2" />
+                    <p className="text-xs font-medium text-green-800">10 Sessions</p>
+                  </div>
+                  <div className="flex flex-col items-center p-4 bg-gradient-to-br from-purple-100 to-violet-100 rounded-lg border border-purple-200">
+                    <Star className="w-8 h-8 text-purple-600 mb-2" />
+                    <p className="text-xs font-medium text-purple-800">High Rating</p>
+                  </div>
+                  <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg border border-gray-200 opacity-50">
+                    <Timer className="w-8 h-8 text-gray-400 mb-2" />
+                    <p className="text-xs font-medium text-gray-500">50 Hours</p>
+                  </div>
+                  <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg border border-gray-200 opacity-50">
+                    <TrendingUp className="w-8 h-8 text-gray-400 mb-2" />
+                    <p className="text-xs font-medium text-gray-500">Progress Master</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
       case 'sessions':
         return (
           <div className="space-y-6">
@@ -300,60 +402,6 @@ const UserDashboard = () => {
               <p className="text-sm text-gray-500 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-blue-100 text-sm font-medium">Progress Rating</p>
-                      <p className="text-3xl font-bold mt-2">{averageRating > 0 ? `${averageRating}/5` : 'N/A'}</p>
-                      <p className="text-blue-100 text-xs mt-1">Average rating</p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 text-blue-200" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-purple-100 text-sm font-medium">Lessons Completed</p>
-                      <p className="text-3xl font-bold mt-2">{totalCompletedSessions}</p>
-                      <p className="text-purple-100 text-xs mt-1">Total sessions</p>
-                    </div>
-                    <BookOpen className="w-8 h-8 text-purple-200" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-orange-100 text-sm font-medium">Streak</p>
-                      <p className="text-3xl font-bold mt-2">{streakDays} days</p>
-                      <p className="text-orange-100 text-xs mt-1">Current streak</p>
-                    </div>
-                    <Flame className="w-8 h-8 text-orange-200" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-green-100 text-sm font-medium">Total Time</p>
-                      <p className="text-3xl font-bold mt-2">{totalTimeHours}h</p>
-                      <p className="text-green-100 text-xs mt-1">Hours completed</p>
-                    </div>
-                    <Timer className="w-8 h-8 text-green-200" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
 
             {/* Dynamic Content */}
             {renderContent()}
