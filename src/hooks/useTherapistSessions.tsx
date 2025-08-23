@@ -1,9 +1,25 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface TherapySession {
+  id: string;
+  session_date: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  status: string;
+  session_type: string;
+  client_notes?: string;
+  therapist_notes?: string;
+  price_paid?: number;
+  currency?: string;
+  created_at: string;
+}
+
 interface SessionStats {
   todaySessions: number;
   totalSessions: number;
+  sessions: TherapySession[];
   loading: boolean;
   error: string | null;
 }
@@ -12,6 +28,7 @@ export const useTherapistSessions = (therapistId: string | null) => {
   const [stats, setStats] = useState<SessionStats>({
     todaySessions: 0,
     totalSessions: 0,
+    sessions: [],
     loading: true,
     error: null,
   });
@@ -39,20 +56,24 @@ export const useTherapistSessions = (therapistId: string | null) => {
           throw todayError;
         }
 
-        // Fetch total completed sessions
-        const { data: totalData, error: totalError } = await supabase
+        // Fetch all sessions with full details
+        const { data: allSessions, error: allSessionsError } = await supabase
           .from('therapy_sessions')
-          .select('id')
+          .select('*')
           .eq('therapist_id', therapistId)
-          .eq('status', 'completed');
+          .order('created_at', { ascending: false });
 
-        if (totalError) {
-          throw totalError;
+        if (allSessionsError) {
+          throw allSessionsError;
         }
+
+        // Count completed sessions
+        const completedSessions = allSessions?.filter(session => session.status === 'completed') || [];
 
         setStats({
           todaySessions: todayData?.length || 0,
-          totalSessions: totalData?.length || 0,
+          totalSessions: completedSessions.length,
+          sessions: allSessions || [],
           loading: false,
           error: null,
         });

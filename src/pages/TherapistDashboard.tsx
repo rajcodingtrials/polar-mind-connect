@@ -36,7 +36,7 @@ import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails"
 const TherapistDashboard = () => {
   const { user, signOut } = useAuth();
   const { therapistProfile, updateTherapistProfile, loading } = useTherapistAuth();
-  const { todaySessions, totalSessions, loading: sessionsLoading } = useTherapistSessions(therapistProfile?.id || null);
+  const { todaySessions, totalSessions, sessions, loading: sessionsLoading } = useTherapistSessions(therapistProfile?.id || null);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -137,14 +137,14 @@ const TherapistDashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Heading */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-4xl font-bold text-black mb-4 tracking-tight">
             Therapist Dashboard
           </h1>
         </div>
         
         {/* Welcome Section */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h2 className="text-2xl font-bold text-white mb-3">
             Welcome back, {therapistProfile.name}!
           </h2>
@@ -285,13 +285,82 @@ const TherapistDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No sessions yet</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Your session history will appear here
-                  </p>
-                </div>
+                {sessionsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                    <p className="text-gray-500">Loading sessions...</p>
+                  </div>
+                ) : sessions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No sessions yet</p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Your session history will appear here
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {sessions.map((session) => (
+                      <Card key={session.id} className="border border-gray-200">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <Badge 
+                                  variant={session.status === 'completed' ? 'default' : 
+                                          session.status === 'pending' ? 'secondary' : 'destructive'}
+                                >
+                                  {session.status}
+                                </Badge>
+                                <span className="text-sm text-gray-500">
+                                  {session.session_type}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <p className="font-medium text-gray-700">Date</p>
+                                  <p className="text-gray-600">{new Date(session.session_date).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-700">Time</p>
+                                  <p className="text-gray-600">{session.start_time} - {session.end_time}</p>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-700">Duration</p>
+                                  <p className="text-gray-600">{session.duration_minutes} min</p>
+                                </div>
+                                {session.price_paid && (
+                                  <div>
+                                    <p className="font-medium text-gray-700">Payment</p>
+                                    <p className="text-gray-600">${session.price_paid} {session.currency}</p>
+                                  </div>
+                                )}
+                              </div>
+                              {session.client_notes && (
+                                <div className="mt-3">
+                                  <p className="font-medium text-gray-700 text-sm">Client Notes</p>
+                                  <p className="text-gray-600 text-sm">{session.client_notes}</p>
+                                </div>
+                              )}
+                              {session.therapist_notes && (
+                                <div className="mt-3">
+                                  <p className="font-medium text-gray-700 text-sm">Your Notes</p>
+                                  <p className="text-gray-600 text-sm">{session.therapist_notes}</p>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                              <Clock className="h-4 w-4 text-gray-400" />
+                              <span className="text-xs text-gray-500">
+                                {new Date(session.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
