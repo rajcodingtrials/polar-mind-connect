@@ -510,21 +510,19 @@ const OpenAIChatPage = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       
-      {/* Dashboard Button */}
-      <div className="absolute top-20 left-4 z-10">
-        <Button
-          onClick={() => window.location.href = '/user-dashboard'}
-          variant="outline"
-          size="icon"
-          className="bg-card/80 backdrop-blur-sm border-border/40 hover:bg-card/90 shadow-lg"
-          title="Go to Dashboard"
-        >
-          <User className="h-4 w-4" />
-        </Button>
-      </div>
-      
       <main className="flex-grow p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
+          {/* Dashboard Button - aligned with content */}
+          <div className="mb-4">
+            <Button
+              onClick={() => window.location.href = '/user-dashboard'}
+              size="icon"
+              className="bg-black text-white hover:bg-gray-800 shadow-lg"
+              title="Go to Dashboard"
+            >
+              <User className="h-4 w-4" />
+            </Button>
+          </div>
           {/* Home Screen */}
           {currentScreen === 'home' && !showQuestionTypes && (
             <>
