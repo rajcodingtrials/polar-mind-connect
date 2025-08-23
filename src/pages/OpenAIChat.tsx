@@ -529,18 +529,18 @@ const OpenAIChatPage = () => {
           {currentScreen === 'home' && !showQuestionTypes && (
             <>
               <div className="mb-8 relative">
+                <Button
+                  onClick={() => window.open('/user-dashboard', '_blank')}
+                  className="absolute top-0 left-0 bg-black text-white hover:bg-gray-800 rounded-full p-3 shadow-lg"
+                  size="icon"
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                </Button>
                 <div className="text-center">
                   <h1 className="text-5xl font-bold mb-4 text-slate-700">
                     Welcome, {profile?.name || 'User'}!
                   </h1>
                 </div>
-                <Button
-                  onClick={() => window.open('/user-dashboard', '_blank')}
-                  className="absolute top-0 right-0 bg-black text-white hover:bg-gray-800 rounded-full p-3 shadow-lg"
-                  size="icon"
-                >
-                  <LayoutDashboard className="h-5 w-5" />
-                </Button>
               </div>
 
               {/* Affirmation for the day Section */}
