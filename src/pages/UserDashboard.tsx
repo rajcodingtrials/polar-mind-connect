@@ -4,11 +4,20 @@ import { useClientSessions } from "@/hooks/useClientSessions";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Clock, Star, User, FileText, Settings } from "lucide-react";
+import { 
+  Calendar, 
+  Clock, 
+  Star, 
+  User, 
+  FileText, 
+  BookOpen,
+  TrendingUp,
+  Timer,
+  Flame
+} from "lucide-react";
 import { format } from "date-fns";
 import SessionRatingModal from "@/components/SessionRatingModal";
 import UserProfileEditor from "@/components/UserProfileEditor";
@@ -18,10 +27,11 @@ const UserDashboard = () => {
   const { profile, loading: profileLoading } = useUserProfile();
   const { upcomingSessions, completedSessions, sessionRatings, loading, submitRating } = useClientSessions(user?.id || null);
   const [selectedSessionForRating, setSelectedSessionForRating] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'sessions' | 'ratings' | 'profile'>('sessions');
 
   if (profileLoading || loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <Header />
         <main className="flex-grow p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
@@ -38,13 +48,13 @@ const UserDashboard = () => {
   const getSessionStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return 'bg-success text-success-foreground';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'completed':
-        return 'bg-muted text-muted-foreground';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'cancelled':
-        return 'bg-destructive text-destructive-foreground';
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-secondary text-secondary-foreground';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -60,38 +70,28 @@ const UserDashboard = () => {
     };
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
-      <Header />
-      
-      <main className="flex-grow p-4 lg:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-slate-700 mb-2">
-              Welcome back, {profile?.name || profile?.username || 'User'}!
-            </h1>
-            <p className="text-slate-600">Manage your therapy sessions and profile here.</p>
-          </div>
+  // Calculate stats
+  const totalCompletedSessions = completedSessions.length;
+  const totalTimeMinutes = completedSessions.reduce((acc, session) => acc + (session.duration_minutes || 0), 0);
+  const totalTimeHours = Math.round(totalTimeMinutes / 60 * 10) / 10;
+  const streakDays = 5; // This would be calculated based on consecutive days
+  const averageRating = sessionRatings.length > 0 
+    ? Math.round((sessionRatings.reduce((acc, rating) => acc + rating.rating, 0) / sessionRatings.length) * 10) / 10
+    : 0;
 
-          <Tabs defaultValue="sessions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border border-slate-200">
-            <TabsTrigger value="sessions" className="data-[state=active]:bg-white data-[state=active]:text-slate-700">
-              <Calendar className="w-4 h-4 mr-2" />
-              My Sessions
-            </TabsTrigger>
-            <TabsTrigger value="ratings" className="data-[state=active]:bg-white data-[state=active]:text-slate-700">
-              <Star className="w-4 h-4 mr-2" />
-              Ratings & Feedback
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-slate-700">
-              <User className="w-4 h-4 mr-2" />
-              My Profile
-            </TabsTrigger>
-            </TabsList>
+  const sidebarItems = [
+    { id: 'sessions', label: 'My Sessions', icon: Calendar },
+    { id: 'ratings', label: 'Ratings & Feedback', icon: Star },
+    { id: 'profile', label: 'My Profile', icon: User },
+  ];
 
-          <TabsContent value="sessions" className="space-y-6">
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'sessions':
+        return (
+          <div className="space-y-6">
             {/* Upcoming Sessions */}
-            <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-slate-700 flex items-center">
                   <Clock className="w-5 h-5 mr-2" />
@@ -141,7 +141,7 @@ const UserDashboard = () => {
             </Card>
 
             {/* Session History */}
-            <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-slate-700 flex items-center">
                   <FileText className="w-5 h-5 mr-2" />
@@ -179,7 +179,7 @@ const UserDashboard = () => {
                             </Badge>
                             {rating ? (
                               <div className="flex items-center text-sm">
-                                <Star className="w-4 h-4 fill-warning text-warning mr-1" />
+                                <Star className="w-4 h-4 fill-amber-400 text-amber-400 mr-1" />
                                 {rating.rating}/5
                               </div>
                             ) : (
@@ -199,60 +199,167 @@ const UserDashboard = () => {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
+        );
 
-          <TabsContent value="ratings" className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-700">Your Session Ratings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {sessionRatings.length === 0 ? (
-                  <p className="text-center text-slate-600 py-8">No ratings submitted yet.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {sessionRatings.map((rating) => {
-                      const session = completedSessions.find(s => s.id === rating.session_id);
-                      return (
-                        <div key={rating.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-medium">
-                              {session ? (
-                                session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`
-                              ) : 'Unknown Therapist'}
-                            </h3>
-                            <div className="flex items-center">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-4 h-4 ${
-                                    i < rating.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
-                                  }`}
-                                />
-                              ))}
-                            </div>
+      case 'ratings':
+        return (
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-slate-700">Your Session Ratings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sessionRatings.length === 0 ? (
+                <p className="text-center text-slate-600 py-8">No ratings submitted yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {sessionRatings.map((rating) => {
+                    const session = completedSessions.find(s => s.id === rating.session_id);
+                    return (
+                      <div key={rating.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-medium">
+                            {session ? (
+                              session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`
+                            ) : 'Unknown Therapist'}
+                          </h3>
+                          <div className="flex items-center">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < rating.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
+                                }`}
+                              />
+                            ))}
                           </div>
-                          {rating.feedback_text && (
-                            <p className="text-sm text-slate-600 mb-2">{rating.feedback_text}</p>
-                          )}
-                          <p className="text-xs text-slate-500">
-                            Submitted on {format(new Date(rating.created_at), 'MMM dd, yyyy')}
-                          </p>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                        {rating.feedback_text && (
+                          <p className="text-sm text-slate-600 mb-2">{rating.feedback_text}</p>
+                        )}
+                        <p className="text-xs text-slate-500">
+                          Submitted on {format(new Date(rating.created_at), 'MMM dd, yyyy')}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
 
-          <TabsContent value="profile">
-            <UserProfileEditor />
-          </TabsContent>
-        </Tabs>
+      case 'profile':
+        return <UserProfileEditor />;
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <Header />
+      
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <div className="w-64 bg-white border-r border-gray-200 shadow-sm">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">Dashboard</h2>
+            <nav className="space-y-2">
+              {sidebarItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id as any)}
+                    className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      activeTab === item.id
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 mr-3" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         </div>
-      </main>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="p-6">
+            {/* Welcome Header */}
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Welcome {profile?.name || profile?.username || 'User'}
+              </h1>
+              <p className="text-gray-600">All systems are running smoothly! You have {upcomingSessions.length} upcoming sessions.</p>
+              <p className="text-sm text-gray-500 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-100 text-sm font-medium">Progress Rating</p>
+                      <p className="text-3xl font-bold mt-2">{averageRating > 0 ? `${averageRating}/5` : 'N/A'}</p>
+                      <p className="text-blue-100 text-xs mt-1">Average rating</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-blue-200" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-purple-100 text-sm font-medium">Lessons Completed</p>
+                      <p className="text-3xl font-bold mt-2">{totalCompletedSessions}</p>
+                      <p className="text-purple-100 text-xs mt-1">Total sessions</p>
+                    </div>
+                    <BookOpen className="w-8 h-8 text-purple-200" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-orange-100 text-sm font-medium">Streak</p>
+                      <p className="text-3xl font-bold mt-2">{streakDays} days</p>
+                      <p className="text-orange-100 text-xs mt-1">Current streak</p>
+                    </div>
+                    <Flame className="w-8 h-8 text-orange-200" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-100 text-sm font-medium">Total Time</p>
+                      <p className="text-3xl font-bold mt-2">{totalTimeHours}h</p>
+                      <p className="text-green-100 text-xs mt-1">Hours completed</p>
+                    </div>
+                    <Timer className="w-8 h-8 text-green-200" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Dynamic Content */}
+            {renderContent()}
+          </div>
+        </div>
+      </div>
 
       {selectedSessionForRating && (
         <SessionRatingModal
