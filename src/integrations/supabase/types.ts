@@ -301,6 +301,7 @@ export type Database = {
           id: string
           rating: number
           session_id: string
+          therapist_id: string | null
           updated_at: string
           would_recommend: boolean | null
         }
@@ -312,6 +313,7 @@ export type Database = {
           id?: string
           rating: number
           session_id: string
+          therapist_id?: string | null
           updated_at?: string
           would_recommend?: boolean | null
         }
@@ -323,10 +325,19 @@ export type Database = {
           id?: string
           rating?: number
           session_id?: string
+          therapist_id?: string | null
           updated_at?: string
           would_recommend?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "session_ratings_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "therapists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       therapist_availability: {
         Row: {

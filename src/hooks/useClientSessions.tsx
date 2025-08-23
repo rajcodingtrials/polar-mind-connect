@@ -137,18 +137,24 @@ const completed = transformedSessions
   const submitRating = async (sessionId: string, rating: number, feedbackText?: string, categories?: string[], wouldRecommend?: boolean) => {
     if (!clientId) throw new Error('Client ID required');
 
-    const { data, error } = await supabase
-      .from('session_ratings')
-      .upsert({
-        session_id: sessionId,
-        client_id: clientId,
-        rating,
-        feedback_text: feedbackText,
-        categories: categories || [],
-        would_recommend: wouldRecommend,
-      })
-      .select()
-      .single();
+const { data, error } = await supabase
+  .from('session_ratings')
+  .upsert({
+    session_id: sessionId,
+    client_id: clientId,
+    therapist_id: (await supabase
+      .from('therapy_sessions')
+      .select('therapist_id')
+      .eq('id', sessionId)
+      .single()
+    ).data?.therapist_id,
+    rating,
+    feedback_text: feedbackText,
+    categories: categories || [],
+    would_recommend: wouldRecommend,
+  })
+  .select()
+  .single();
 
     if (error) throw error;
 
