@@ -24,14 +24,19 @@ interface Therapist {
   headline: string;
 }
 
+interface TherapistRating {
+  therapistId: string;
+  averageRating: number;
+  reviewCount: number;
+}
+
 interface TherapistCardProps {
   therapist: Therapist;
+  rating: TherapistRating;
   onViewProfile: (therapist: Therapist) => void;
 }
 
-const TherapistCard = ({ therapist, onViewProfile }: TherapistCardProps) => {
-  const rating = (Math.random() * 1.5 + 4).toFixed(1);
-  const reviewCount = Math.floor(Math.random() * 200) + 50;
+const TherapistCard = ({ therapist, rating, onViewProfile }: TherapistCardProps) => {
   const isOnline = Math.random() > 0.3; // 70% chance of being online
 
   return (
@@ -99,13 +104,26 @@ const TherapistCard = ({ therapist, onViewProfile }: TherapistCardProps) => {
 
             {/* Rating */}
             <div className="flex items-center gap-2 bg-surface-sunken p-3 rounded-lg">
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-warning text-warning" />
-                ))}
-              </div>
-              <span className="text-sm font-bold text-emphasis-high">{rating}</span>
-              <span className="text-sm text-emphasis-medium">({reviewCount} reviews)</span>
+              {rating.reviewCount > 0 ? (
+                <>
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star 
+                        key={i} 
+                        className={`w-4 h-4 ${
+                          i < Math.floor(rating.averageRating) 
+                            ? 'fill-warning text-warning' 
+                            : 'text-muted-foreground'
+                        }`} 
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-bold text-emphasis-high">{rating.averageRating.toFixed(1)}</span>
+                  <span className="text-sm text-emphasis-medium">({rating.reviewCount} review{rating.reviewCount !== 1 ? 's' : ''})</span>
+                </>
+              ) : (
+                <span className="text-sm text-emphasis-medium italic">No reviews yet</span>
+              )}
             </div>
 
             {/* CTA Button */}

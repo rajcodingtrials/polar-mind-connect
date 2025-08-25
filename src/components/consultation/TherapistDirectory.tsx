@@ -9,6 +9,7 @@ import TherapistCard from "./TherapistCard";
 import TherapistSkeleton from "./TherapistSkeleton";
 import EmptyState from "./EmptyState";
 import { useToast } from "@/hooks/use-toast";
+import { useTherapistRatings } from "@/hooks/useTherapistRatings";
 
 interface Therapist {
   id: string;
@@ -40,6 +41,10 @@ const TherapistDirectory = () => {
   const [sortBy, setSortBy] = useState("name");
   const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
   const { toast } = useToast();
+  
+  // Get therapist IDs for fetching ratings
+  const therapistIds = therapists.map(t => t.id);
+  const { ratings, loading: ratingsLoading, getRatingForTherapist } = useTherapistRatings(therapistIds);
 
   useEffect(() => {
     fetchTherapists();
@@ -241,6 +246,7 @@ const TherapistDirectory = () => {
             <div key={therapist.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
               <TherapistCard
                 therapist={therapist}
+                rating={getRatingForTherapist(therapist.id)}
                 onViewProfile={(t) => setSelectedTherapist(t)}
               />
             </div>
