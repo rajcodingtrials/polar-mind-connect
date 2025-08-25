@@ -33,19 +33,19 @@ const UserDashboard = () => {
 
   if (profileLoading || loading) {
     return (
-      <div className="min-h-screen flex flex-col gradient-bg stars-bg">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <Header />
         <main className="flex-grow p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center">
-              <h1 className="text-2xl font-semibold mb-4 text-white">Loading...</h1>
-              <p className="text-white/80">Please wait while we load your dashboard.</p>
+              <h1 className="text-2xl font-semibold mb-4 text-slate-700">Loading...</h1>
+              <p className="text-slate-600">Please wait while we load your dashboard.</p>
             </div>
           </div>
         </main>
       </div>
     );
-  };
+  }
 
   const getSessionStatusColor = (status: string) => {
     switch (status) {
@@ -360,14 +360,14 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col gradient-bg stars-bg">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
       
       <div className="flex flex-1">
         {/* Sidebar */}
-        <div className="w-64 bg-white/10 backdrop-blur-md border-r border-white/20 shadow-sm">
+        <div className="w-64 bg-white border-r border-gray-200 shadow-sm">
           <div className="p-6">
-            <h2 className="text-lg font-semibold text-white mb-6">Dashboard</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">Dashboard</h2>
             <nav className="space-y-2">
               {sidebarItems.map((item) => {
                 const Icon = item.icon;
@@ -377,8 +377,8 @@ const UserDashboard = () => {
                     onClick={() => setActiveTab(item.id as any)}
                     className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       activeTab === item.id
-                        ? 'bg-white/20 text-white border border-white/30'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
                     <Icon className="w-5 h-5 mr-3" />
@@ -395,12 +395,13 @@ const UserDashboard = () => {
           <div className="p-6">
             {/* Welcome Header */}
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-2">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 Welcome {profile?.name || profile?.username || 'User'}
               </h1>
-              <p className="text-white/80">All systems are running smoothly! You have {upcomingSessions.length} upcoming sessions.</p>
-              <p className="text-sm text-white/60 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
+              <p className="text-gray-600">All systems are running smoothly! You have {upcomingSessions.length} upcoming sessions.</p>
+              <p className="text-sm text-gray-500 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
             </div>
+
 
             {/* Dynamic Content */}
             {renderContent()}
