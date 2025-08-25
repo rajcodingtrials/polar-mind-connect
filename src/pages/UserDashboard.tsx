@@ -149,7 +149,7 @@ const UserDashboard = () => {
             </div>
 
             {/* Badges Section */}
-            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-sm">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
                   <Award className="w-5 h-5 mr-2" />
@@ -193,7 +193,7 @@ const UserDashboard = () => {
         return (
           <div className="space-y-6">
             {/* Upcoming Sessions */}
-            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-sm">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
                   <Clock className="w-5 h-5 mr-2" />
@@ -243,7 +243,7 @@ const UserDashboard = () => {
             </Card>
 
             {/* Session History */}
-            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-sm">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
                   <FileText className="w-5 h-5 mr-2" />
@@ -306,7 +306,7 @@ const UserDashboard = () => {
 
       case 'ratings':
         return (
-          <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-sm">
+          <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
             <CardHeader>
               <CardTitle className="text-white">Your Session Ratings</CardTitle>
             </CardHeader>
@@ -337,7 +337,7 @@ const UserDashboard = () => {
                           </div>
                         </div>
                         {rating.feedback_text && (
-                          <p className="text-sm text-white/70 mb-2">{rating.feedback_text}</p>
+                          <p className="text-sm text-white/80 mb-2">{rating.feedback_text}</p>
                         )}
                         <p className="text-xs text-white/60">
                           Submitted on {format(new Date(rating.created_at), 'MMM dd, yyyy')}
@@ -365,7 +365,7 @@ const UserDashboard = () => {
       
       <div className="flex flex-1">
         {/* Sidebar */}
-        <div className="w-64 bg-white/10 backdrop-blur-md border-r border-white/20 shadow-sm">
+        <div className="w-64 bg-white/10 backdrop-blur-md border-r border-white/20 shadow-lg">
           <div className="p-6">
             <h2 className="text-lg font-semibold text-white mb-6">Dashboard</h2>
             <nav className="space-y-2">
@@ -401,7 +401,6 @@ const UserDashboard = () => {
               <p className="text-white/80">All systems are running smoothly! You have {upcomingSessions.length} upcoming sessions.</p>
               <p className="text-sm text-white/60 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
             </div>
-
 
             {/* Dynamic Content */}
             {renderContent()}
