@@ -45,7 +45,7 @@ const UserDashboard = () => {
         </main>
       </div>
     );
-  }
+  };
 
   const getSessionStatusColor = (status: string) => {
     switch (status) {
@@ -149,9 +149,9 @@ const UserDashboard = () => {
             </div>
 
             {/* Badges Section */}
-            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-slate-700 flex items-center">
                   <Award className="w-5 h-5 mr-2" />
                   Badges Earned
                 </CardTitle>
@@ -193,9 +193,9 @@ const UserDashboard = () => {
         return (
           <div className="space-y-6">
             {/* Upcoming Sessions */}
-            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-slate-700 flex items-center">
                   <Clock className="w-5 h-5 mr-2" />
                   Upcoming Sessions ({upcomingSessions.length})
                 </CardTitle>
@@ -203,7 +203,7 @@ const UserDashboard = () => {
               <CardContent>
                 {upcomingSessions.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-white/80 mb-4">No upcoming sessions scheduled.</p>
+                    <p className="text-slate-600 mb-4">No upcoming sessions scheduled.</p>
                     <Button onClick={() => window.location.href = '/consultation'}>
                       Book a Session
                     </Button>
@@ -213,7 +213,7 @@ const UserDashboard = () => {
                     {upcomingSessions.map((session) => {
                       const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                       return (
-                        <div key={session.id} className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20">
+                        <div key={session.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                           <div className="flex items-center space-x-4">
                             <Avatar>
                               <AvatarImage src={session.therapist.avatar_url} />
@@ -222,11 +222,11 @@ const UserDashboard = () => {
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <h3 className="font-medium text-white">
+                              <h3 className="font-medium">
                                 {session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`}
                               </h3>
-                              <p className="text-sm text-white/70">{date} at {time}</p>
-                              <p className="text-xs text-white/60">{session.duration_minutes} minutes</p>
+                              <p className="text-sm text-slate-500">{date} at {time}</p>
+                              <p className="text-xs text-slate-500">{session.duration_minutes} minutes</p>
                             </div>
                           </div>
                           <div className="text-right">
@@ -243,23 +243,23 @@ const UserDashboard = () => {
             </Card>
 
             {/* Session History */}
-            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-slate-700 flex items-center">
                   <FileText className="w-5 h-5 mr-2" />
                   Session History ({completedSessions.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {completedSessions.length === 0 ? (
-                  <p className="text-center text-white/80 py-8">No completed sessions yet.</p>
+                  <p className="text-center text-slate-600 py-8">No completed sessions yet.</p>
                 ) : (
                   <div className="space-y-4">
                     {completedSessions.slice(0, 10).map((session) => {
                       const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                       const rating = getSessionRating(session.id);
                       return (
-                        <div key={session.id} className="flex items-center justify-between p-4 bg-white/10 rounded-lg border border-white/20">
+                        <div key={session.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                           <div className="flex items-center space-x-4">
                             <Avatar>
                               <AvatarImage src={session.therapist.avatar_url} />
@@ -268,11 +268,11 @@ const UserDashboard = () => {
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <h3 className="font-medium text-white">
+                              <h3 className="font-medium">
                                 {session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`}
                               </h3>
-                              <p className="text-sm text-white/70">{date} at {time}</p>
-                              <p className="text-xs text-white/60">{session.duration_minutes} minutes</p>
+                              <p className="text-sm text-slate-500">{date} at {time}</p>
+                              <p className="text-xs text-slate-500">{session.duration_minutes} minutes</p>
                             </div>
                           </div>
                           <div className="text-right space-y-2">
@@ -306,21 +306,21 @@ const UserDashboard = () => {
 
       case 'ratings':
         return (
-          <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-lg">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-white">Your Session Ratings</CardTitle>
+              <CardTitle className="text-slate-700">Your Session Ratings</CardTitle>
             </CardHeader>
             <CardContent>
               {sessionRatings.length === 0 ? (
-                <p className="text-center text-white/80 py-8">No ratings submitted yet.</p>
+                <p className="text-center text-slate-600 py-8">No ratings submitted yet.</p>
               ) : (
                 <div className="space-y-4">
                   {sessionRatings.map((rating) => {
                     const session = completedSessions.find(s => s.id === rating.session_id);
                     return (
-                      <div key={rating.id} className="p-4 bg-white/10 rounded-lg border border-white/20">
+                      <div key={rating.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-medium text-white">
+                          <h3 className="font-medium">
                             {session ? (
                               session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`
                             ) : 'Unknown Therapist'}
@@ -337,9 +337,9 @@ const UserDashboard = () => {
                           </div>
                         </div>
                         {rating.feedback_text && (
-                          <p className="text-sm text-white/80 mb-2">{rating.feedback_text}</p>
+                          <p className="text-sm text-slate-600 mb-2">{rating.feedback_text}</p>
                         )}
-                        <p className="text-xs text-white/60">
+                        <p className="text-xs text-slate-500">
                           Submitted on {format(new Date(rating.created_at), 'MMM dd, yyyy')}
                         </p>
                       </div>
@@ -365,7 +365,7 @@ const UserDashboard = () => {
       
       <div className="flex flex-1">
         {/* Sidebar */}
-        <div className="w-64 bg-white/10 backdrop-blur-md border-r border-white/20 shadow-lg">
+        <div className="w-64 bg-white/10 backdrop-blur-md border-r border-white/20 shadow-sm">
           <div className="p-6">
             <h2 className="text-lg font-semibold text-white mb-6">Dashboard</h2>
             <nav className="space-y-2">
