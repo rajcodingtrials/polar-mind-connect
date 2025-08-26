@@ -23,6 +23,7 @@ import {
 import { format } from "date-fns";
 import SessionRatingModal from "@/components/SessionRatingModal";
 import UserProfileEditor from "@/components/UserProfileEditor";
+import Footer from "@/components/Footer";
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -419,6 +420,8 @@ const UserDashboard = () => {
           onClose={() => setSelectedSessionForRating(null)}
         />
       )}
+      
+      <Footer />
     </div>
   );
 };

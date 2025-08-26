@@ -5,6 +5,7 @@ import TherapistHero from "@/components/consultation/TherapistHero";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import Footer from "@/components/Footer";
 
 const Consultation = () => {
   const { user } = useAuth();
@@ -49,6 +50,8 @@ const Consultation = () => {
       <div id="therapist-directory" className="container mx-auto px-4 py-20 lg:py-24">
         <TherapistDirectory />
       </div>
+      
+      <Footer />
     </div>
   );
 };

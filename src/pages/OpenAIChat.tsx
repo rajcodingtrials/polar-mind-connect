@@ -14,6 +14,7 @@ import IntroductionScreen from '../components/IntroductionScreen';
 import SingleQuestionView from '../components/SingleQuestionView';
 import MiniCelebration from '../components/MiniCelebration';
 import LessonSelection from '../components/LessonSelection';
+import Footer from '../components/Footer';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -948,6 +949,8 @@ const OpenAIChatPage = () => {
           )}
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };

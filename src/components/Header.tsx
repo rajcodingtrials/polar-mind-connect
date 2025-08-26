@@ -27,8 +27,12 @@ const Header = () => {
 
         <nav className="flex items-center gap-4">
           <Link to="/" className="text-white hover:text-white/80 transition-colors font-medium">Home</Link>
-          <Link to="/our-story" className="text-white hover:text-white/80 transition-colors font-medium">Our Story</Link>
-          <Link to="/meet-the-team" className="text-white hover:text-white/80 transition-colors font-medium">Meet the Team</Link>
+          {!isAuthenticated && (
+            <>
+              <Link to="/our-story" className="text-white hover:text-white/80 transition-colors font-medium">Our Story</Link>
+              <Link to="/meet-the-team" className="text-white hover:text-white/80 transition-colors font-medium">Meet the Team</Link>
+            </>
+          )}
           {isAuthenticated && (
             <Link to="/consultation" className="text-white hover:text-white/80 transition-colors font-medium">Coaches</Link>
           )}
