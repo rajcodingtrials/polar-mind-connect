@@ -1,6 +1,7 @@
 
 import React from "react";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 const OurStory = () => {
   return (
@@ -44,6 +45,8 @@ const OurStory = () => {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };

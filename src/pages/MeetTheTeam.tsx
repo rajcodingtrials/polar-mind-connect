@@ -1,6 +1,7 @@
 
 import React from "react";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 
 const MeetTheTeam = () => {
@@ -72,6 +73,8 @@ const MeetTheTeam = () => {
           </Card>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };
