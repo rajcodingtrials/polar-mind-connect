@@ -518,18 +518,10 @@ const OpenAIChatPage = () => {
           {currentScreen === 'home' && !showQuestionTypes && (
             <>
               <div className="mb-8 relative">
-                <div className="flex items-center justify-between">
-                  <Button
-                    onClick={() => window.location.href = '/user-dashboard'}
-                    className="bg-black text-white hover:bg-gray-800 rounded-full p-3 shadow-lg"
-                    size="icon"
-                  >
-                    <User className="h-5 w-5" />
-                  </Button>
-                  <h1 className="text-5xl font-bold text-slate-700 flex-1 text-center">
+                <div className="flex items-center justify-center">
+                  <h1 className="text-5xl font-bold text-slate-700 text-center">
                     Welcome, {profile?.name || 'User'}!
                   </h1>
-                  <div className="w-12"></div> {/* Spacer for balance */}
                 </div>
               </div>
 
