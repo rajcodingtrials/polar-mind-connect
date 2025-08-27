@@ -2,13 +2,14 @@ import React from "react";
 import Header from "@/components/Header";
 import FooterCardStyle from "@/components/FooterCardStyle";
 import FooterFloating from "@/components/FooterFloating";
+import FooterEnhanced from "@/components/FooterEnhanced";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 const FooterDemo = () => {
-  const [activeFooter, setActiveFooter] = useState<'original' | 'card' | 'floating'>('original');
+  const [activeFooter, setActiveFooter] = useState<'original' | 'enhanced' | 'card' | 'floating'>('original');
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -31,6 +32,12 @@ const FooterDemo = () => {
                   onClick={() => setActiveFooter('original')}
                 >
                   Original Footer
+                </Button>
+                <Button 
+                  variant={activeFooter === 'enhanced' ? 'default' : 'outline'}
+                  onClick={() => setActiveFooter('enhanced')}
+                >
+                  Enhanced Original
                 </Button>
                 <Button 
                   variant={activeFooter === 'card' ? 'default' : 'outline'}
@@ -58,6 +65,10 @@ const FooterDemo = () => {
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">Original Footer</h3>
                   <p className="text-muted-foreground text-sm">Simple horizontal layout with logo, copyright, and navigation links</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-2">Enhanced Original</h3>
+                  <p className="text-muted-foreground text-sm">Improved version with gradient backgrounds, hover effects, and better typography</p>
                 </div>
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">Card Style Footer</h3>
@@ -89,6 +100,7 @@ const FooterDemo = () => {
 
       {/* Render Selected Footer */}
       {activeFooter === 'original' && <Footer />}
+      {activeFooter === 'enhanced' && <FooterEnhanced />}
       {activeFooter === 'card' && <FooterCardStyle />}
       {activeFooter === 'floating' && <FooterFloating />}
     </div>
