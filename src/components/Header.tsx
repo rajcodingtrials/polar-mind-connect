@@ -34,7 +34,10 @@ const Header = () => {
             </>
           )}
           {isAuthenticated && (
-            <Link to="/consultation" className="text-white hover:text-white/80 transition-colors font-medium">Coaches</Link>
+            <>
+              <Link to="/user-dashboard" className="text-white hover:text-white/80 transition-colors font-medium">My Dashboard</Link>
+              <Link to="/consultation" className="text-white hover:text-white/80 transition-colors font-medium">Coaches</Link>
+            </>
           )}
           {!isAuthenticated && (
             <Link to="/therapist-auth" className="text-white hover:text-white/80 transition-colors font-medium">Therapists</Link>
