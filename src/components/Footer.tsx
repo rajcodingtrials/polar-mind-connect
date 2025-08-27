@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="relative bg-gradient-to-r from-black via-gray-900 to-black border-t border-primary/20 mt-auto overflow-hidden">
+    <footer className="relative bg-gradient-to-r from-background via-muted/20 to-background border-t border-primary/20 mt-auto overflow-hidden">
       {/* Subtle background effects */}
       <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent" />
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
