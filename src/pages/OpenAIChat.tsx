@@ -652,7 +652,7 @@ const OpenAIChatPage = () => {
               <div className="flex max-w-7xl mx-auto gap-8 min-h-[500px]">
                 {/* Activity Cards Section */}
                 <div className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-2/5' : 'w-full'}`}>
-                  <div className={`grid gap-8 ${showLessonsPanel ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'} justify-items-center`}>
+                  <div className={`grid gap-8 ${showLessonsPanel ? 'grid-cols-1' : 'grid-cols-5'} justify-items-center`}>
                     {/* Show selected activity first when panel is open */}
                     {showLessonsPanel && hoveredActivityType && (() => {
                       const selectedType = questionTypes.find(type => type.value === hoveredActivityType);
