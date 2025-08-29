@@ -251,10 +251,12 @@ export type Database = {
       questions: {
         Row: {
           answer: string
+          correct_image_index: number | null
           created_at: string | null
           created_by: string | null
           id: string
           image_name: string | null
+          images: Json | null
           lesson_id: string | null
           question: string
           question_type: Database["public"]["Enums"]["question_type_enum"]
@@ -262,10 +264,12 @@ export type Database = {
         }
         Insert: {
           answer: string
+          correct_image_index?: number | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           image_name?: string | null
+          images?: Json | null
           lesson_id?: string | null
           question: string
           question_type?: Database["public"]["Enums"]["question_type_enum"]
@@ -273,10 +277,12 @@ export type Database = {
         }
         Update: {
           answer?: string
+          correct_image_index?: number | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           image_name?: string | null
+          images?: Json | null
           lesson_id?: string | null
           question?: string
           question_type?: Database["public"]["Enums"]["question_type_enum"]
@@ -617,6 +623,166 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_profiles: {
+        Row: {
+          acoustic_features: Json
+          created_at: string | null
+          detected_capabilities: Json
+          id: string
+          is_active: boolean
+          primary_communication_mode: string
+          quality_score: number
+          sample_count: number
+          updated_at: string | null
+          user_id: string
+          verification_thresholds: Json
+          voice_embedding: number[]
+        }
+        Insert: {
+          acoustic_features?: Json
+          created_at?: string | null
+          detected_capabilities?: Json
+          id?: string
+          is_active?: boolean
+          primary_communication_mode?: string
+          quality_score?: number
+          sample_count?: number
+          updated_at?: string | null
+          user_id: string
+          verification_thresholds?: Json
+          voice_embedding: number[]
+        }
+        Update: {
+          acoustic_features?: Json
+          created_at?: string | null
+          detected_capabilities?: Json
+          id?: string
+          is_active?: boolean
+          primary_communication_mode?: string
+          quality_score?: number
+          sample_count?: number
+          updated_at?: string | null
+          user_id?: string
+          verification_thresholds?: Json
+          voice_embedding?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_registration_sessions: {
+        Row: {
+          completed_at: string | null
+          current_step: number
+          error_message: string | null
+          id: string
+          profile_id: string | null
+          samples_collected: number
+          session_data: Json | null
+          started_at: string | null
+          status: string
+          total_steps: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          current_step?: number
+          error_message?: string | null
+          id?: string
+          profile_id?: string | null
+          samples_collected?: number
+          session_data?: Json | null
+          started_at?: string | null
+          status?: string
+          total_steps?: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          current_step?: number
+          error_message?: string | null
+          id?: string
+          profile_id?: string | null
+          samples_collected?: number
+          session_data?: Json | null
+          started_at?: string | null
+          status?: string
+          total_steps?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_registration_sessions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "voice_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_registration_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_samples: {
+        Row: {
+          audio_url: string
+          created_at: string | null
+          duration_ms: number
+          embedding: number[]
+          id: string
+          is_used_in_profile: boolean
+          profile_id: string
+          quality_score: number
+          sample_type: string
+          step_index: number
+          voice_features: Json
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string | null
+          duration_ms: number
+          embedding: number[]
+          id?: string
+          is_used_in_profile?: boolean
+          profile_id: string
+          quality_score?: number
+          sample_type: string
+          step_index?: number
+          voice_features?: Json
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string | null
+          duration_ms?: number
+          embedding?: number[]
+          id?: string
+          is_used_in_profile?: boolean
+          profile_id?: string
+          quality_score?: number
+          sample_type?: string
+          step_index?: number
+          voice_features?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_samples_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -637,6 +803,7 @@ export type Database = {
         | "question_time"
         | "build_sentence"
         | "lets_chat"
+        | "tap_and_play"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -770,6 +937,7 @@ export const Constants = {
         "question_time",
         "build_sentence",
         "lets_chat",
+        "tap_and_play",
       ],
     },
   },
