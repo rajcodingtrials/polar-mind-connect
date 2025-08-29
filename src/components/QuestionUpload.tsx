@@ -26,7 +26,9 @@ interface Question {
   id: string;
   question: string;
   answer: string;
-  imageName?: string;
+  imageName?: string; // Keep for backward compatibility with single-image activities  
+  images?: string[]; // Array of image names for multi-image activities like tap_and_play
+  correctImageIndex?: number; // Index of the correct image in the images array (0-based)
   questionType?: string;
 }
 
@@ -76,6 +78,7 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
   const questionTypes = [
     { value: 'first_words' as QuestionType, label: 'First Words' },
     { value: 'question_time' as QuestionType, label: 'Question Time' },
+    { value: 'tap_and_play' as QuestionType, label: 'Tap and Play' },
     { value: 'build_sentence' as QuestionType, label: 'Build a Sentence' },
     { value: 'lets_chat' as QuestionType, label: 'Lets Chat' }
   ];
@@ -143,8 +146,27 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
             question: item.question || '',
             answer: item.answer || '',
             imageName: item.imageName || item.image || '',
+            images: item.images || undefined, // Handle new images array for tap_and_play
+            correctImageIndex: item.correctImageIndex ?? undefined, // Handle correct image index
             questionType: item.questionType || selectedQuestionType
           }));
+          
+          // Validate tap_and_play questions
+          if (selectedQuestionType === 'tap_and_play') {
+            const invalidQuestions = formattedQuestions.filter(q => 
+              !q.images || !Array.isArray(q.images) || q.images.length !== 2 || q.correctImageIndex === undefined
+            );
+            
+            if (invalidQuestions.length > 0) {
+              toast({
+                title: "Invalid Tap and Play Questions",
+                description: `${invalidQuestions.length} questions are missing required fields for Tap and Play (images array with 2 items and correctImageIndex)`,
+                variant: "destructive",
+              });
+              return;
+            }
+          }
+          
           setQuestions(formattedQuestions);
           toast({
             title: "Questions loaded",
@@ -282,11 +304,13 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
         return acc;
       }, {} as Record<string, string>);
 
-      // Prepare questions with lesson_id
+      // Prepare questions with lesson_id and new tap_and_play fields
       const questionsToInsert = questions.map(q => ({
         question: q.question,
         answer: q.answer,
         image_name: q.imageName ? imageNameMap[q.imageName] : null,
+        images: q.images ? q.images.map(img => imageNameMap[img] || img) : null, // Map image names to storage names
+        correct_image_index: q.correctImageIndex ?? null, // Include correct image index for tap_and_play
         question_type: selectedQuestionType,
         lesson_id: lessonId // This is the key fix - include lesson_id
       }));
@@ -353,11 +377,13 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
           return acc;
         }, {} as Record<string, string>);
 
-        // Prepare questions without lesson_id
+        // Prepare questions without lesson_id but with new tap_and_play fields
         const questionsToInsert = questions.map(q => ({
           question: q.question,
           answer: q.answer,
           image_name: q.imageName ? imageNameMap[q.imageName] : null,
+          images: q.images ? q.images.map(img => imageNameMap[img] || img) : null, // Map image names to storage names
+          correct_image_index: q.correctImageIndex ?? null, // Include correct image index for tap_and_play
           question_type: selectedQuestionType,
           lesson_id: null // No lesson assignment
         }));
@@ -409,7 +435,8 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
             className="cursor-pointer"
           />
           <p className="text-xs text-gray-600">
-            Format: {`[{"question": "What is this?", "answer": "apple", "imageName": "apple.jpg"}]`}
+            <strong>For regular activities:</strong> {`[{"question": "What is this?", "answer": "apple", "imageName": "apple.jpg"}]`}<br/>
+            <strong>For Tap and Play:</strong> {`[{"question": "Which one is a cat?", "answer": "cat", "images": ["cat.jpg", "dog.jpg"], "correctImageIndex": 0}]`}
           </p>
         </div>
 

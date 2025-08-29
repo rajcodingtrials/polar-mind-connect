@@ -12,6 +12,7 @@ import type { Database } from '@/integrations/supabase/types';
 import ProgressCharacter from '../components/ProgressCharacter';
 import IntroductionScreen from '../components/IntroductionScreen';
 import SingleQuestionView from '../components/SingleQuestionView';
+import TapAndPlayView from '../components/TapAndPlayView';
 import MiniCelebration from '../components/MiniCelebration';
 import LessonSelection from '../components/LessonSelection';
 import Footer from '../components/Footer';
@@ -22,7 +23,9 @@ interface Question {
   id: string;
   question: string;
   answer: string;
-  imageName?: string;
+  imageName?: string; // Keep for backward compatibility with single-image activities
+  images?: string[]; // Array of image names for multi-image activities like tap_and_play
+  correctImageIndex?: number; // Index of the correct image in the images array (0-based)
   questionType?: QuestionType;
   lessonId?: string | null;
   lesson?: {
@@ -116,6 +119,14 @@ const OpenAIChatPage = () => {
       icon: MessageCircle
     },
     { 
+      value: 'tap_and_play' as QuestionType, 
+      label: 'Tap and Play', 
+      description: 'Choose the correct picture by tapping', 
+      color: 'bg-purple-100 hover:bg-purple-200 border-purple-200',
+      textColor: 'text-purple-800',
+      icon: User
+    },
+    { 
       value: 'build_sentence' as QuestionType, 
       label: 'Build a Sentence', 
       description: 'Learn to construct sentences', 
@@ -161,6 +172,8 @@ const OpenAIChatPage = () => {
             question: q.question,
             answer: q.answer,
             imageName: q.image_name,
+            images: q.images ? (Array.isArray(q.images) ? q.images.map(img => String(img)) : []) : undefined, // Convert Json[] to string[]
+            correctImageIndex: q.correct_image_index ?? undefined, // Handle new correct image index
             questionType: q.question_type,
             lessonId: q.lesson_id,
             lesson: q.lessons
@@ -177,6 +190,7 @@ const OpenAIChatPage = () => {
           const imageUrlMap: {[key: string]: string} = {};
           
           for (const question of formattedQuestions) {
+            // Handle single image (backward compatibility)
             if (question.imageName) {
               const { data } = supabase.storage
                 .from('question-images')
@@ -185,6 +199,22 @@ const OpenAIChatPage = () => {
               if (data?.publicUrl) {
                 imageUrlMap[question.imageName] = data.publicUrl;
                 console.log(`Loaded image URL for ${question.imageName}:`, data.publicUrl);
+              }
+            }
+            
+            // Handle multiple images for tap_and_play
+            if (question.images && Array.isArray(question.images)) {
+              for (const imageName of question.images) {
+                if (!imageUrlMap[imageName]) {
+                  const { data } = supabase.storage
+                    .from('question-images')
+                    .getPublicUrl(imageName);
+                  
+                  if (data?.publicUrl) {
+                    imageUrlMap[imageName] = data.publicUrl;
+                    console.log(`Loaded image URL for ${imageName}:`, data.publicUrl);
+                  }
+                }
               }
             }
           }
@@ -819,29 +849,46 @@ const OpenAIChatPage = () => {
             />
           )}
 
-          {/* Single Question View */}
+          {/* Question View - render different components based on question type */}
           {currentScreen === 'question' && selectedQuestionType && currentQuestion && (
-            <SingleQuestionView
-              question={currentQuestion}
-              imageUrl={currentQuestion.imageName ? imageUrls[currentQuestion.imageName] : undefined}
-              questionNumber={sessionQuestionCount}
-              totalQuestions={Math.min(maxQuestionsPerSession, availableQuestions.length)}
-              therapistName={therapistName}
-              childName={childName}
-              // speechDelayMode now handled internally by SingleQuestionView
-              onCorrectAnswer={handleCorrectAnswer}
-              onNextQuestion={handleNextQuestion}
-              onComplete={() => setCurrentScreen('complete')}
-              retryCount={retryCount}
-              onRetryCountChange={setRetryCount}
-              // onSpeechDelayModeChange now handled internally by SingleQuestionView
-              onAmplifyMicChange={handleAmplifyMicChange}
-              onMicGainChange={handleMicGainChange}
-              comingFromCelebration={comingFromCelebration}
-              showMicInput={!!(adminSettings && adminSettings.show_mic_input)}
-              amplifyMic={localAmplifyMic}
-              micGain={localMicGain}
-            />
+            <>
+              {currentQuestion.questionType === 'tap_and_play' ? (
+                <TapAndPlayView
+                  question={currentQuestion}
+                  imageUrls={imageUrls}
+                  questionNumber={sessionQuestionCount}
+                  totalQuestions={Math.min(maxQuestionsPerSession, availableQuestions.length)}
+                  therapistName={therapistName}
+                  childName={childName}
+                  onCorrectAnswer={handleCorrectAnswer}
+                  onNextQuestion={handleNextQuestion}
+                  onComplete={() => setCurrentScreen('complete')}
+                  retryCount={retryCount}
+                  onRetryCountChange={setRetryCount}
+                  comingFromCelebration={comingFromCelebration}
+                />
+              ) : (
+                <SingleQuestionView
+                  question={currentQuestion}
+                  imageUrl={currentQuestion.imageName ? imageUrls[currentQuestion.imageName] : undefined}
+                  questionNumber={sessionQuestionCount}
+                  totalQuestions={Math.min(maxQuestionsPerSession, availableQuestions.length)}
+                  therapistName={therapistName}
+                  childName={childName}
+                  onCorrectAnswer={handleCorrectAnswer}
+                  onNextQuestion={handleNextQuestion}
+                  onComplete={() => setCurrentScreen('complete')}
+                  retryCount={retryCount}
+                  onRetryCountChange={setRetryCount}
+                  onAmplifyMicChange={handleAmplifyMicChange}
+                  onMicGainChange={handleMicGainChange}
+                  comingFromCelebration={comingFromCelebration}
+                  showMicInput={!!(adminSettings && adminSettings.show_mic_input)}
+                  amplifyMic={localAmplifyMic}
+                  micGain={localMicGain}
+                />
+              )}
+            </>
           )}
 
           {/* Mini Celebration */}
