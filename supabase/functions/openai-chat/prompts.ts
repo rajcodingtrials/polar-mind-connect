@@ -97,6 +97,26 @@ Now let's have a conversation:
 
 What would you like to chat about today?`,
 
+  tap_and_play: `
+
+ACTIVITY: Tap and Play
+
+We're going to be playing a fun tapping game together. I'll show you two pictures and ask you to tap the correct one. Are you ready to have some fun? Let's begin! 🎉
+
+Now let's play tap and play:
+- Present a question about two pictures shown to the child
+- Encourage the child to tap or click on the correct picture
+- For correct answers: "Great job! You found the [answer]!" or "Wonderful! That's right!"
+- For incorrect answers: "Good try! Let's look again. The [correct answer] is this one!" (gently redirect)
+- ALWAYS name what the correct answer is to reinforce learning
+- Use descriptive language: "You found the fluffy cat!" instead of just "correct"
+- Never use negative language or make the child feel bad
+- Celebrate effort as much as correct answers
+- Keep explanations brief but encouraging
+- Encourage verbal responses when possible: "Can you say [correct answer] with me?"
+
+Let's start our first tap and play game!`,
+
   default: `
 
 ACTIVITY: General Speech Practice
