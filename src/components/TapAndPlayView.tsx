@@ -336,8 +336,8 @@ const TapAndPlayView = ({
         </div>
       </div>
 
-      {/* Two images side by side */}
-      <div className="flex gap-6 mb-8">
+      {/* Two images side by side - responsive layout */}
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-8 w-full max-w-lg">
         {question.images.map((imageName, index) => {
           const imageUrl = imageUrls[imageName];
           const isSelected = selectedImageIndex === index;
@@ -360,20 +360,21 @@ const TapAndPlayView = ({
               key={index}
               className={`relative cursor-pointer rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 ${borderStyle} ${
                 isProcessingAnswer ? 'pointer-events-none' : ''
-              }`}
+              } flex-1 min-h-[150px] sm:min-h-[200px]`}
               onClick={() => handleImageClick(index)}
-              style={{ width: '200px', height: '200px' }}
+              style={{ maxWidth: '200px', aspectRatio: '1' }}
             >
               {imageUrl ? (
                 <img 
                   src={imageUrl} 
-                  alt={`Option ${index + 1}`}
+                  alt={`Option ${index + 1}: ${imageName.split('.')[0]}`}
                   className="w-full h-full object-cover"
                   style={{ pointerEvents: 'none' }}
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-full h-full bg-muted flex items-center justify-center">
-                  <span className="text-muted-foreground">Image {index + 1}</span>
+                  <span className="text-muted-foreground text-sm">Image {index + 1}</span>
                 </div>
               )}
               
@@ -391,6 +392,13 @@ const TapAndPlayView = ({
               {showResult && !isSelected && isCorrectAnswer && !isCorrect && (
                 <div className="absolute inset-0 flex items-center justify-center bg-green-500/20">
                   <div className="text-4xl text-green-600">✓</div>
+                </div>
+              )}
+              
+              {/* Loading state for missing images */}
+              {!imageUrl && (
+                <div className="absolute top-2 right-2">
+                  <div className="w-4 h-4 bg-muted-foreground/20 rounded animate-pulse"></div>
                 </div>
               )}
             </div>
