@@ -356,13 +356,21 @@ const TapAndPlayView = ({
           {question.images.map((imageName, index) => {
             // Fix image URL resolution - check multiple possible sources
             let imageUrl = imageUrls[imageName];
+            
+            console.log(`TapAndPlay: Checking image ${imageName}:`, { 
+              imageUrl, 
+              availableUrls: Object.keys(imageUrls),
+              allImageUrls: imageUrls 
+            });
+            
             if (!imageUrl) {
               // Try with full URL if it's already a URL
               if (imageName.startsWith('http')) {
                 imageUrl = imageName;
               } else {
-                // Try constructing the Supabase storage URL
+                // Try constructing the Supabase storage URL directly
                 imageUrl = `https://gsnsjrfudxyczpldbkzc.supabase.co/storage/v1/object/public/question-images/${imageName}`;
+                console.log(`TapAndPlay: Constructed URL for ${imageName}:`, imageUrl);
               }
             }
             
@@ -403,15 +411,30 @@ const TapAndPlayView = ({
                       style={{ pointerEvents: 'none' }}
                       loading="lazy"
                       onError={(e) => {
-                        console.error(`Failed to load image: ${imageUrl}`);
+                        console.error(`TapAndPlay: Failed to load image: ${imageUrl} for ${imageName}`);
                         e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.parentElement?.querySelector('.image-fallback') as HTMLElement;
+                        if (fallback) {
+                          fallback.style.display = 'flex';
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log(`TapAndPlay: Successfully loaded image: ${imageUrl} for ${imageName}`);
                       }}
                     />
-                  ) : (
-                    <div className="w-auto h-[24rem] max-w-3xl bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-500 text-lg">Image {index + 1}</span>
-                    </div>
-                  )}
+                  ) : null}
+                  
+                  {/* Fallback display */}
+                  <div 
+                    className={`image-fallback w-auto h-[24rem] max-w-3xl bg-blue-100 border-2 border-blue-300 flex flex-col items-center justify-center ${imageUrl ? 'hidden' : 'flex'}`}
+                    style={{ minWidth: '300px' }}
+                  >
+                    <div className="text-6xl mb-4">🖼️</div>
+                    <span className="text-blue-700 text-lg font-medium text-center px-4">
+                      {imageName.split('.')[0].replace(/[-_]/g, ' ').toUpperCase()}
+                    </span>
+                    <span className="text-blue-500 text-sm mt-2">Image {index + 1}</span>
+                  </div>
                   
                   {/* Result indicators - matching SingleQuestionView feedback styling */}
                   {showResult && isSelected && (
