@@ -310,41 +310,49 @@ const TapAndPlayView = ({
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-muted" ref={mainContentRef}>
-      {/* Header section with avatar and progress */}
-      <div className="flex flex-col sm:flex-row items-center justify-between p-6 bg-card/50 backdrop-blur-sm border-b border-border/10">
-        <div className="flex items-center gap-4">
-          <Avatar className="w-16 h-16 border-2 border-primary/20">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+      {/* Header with therapist and progress - matching SingleQuestionView exactly */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
             <AvatarImage src={`/lovable-uploads/${therapistName}.png`} alt={therapistName} />
-            <AvatarFallback className="text-xl font-bold bg-primary/10 text-primary">
+            <AvatarFallback className="bg-blue-200 text-blue-800 font-semibold">
               {therapistName.charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">{therapistName}</h3>
-            <p className="text-sm text-muted-foreground">Speech Therapist</p>
+            <h3 className="font-bold text-blue-900 text-2xl">{therapistName}</h3>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-4 sm:mt-0">
-          <Clock className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium text-primary">
-            Question {questionNumber} of {totalQuestions}
-          </span>
+
+        <div className="flex items-center gap-6">
+          <div className="text-center">
+            <p className="text-xl font-bold text-purple-800">
+              Question {questionNumber} of {totalQuestions}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-        {/* Question section */}
-        <div className="text-center mb-8 max-w-2xl">
-          <div className="bg-card rounded-2xl p-8 shadow-lg border border-border/20">
-            <h2 className="text-3xl font-bold text-foreground mb-4">{question.question}</h2>
-            <p className="text-lg text-muted-foreground">Tap the correct picture!</p>
-          </div>
+      {/* Main Question Area - matching SingleQuestionView structure */}
+      <div ref={mainContentRef} className="flex-grow flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
+        {/* Question Text - Hidden from UI but TTS still reads it */}
+        <div className="mb-8 animate-fade-in sr-only">
+          <h2 className="text-4xl font-bold text-center text-blue-900 leading-relaxed">
+            {question.question}
+          </h2>
         </div>
 
-        {/* Two images side by side - responsive layout */}
-        <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 mb-8 w-full max-w-2xl">
+        {/* Instruction Text */}
+        <div className="mb-8 animate-fade-in text-center">
+          <h2 className="text-4xl font-bold text-blue-900 leading-relaxed mb-4">
+            {question.question}
+          </h2>
+          <p className="text-2xl text-blue-700 font-medium">Tap the correct picture!</p>
+        </div>
+
+        {/* Two Images - matching the image styling from SingleQuestionView */}
+        <div className="mb-8 animate-scale-in flex justify-center gap-8">
           {question.images.map((imageName, index) => {
             // Fix image URL resolution - check multiple possible sources
             let imageUrl = imageUrls[imageName];
@@ -362,89 +370,89 @@ const TapAndPlayView = ({
             const isCorrectAnswer = question.correctImageIndex === index;
             const showResult = selectedImageIndex !== null;
             
-            let borderStyle = 'border-2 border-border/30 hover:border-primary/50';
+            let borderStyle = 'border-4 border-white';
             let overlayClass = '';
             
             if (showResult) {
               if (isSelected && isCorrect) {
                 borderStyle = 'border-4 border-green-500';
-                overlayClass = 'bg-green-500/10';
+                overlayClass = 'bg-green-500/20';
               } else if (isSelected && !isCorrect) {
                 borderStyle = 'border-4 border-red-500';
-                overlayClass = 'bg-red-500/10';
+                overlayClass = 'bg-red-500/20';
               } else if (!isSelected && isCorrectAnswer && !isCorrect) {
                 borderStyle = 'border-4 border-green-500';
-                overlayClass = 'bg-green-500/10';
+                overlayClass = 'bg-green-500/20';
               }
             }
             
             return (
               <div
                 key={index}
-                className={`relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${borderStyle} ${overlayClass} ${
+                className={`inline-block rounded-3xl shadow-2xl ${borderStyle} overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 ${
                   isProcessingAnswer ? 'pointer-events-none' : ''
-                } flex-1 min-h-[180px] sm:min-h-[220px] bg-card`}
+                }`}
                 onClick={() => handleImageClick(index)}
-                style={{ maxWidth: '300px', aspectRatio: '1' }}
               >
-                {imageUrl ? (
-                  <img 
-                    src={imageUrl} 
-                    alt={`Option ${index + 1}: ${imageName.split('.')[0]}`}
-                    className="w-full h-full object-cover"
-                    style={{ pointerEvents: 'none' }}
-                    loading="lazy"
-                    onError={(e) => {
-                      console.error(`Failed to load image: ${imageUrl}`);
-                      // Hide the broken image and show fallback
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <span className="text-muted-foreground text-sm">Image {index + 1}</span>
-                  </div>
-                )}
-                
-                {/* Fallback for broken images */}
-                <div className="absolute inset-0 bg-muted flex items-center justify-center" 
-                     style={{ display: 'none' }}
-                     id={`fallback-${index}`}>
-                  <span className="text-muted-foreground text-sm">Image {index + 1}</span>
-                </div>
-                
-                {/* Result indicators */}
-                {showResult && isSelected && (
-                  <div className={`absolute inset-0 flex items-center justify-center ${
-                    isCorrect ? 'bg-green-500/20' : 'bg-red-500/20'
-                  }`}>
-                    <div className={`text-6xl font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                      {isCorrect ? '✓' : '✗'}
+                <div className={`relative ${overlayClass}`}>
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={`Option ${index + 1}: ${imageName.split('.')[0]}`}
+                      className="w-auto h-[24rem] max-w-3xl object-contain"
+                      style={{ pointerEvents: 'none' }}
+                      loading="lazy"
+                      onError={(e) => {
+                        console.error(`Failed to load image: ${imageUrl}`);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-auto h-[24rem] max-w-3xl bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500 text-lg">Image {index + 1}</span>
                     </div>
-                  </div>
-                )}
-                
-                {showResult && !isSelected && isCorrectAnswer && !isCorrect && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-green-500/20">
-                    <div className="text-6xl font-bold text-green-600">✓</div>
-                  </div>
-                )}
-                
-                {/* Loading indicator */}
-                {!imageUrl && (
-                  <div className="absolute top-3 right-3">
-                    <div className="w-6 h-6 bg-muted-foreground/20 rounded-full animate-pulse"></div>
-                  </div>
-                )}
+                  )}
+                  
+                  {/* Result indicators - matching SingleQuestionView feedback styling */}
+                  {showResult && isSelected && (
+                    <div className={`absolute inset-0 flex items-center justify-center ${
+                      isCorrect ? 'bg-green-500/30' : 'bg-red-500/30'
+                    }`}>
+                      <div className={`text-8xl font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                        {isCorrect ? '✓' : '✗'}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {showResult && !isSelected && isCorrectAnswer && !isCorrect && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-green-500/30">
+                      <div className="text-8xl font-bold text-green-600">✓</div>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Feedback display */}
-        {showFeedback && currentResponse && (
-          <div className="bg-card rounded-2xl p-6 shadow-lg border border-border/20 max-w-md text-center">
-            <p className="text-foreground font-medium text-lg">{currentResponse}</p>
+        {/* Feedback Area - exactly matching SingleQuestionView */}
+        {showFeedback && (
+          <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-4 border-green-200 rounded-3xl p-6 max-w-2xl mx-auto mb-8 animate-fade-in">
+            <p className="text-lg text-center text-green-800 font-medium">
+              {currentResponse}
+            </p>
+          </div>
+        )}
+
+        {/* Processing State - matching SingleQuestionView */}
+        {isProcessingAnswer && !showFeedback && (
+          <div className="text-center animate-fade-in">
+            <div className="flex flex-col items-center">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 flex items-center justify-center mb-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+              <p className="text-blue-600 font-normal text-lg">🔄 Processing your answer...</p>
+            </div>
           </div>
         )}
       </div>
