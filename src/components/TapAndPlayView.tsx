@@ -310,108 +310,144 @@ const TapAndPlayView = ({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-muted p-6" ref={mainContentRef}>
-      {/* Progress indicator */}
-      <div className="flex items-center gap-2 mb-6">
-        <Clock className="h-5 w-5 text-primary" />
-        <span className="text-sm font-medium text-primary">
-          Question {questionNumber} of {totalQuestions}
-        </span>
-      </div>
-
-      {/* Therapist avatar and question */}
-      <div className="flex flex-col items-center mb-8 text-center max-w-2xl">
-        <div className="mb-6">
-          <Avatar className="w-20 h-20 border-4 border-primary/20">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-muted" ref={mainContentRef}>
+      {/* Header section with avatar and progress */}
+      <div className="flex flex-col sm:flex-row items-center justify-between p-6 bg-card/50 backdrop-blur-sm border-b border-border/10">
+        <div className="flex items-center gap-4">
+          <Avatar className="w-16 h-16 border-2 border-primary/20">
             <AvatarImage src={`/lovable-uploads/${therapistName}.png`} alt={therapistName} />
-            <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
+            <AvatarFallback className="text-xl font-bold bg-primary/10 text-primary">
               {therapistName.charAt(0)}
             </AvatarFallback>
           </Avatar>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{therapistName}</h3>
+            <p className="text-sm text-muted-foreground">Speech Therapist</p>
+          </div>
         </div>
-        
-        <div className="bg-card rounded-2xl p-6 shadow-lg border-2 border-primary/10">
-          <h2 className="text-2xl font-bold text-foreground mb-4">{question.question}</h2>
-          <p className="text-muted-foreground">Tap the correct picture!</p>
+        <div className="flex items-center gap-2 mt-4 sm:mt-0">
+          <Clock className="h-5 w-5 text-primary" />
+          <span className="text-sm font-medium text-primary">
+            Question {questionNumber} of {totalQuestions}
+          </span>
         </div>
       </div>
 
-      {/* Two images side by side - responsive layout */}
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-8 w-full max-w-lg">
-        {question.images.map((imageName, index) => {
-          const imageUrl = imageUrls[imageName];
-          const isSelected = selectedImageIndex === index;
-          const isCorrectAnswer = question.correctImageIndex === index;
-          const showResult = selectedImageIndex !== null;
-          
-          let borderStyle = 'border-2 border-muted-foreground/30';
-          if (showResult) {
-            if (isSelected && isCorrect) {
-              borderStyle = 'border-4 border-green-500 bg-green-50';
-            } else if (isSelected && !isCorrect) {
-              borderStyle = 'border-4 border-red-500 bg-red-50';
-            } else if (!isSelected && isCorrectAnswer && !isCorrect) {
-              borderStyle = 'border-4 border-green-500 bg-green-50';
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+        {/* Question section */}
+        <div className="text-center mb-8 max-w-2xl">
+          <div className="bg-card rounded-2xl p-8 shadow-lg border border-border/20">
+            <h2 className="text-3xl font-bold text-foreground mb-4">{question.question}</h2>
+            <p className="text-lg text-muted-foreground">Tap the correct picture!</p>
+          </div>
+        </div>
+
+        {/* Two images side by side - responsive layout */}
+        <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 mb-8 w-full max-w-2xl">
+          {question.images.map((imageName, index) => {
+            // Fix image URL resolution - check multiple possible sources
+            let imageUrl = imageUrls[imageName];
+            if (!imageUrl) {
+              // Try with full URL if it's already a URL
+              if (imageName.startsWith('http')) {
+                imageUrl = imageName;
+              } else {
+                // Try constructing the Supabase storage URL
+                imageUrl = `https://gsnsjrfudxyczpldbkzc.supabase.co/storage/v1/object/public/question-images/${imageName}`;
+              }
             }
-          }
-          
-          return (
-            <div
-              key={index}
-              className={`relative cursor-pointer rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 ${borderStyle} ${
-                isProcessingAnswer ? 'pointer-events-none' : ''
-              } flex-1 min-h-[150px] sm:min-h-[200px]`}
-              onClick={() => handleImageClick(index)}
-              style={{ maxWidth: '200px', aspectRatio: '1' }}
-            >
-              {imageUrl ? (
-                <img 
-                  src={imageUrl} 
-                  alt={`Option ${index + 1}: ${imageName.split('.')[0]}`}
-                  className="w-full h-full object-cover"
-                  style={{ pointerEvents: 'none' }}
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full bg-muted flex items-center justify-center">
+            
+            const isSelected = selectedImageIndex === index;
+            const isCorrectAnswer = question.correctImageIndex === index;
+            const showResult = selectedImageIndex !== null;
+            
+            let borderStyle = 'border-2 border-border/30 hover:border-primary/50';
+            let overlayClass = '';
+            
+            if (showResult) {
+              if (isSelected && isCorrect) {
+                borderStyle = 'border-4 border-green-500';
+                overlayClass = 'bg-green-500/10';
+              } else if (isSelected && !isCorrect) {
+                borderStyle = 'border-4 border-red-500';
+                overlayClass = 'bg-red-500/10';
+              } else if (!isSelected && isCorrectAnswer && !isCorrect) {
+                borderStyle = 'border-4 border-green-500';
+                overlayClass = 'bg-green-500/10';
+              }
+            }
+            
+            return (
+              <div
+                key={index}
+                className={`relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg ${borderStyle} ${overlayClass} ${
+                  isProcessingAnswer ? 'pointer-events-none' : ''
+                } flex-1 min-h-[180px] sm:min-h-[220px] bg-card`}
+                onClick={() => handleImageClick(index)}
+                style={{ maxWidth: '300px', aspectRatio: '1' }}
+              >
+                {imageUrl ? (
+                  <img 
+                    src={imageUrl} 
+                    alt={`Option ${index + 1}: ${imageName.split('.')[0]}`}
+                    className="w-full h-full object-cover"
+                    style={{ pointerEvents: 'none' }}
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error(`Failed to load image: ${imageUrl}`);
+                      // Hide the broken image and show fallback
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                    <span className="text-muted-foreground text-sm">Image {index + 1}</span>
+                  </div>
+                )}
+                
+                {/* Fallback for broken images */}
+                <div className="absolute inset-0 bg-muted flex items-center justify-center" 
+                     style={{ display: 'none' }}
+                     id={`fallback-${index}`}>
                   <span className="text-muted-foreground text-sm">Image {index + 1}</span>
                 </div>
-              )}
-              
-              {/* Result indicators */}
-              {showResult && isSelected && (
-                <div className={`absolute inset-0 flex items-center justify-center ${
-                  isCorrect ? 'bg-green-500/20' : 'bg-red-500/20'
-                }`}>
-                  <div className={`text-4xl ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                    {isCorrect ? '✓' : '✗'}
+                
+                {/* Result indicators */}
+                {showResult && isSelected && (
+                  <div className={`absolute inset-0 flex items-center justify-center ${
+                    isCorrect ? 'bg-green-500/20' : 'bg-red-500/20'
+                  }`}>
+                    <div className={`text-6xl font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                      {isCorrect ? '✓' : '✗'}
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {showResult && !isSelected && isCorrectAnswer && !isCorrect && (
-                <div className="absolute inset-0 flex items-center justify-center bg-green-500/20">
-                  <div className="text-4xl text-green-600">✓</div>
-                </div>
-              )}
-              
-              {/* Loading state for missing images */}
-              {!imageUrl && (
-                <div className="absolute top-2 right-2">
-                  <div className="w-4 h-4 bg-muted-foreground/20 rounded animate-pulse"></div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Feedback display */}
-      {showFeedback && currentResponse && (
-        <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 max-w-md text-center">
-          <p className="text-accent-foreground font-medium">{currentResponse}</p>
+                )}
+                
+                {showResult && !isSelected && isCorrectAnswer && !isCorrect && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-green-500/20">
+                    <div className="text-6xl font-bold text-green-600">✓</div>
+                  </div>
+                )}
+                
+                {/* Loading indicator */}
+                {!imageUrl && (
+                  <div className="absolute top-3 right-3">
+                    <div className="w-6 h-6 bg-muted-foreground/20 rounded-full animate-pulse"></div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      )}
+
+        {/* Feedback display */}
+        {showFeedback && currentResponse && (
+          <div className="bg-card rounded-2xl p-6 shadow-lg border border-border/20 max-w-md text-center">
+            <p className="text-foreground font-medium text-lg">{currentResponse}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
