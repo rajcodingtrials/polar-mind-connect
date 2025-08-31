@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 import { getCelebrationMessage, calculateProgressLevel } from '@/utils/celebrationMessages';
-import { soundFeedbackManager } from '@/utils/soundFeedback';
+// Removed soundFeedbackManager import - now using direct OpenAI chat calls
 import type { Database } from '@/integrations/supabase/types';
 import { Clock } from 'lucide-react';
 
@@ -159,38 +159,44 @@ const TapAndPlayView = ({
     setIsCorrect(isAnswerCorrect);
 
     if (isAnswerCorrect) {
-      // Correct answer logic
-      let feedbackForScreen = '';
-      
-      // Generate sound feedback if available
-      if (question.answer) {
-        await soundFeedbackManager.initialize();
-        const { targetSound, confidence } = soundFeedbackManager.detectTargetSound(question.answer);
-        
-        if (targetSound && confidence > 0.6) {
-          const feedback = await soundFeedbackManager.generateSoundFeedback({
-            target_sound: question.answer,
-            user_attempt: question.answer, // Since they clicked correctly, use the expected answer
-            therapistName,
-            childName,
-            question: question.question,
-            correct_answer: question.answer
-          }, 'correct');
-          
-          if (feedback) {
-            feedbackForScreen = feedback;
-            setCurrentResponse(feedbackForScreen);
-            setShowFeedback(true);
-            try {
-              const { data, error } = await callTTS(feedback, ttsSettings.voice, ttsSettings.speed);
-              if (data?.audioContent) {
-                await playGlobalTTS(data.audioContent, 'TapAndPlay-Correct');
+      // Correct answer logic - use tap_feedback_correct prompt
+      try {
+        const { data, error } = await supabase.functions.invoke('openai-chat', {
+          body: {
+            messages: [
+              {
+                role: 'user',
+                content: 'Generate tap feedback for correct answer'
               }
-            } catch (e) { 
-              console.error('TTS error (tap and play correct):', e); 
+            ],
+            promptType: 'tap_feedback_correct',
+            childName,
+            therapistName,
+            customVariables: {
+              correct_answer: question.answer,
+              question: question.question,
+              child_name: childName,
+              therapist_name: therapistName
             }
           }
+        });
+
+        if (data?.content) {
+          const feedbackMessage = data.content;
+          setCurrentResponse(feedbackMessage);
+          setShowFeedback(true);
+          
+          try {
+            const ttsResponse = await callTTS(feedbackMessage, ttsSettings.voice, ttsSettings.speed);
+            if (ttsResponse.data?.audioContent) {
+              await playGlobalTTS(ttsResponse.data.audioContent, 'TapAndPlay-Correct');
+            }
+          } catch (e) { 
+            console.error('TTS error (tap and play correct):', e); 
+          }
         }
+      } catch (error) {
+        console.error('Error generating tap feedback for correct answer:', error);
       }
 
       // Get celebration message
@@ -219,38 +225,46 @@ const TapAndPlayView = ({
       }, 500);
       
     } else {
-      // Incorrect answer logic
+      // Incorrect answer logic - use tap_feedback_incorrect prompt
       let feedbackForScreen = '';
       
-      // Generate feedback for incorrect answer
-      if (question.answer) {
-        await soundFeedbackManager.initialize();
-        const { targetSound, confidence } = soundFeedbackManager.detectTargetSound(question.answer);
-        
-        if (targetSound && confidence > 0.6) {
-          const feedback = await soundFeedbackManager.generateSoundFeedback({
-            target_sound: targetSound.sound,
-            user_attempt: 'incorrect selection', // User clicked wrong image
-            therapistName,
-            childName,
-            question: question.question,
-            correct_answer: question.answer
-          }, 'incorrect');
-          
-          if (feedback) {
-            feedbackForScreen = feedback;
-            setCurrentResponse(feedbackForScreen);
-            setShowFeedback(true);
-            try {
-              const { data, error } = await callTTS(feedback, ttsSettings.voice, ttsSettings.speed);
-              if (data?.audioContent) {
-                await playGlobalTTS(data.audioContent, 'TapAndPlay-Incorrect');
+      try {
+        const { data, error } = await supabase.functions.invoke('openai-chat', {
+          body: {
+            messages: [
+              {
+                role: 'user',
+                content: 'Generate tap feedback for incorrect answer'
               }
-            } catch (e) { 
-              console.error('TTS error (tap and play incorrect):', e); 
+            ],
+            promptType: 'tap_feedback_incorrect',
+            childName,
+            therapistName,
+            customVariables: {
+              correct_answer: question.answer,
+              question: question.question,
+              child_name: childName,
+              therapist_name: therapistName
             }
           }
+        });
+
+        if (data?.content) {
+          feedbackForScreen = data.content;
+          setCurrentResponse(feedbackForScreen);
+          setShowFeedback(true);
+          
+          try {
+            const ttsResponse = await callTTS(feedbackForScreen, ttsSettings.voice, ttsSettings.speed);
+            if (ttsResponse.data?.audioContent) {
+              await playGlobalTTS(ttsResponse.data.audioContent, 'TapAndPlay-Incorrect');
+            }
+          } catch (e) { 
+            console.error('TTS error (tap and play incorrect):', e); 
+          }
         }
+      } catch (error) {
+        console.error('Error generating tap feedback for incorrect answer:', error);
       }
       
       const newRetryCount = retryCount + 1;
