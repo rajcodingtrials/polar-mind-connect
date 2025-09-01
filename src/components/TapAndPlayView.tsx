@@ -182,8 +182,9 @@ const TapAndPlayView = ({
           }
         });
 
-        if (data?.content) {
-          feedbackForScreen = data.content;
+        const feedbackMessage = data?.content || data?.choices?.[0]?.message?.content;
+        if (feedbackMessage) {
+          feedbackForScreen = feedbackMessage;
           setCurrentResponse(feedbackForScreen);
           setShowFeedback(true);
           
@@ -250,8 +251,9 @@ const TapAndPlayView = ({
           }
         });
 
-        if (data?.content) {
-          feedbackForScreen = data.content;
+        const feedbackMessage = data?.content || data?.choices?.[0]?.message?.content;
+        if (feedbackMessage) {
+          feedbackForScreen = feedbackMessage;
           setCurrentResponse(feedbackForScreen);
           setShowFeedback(true);
           
