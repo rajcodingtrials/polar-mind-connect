@@ -199,19 +199,6 @@ const TapAndPlayView = ({
         console.error('Error generating tap feedback for correct answer:', error);
       }
 
-      // Get celebration message
-      const progressLevel = calculateProgressLevel(questionNumber);
-      const celebrationMessage = await getCelebrationMessage({
-        messageType: 'question_feedback',
-        therapistName,
-        messageCategory: 'correct_answer',
-        progressLevel,
-        childName
-      });
-      
-      setCurrentResponse(celebrationMessage);
-      setShowFeedback(true);
-      
       console.log(`✅ Correct tap and play answer! Moving to celebration`);
       
       if (!hasCalledCorrectAnswer) {
