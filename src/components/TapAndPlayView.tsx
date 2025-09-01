@@ -160,6 +160,7 @@ const TapAndPlayView = ({
 
     if (isAnswerCorrect) {
       // Correct answer logic - use tap_feedback_correct prompt
+      let feedbackForScreen = '';
       try {
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
@@ -182,12 +183,12 @@ const TapAndPlayView = ({
         });
 
         if (data?.content) {
-          const feedbackMessage = data.content;
-          setCurrentResponse(feedbackMessage);
+          feedbackForScreen = data.content;
+          setCurrentResponse(feedbackForScreen);
           setShowFeedback(true);
           
           try {
-            const ttsResponse = await callTTS(feedbackMessage, ttsSettings.voice, ttsSettings.speed);
+            const ttsResponse = await callTTS(feedbackForScreen, ttsSettings.voice, ttsSettings.speed);
             if (ttsResponse.data?.audioContent) {
               await playGlobalTTS(ttsResponse.data.audioContent, 'TapAndPlay-Correct');
             }
@@ -199,6 +200,19 @@ const TapAndPlayView = ({
         console.error('Error generating tap feedback for correct answer:', error);
       }
 
+      // Get personalized celebration message (same pattern as SingleQuestionView)
+      const progressLevel = calculateProgressLevel(questionNumber);
+      const celebrationMessage = await getCelebrationMessage({
+        messageType: 'question_feedback',
+        therapistName,
+        messageCategory: 'correct_answer',
+        progressLevel,
+        childName
+      });
+      
+      setCurrentResponse(celebrationMessage);
+      setShowFeedback(true);
+      
       console.log(`✅ Correct tap and play answer! Moving to celebration`);
       
       if (!hasCalledCorrectAnswer) {
