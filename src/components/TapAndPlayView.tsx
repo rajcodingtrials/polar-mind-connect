@@ -173,6 +173,8 @@ const TapAndPlayView = ({
             promptType: 'tap_feedback_correct',
             childName,
             therapistName,
+            activityType: 'tap_and_play',
+            customInstructions: "Return only the final feedback line to speak to the child. No explanations, no quotes, no meta commentary. Use provided variables. 1-2 short sentences. Warm, child-friendly. Max 1 emoji.",
             customVariables: {
               correct_answer: question.answer,
               question: question.question,
@@ -182,7 +184,8 @@ const TapAndPlayView = ({
           }
         });
 
-        const feedbackMessage = data?.content || data?.choices?.[0]?.message?.content;
+        const feedbackMessageRaw = data?.content || data?.choices?.[0]?.message?.content;
+        const feedbackMessage = (feedbackMessageRaw || '').trim().replace(/^(["'])|(["'])$/g, '');
         if (feedbackMessage) {
           feedbackForScreen = feedbackMessage;
           setCurrentResponse(feedbackForScreen);
@@ -242,6 +245,8 @@ const TapAndPlayView = ({
             promptType: 'tap_feedback_incorrect',
             childName,
             therapistName,
+            activityType: 'tap_and_play',
+            customInstructions: "Return only the final feedback line to speak to the child. No explanations, no quotes, no meta commentary. Use provided variables. 1-2 short sentences. Warm, child-friendly. Max 1 emoji.",
             customVariables: {
               correct_answer: question.answer,
               question: question.question,
@@ -251,7 +256,8 @@ const TapAndPlayView = ({
           }
         });
 
-        const feedbackMessage = data?.content || data?.choices?.[0]?.message?.content;
+        const feedbackMessageRaw = data?.content || data?.choices?.[0]?.message?.content;
+        const feedbackMessage = (feedbackMessageRaw || '').trim().replace(/^(["'])|(["'])$/g, '');
         if (feedbackMessage) {
           feedbackForScreen = feedbackMessage;
           setCurrentResponse(feedbackForScreen);
