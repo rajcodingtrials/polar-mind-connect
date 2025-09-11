@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "../context/AuthContext";
 import { useTherapistAuth } from "../hooks/useTherapistAuth";
 import { useTherapistSessions } from "../hooks/useTherapistSessions";
+import { useTherapistRatings } from "../hooks/useTherapistRatings";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   Calendar, 
@@ -37,6 +38,7 @@ const TherapistDashboard = () => {
   const { user, signOut } = useAuth();
   const { therapistProfile, updateTherapistProfile, loading } = useTherapistAuth();
   const { todaySessions, totalSessions, sessions, loading: sessionsLoading } = useTherapistSessions(therapistProfile?.id || null);
+  const { getRatingForTherapist } = useTherapistRatings(therapistProfile?.id ? [therapistProfile.id] : []);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -90,6 +92,26 @@ const TherapistDashboard = () => {
     setEditedProfile(therapistProfile);
     setIsEditing(false);
   };
+
+  // Calculate monthly earnings from completed sessions
+  const calculateMonthlyEarnings = () => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    return sessions
+      .filter(session => {
+        const sessionDate = new Date(session.session_date);
+        return sessionDate.getMonth() === currentMonth && 
+               sessionDate.getFullYear() === currentYear &&
+               session.status === 'completed' &&
+               session.price_paid;
+      })
+      .reduce((total, session) => total + (session.price_paid || 0), 0);
+  };
+
+  // Get therapist rating
+  const therapistRating = therapistProfile?.id ? getRatingForTherapist(therapistProfile.id) : { averageRating: 0, reviewCount: 0 };
 
   if (loading) {
     return (
@@ -195,7 +217,9 @@ const TherapistDashboard = () => {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">$2,400</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -209,7 +233,14 @@ const TherapistDashboard = () => {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Rating</p>
-                  <p className="text-2xl font-bold text-gray-900">4.9</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
+                  </p>
+                  {therapistRating.reviewCount > 0 && (
+                    <p className="text-xs text-gray-500">
+                      ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
