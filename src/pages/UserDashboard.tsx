@@ -96,54 +96,64 @@ const UserDashboard = () => {
           <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+              <Card className="bg-blue-50 border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-blue-100">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-blue-100 text-sm font-medium">Progress Rating</p>
-                      <p className="text-3xl font-bold mt-2">{averageRating > 0 ? `${averageRating}/5` : 'N/A'}</p>
-                      <p className="text-blue-100 text-xs mt-1">Average rating</p>
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-lg bg-blue-100">
+                      <TrendingUp className="h-8 w-8 text-blue-600" />
                     </div>
-                    <TrendingUp className="w-8 h-8 text-blue-200" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-blue-700">Progress Rating</p>
+                      <p className="text-2xl font-bold text-blue-900">
+                        {averageRating > 0 ? `${averageRating}/5` : 'N/A'}
+                      </p>
+                      <p className="text-xs text-blue-600">Average rating</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+              <Card className="bg-purple-50 border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-100">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-purple-100 text-sm font-medium">Lessons Completed</p>
-                      <p className="text-3xl font-bold mt-2">{totalCompletedSessions}</p>
-                      <p className="text-purple-100 text-xs mt-1">Total sessions</p>
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-lg bg-purple-100">
+                      <BookOpen className="h-8 w-8 text-purple-600" />
                     </div>
-                    <BookOpen className="w-8 h-8 text-purple-200" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-purple-700">Lessons Completed</p>
+                      <p className="text-2xl font-bold text-purple-900">{totalCompletedSessions}</p>
+                      <p className="text-xs text-purple-600">Total sessions</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white border-0">
+              <Card className="bg-orange-50 border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-orange-100">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-orange-100 text-sm font-medium">Streak</p>
-                      <p className="text-3xl font-bold mt-2">{streakDays} days</p>
-                      <p className="text-orange-100 text-xs mt-1">Current streak</p>
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-lg bg-orange-100">
+                      <Flame className="h-8 w-8 text-orange-600" />
                     </div>
-                    <Flame className="w-8 h-8 text-orange-200" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-orange-700">Streak</p>
+                      <p className="text-2xl font-bold text-orange-900">{streakDays} days</p>
+                      <p className="text-xs text-orange-600">Current streak</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+              <Card className="bg-green-50 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-green-100">
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-green-100 text-sm font-medium">Total Time</p>
-                      <p className="text-3xl font-bold mt-2">{totalTimeHours}h</p>
-                      <p className="text-green-100 text-xs mt-1">Hours completed</p>
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-lg bg-green-100">
+                      <Timer className="h-8 w-8 text-green-600" />
                     </div>
-                    <Timer className="w-8 h-8 text-green-200" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-green-700">Total Time</p>
+                      <p className="text-2xl font-bold text-green-900">{totalTimeHours}h</p>
+                      <p className="text-xs text-green-600">Hours completed</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
