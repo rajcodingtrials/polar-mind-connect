@@ -505,6 +505,7 @@ export type Database = {
           id: string
           payment_status: string
           price_paid: number | null
+          reminder_sent: boolean
           session_date: string
           session_type: string
           start_time: string
@@ -523,6 +524,7 @@ export type Database = {
           id?: string
           payment_status?: string
           price_paid?: number | null
+          reminder_sent?: boolean
           session_date: string
           session_type?: string
           start_time: string
@@ -541,6 +543,7 @@ export type Database = {
           id?: string
           payment_status?: string
           price_paid?: number | null
+          reminder_sent?: boolean
           session_date?: string
           session_type?: string
           start_time?: string

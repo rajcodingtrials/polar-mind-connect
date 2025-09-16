@@ -198,7 +198,7 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
           sessionId,
           clientEmail: user?.email || '',
           clientName: user?.user_metadata?.name || user?.email || '',
-          therapistName: therapist.name,
+          therapistName: `${therapist.first_name} ${therapist.last_name}`,
           sessionDate: format(selectedDate, "yyyy-MM-dd"),
           sessionTime: selectedTime,
           duration: parseInt(duration),
