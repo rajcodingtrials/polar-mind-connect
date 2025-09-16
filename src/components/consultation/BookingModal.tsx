@@ -190,10 +190,31 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
     return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async () => {
+    try {
+      // Send booking confirmation email
+      await supabase.functions.invoke('send-booking-confirmation', {
+        body: {
+          sessionId,
+          clientEmail: user?.email || '',
+          clientName: user?.user_metadata?.name || user?.email || '',
+          therapistName: therapist.name,
+          sessionDate: format(selectedDate, "yyyy-MM-dd"),
+          sessionTime: selectedTime,
+          duration: parseInt(duration),
+          sessionType,
+          price: sessionPrice,
+        }
+      });
+      
+      console.log("Booking confirmation email sent");
+    } catch (error) {
+      console.error("Error sending booking confirmation email:", error);
+    }
+    
     toast({
       title: "Booking Confirmed!",
-      description: "Your therapy session has been successfully booked.",
+      description: "Your therapy session has been booked successfully. Check your email for confirmation details.",
     });
     onClose();
   };
