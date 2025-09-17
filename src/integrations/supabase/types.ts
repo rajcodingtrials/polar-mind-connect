@@ -110,6 +110,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          html_content: string
+          id: string
+          is_active: boolean
+          subject: string
+          template_name: string
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean
+          subject: string
+          template_name: string
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean
+          subject?: string
+          template_name?: string
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: []
+      }
       lessons: {
         Row: {
           created_at: string | null
