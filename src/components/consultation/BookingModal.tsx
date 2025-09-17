@@ -86,11 +86,23 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
     fetchTherapistAvailability();
   }, [therapist.id]);
 
-  // Generate time slots based on therapist's actual availability
-  const generateTimeSlotsForDay = (dayOfWeek: number): TimeSlot[] => {
+  // Generate time slots based on therapist's actual availability and existing bookings
+  const generateTimeSlotsForDay = async (dayOfWeek: number, date: Date): Promise<TimeSlot[]> => {
     const dayAvailability = therapistAvailability.filter(av => av.day_of_week === dayOfWeek);
     
     if (dayAvailability.length === 0) return [];
+
+    // Fetch existing bookings for this therapist on the selected date
+    const { data: existingBookings } = await supabase
+      .from("therapy_sessions")
+      .select("start_time, end_time, status")
+      .eq("therapist_id", therapist.id)
+      .eq("session_date", format(date, "yyyy-MM-dd"))
+      .in("status", ["pending", "confirmed", "completed"]);
+
+    const bookedSlots = new Set(
+      existingBookings?.map(booking => booking.start_time) || []
+    );
 
     const slots: TimeSlot[] = [];
     
@@ -110,7 +122,8 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
         const hour = Math.floor(minutes / 60);
         const min = minutes % 60;
         const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-        slots.push({ time, available: true });
+        const isBooked = bookedSlots.has(time);
+        slots.push({ time, available: !isBooked });
       }
     });
     
@@ -124,10 +137,15 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
   };
 
   useEffect(() => {
-    if (selectedDate && therapistAvailability.length > 0) {
-      const dayOfWeek = getDay(selectedDate);
-      setAvailability(generateTimeSlotsForDay(dayOfWeek));
-    }
+    const loadAvailability = async () => {
+      if (selectedDate && therapistAvailability.length > 0) {
+        const dayOfWeek = getDay(selectedDate);
+        const slots = await generateTimeSlotsForDay(dayOfWeek, selectedDate);
+        setAvailability(slots);
+      }
+    };
+    
+    loadAvailability();
   }, [selectedDate, therapistAvailability]);
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -300,10 +318,12 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
                   variant={selectedTime === slot.time ? "default" : "outline"}
                   size="sm"
                   disabled={!slot.available}
-                  onClick={() => setSelectedTime(slot.time)}
-                  className="text-xs"
+                  onClick={() => slot.available && setSelectedTime(slot.time)}
+                  className={`text-xs ${!slot.available ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  title={!slot.available ? "This time slot is already booked" : ""}
                 >
                   {slot.time}
+                  {!slot.available && <span className="ml-1 text-xs">(booked)</span>}
                 </Button>
               ))}
             </div>
