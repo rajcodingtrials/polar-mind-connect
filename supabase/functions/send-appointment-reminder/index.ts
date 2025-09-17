@@ -16,13 +16,6 @@ const corsHeaders = {
 
 interface ReminderRequest {
   sessionId: string;
-  clientEmail: string;
-  clientName: string;
-  therapistName: string;
-  sessionDate: string;
-  sessionTime: string;
-  duration: number;
-  sessionType: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -32,76 +25,124 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const {
-      sessionId,
-      clientEmail,
-      clientName,
-      therapistName,
-      sessionDate,
-      sessionTime,
-      duration,
-      sessionType,
-    }: ReminderRequest = await req.json();
+    const { sessionId }: ReminderRequest = await req.json();
 
-    console.log("Sending appointment reminder email to:", clientEmail);
+    console.log("Processing appointment reminder for session:", sessionId);
 
-    // Format the date for better readability
-    const sessionDateTime = new Date(`${sessionDate}T${sessionTime}`);
-    const formattedDate = sessionDateTime.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    // Fetch session details with therapist and client information
+    const { data: session, error: sessionError } = await supabase
+      .from('therapy_sessions')
+      .select(`
+        *,
+        therapists!inner(name, email, first_name, last_name),
+        profiles!inner(name, email)
+      `)
+      .eq('id', sessionId)
+      .single();
 
-    // Calculate hours until appointment
-    const now = new Date();
-    const hoursUntil = Math.round((sessionDateTime.getTime() - now.getTime()) / (1000 * 60 * 60));
+    if (sessionError || !session) {
+      console.error('Error fetching session details:', sessionError);
+      throw new Error('Session not found');
+    }
 
-    // Fetch email template from database
-    const { data: template, error: templateError } = await supabase
+    // Fetch both client and therapist email templates
+    const { data: clientTemplate, error: clientTemplateError } = await supabase
       .from('email_templates')
       .select('subject, html_content')
       .eq('template_name', 'appointment_reminder')
       .eq('is_active', true)
       .single();
 
-    if (templateError || !template) {
-      console.error('Failed to fetch email template:', templateError);
-      throw new Error('Email template not found');
+    const { data: therapistTemplate, error: therapistTemplateError } = await supabase
+      .from('email_templates')
+      .select('subject, html_content')
+      .eq('template_name', 'therapist_appointment_reminder')
+      .eq('is_active', true)
+      .single();
+
+    if (clientTemplateError || !clientTemplate) {
+      console.error('Error fetching client email template:', clientTemplateError);
+      throw new Error('Client email template not found');
     }
 
-    // Replace variables in template
-    const variables = {
-      clientName,
-      therapistName,
-      sessionDate: formattedDate,
-      sessionTime,
-      duration: duration.toString(),
-      sessionType,
-      hoursUntil: hoursUntil.toString()
+    if (therapistTemplateError || !therapistTemplate) {
+      console.error('Error fetching therapist email template:', therapistTemplateError);
+      throw new Error('Therapist email template not found');
+    }
+
+    // Format the session date for better readability
+    const sessionDate = new Date(session.session_date);
+    const formattedDate = sessionDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const therapistName = session.therapists.name || 
+      `${session.therapists.first_name || ''} ${session.therapists.last_name || ''}`.trim() || 
+      'Your Therapist';
+
+    // Prepare template variables
+    const templateVars = {
+      client_name: session.profiles.name || 'Valued Client',
+      therapist_name: therapistName,
+      session_date: formattedDate,
+      session_time: session.start_time,
+      duration: session.duration_minutes.toString(),
+      session_type: session.session_type
     };
 
-    let htmlContent = template.html_content;
-    let subject = template.subject;
+    // Send email to client
+    let clientEmailSubject = clientTemplate.subject;
+    let clientEmailContent = clientTemplate.html_content;
 
-    // Replace all variables in the template
-    Object.entries(variables).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      htmlContent = htmlContent.replace(regex, value);
-      subject = subject.replace(regex, value);
+    Object.entries(templateVars).forEach(([key, value]) => {
+      const placeholder = `{{${key}}}`;
+      clientEmailSubject = clientEmailSubject.replace(new RegExp(placeholder, 'g'), value);
+      clientEmailContent = clientEmailContent.replace(new RegExp(placeholder, 'g'), value);
     });
 
-    const emailResponse = await resend.emails.send({
-      from: "Polariz Therapy <reminders@polariz.com>",
-      to: [clientEmail],
-      subject,
-      html: htmlContent,
+    console.log('Sending appointment reminder to client:', session.profiles.email);
+
+    const clientEmailResponse = await resend.emails.send({
+      from: "Therapy Platform <noreply@resend.dev>",
+      to: [session.profiles.email],
+      subject: clientEmailSubject,
+      html: clientEmailContent,
     });
 
-    console.log("Appointment reminder email sent successfully:", emailResponse);
+    console.log("Client appointment reminder sent successfully:", clientEmailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
+    // Send email to therapist
+    let therapistEmailSubject = therapistTemplate.subject;
+    let therapistEmailContent = therapistTemplate.html_content;
+
+    Object.entries(templateVars).forEach(([key, value]) => {
+      const placeholder = `{{${key}}}`;
+      therapistEmailSubject = therapistEmailSubject.replace(new RegExp(placeholder, 'g'), value);
+      therapistEmailContent = therapistEmailContent.replace(new RegExp(placeholder, 'g'), value);
+    });
+
+    if (session.therapists.email) {
+      console.log('Sending appointment reminder to therapist:', session.therapists.email);
+
+      const therapistEmailResponse = await resend.emails.send({
+        from: "Therapy Platform <noreply@resend.dev>",
+        to: [session.therapists.email],
+        subject: therapistEmailSubject,
+        html: therapistEmailContent,
+      });
+
+      console.log("Therapist appointment reminder sent successfully:", therapistEmailResponse);
+    } else {
+      console.warn('Therapist email not found, skipping therapist reminder');
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: "Appointment reminders sent successfully to both client and therapist"
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",

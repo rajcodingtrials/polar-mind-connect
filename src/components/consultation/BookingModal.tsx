@@ -192,7 +192,7 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
 
   const handlePaymentSuccess = async () => {
     try {
-      // Send booking confirmation email
+      // Send booking confirmation email to client
       await supabase.functions.invoke('send-booking-confirmation', {
         body: {
           sessionId,
@@ -207,14 +207,31 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
         }
       });
       
-      console.log("Booking confirmation email sent");
+      console.log("Booking confirmation email sent to client");
+
+      // Send notification email to therapist
+      await supabase.functions.invoke('send-therapist-notification', {
+        body: {
+          sessionId,
+          therapistId: therapist.id,
+          clientName: user?.user_metadata?.name || user?.email || 'New Client',
+          sessionDate: format(selectedDate, "yyyy-MM-dd"),
+          sessionTime: selectedTime,
+          duration: parseInt(duration),
+          sessionType,
+          amount: sessionPrice,
+          clientNotes: clientNotes,
+        }
+      });
+      
+      console.log("Therapist notification email sent");
     } catch (error) {
-      console.error("Error sending booking confirmation email:", error);
+      console.error("Error sending booking emails:", error);
     }
     
     toast({
       title: "Booking Confirmed!",
-      description: "Your therapy session has been booked successfully. Check your email for confirmation details.",
+      description: "Your therapy session has been booked successfully. Both you and your therapist will receive confirmation emails.",
     });
     onClose();
   };
