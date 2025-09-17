@@ -92,17 +92,24 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
     
     if (dayAvailability.length === 0) return [];
 
-    // Fetch existing bookings for this therapist on the selected date
-    const { data: existingBookings } = await supabase
-      .from("therapy_sessions")
-      .select("start_time, end_time, status")
-      .eq("therapist_id", therapist.id)
-      .eq("session_date", format(date, "yyyy-MM-dd"))
-      .in("status", ["pending", "confirmed", "completed"]);
+    // Fetch existing bookings via RPC (bypasses RLS safely and returns only times)
+    const { data: bookedRanges, error: bookedErr } = await supabase.rpc('get_booked_slots', {
+      _therapist_id: therapist.id,
+      _session_date: format(date, 'yyyy-MM-dd'),
+    });
+    if (bookedErr) {
+      console.error('Error fetching booked slots:', bookedErr);
+    }
 
-    const bookedSlots = new Set(
-      existingBookings?.map(booking => booking.start_time) || []
-    );
+    const bookings = (bookedRanges || []).map((b: any) => ({
+      start: String(b.start_time),
+      end: String(b.end_time),
+    }));
+
+    const toMinutes = (t: string) => {
+      const [hh, mm] = t.split(':').map(Number);
+      return (hh * 60) + (mm || 0);
+    };
 
     const slots: TimeSlot[] = [];
     
@@ -122,7 +129,12 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
         const hour = Math.floor(minutes / 60);
         const min = minutes % 60;
         const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-        const isBooked = bookedSlots.has(time);
+        const m = toMinutes(time);
+        const isBooked = bookings.some(b => {
+          const s = toMinutes(b.start);
+          const e = toMinutes(b.end);
+          return m >= s && m < e; // disable any slot that falls within a booked range
+        });
         slots.push({ time, available: !isBooked });
       }
     });
