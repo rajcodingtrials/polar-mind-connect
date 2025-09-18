@@ -159,9 +159,12 @@ const TherapistDashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Heading */}
-        <div className="mb-6 text-center">
-          <h1 className="text-4xl font-bold text-black mb-4 tracking-tight">
-            Speech Coach Dashboard
+        <div className="mb-6 text-center animate-fade-in">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-emphasis-high leading-tight tracking-tight">
+            Speech Coach
+            <span className="block text-transparent bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text mt-2">
+              Dashboard
+            </span>
           </h1>
         </div>
         
