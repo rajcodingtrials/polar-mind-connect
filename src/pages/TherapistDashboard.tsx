@@ -179,14 +179,14 @@ const TherapistDashboard = () => {
         {/* Stats Cards Container */}
         <div className="relative">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <Card className="bg-gradient-to-br from-blue-950/60 to-indigo-950/60 backdrop-blur-sm border border-blue-400/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-blue-400/30">
+            <Card className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-sm border border-gray-600/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-gray-500/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-blue-500/20 backdrop-blur-sm">
-                    <Calendar className="h-8 w-8 text-blue-300" />
+                  <div className="p-3 rounded-xl bg-gray-700/40 backdrop-blur-sm">
+                    <Calendar className="h-8 w-8 text-gray-300" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-blue-200">Today's Sessions</p>
+                    <p className="text-sm font-medium text-gray-400">Today's Sessions</p>
                     <p className="text-2xl font-bold text-white">
                       {sessionsLoading ? "..." : todaySessions}
                     </p>
@@ -195,14 +195,14 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-purple-950/60 to-violet-950/60 backdrop-blur-sm border border-purple-400/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-purple-400/30">
+            <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm border border-slate-600/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-slate-500/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-purple-500/20 backdrop-blur-sm">
-                    <Users className="h-8 w-8 text-purple-300" />
+                  <div className="p-3 rounded-xl bg-slate-700/40 backdrop-blur-sm">
+                    <Users className="h-8 w-8 text-slate-300" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-purple-200">Total Sessions</p>
+                    <p className="text-sm font-medium text-slate-400">Total Sessions</p>
                     <p className="text-2xl font-bold text-white">
                       {sessionsLoading ? "..." : totalSessions}
                     </p>
@@ -211,14 +211,14 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-indigo-950/60 to-blue-950/60 backdrop-blur-sm border border-indigo-400/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-indigo-400/30">
+            <Card className="bg-gradient-to-br from-zinc-900/80 to-zinc-800/80 backdrop-blur-sm border border-zinc-600/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-zinc-500/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-indigo-500/20 backdrop-blur-sm">
-                    <DollarSign className="h-8 w-8 text-indigo-300" />
+                  <div className="p-3 rounded-xl bg-zinc-700/40 backdrop-blur-sm">
+                    <DollarSign className="h-8 w-8 text-zinc-300" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-indigo-200">This Month</p>
+                    <p className="text-sm font-medium text-zinc-400">This Month</p>
                     <p className="text-2xl font-bold text-white">
                       ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
                     </p>
@@ -227,19 +227,19 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-violet-950/60 to-purple-950/60 backdrop-blur-sm border border-violet-400/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-violet-400/30">
+            <Card className="bg-gradient-to-br from-neutral-900/80 to-neutral-800/80 backdrop-blur-sm border border-neutral-600/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-neutral-500/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-violet-500/20 backdrop-blur-sm">
-                    <Star className="h-8 w-8 text-violet-300" />
+                  <div className="p-3 rounded-xl bg-neutral-700/40 backdrop-blur-sm">
+                    <Star className="h-8 w-8 text-neutral-300" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-violet-200">Rating</p>
+                    <p className="text-sm font-medium text-neutral-400">Rating</p>
                     <p className="text-2xl font-bold text-white">
                       {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
                     </p>
                     {therapistRating.reviewCount > 0 && (
-                      <p className="text-xs text-violet-300">
+                      <p className="text-xs text-neutral-400">
                         ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
                       </p>
                     )}
