@@ -219,15 +219,15 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-emerald-50 border border-emerald-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-emerald-100">
+          <Card className="bg-stone-50 border border-stone-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-stone-100">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-emerald-100">
-                  <DollarSign className="h-8 w-8 text-emerald-600" />
+                <div className="p-2 rounded-lg bg-stone-100">
+                  <DollarSign className="h-8 w-8 text-stone-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-emerald-700">This Month</p>
-                  <p className="text-2xl font-bold text-emerald-900">
+                  <p className="text-sm font-medium text-stone-700">This Month</p>
+                  <p className="text-2xl font-bold text-stone-900">
                     ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
                   </p>
                 </div>
@@ -235,19 +235,19 @@ const TherapistDashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-indigo-50 border border-indigo-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-indigo-100">
+          <Card className="bg-zinc-50 border border-zinc-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-zinc-100">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-indigo-100">
-                  <Star className="h-8 w-8 text-indigo-600" />
+                <div className="p-2 rounded-lg bg-zinc-100">
+                  <Star className="h-8 w-8 text-zinc-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-indigo-700">Rating</p>
-                  <p className="text-2xl font-bold text-indigo-900">
+                  <p className="text-sm font-medium text-zinc-700">Rating</p>
+                  <p className="text-2xl font-bold text-zinc-900">
                     {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
                   </p>
                   {therapistRating.reviewCount > 0 && (
-                    <p className="text-xs text-indigo-600">
+                    <p className="text-xs text-zinc-600">
                       ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
                     </p>
                   )}
