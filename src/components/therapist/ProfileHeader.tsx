@@ -19,7 +19,7 @@ interface ProfileHeaderProps {
 export const ProfileHeader = ({ therapistProfile }: ProfileHeaderProps) => {
   return (
     <div className="flex items-start space-x-6 pb-6">
-      <Avatar className="h-32 w-32 border-4 border-white shadow-lg rounded-lg">
+      <Avatar className="h-40 w-40 border-4 border-white shadow-lg rounded-lg">
         <AvatarImage 
           src={therapistProfile?.avatar_url} 
           alt="Profile photo" 
