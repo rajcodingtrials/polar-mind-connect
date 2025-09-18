@@ -211,14 +211,14 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-stone-800/60 backdrop-blur-sm border border-stone-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-stone-800/70">
+            <Card className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-slate-800/70">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-stone-700/50">
-                    <DollarSign className="h-8 w-8 text-stone-300" />
+                  <div className="p-3 rounded-xl bg-slate-700/50">
+                    <DollarSign className="h-8 w-8 text-slate-300" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-stone-400">This Month</p>
+                    <p className="text-sm font-medium text-slate-400">This Month</p>
                     <p className="text-2xl font-bold text-white">
                       ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
                     </p>
@@ -227,19 +227,19 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-zinc-800/60 backdrop-blur-sm border border-zinc-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-zinc-800/70">
+            <Card className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-gray-800/70">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-zinc-700/50">
-                    <Star className="h-8 w-8 text-zinc-300" />
+                  <div className="p-3 rounded-xl bg-gray-700/50">
+                    <Star className="h-8 w-8 text-gray-300" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-zinc-400">Rating</p>
+                    <p className="text-sm font-medium text-gray-400">Rating</p>
                     <p className="text-2xl font-bold text-white">
                       {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
                     </p>
                     {therapistRating.reviewCount > 0 && (
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-gray-400">
                         ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
                       </p>
                     )}
