@@ -159,9 +159,9 @@ const TherapistDashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Heading */}
-        <div className="mb-6">
+        <div className="mb-6 text-center">
           <h1 className="text-4xl font-bold text-black mb-4 tracking-tight">
-            Therapist Dashboard
+            Speech Coach Dashboard
           </h1>
         </div>
         
