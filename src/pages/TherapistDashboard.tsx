@@ -158,103 +158,99 @@ const TherapistDashboard = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section with Header */}
-        <div className="relative mb-12 overflow-hidden rounded-3xl bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm border border-white/20">
-          <div className="absolute inset-0 stars-bg opacity-20"></div>
-          
-          <div className="relative z-10 px-8 py-12 text-center">
-            {/* Main heading */}
-            <div className="animate-fade-in mb-6">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
-                Speech Coach
-                <span className="block text-black mt-2">
-                  Dashboard
-                </span>
-              </h1>
-            </div>
-            
-            {/* Welcome message */}
-            <div className="max-w-2xl mx-auto">
-              <h2 className="text-xl sm:text-2xl font-semibold text-white/90 mb-3">
-                Welcome back, {therapistProfile.name}!
-              </h2>
-              <p className="text-white/70 text-base sm:text-lg">
-                Manage your practice, schedule, and client sessions from your dashboard.
-              </p>
-            </div>
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight mb-4">
+            Speech Coach
+            <span className="block text-black mt-2">
+              Dashboard
+            </span>
+          </h1>
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-xl sm:text-2xl font-semibold text-white/90 mb-2">
+              Welcome back, {therapistProfile.name}!
+            </h2>
+            <p className="text-white/70 text-base sm:text-lg">
+              Manage your practice, schedule, and client sessions from your dashboard.
+            </p>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-          <Card className="bg-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-slate-100">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-slate-100">
-                  <Calendar className="h-8 w-8 text-slate-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-slate-700">Today's Sessions</p>
-                  <p className="text-2xl font-bold text-slate-900">
-                    {sessionsLoading ? "..." : todaySessions}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Cards Container */}
+        <div className="relative">
+          {/* Background decoration for stats section */}
+          <div className="absolute inset-0 -inset-x-4 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-2xl"></div>
           
-          <Card className="bg-gray-50 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-gray-100">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-gray-100">
-                  <Users className="h-8 w-8 text-gray-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-700">Total Sessions</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {sessionsLoading ? "..." : totalSessions}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-stone-50 border border-stone-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-stone-100">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-stone-100">
-                  <DollarSign className="h-8 w-8 text-stone-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-stone-700">This Month</p>
-                  <p className="text-2xl font-bold text-stone-900">
-                    ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-zinc-50 border border-zinc-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-zinc-100">
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 rounded-lg bg-zinc-100">
-                  <Star className="h-8 w-8 text-zinc-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-zinc-700">Rating</p>
-                  <p className="text-2xl font-bold text-zinc-900">
-                    {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
-                  </p>
-                  {therapistRating.reviewCount > 0 && (
-                    <p className="text-xs text-zinc-600">
-                      ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <Card className="bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-white/15">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                    <Calendar className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-white/80">Today's Sessions</p>
+                    <p className="text-2xl font-bold text-white">
+                      {sessionsLoading ? "..." : todaySessions}
                     </p>
-                  )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-white/15">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                    <Users className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-white/80">Total Sessions</p>
+                    <p className="text-2xl font-bold text-white">
+                      {sessionsLoading ? "..." : totalSessions}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-white/15">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                    <DollarSign className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-white/80">This Month</p>
+                    <p className="text-2xl font-bold text-white">
+                      ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-white/15">
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                    <Star className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-white/80">Rating</p>
+                    <p className="text-2xl font-bold text-white">
+                      {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
+                    </p>
+                    {therapistRating.reviewCount > 0 && (
+                      <p className="text-xs text-white/70">
+                        ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Main Content Tabs */}
