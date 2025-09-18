@@ -157,23 +157,34 @@ const TherapistDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Main Heading */}
-        <div className="mb-6 text-center animate-fade-in">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-emphasis-high leading-tight tracking-tight">
-            Speech Coach
-            <span className="block text-transparent bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text mt-2">
-              Dashboard
-            </span>
-          </h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Main Heading Section */}
+        <div className="relative mb-16 text-center">
+          {/* Background decoration */}
+          <div className="absolute inset-0 -top-8 -bottom-8 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-3xl"></div>
+          
+          {/* Main heading */}
+          <div className="relative z-10 animate-fade-in">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-emphasis-high leading-none tracking-tight mb-4">
+              Speech Coach
+              <span className="block text-transparent bg-gradient-to-r from-primary via-accent to-primary bg-clip-text mt-3">
+                Dashboard
+              </span>
+            </h1>
+            
+            {/* Decorative underline */}
+            <div className="flex justify-center mt-6">
+              <div className="w-32 h-1 bg-gradient-to-r from-primary/30 via-primary to-primary/30 rounded-full"></div>
+            </div>
+          </div>
         </div>
         
         {/* Welcome Section */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white mb-3">
+        <div className="mb-8 text-center max-w-3xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
             Welcome back, {therapistProfile.name}!
           </h2>
-          <p className="text-white/80 text-lg">
+          <p className="text-white/80 text-lg sm:text-xl leading-relaxed">
             Manage your practice, schedule, and client sessions from your dashboard.
           </p>
         </div>
