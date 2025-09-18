@@ -157,36 +157,32 @@ const TherapistDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Main Heading Section */}
-        <div className="relative mb-16 text-center">
-          {/* Background decoration */}
-          <div className="absolute inset-0 -top-8 -bottom-8 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-3xl"></div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Section with Header */}
+        <div className="relative mb-12 overflow-hidden rounded-3xl bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-sm border border-white/20">
+          <div className="absolute inset-0 stars-bg opacity-20"></div>
           
-          {/* Main heading */}
-          <div className="relative z-10 animate-fade-in">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-emphasis-high leading-none tracking-tight mb-4">
-              Speech Coach
-              <span className="block text-transparent bg-gradient-to-r from-primary via-accent to-primary bg-clip-text mt-3">
-                Dashboard
-              </span>
-            </h1>
+          <div className="relative z-10 px-8 py-12 text-center">
+            {/* Main heading */}
+            <div className="animate-fade-in mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
+                Speech Coach
+                <span className="block text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 bg-clip-text mt-2">
+                  Dashboard
+                </span>
+              </h1>
+            </div>
             
-            {/* Decorative underline */}
-            <div className="flex justify-center mt-6">
-              <div className="w-32 h-1 bg-gradient-to-r from-primary/30 via-primary to-primary/30 rounded-full"></div>
+            {/* Welcome message */}
+            <div className="max-w-2xl mx-auto">
+              <h2 className="text-xl sm:text-2xl font-semibold text-white/90 mb-3">
+                Welcome back, {therapistProfile.name}!
+              </h2>
+              <p className="text-white/70 text-base sm:text-lg">
+                Manage your practice, schedule, and client sessions from your dashboard.
+              </p>
             </div>
           </div>
-        </div>
-        
-        {/* Welcome Section */}
-        <div className="mb-8 text-center max-w-3xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-            Welcome back, {therapistProfile.name}!
-          </h2>
-          <p className="text-white/80 text-lg sm:text-xl leading-relaxed">
-            Manage your practice, schedule, and client sessions from your dashboard.
-          </p>
         </div>
 
         {/* Stats Cards */}
