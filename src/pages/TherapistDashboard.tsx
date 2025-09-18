@@ -249,34 +249,34 @@ const TherapistDashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-card border border-border rounded-lg p-1 shadow-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-black via-gray-900 to-black border border-white/20 rounded-xl p-2 shadow-2xl backdrop-blur-sm">
             <TabsTrigger 
               value="profile" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground transition-all duration-200 rounded-md px-4 py-2"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
               Profile
             </TabsTrigger>
             <TabsTrigger 
               value="files" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground transition-all duration-200 rounded-md px-4 py-2"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
               Photos & Docs
             </TabsTrigger>
             <TabsTrigger 
               value="schedule" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground transition-all duration-200 rounded-md px-4 py-2"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
               Schedule
             </TabsTrigger>
             <TabsTrigger 
               value="sessions" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground transition-all duration-200 rounded-md px-4 py-2"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
               Sessions
             </TabsTrigger>
             <TabsTrigger 
               value="earnings" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground transition-all duration-200 rounded-md px-4 py-2"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
               Earnings
             </TabsTrigger>
