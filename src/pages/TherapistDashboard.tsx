@@ -179,15 +179,15 @@ const TherapistDashboard = () => {
         {/* Stats Cards Container */}
         <div className="relative">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <Card className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-sm border border-gray-600/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-gray-500/50">
+            <Card className="bg-surface-elevated/90 backdrop-blur-sm border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-accent/60">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-gray-700/40 backdrop-blur-sm">
-                    <Calendar className="h-8 w-8 text-gray-300" />
+                  <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
+                    <Calendar className="h-8 w-8 text-primary" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-400">Today's Sessions</p>
-                    <p className="text-2xl font-bold text-white">
+                    <p className="text-sm font-medium text-emphasis-medium">Today's Sessions</p>
+                    <p className="text-2xl font-bold text-emphasis-high">
                       {sessionsLoading ? "..." : todaySessions}
                     </p>
                   </div>
@@ -195,15 +195,15 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm border border-slate-600/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-slate-500/50">
+            <Card className="bg-secondary/90 backdrop-blur-sm border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-accent/60">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-slate-700/40 backdrop-blur-sm">
-                    <Users className="h-8 w-8 text-slate-300" />
+                  <div className="p-3 rounded-xl bg-info/20 backdrop-blur-sm">
+                    <Users className="h-8 w-8 text-info" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-slate-400">Total Sessions</p>
-                    <p className="text-2xl font-bold text-white">
+                    <p className="text-sm font-medium text-emphasis-medium">Total Sessions</p>
+                    <p className="text-2xl font-bold text-emphasis-high">
                       {sessionsLoading ? "..." : totalSessions}
                     </p>
                   </div>
@@ -211,15 +211,15 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-zinc-900/80 to-zinc-800/80 backdrop-blur-sm border border-zinc-600/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-zinc-500/50">
+            <Card className="bg-success/10 backdrop-blur-sm border border-success/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-success/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-zinc-700/40 backdrop-blur-sm">
-                    <DollarSign className="h-8 w-8 text-zinc-300" />
+                  <div className="p-3 rounded-xl bg-success/20 backdrop-blur-sm">
+                    <DollarSign className="h-8 w-8 text-success" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-zinc-400">This Month</p>
-                    <p className="text-2xl font-bold text-white">
+                    <p className="text-sm font-medium text-emphasis-medium">This Month</p>
+                    <p className="text-2xl font-bold text-emphasis-high">
                       ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
                     </p>
                   </div>
@@ -227,19 +227,19 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-gradient-to-br from-neutral-900/80 to-neutral-800/80 backdrop-blur-sm border border-neutral-600/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-neutral-500/50">
+            <Card className="bg-warning/10 backdrop-blur-sm border border-warning/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-warning/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-neutral-700/40 backdrop-blur-sm">
-                    <Star className="h-8 w-8 text-neutral-300" />
+                  <div className="p-3 rounded-xl bg-warning/20 backdrop-blur-sm">
+                    <Star className="h-8 w-8 text-warning" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-neutral-400">Rating</p>
-                    <p className="text-2xl font-bold text-white">
+                    <p className="text-sm font-medium text-emphasis-medium">Rating</p>
+                    <p className="text-2xl font-bold text-emphasis-high">
                       {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
                     </p>
                     {therapistRating.reviewCount > 0 && (
-                      <p className="text-xs text-neutral-400">
+                      <p className="text-xs text-emphasis-low">
                         ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
                       </p>
                     )}
