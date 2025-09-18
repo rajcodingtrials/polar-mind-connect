@@ -249,41 +249,36 @@ const TherapistDashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-black via-gray-900 to-black border border-white/30 rounded-xl p-3 shadow-2xl backdrop-blur-sm ring-1 ring-white/10">
+          <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-black via-gray-900 to-black border border-white/20 rounded-xl p-2 shadow-2xl backdrop-blur-sm">
             <TabsTrigger 
               value="profile" 
-              className="group relative text-white/70 hover:text-white hover:bg-gradient-to-r hover:from-white/15 hover:to-white/25 hover:shadow-lg hover:shadow-white/20 hover:ring-1 hover:ring-white/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/35 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-white/30 data-[state=active]:ring-2 data-[state=active]:ring-white/40 data-[state=active]:font-semibold transition-all duration-300 ease-out hover:scale-110 data-[state=active]:scale-105 rounded-lg mx-1 py-3.5 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
-              <span className="relative z-10">Profile</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+              Profile
             </TabsTrigger>
             <TabsTrigger 
               value="files" 
-              className="group relative text-white/70 hover:text-white hover:bg-gradient-to-r hover:from-white/15 hover:to-white/25 hover:shadow-lg hover:shadow-white/20 hover:ring-1 hover:ring-white/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/35 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-white/30 data-[state=active]:ring-2 data-[state=active]:ring-white/40 data-[state=active]:font-semibold transition-all duration-300 ease-out hover:scale-110 data-[state=active]:scale-105 rounded-lg mx-1 py-3.5 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
-              <span className="relative z-10">Photos & Docs</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+              Photos & Docs
             </TabsTrigger>
             <TabsTrigger 
               value="schedule" 
-              className="group relative text-white/70 hover:text-white hover:bg-gradient-to-r hover:from-white/15 hover:to-white/25 hover:shadow-lg hover:shadow-white/20 hover:ring-1 hover:ring-white/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/35 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-white/30 data-[state=active]:ring-2 data-[state=active]:ring-white/40 data-[state=active]:font-semibold transition-all duration-300 ease-out hover:scale-110 data-[state=active]:scale-105 rounded-lg mx-1 py-3.5 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
-              <span className="relative z-10">Schedule</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+              Schedule
             </TabsTrigger>
             <TabsTrigger 
               value="sessions" 
-              className="group relative text-white/70 hover:text-white hover:bg-gradient-to-r hover:from-white/15 hover:to-white/25 hover:shadow-lg hover:shadow-white/20 hover:ring-1 hover:ring-white/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/35 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-white/30 data-[state=active]:ring-2 data-[state=active]:ring-white/40 data-[state=active]:font-semibold transition-all duration-300 ease-out hover:scale-110 data-[state=active]:scale-105 rounded-lg mx-1 py-3.5 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
-              <span className="relative z-10">Sessions</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+              Sessions
             </TabsTrigger>
             <TabsTrigger 
               value="earnings" 
-              className="group relative text-white/70 hover:text-white hover:bg-gradient-to-r hover:from-white/15 hover:to-white/25 hover:shadow-lg hover:shadow-white/20 hover:ring-1 hover:ring-white/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/35 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-white/30 data-[state=active]:ring-2 data-[state=active]:ring-white/40 data-[state=active]:font-semibold transition-all duration-300 ease-out hover:scale-110 data-[state=active]:scale-105 rounded-lg mx-1 py-3.5 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="text-white/80 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/20 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/20 data-[state=active]:to-white/30 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-white/10 transition-all duration-300 ease-out hover:scale-105 rounded-lg mx-1 py-3"
             >
-              <span className="relative z-10">Earnings</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+              Earnings
             </TabsTrigger>
           </TabsList>
           
