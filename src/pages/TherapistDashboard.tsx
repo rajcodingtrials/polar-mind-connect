@@ -167,7 +167,7 @@ const TherapistDashboard = () => {
             <div className="animate-fade-in mb-6">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
                 Speech Coach
-                <span className="block text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 bg-clip-text mt-2">
+                <span className="block text-black mt-2">
                   Dashboard
                 </span>
               </h1>
