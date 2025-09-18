@@ -249,12 +249,12 @@ const TherapistDashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="files">Photos & Docs</TabsTrigger>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
-            <TabsTrigger value="sessions">Sessions</TabsTrigger>
-            <TabsTrigger value="earnings">Earnings</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 bg-black border border-white/20">
+            <TabsTrigger value="profile" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Profile</TabsTrigger>
+            <TabsTrigger value="files" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Photos & Docs</TabsTrigger>
+            <TabsTrigger value="schedule" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Schedule</TabsTrigger>
+            <TabsTrigger value="sessions" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Sessions</TabsTrigger>
+            <TabsTrigger value="earnings" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Earnings</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile">
