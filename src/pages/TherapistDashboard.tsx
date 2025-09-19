@@ -76,8 +76,6 @@ const TherapistDashboard = () => {
       certification: editedProfile.certification,
       education: editedProfile.education,
       languages: editedProfile.languages,
-      hourly_rate_30min: editedProfile.hourly_rate_30min,
-      hourly_rate_60min: editedProfile.hourly_rate_60min,
       specializations: editedProfile.specializations,
       avatar_url: editedProfile.avatar_url,
     };

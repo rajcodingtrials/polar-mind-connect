@@ -205,36 +205,18 @@ export const ProfessionalDetails = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
             <Label className="text-sm font-medium text-muted-foreground">30-min Session Rate</Label>
-            {isEditing ? (
-              <Input
-                type="number"
-                step="0.01"
-                value={editedProfile?.hourly_rate_30min || ''}
-                onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_30min: parseFloat(e.target.value) || null} : null)}
-                placeholder="0.00"
-              />
-            ) : (
-              <p className="text-foreground font-medium">
-                ${therapistProfile.hourly_rate_30min || 'Not set'}
-              </p>
-            )}
+            <p className="text-foreground font-medium">
+              ${therapistProfile.hourly_rate_30min || 'Not set'}
+            </p>
+            <p className="text-xs text-muted-foreground">Contact admin to change rates</p>
           </div>
           
           <div className="space-y-1">
             <Label className="text-sm font-medium text-muted-foreground">60-min Session Rate</Label>
-            {isEditing ? (
-              <Input
-                type="number"
-                step="0.01"
-                value={editedProfile?.hourly_rate_60min || ''}
-                onChange={(e) => setEditedProfile(prev => prev ? {...prev, hourly_rate_60min: parseFloat(e.target.value) || null} : null)}
-                placeholder="0.00"
-              />
-            ) : (
-              <p className="text-foreground font-medium">
-                ${therapistProfile.hourly_rate_60min || 'Not set'}
-              </p>
-            )}
+            <p className="text-foreground font-medium">
+              ${therapistProfile.hourly_rate_60min || 'Not set'}
+            </p>
+            <p className="text-xs text-muted-foreground">Contact admin to change rates</p>
           </div>
         </div>
       </CardContent>
