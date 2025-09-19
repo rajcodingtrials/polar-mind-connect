@@ -176,15 +176,15 @@ const TherapistDashboard = () => {
         {/* Stats Cards Container */}
         <div className="relative">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <Card className="bg-card/95 backdrop-blur-sm border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-info/60">
+            <Card className="bg-info/10 backdrop-blur-sm border border-info/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-info/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-info/10 backdrop-blur-sm">
+                  <div className="p-3 rounded-xl bg-info/20 backdrop-blur-sm">
                     <Calendar className="h-8 w-8 text-info" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-emphasis-medium">Today's Sessions</p>
-                    <p className="text-2xl font-bold text-emphasis-high">
+                    <p className="text-sm font-medium text-info">Today's Sessions</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {sessionsLoading ? "..." : todaySessions}
                     </p>
                   </div>
@@ -192,15 +192,15 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-card/95 backdrop-blur-sm border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-primary/60">
+            <Card className="bg-primary/10 backdrop-blur-sm border border-primary/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-primary/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
+                  <div className="p-3 rounded-xl bg-primary/20 backdrop-blur-sm">
                     <Users className="h-8 w-8 text-primary" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-emphasis-medium">Total Sessions</p>
-                    <p className="text-2xl font-bold text-emphasis-high">
+                    <p className="text-sm font-medium text-primary">Total Sessions</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {sessionsLoading ? "..." : totalSessions}
                     </p>
                   </div>
@@ -208,15 +208,15 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-card/95 backdrop-blur-sm border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-success/60">
+            <Card className="bg-success/10 backdrop-blur-sm border border-success/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-success/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-success/10 backdrop-blur-sm">
+                  <div className="p-3 rounded-xl bg-success/20 backdrop-blur-sm">
                     <DollarSign className="h-8 w-8 text-success" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-emphasis-medium">This Month</p>
-                    <p className="text-2xl font-bold text-emphasis-high">
+                    <p className="text-sm font-medium text-success">This Month</p>
+                    <p className="text-2xl font-bold text-foreground">
                       ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
                     </p>
                   </div>
@@ -224,19 +224,19 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-card/95 backdrop-blur-sm border border-border/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-warning/60">
+            <Card className="bg-warning/10 backdrop-blur-sm border border-warning/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-warning/50">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-warning/10 backdrop-blur-sm">
+                  <div className="p-3 rounded-xl bg-warning/20 backdrop-blur-sm">
                     <Star className="h-8 w-8 text-warning" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-emphasis-medium">Rating</p>
-                    <p className="text-2xl font-bold text-emphasis-high">
+                    <p className="text-sm font-medium text-warning">Rating</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
                     </p>
                     {therapistRating.reviewCount > 0 && (
-                      <p className="text-xs text-emphasis-low">
+                      <p className="text-xs text-muted-foreground">
                         ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
                       </p>
                     )}
