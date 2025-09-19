@@ -120,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email using Resend
     const emailResponse = await resend.emails.send({
-      from: "Therapy Platform <noreply@resend.dev>",
+      from: "Polariz Therapy <noreply@polariz.com>",
       to: [therapist.email],
       subject: emailSubject,
       html: emailContent,

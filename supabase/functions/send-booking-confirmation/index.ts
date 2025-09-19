@@ -90,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const emailResponse = await resend.emails.send({
-      from: "Polariz Therapy <bookings@polariz.com>",
+      from: "Polariz Therapy <noreply@polariz.com>",
       to: [clientEmail],
       subject,
       html: htmlContent,
