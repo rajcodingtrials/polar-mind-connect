@@ -130,25 +130,25 @@ const TherapistDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-bg stars-bg">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="backdrop-blur-md bg-black border-b border-white/10 shadow-lg">
+      <header className="backdrop-blur-md bg-card/80 border-b border-border shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                <Star className="h-5 w-5 text-black" />
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                <Star className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-white">Polariz</h1>
+                <h1 className="text-xl font-semibold text-foreground">Polariz</h1>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
-                <User className="h-4 w-4 text-white" />
-                <span className="text-sm text-white">{therapistProfile.name}</span>
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-surface-elevated backdrop-blur-sm border border-border">
+                <User className="h-4 w-4 text-foreground" />
+                <span className="text-sm text-foreground">{therapistProfile.name}</span>
               </div>
-              <Button onClick={handleSignOut} variant="outline" size="sm" className="border-white/50 text-white hover:bg-white/20 hover:text-white bg-white/10">
+              <Button onClick={handleSignOut} variant="outline" size="sm">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
@@ -160,17 +160,17 @@ const TherapistDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight mb-4">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight tracking-tight mb-4">
             Speech Coach
-            <span className="block text-black mt-2">
+            <span className="block text-primary mt-2">
               Dashboard
             </span>
           </h1>
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-xl sm:text-2xl font-semibold text-white/90 mb-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-emphasis-medium mb-2">
               Welcome back, {therapistProfile.name}!
             </h2>
-            <p className="text-white/70 text-base sm:text-lg">
+            <p className="text-emphasis-low text-base sm:text-lg">
               Manage your practice, schedule, and client sessions from your dashboard.
             </p>
           </div>
@@ -252,12 +252,12 @@ const TherapistDashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-black border border-white/20">
-            <TabsTrigger value="profile" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Profile</TabsTrigger>
-            <TabsTrigger value="files" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Photos & Docs</TabsTrigger>
-            <TabsTrigger value="schedule" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Schedule</TabsTrigger>
-            <TabsTrigger value="sessions" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Sessions</TabsTrigger>
-            <TabsTrigger value="earnings" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Earnings</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 bg-card border border-border">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="files">Photos & Docs</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="sessions">Sessions</TabsTrigger>
+            <TabsTrigger value="earnings">Earnings</TabsTrigger>
           </TabsList>
           
           <TabsContent value="profile">
