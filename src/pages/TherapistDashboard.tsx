@@ -161,10 +161,7 @@ const TherapistDashboard = () => {
         {/* Header Section */}
         <div className="text-center mb-8">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight mb-4">
-            Speech Coach
-            <span className="block text-black mt-2">
-              Dashboard
-            </span>
+            Coach Dashboard
           </h1>
           <div className="max-w-2xl mx-auto">
             <h2 className="text-xl sm:text-2xl font-semibold text-white/90 mb-2">
