@@ -174,15 +174,15 @@ const TherapistDashboard = () => {
         {/* Stats Cards Container */}
         <div className="relative">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <Card className="bg-muted/30 backdrop-blur-sm border border-border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-muted">
+            <Card className="bg-surface-elevated border border-border/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-primary/20 hover:bg-surface-elevated/80">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-muted/50 backdrop-blur-sm">
-                    <Calendar className="h-8 w-8 text-muted-foreground" />
+                  <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
+                    <Calendar className="h-8 w-8 text-primary" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">Today's Sessions</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-sm font-medium text-emphasis-medium">Today's Sessions</p>
+                    <p className="text-2xl font-bold text-emphasis-high">
                       {sessionsLoading ? "..." : todaySessions}
                     </p>
                   </div>
@@ -190,15 +190,15 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-muted/30 backdrop-blur-sm border border-border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-muted">
+            <Card className="bg-surface-elevated border border-border/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-success/20 hover:bg-surface-elevated/80">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-muted/50 backdrop-blur-sm">
-                    <Users className="h-8 w-8 text-muted-foreground" />
+                  <div className="p-3 rounded-xl bg-success/10 backdrop-blur-sm">
+                    <Users className="h-8 w-8 text-success" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">Total Sessions</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-sm font-medium text-emphasis-medium">Total Sessions</p>
+                    <p className="text-2xl font-bold text-emphasis-high">
                       {sessionsLoading ? "..." : totalSessions}
                     </p>
                   </div>
@@ -206,15 +206,15 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-muted/30 backdrop-blur-sm border border-border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-muted">
+            <Card className="bg-surface-elevated border border-border/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-info/20 hover:bg-surface-elevated/80">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-muted/50 backdrop-blur-sm">
-                    <DollarSign className="h-8 w-8 text-muted-foreground" />
+                  <div className="p-3 rounded-xl bg-info/10 backdrop-blur-sm">
+                    <DollarSign className="h-8 w-8 text-info" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-sm font-medium text-emphasis-medium">This Month</p>
+                    <p className="text-2xl font-bold text-emphasis-high">
                       ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
                     </p>
                   </div>
@@ -222,19 +222,19 @@ const TherapistDashboard = () => {
               </CardContent>
             </Card>
             
-            <Card className="bg-muted/30 backdrop-blur-sm border border-border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-muted">
+            <Card className="bg-surface-elevated border border-border/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-warning/20 hover:bg-surface-elevated/80">
               <CardContent className="p-6">
                 <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-muted/50 backdrop-blur-sm">
-                    <Star className="h-8 w-8 text-muted-foreground" />
+                  <div className="p-3 rounded-xl bg-warning/10 backdrop-blur-sm">
+                    <Star className="h-8 w-8 text-warning" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground">Rating</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-sm font-medium text-emphasis-medium">Rating</p>
+                    <p className="text-2xl font-bold text-emphasis-high">
                       {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
                     </p>
                     {therapistRating.reviewCount > 0 && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-emphasis-low">
                         ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
                       </p>
                     )}
