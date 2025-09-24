@@ -52,8 +52,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
     } = webhookData;
 
-    // Create verification link
-    const verificationUrl = `${site_url}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`;
+    // Create verification link with required API key
+    const verificationUrl = `${site_url}/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}&apikey=${Deno.env.get('SUPABASE_ANON_KEY')}`;
 
     // Initialize Supabase client
     const supabase = createClient(
