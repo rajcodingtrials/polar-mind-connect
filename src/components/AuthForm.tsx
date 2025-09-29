@@ -95,32 +95,28 @@ const AuthForm = () => {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-3 pt-2">
+      <CardFooter className="flex flex-col space-y-2 pt-0">
         <Link 
           to="/auth?forgot=true" 
-          className="text-sm text-center text-muted-foreground hover:text-foreground transition-colors"
+          className="text-sm text-center text-blue-600 hover:text-blue-800 underline"
         >
           Forgot your password?
         </Link>
-        <div className="pt-3 border-t">
-          <p className="text-sm text-center text-muted-foreground mb-2">
-            Don't have an account?
-          </p>
-          <div className="text-sm text-center">
-            <Link 
-              to="/auth?signup=true" 
-              className="font-medium text-primary hover:underline"
-            >
-              Sign up as Parent
-            </Link>
-            <span className="text-muted-foreground mx-2">or</span>
-            <Link 
-              to="/therapist-auth?signup=true" 
-              className="font-medium text-primary hover:underline"
-            >
-              Sign up as Therapist
-            </Link>
-          </div>
+        <div className="text-sm text-center text-gray-600">
+          Sign up as:{" "}
+          <Link 
+            to="/auth?signup=true" 
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            Parent/Client
+          </Link>
+          {" or "}
+          <Link 
+            to="/therapist-auth?signup=true" 
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            Therapist
+          </Link>
         </div>
       </CardFooter>
     </Card>
