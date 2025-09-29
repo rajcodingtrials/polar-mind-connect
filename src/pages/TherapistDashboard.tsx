@@ -62,7 +62,7 @@ const TherapistDashboard = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/therapist-auth");
+    navigate("/auth", { replace: true });
   };
 
   const handleSaveProfile = async () => {
