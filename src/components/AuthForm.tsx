@@ -62,14 +62,14 @@ const AuthForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-lg mt-0">
-      <CardHeader className="p-2 pb-0">
-        <CardTitle className="text-2xl text-center">Login</CardTitle>
+    <Card className="w-full max-w-md shadow-xl border-border/50 backdrop-blur-sm mt-0">
+      <CardHeader className="p-8 pb-6 border-b border-border/50">
+        <CardTitle className="text-2xl text-center font-semibold">Login</CardTitle>
       </CardHeader>
-      <CardContent className="pb-2">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <CardContent className="p-8 pt-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="font-medium">Email</Label>
             <Input
               id="email"
               type="email"
@@ -77,10 +77,11 @@ const AuthForm = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="h-11 transition-all duration-200"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="font-medium">Password</Label>
             <Input
               id="password"
               type="password"
@@ -88,32 +89,37 @@ const AuthForm = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="h-11 transition-all duration-200"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full h-11 transition-all duration-200" 
+            disabled={isLoading}
+          >
             {isLoading ? "Logging in..." : "Login"}
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-2 pt-0">
+      <CardFooter className="flex flex-col space-y-3 p-8 pt-6 border-t border-border/50">
         <Link 
           to="/auth?forgot=true" 
-          className="text-sm text-center text-blue-600 hover:text-blue-800 underline"
+          className="text-sm text-center text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
         >
           Forgot your password?
         </Link>
-        <div className="text-sm text-center text-gray-600">
+        <div className="text-sm text-center text-muted-foreground">
           Sign up as:{" "}
           <Link 
             to="/auth?signup=true" 
-            className="text-blue-600 hover:text-blue-800 underline"
+            className="text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
           >
             Parent
           </Link>
-          {" or "}
+          <span className="text-muted-foreground/70"> or </span>
           <Link 
             to="/therapist-auth?signup=true" 
-            className="text-blue-600 hover:text-blue-800 underline"
+            className="text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
           >
             Therapist
           </Link>
