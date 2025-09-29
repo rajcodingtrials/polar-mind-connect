@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const AuthForm = () => {
   const [email, setEmail] = useState("");
@@ -23,9 +24,25 @@ const AuthForm = () => {
       const result = await login(email, password);
       
       if (!result.error) {
-        // Successfully logged in, navigate to home and scroll to top
-        navigate("/home", { replace: true });
-        window.scrollTo(0, 0);
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          // Check if user is a therapist
+          const { data: therapistData } = await supabase
+            .from('therapists')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          // Redirect based on user type
+          if (therapistData) {
+            navigate("/therapist-dashboard", { replace: true });
+          } else {
+            navigate("/home", { replace: true });
+          }
+          window.scrollTo(0, 0);
+        }
       } else {
         toast({
           variant: "destructive",
@@ -86,12 +103,19 @@ const AuthForm = () => {
           Forgot your password?
         </Link>
         <div className="text-sm text-center text-gray-600">
-          Don't have an account?{" "}
+          Sign up as:{" "}
           <Link 
             to="/auth?signup=true" 
             className="text-blue-600 hover:text-blue-800 underline"
           >
-            Sign up here
+            Parent/Client
+          </Link>
+          {" or "}
+          <Link 
+            to="/therapist-auth?signup=true" 
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            Therapist
           </Link>
         </div>
       </CardFooter>
