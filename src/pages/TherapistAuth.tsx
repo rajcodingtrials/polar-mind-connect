@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "../context/AuthContext";
 import { useTherapistAuth } from "../hooks/useTherapistAuth";
 import { useToast } from "@/components/ui/use-toast";
-import { Stethoscope, UserPlus, LogIn } from "lucide-react";
+import { Stethoscope, UserPlus } from "lucide-react";
 
 const TherapistAuth = () => {
-  const [searchParams] = useSearchParams();
-  const [isLogin, setIsLogin] = useState(true);
   const [showCreateProfile, setShowCreateProfile] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,62 +52,38 @@ const TherapistAuth = () => {
     }
   }, [user, isTherapist, navigate]);
 
-  useEffect(() => {
-    const signupParam = searchParams.get('signup');
-    if (signupParam === 'true') {
-      setIsLogin(false);
-    }
-  }, [searchParams]);
-
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Login Failed",
-            description: error.message,
-          });
-        } else {
-          // Check if user has therapist profile
-          if (!isTherapist()) {
-            setShowCreateProfile(true);
-          } else {
-            navigate("/therapist-dashboard");
-          }
-        }
-      } else {
-        const birthDate = new Date(dateOfBirth);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        
-        if (age < 18 || isNaN(birthDate.getTime())) {
-          toast({
-            variant: "destructive",
-            title: "Invalid Date of Birth",
-            description: "Therapists must be at least 18 years old.",
-          });
-          return;
-        }
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      
+      if (age < 18 || isNaN(birthDate.getTime())) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Date of Birth",
+          description: "Therapists must be at least 18 years old.",
+        });
+        setLoading(false);
+        return;
+      }
 
-        const { error } = await signUp(email, password, firstName, `${firstName} ${lastName}`, age);
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Sign Up Failed",
-            description: error.message,
-          });
-        } else {
-          toast({
-            title: "Account Created",
-            description: "Please check your email to verify your account, then create your therapist profile.",
-          });
-          setIsLogin(true);
-        }
+      const { error } = await signUp(email, password, firstName, `${firstName} ${lastName}`, age);
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Sign Up Failed",
+          description: error.message,
+        });
+      } else {
+        toast({
+          title: "Account Created",
+          description: "Please check your email to verify your account, then create your therapist profile.",
+        });
+        setShowCreateProfile(true);
       }
     } catch (error) {
       toast({
@@ -291,115 +264,71 @@ const TherapistAuth = () => {
             <Stethoscope className="h-8 w-8 text-blue-600" />
           </div>
           <CardTitle className="text-2xl text-center">
-            Therapist Portal
+            Therapist Sign Up
           </CardTitle>
           <CardDescription className="text-center">
-            Professional access for speech therapists
+            Create your professional therapist account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={isLogin ? "login" : "signup"} onValueChange={(value) => setIsLogin(value === "login")}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login" className="flex items-center gap-2">
-                <LogIn className="h-4 w-4" />
-                Sign In
-              </TabsTrigger>
-              <TabsTrigger value="signup" className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4" />
-                Sign Up
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login" className="space-y-4">
-              <form onSubmit={handleAuthSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing In..." : "Sign In"}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup" className="space-y-4">
-              <form onSubmit={handleAuthSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    placeholder="Enter your first name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    placeholder="Enter your last name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating Account..." : "Create Account"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          <form onSubmit={handleAuthSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Create a password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                placeholder="Enter your first name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                placeholder="Enter your last name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              {loading ? "Creating Account..." : "Create Account"}
+            </Button>
+          </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <Link to="/" className="text-sm text-center text-gray-600 hover:text-gray-900">
