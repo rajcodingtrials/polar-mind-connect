@@ -39,9 +39,6 @@ const Header = () => {
               <Link to="/consultation" className="text-white hover:text-white/80 transition-colors font-medium">Coaches</Link>
             </>
           )}
-          {!isAuthenticated && (
-            <Link to="/therapist-auth" className="text-white hover:text-white/80 transition-colors font-medium">Therapists</Link>
-          )}
           {isAuthenticated && (
             <>
               {isAdmin() && (

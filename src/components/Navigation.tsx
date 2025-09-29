@@ -38,9 +38,6 @@ const Navigation = () => {
             <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors">
               About
             </Link>
-            <Link to="/therapist-auth" className="text-gray-700 hover:text-blue-600 transition-colors">
-              Therapists
-            </Link>
             
             {user ? (
               <div className="flex items-center space-x-4">
@@ -95,13 +92,6 @@ const Navigation = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 About
-              </Link>
-              <Link
-                to="/therapist-auth"
-                className="block px-3 py-2 text-gray-700 hover:text-blue-600"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Therapists
               </Link>
               
               {user ? (
