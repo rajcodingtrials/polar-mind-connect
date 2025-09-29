@@ -3,22 +3,33 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useUserProfile } from "../hooks/useUserProfile";
+import { useTherapistAuth } from "../hooks/useTherapistAuth";
 import Header from "../components/Header";
 
 const Home = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
+  const { therapistProfile, loading: therapistLoading } = useTherapistAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate("/");
+      navigate("/", { replace: true });
       return;
     }
     
-    // Redirect authenticated users to the OpenAI chat page
-    navigate("/openai-chat");
-  }, [isAuthenticated, navigate]);
+    // Wait for therapist check to complete
+    if (therapistLoading) return;
+    
+    // Redirect therapists to their dashboard
+    if (therapistProfile) {
+      navigate("/therapist-dashboard", { replace: true });
+      return;
+    }
+    
+    // Redirect regular users to the OpenAI chat page
+    navigate("/openai-chat", { replace: true });
+  }, [isAuthenticated, therapistProfile, therapistLoading, navigate]);
 
   if (profileLoading) {
     return (
