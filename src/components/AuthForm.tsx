@@ -104,7 +104,7 @@ const AuthForm = () => {
       <CardFooter className="flex flex-col space-y-3 p-8 pt-6 border-t border-border/20">
         <Link 
           to="/auth?forgot=true" 
-          className="text-sm text-center text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
+          className="text-sm text-center text-blue-600 hover:text-blue-500 underline font-medium transition-colors duration-200"
         >
           Forgot your password?
         </Link>
@@ -112,14 +112,14 @@ const AuthForm = () => {
           Sign up as:{" "}
           <Link 
             to="/auth?signup=true" 
-            className="text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
+            className="text-blue-600 hover:text-blue-500 underline font-medium transition-colors duration-200"
           >
             Parent
           </Link>
           <span className="text-muted-foreground/70"> or </span>
           <Link 
             to="/therapist-auth?signup=true" 
-            className="text-primary hover:text-primary/80 underline font-medium transition-colors duration-200"
+            className="text-blue-600 hover:text-blue-500 underline font-medium transition-colors duration-200"
           >
             Therapist
           </Link>
