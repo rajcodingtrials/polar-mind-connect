@@ -108,7 +108,7 @@ const AuthForm = () => {
             to="/auth?signup=true" 
             className="text-blue-600 hover:text-blue-800 underline"
           >
-            Parent/Client
+            Parent
           </Link>
           {" or "}
           <Link 
