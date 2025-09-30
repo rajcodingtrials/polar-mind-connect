@@ -13,8 +13,8 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [age, setAge] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, resetPassword } = useAuth();
@@ -77,7 +77,7 @@ const Auth = () => {
           return;
         }
 
-        const { error } = await signUp(email, password, username, name, ageNum);
+        const { error } = await signUp(email, password, firstName, lastName, ageNum);
         if (error) {
           toast({
             variant: "destructive",
@@ -106,8 +106,8 @@ const Auth = () => {
   const resetForm = () => {
     setEmail("");
     setPassword("");
-    setUsername("");
-    setName("");
+    setFirstName("");
+    setLastName("");
     setAge("");
     setShowForgotPassword(false);
   };
@@ -164,24 +164,24 @@ const Auth = () => {
             {!isLogin && !showForgotPassword && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    id="username"
+                    id="firstName"
                     type="text"
-                    placeholder="Choose a username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter your first name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">First Name</Label>
+                  <Label htmlFor="lastName">Last Name</Label>
                   <Input
-                    id="name"
+                    id="lastName"
                     type="text"
-                    placeholder="Enter your first name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter your last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     required
                   />
                 </div>

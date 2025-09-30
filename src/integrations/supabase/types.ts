@@ -191,6 +191,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          last_name: string | null
           name: string | null
           speech_delay_mode: boolean
           updated_at: string
@@ -201,6 +202,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id: string
+          last_name?: string | null
           name?: string | null
           speech_delay_mode?: boolean
           updated_at?: string
@@ -211,6 +213,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          last_name?: string | null
           name?: string | null
           speech_delay_mode?: boolean
           updated_at?: string

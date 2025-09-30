@@ -7,6 +7,7 @@ interface UserProfile {
   id: string;
   username: string;
   name: string;
+  last_name: string;
   age: number;
   email: string;
   created_at: string;
