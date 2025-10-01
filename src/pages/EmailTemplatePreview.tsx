@@ -32,18 +32,19 @@ const EmailTemplatePreview = () => {
             <div style={{
               width: '60px',
               height: '60px',
-              background: 'white',
+              background: 'rgba(255, 255, 255, 0.2)',
               borderRadius: '16px',
               padding: '10px',
               boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: '2px solid rgba(255, 255, 255, 0.3)'
             }}>
               <img 
                 src="/lovable-uploads/polariz_icon_only_white.png" 
                 alt="Polariz Logo"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
               />
             </div>
             <span style={{
