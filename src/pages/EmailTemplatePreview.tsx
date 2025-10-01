@@ -51,7 +51,7 @@ const EmailTemplatePreview = () => {
             fontSize: '16px',
             fontWeight: '400'
           }}>
-            Your journey to better communication starts here
+            Connecting speech therapy professionals and families
           </p>
         </div>
 
@@ -72,7 +72,7 @@ const EmailTemplatePreview = () => {
             color: '#4a5568',
             marginBottom: '32px'
           }}>
-            We're thrilled to have you join the Polariz family! You're just one click away from unlocking personalized speech therapy tools designed to make learning fun and effective.
+            We're thrilled to have you join the Polariz community! You're just one click away from accessing our platform that connects speech therapy professionals with families seeking support.
           </p>
 
           {/* CTA Button */}
@@ -128,7 +128,7 @@ const EmailTemplatePreview = () => {
                 fontSize: '14px'
               }}>
                 <span style={{ marginRight: '12px', fontSize: '18px' }}>🎯</span>
-                <span>Interactive speech exercises tailored to your needs</span>
+                <span>Interactive tools and resources for speech therapy</span>
               </li>
               <li style={{
                 display: 'flex',
@@ -137,8 +137,8 @@ const EmailTemplatePreview = () => {
                 color: '#4a5568',
                 fontSize: '14px'
               }}>
-                <span style={{ marginRight: '12px', fontSize: '18px' }}>👨‍⚕️</span>
-                <span>Connect with certified speech therapists</span>
+                <span style={{ marginRight: '12px', fontSize: '18px' }}>🤝</span>
+                <span>Connect professionals with families seeking support</span>
               </li>
               <li style={{
                 display: 'flex',
@@ -148,7 +148,7 @@ const EmailTemplatePreview = () => {
                 fontSize: '14px'
               }}>
                 <span style={{ marginRight: '12px', fontSize: '18px' }}>📊</span>
-                <span>Track your progress with detailed insights</span>
+                <span>Progress tracking and session management</span>
               </li>
               <li style={{
                 display: 'flex',
@@ -157,8 +157,8 @@ const EmailTemplatePreview = () => {
                 color: '#4a5568',
                 fontSize: '14px'
               }}>
-                <span style={{ marginRight: '12px', fontSize: '18px' }}>🎮</span>
-                <span>Gamified learning experience for all ages</span>
+                <span style={{ marginRight: '12px', fontSize: '18px' }}>🔒</span>
+                <span>Secure communication and scheduling platform</span>
               </li>
             </ul>
           </div>
@@ -234,7 +234,7 @@ const EmailTemplatePreview = () => {
             lineHeight: '1.6'
           }}>
             © 2025 Polariz. All rights reserved.<br />
-            Making speech therapy accessible and enjoyable for everyone.
+            Empowering speech therapy professionals and families.
           </p>
         </div>
       </div>
