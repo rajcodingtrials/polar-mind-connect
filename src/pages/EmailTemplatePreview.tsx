@@ -32,7 +32,7 @@ const EmailTemplatePreview = () => {
             <div style={{
               width: '60px',
               height: '60px',
-              background: 'rgba(255, 255, 255, 0.2)',
+              background: '#000000',
               borderRadius: '16px',
               padding: '10px',
               boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
