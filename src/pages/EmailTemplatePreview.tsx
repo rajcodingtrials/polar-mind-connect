@@ -69,7 +69,7 @@ const EmailTemplatePreview = () => {
             fontSize: '16px',
             fontWeight: '400'
           }}>
-            AI-powered speech therapy for children who need it most
+            AI-powered speech therapy connecting families and professionals
           </p>
         </div>
 
@@ -90,7 +90,7 @@ const EmailTemplatePreview = () => {
             color: '#4a5568',
             marginBottom: '32px'
           }}>
-            {"We're thrilled to have you join the Polariz community! You're just one click away from accessing our AI-powered speech therapy platform designed to help speech-delayed children communicate with confidence."}
+            {"We're thrilled to have you join Polariz! You're just one click away from accessing our AI-powered platform that helps speech-delayed children find their voice, while connecting families with professional support."}
           </p>
 
           {/* CTA Button */}
@@ -146,27 +146,7 @@ const EmailTemplatePreview = () => {
                 fontSize: '14px'
               }}>
                 <span style={{ marginRight: '12px', fontSize: '18px' }}>🤖</span>
-                <span>AI-powered speech exercises tailored for speech-delayed children</span>
-              </li>
-              <li style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px 0',
-                color: '#4a5568',
-                fontSize: '14px'
-              }}>
-                <span style={{ marginRight: '12px', fontSize: '18px' }}>🎮</span>
-                <span>Fun, interactive learning that keeps children engaged</span>
-              </li>
-              <li style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px 0',
-                color: '#4a5568',
-                fontSize: '14px'
-              }}>
-                <span style={{ marginRight: '12px', fontSize: '18px' }}>📊</span>
-                <span>Track progress and celebrate every milestone</span>
+                <span>AI-powered speech exercises for children with speech delays</span>
               </li>
               <li style={{
                 display: 'flex',
@@ -176,7 +156,27 @@ const EmailTemplatePreview = () => {
                 fontSize: '14px'
               }}>
                 <span style={{ marginRight: '12px', fontSize: '18px' }}>👨‍⚕️</span>
-                <span>Connect with certified speech therapy professionals</span>
+                <span>Professional tools for speech therapists to support clients</span>
+              </li>
+              <li style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '8px 0',
+                color: '#4a5568',
+                fontSize: '14px'
+              }}>
+                <span style={{ marginRight: '12px', fontSize: '18px' }}>📊</span>
+                <span>Progress tracking and detailed insights for families</span>
+              </li>
+              <li style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '8px 0',
+                color: '#4a5568',
+                fontSize: '14px'
+              }}>
+                <span style={{ marginRight: '12px', fontSize: '18px' }}>🔒</span>
+                <span>Secure scheduling and communication platform</span>
               </li>
             </ul>
           </div>
