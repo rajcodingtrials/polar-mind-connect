@@ -180,21 +180,31 @@ const Admin = () => {
 
     setResendingEmail(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: resendEmail,
+      // Call the edge function directly with mock data to test custom template
+      const { data, error } = await supabase.functions.invoke('send-email-verification', {
+        body: {
+          user: { email: resendEmail },
+          email_data: {
+            token: 'test-token-123456',
+            token_hash: 'test-hash-' + Math.random().toString(36).substring(7),
+            redirect_to: window.location.origin,
+            email_action_type: 'signup',
+            site_url: 'https://gsnsjrfudxyczpldbkzc.supabase.co/auth/v1'
+          }
+        }
       });
 
       if (error) throw error;
 
       toast({
-        title: "Verification email sent",
-        description: `A verification email has been sent to ${resendEmail}`,
+        title: "Test email sent",
+        description: `A test verification email with your custom template has been sent to ${resendEmail}`,
       });
     } catch (error: any) {
+      console.error('Email send error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to resend verification email",
+        description: error.message || "Failed to send test email",
         variant: "destructive",
       });
     } finally {
@@ -388,7 +398,10 @@ const Admin = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Send a verification email to test the email template
+                  Test your custom email template by sending a sample verification email
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Note: This sends a test email with a dummy verification link
                 </p>
               </div>
             </CardContent>
