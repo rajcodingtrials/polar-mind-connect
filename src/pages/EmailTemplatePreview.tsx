@@ -23,19 +23,37 @@ const EmailTemplatePreview = () => {
           textAlign: 'center'
         }}>
           <div style={{
-            width: '80px',
-            height: '80px',
-            margin: '0 auto 16px',
-            background: 'white',
-            borderRadius: '20px',
-            padding: '12px',
-            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            marginBottom: '16px'
           }}>
-            <img 
-              src="/lovable-uploads/polariz_icon_only_white.png" 
-              alt="Polariz Logo"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
+            <div style={{
+              width: '60px',
+              height: '60px',
+              background: 'white',
+              borderRadius: '16px',
+              padding: '10px',
+              boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <img 
+                src="/lovable-uploads/polariz_icon_only_white.png" 
+                alt="Polariz Logo"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
+            <span style={{
+              fontSize: '32px',
+              fontWeight: '700',
+              color: 'white',
+              letterSpacing: '-0.5px'
+            }}>
+              Polariz
+            </span>
           </div>
           <h1 style={{
             color: '#ffffff',
