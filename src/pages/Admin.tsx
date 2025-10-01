@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Slider } from '@radix-ui/react-slider';
 import { useUserRole } from '../hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 import { ChevronDown, ChevronRight } from 'lucide-react';
@@ -91,6 +92,8 @@ const Admin = () => {
 
   const [clearUploadForm, setClearUploadForm] = useState(false);
   const [showCelebrationBlock, setShowCelebrationBlock] = useState(false);
+  const [resendEmail, setResendEmail] = useState('pree.nair86@gmail.com');
+  const [resendingEmail, setResendingEmail] = useState(false);
 
   const handleQuestionsUploaded = async (questions: Question[], images: File[], questionType: string) => {
     try {
@@ -163,6 +166,40 @@ const Admin = () => {
     setDefaultChatMode(mode);
     localStorage.setItem('defaultChatMode', mode);
     console.log('Default chat mode changed to:', mode);
+  };
+
+  const handleResendVerification = async () => {
+    if (!resendEmail || !resendEmail.includes('@')) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResendingEmail(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: resendEmail,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Verification email sent",
+        description: `A verification email has been sent to ${resendEmail}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend verification email",
+        variant: "destructive",
+      });
+    } finally {
+      setResendingEmail(false);
+    }
   };
 
   const clearStoredData = async () => {
@@ -316,6 +353,46 @@ const Admin = () => {
               </>
             )}
           </div>
+
+          {/* Email Verification Testing */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="w-5 h-5" />
+                Email Verification Testing
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="resend-email">Email Address</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="resend-email"
+                    type="email"
+                    placeholder="user@example.com"
+                    value={resendEmail}
+                    onChange={(e) => setResendEmail(e.target.value)}
+                  />
+                  <Button 
+                    onClick={handleResendVerification}
+                    disabled={resendingEmail}
+                  >
+                    {resendingEmail ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Resend Verification'
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Send a verification email to test the email template
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Settings Card */}
           <Card>
