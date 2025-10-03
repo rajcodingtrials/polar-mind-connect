@@ -7,7 +7,7 @@ const EmailTemplatesPreview = () => {
   const VerificationTemplate = () => (
     <div style={{ 
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: '#ffffff',
       padding: '40px 20px',
       minHeight: '100vh'
     }}>
@@ -266,7 +266,7 @@ const EmailTemplatesPreview = () => {
   const BookingConfirmationTemplate = () => (
     <div style={{ 
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+      background: '#ffffff',
       padding: '40px 20px',
       minHeight: '100vh'
     }}>
@@ -575,7 +575,7 @@ const EmailTemplatesPreview = () => {
   const ReminderTemplate = () => (
     <div style={{ 
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      background: '#ffffff',
       padding: '40px 20px',
       minHeight: '100vh'
     }}>
