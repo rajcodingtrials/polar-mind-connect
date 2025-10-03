@@ -24,6 +24,7 @@ import Consultation from "./pages/Consultation";
 import UserDashboard from "./pages/UserDashboard";
 import FooterDemo from "./pages/FooterDemo";
 import EmailTemplatePreview from "./pages/EmailTemplatePreview";
+import EmailTemplatesPreview from "./pages/EmailTemplatesPreview";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,7 +87,8 @@ function App() {
               <Route path="/consultation" element={<Consultation />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />
               <Route path="/footer-demo" element={<FooterDemo />} />
-              <Route path="/email-preview" element={<EmailTemplatePreview />} />
+          <Route path="/email-preview" element={<EmailTemplatePreview />} />
+          <Route path="/email-templates-preview" element={<EmailTemplatesPreview />} />
             </Routes>
           </TooltipProvider>
         </AuthProvider>
