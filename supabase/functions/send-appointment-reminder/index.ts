@@ -49,14 +49,14 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: clientTemplate, error: clientTemplateError } = await supabase
       .from('email_templates')
       .select('subject, html_content')
-      .eq('template_name', 'appointment_reminder')
+      .eq('template_name', 'appointment_reminder_client')
       .eq('is_active', true)
       .single();
 
     const { data: therapistTemplate, error: therapistTemplateError } = await supabase
       .from('email_templates')
       .select('subject, html_content')
-      .eq('template_name', 'therapist_appointment_reminder')
+      .eq('template_name', 'appointment_reminder_therapist')
       .eq('is_active', true)
       .single();
 
@@ -83,14 +83,19 @@ const handler = async (req: Request): Promise<Response> => {
       `${session.therapists.first_name || ''} ${session.therapists.last_name || ''}`.trim() || 
       'Your Therapist';
 
-    // Prepare template variables
+    // Prepare template variables - support both formats
     const templateVars = {
       client_name: session.profiles.name || 'Valued Client',
+      clientName: session.profiles.name || 'Valued Client',
       therapist_name: therapistName,
+      therapistName: therapistName,
       session_date: formattedDate,
+      sessionDate: formattedDate,
       session_time: session.start_time,
+      sessionTime: session.start_time,
       duration: session.duration_minutes.toString(),
-      session_type: session.session_type
+      session_type: session.session_type,
+      sessionType: session.session_type
     };
 
     // Send email to client

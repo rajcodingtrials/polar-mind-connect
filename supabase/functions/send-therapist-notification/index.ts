@@ -90,13 +90,19 @@ const handler = async (req: Request): Promise<Response> => {
     const therapistName = therapist.name || `${therapist.first_name || ''} ${therapist.last_name || ''}`.trim() || 'Doctor';
     const templateVars = {
       therapist_name: therapistName,
+      therapistName: therapistName,
       client_name: clientName,
+      clientName: clientName,
       session_date: formattedDate,
+      sessionDate: formattedDate,
       session_time: sessionTime,
+      sessionTime: sessionTime,
       duration: duration.toString(),
       session_type: sessionType,
+      sessionType: sessionType,
       amount: amount.toFixed(2),
-      client_notes: clientNotes || ''
+      client_notes: clientNotes || '',
+      clientNotes: clientNotes || ''
     };
 
     // Replace placeholders in subject and content

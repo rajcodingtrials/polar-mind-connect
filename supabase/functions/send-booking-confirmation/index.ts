@@ -59,7 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: template, error: templateError } = await supabase
       .from('email_templates')
       .select('subject, html_content')
-      .eq('template_name', 'booking_confirmation')
+      .eq('template_name', 'booking_confirmation_client')
       .eq('is_active', true)
       .single();
 
@@ -68,15 +68,22 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Email template not found');
     }
 
-    // Replace variables in template
+    // Replace variables in template - support both formats
     const variables = {
+      client_name: clientName,
       clientName,
+      therapist_name: therapistName,
       therapistName,
+      session_date: formattedDate,
       sessionDate: formattedDate,
+      session_time: sessionTime,
       sessionTime,
       duration: duration.toString(),
+      session_type: sessionType,
       sessionType,
-      price: price.toString()
+      price: price.toString(),
+      booking_id: sessionId,
+      dashboard_url: 'https://polariz.ai/dashboard'
     };
 
     let htmlContent = template.html_content;
