@@ -268,7 +268,8 @@ export const createSystemPrompt = async (
   customBasePrompt?: string,
   customActivityPrompts?: any,
   childName?: string,
-  therapistName?: string
+  therapistName?: string,
+  customVariables?: Record<string, string>
 ): Promise<string> => {
   console.log('🚀 === CREATE SYSTEM PROMPT CALLED ===');
   console.log('  - Activity type:', activityType);
@@ -313,6 +314,18 @@ export const createSystemPrompt = async (
   const nameToUse = childName || "friend";
   const therapistToUse = therapistName || "Laura";
   prompt = prompt.replace(/{child_name}/g, nameToUse).replace(/{therapist_name}/g, therapistToUse);
+
+  // Apply any custom variable placeholders like {correct_answer}, {question}, etc.
+  if (customVariables && typeof customVariables === 'object') {
+    for (const [key, value] of Object.entries(customVariables)) {
+      try {
+        const token = new RegExp(`\\{${key}\\}`, 'g');
+        prompt = prompt.replace(token, String(value));
+      } catch (e) {
+        console.warn('Variable replacement failed for key:', key);
+      }
+    }
+  }
   
   console.log('🎯 === FINAL PROMPT SUMMARY ===');
   console.log('  - Final prompt total length:', prompt.length);

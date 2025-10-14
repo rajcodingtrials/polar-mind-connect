@@ -30,7 +30,9 @@ serve(async (req) => {
       model = 'gpt-4o-mini', 
       systemPrompt, 
       activityType, 
+      promptType,
       customInstructions,
+      customVariables,
       therapistName,
       childName
     } = requestBody;
@@ -41,7 +43,9 @@ serve(async (req) => {
       model,
       hasSystemPrompt: !!systemPrompt,
       activityType,
+      promptType,
       hasCustomInstructions: !!customInstructions,
+      hasCustomVariables: !!customVariables,
       therapistName,
       childName
     });
@@ -57,12 +61,15 @@ serve(async (req) => {
     let finalSystemPrompt = systemPrompt;
     if (!finalSystemPrompt) {
       console.log('=== CREATING SYSTEM PROMPT ===');
-      console.log('Activity type passed to createSystemPrompt:', activityType);
+      const activityKey = promptType || activityType;
+      console.log('Activity key passed to createSystemPrompt:', activityKey);
+      console.log('Prompt type:', promptType);
       console.log('Custom instructions passed:', customInstructions);
       console.log('Therapist name:', therapistName);
       console.log('Child name:', childName);
+      console.log('Has custom variables:', !!customVariables);
       
-      finalSystemPrompt = await createSystemPrompt(activityType, customInstructions, undefined, undefined, childName, therapistName);
+      finalSystemPrompt = await createSystemPrompt(activityKey, customInstructions, undefined, undefined, childName, therapistName, customVariables);
       
       console.log('=== SYSTEM PROMPT CREATED ===');
       console.log('Final system prompt length:', finalSystemPrompt.length);
