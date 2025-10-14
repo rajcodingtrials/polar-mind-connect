@@ -174,7 +174,6 @@ const TapAndPlayView = ({
             childName,
             therapistName,
             activityType: 'tap_and_play',
-            customInstructions: "Return only the final feedback line to speak to the child. No explanations, no quotes, no meta commentary. Use provided variables. 1-2 short sentences. Warm, child-friendly. Max 1 emoji.",
             customVariables: {
               correct_answer: question.answer,
               question: question.question,
@@ -233,7 +232,6 @@ const TapAndPlayView = ({
             childName,
             therapistName,
             activityType: 'tap_and_play',
-            customInstructions: "Return only the final feedback line to speak to the child. No explanations, no quotes, no meta commentary. Use provided variables. 1-2 short sentences. Warm, child-friendly. Max 1 emoji.",
             customVariables: {
               correct_answer: question.answer,
               question: question.question,
