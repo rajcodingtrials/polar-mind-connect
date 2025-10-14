@@ -174,7 +174,7 @@ const TapAndPlayView = ({
             childName,
             therapistName,
             activityType: 'tap_and_play',
-            customInstructions: "CRITICAL: Generate VARIED responses. NEVER start with 'That's amazing'. Rotate through different openings: 'Excellent!', 'Perfect choice!', 'You got it!', 'Wonderful!', 'Yes, that's right!', 'Fantastic!', 'Great work!', 'You found it!', 'Brilliant!', 'Super!', 'Well done!'. Return ONLY the feedback line (no quotes, no explanations). 1-2 sentences. Mention what they selected. Max 1 emoji.",
+            customInstructions: "Return only the final feedback line to speak to the child. No explanations, no quotes, no meta commentary. Use provided variables. 1-2 short sentences. Warm, child-friendly. Max 1 emoji.",
             customVariables: {
               correct_answer: question.answer,
               question: question.question,
@@ -233,7 +233,7 @@ const TapAndPlayView = ({
             childName,
             therapistName,
             activityType: 'tap_and_play',
-            customInstructions: "CRITICAL: Generate VARIED responses. Be encouraging but VARY your openings. Rotate through: 'Not quite', 'Let's try again', 'Hmm', 'Almost', 'Good try'. Gently guide them. Return ONLY the feedback line (no quotes, no explanations). 1-2 sentences. Max 1 emoji.",
+            customInstructions: "Return only the final feedback line to speak to the child. No explanations, no quotes, no meta commentary. Use provided variables. 1-2 short sentences. Warm, child-friendly. Max 1 emoji.",
             customVariables: {
               correct_answer: question.answer,
               question: question.question,
