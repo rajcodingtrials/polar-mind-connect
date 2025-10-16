@@ -289,18 +289,32 @@ export const createSystemPrompt = async (
   console.log('    * Contains "That\'s amazing!":', basePrompt.includes("That's amazing!"));
   console.log('    * Total length:', basePrompt.length);
   
-  let prompt = basePrompt + '\n' + introduction + '\n';
+  // For feedback-specific prompts, use them as standalone prompts without base prompt
+  const feedbackPromptTypes = ['tap_feedback_correct', 'tap_feedback_incorrect', 'sound_feedback_correct', 'sound_feedback_incorrect', 'sound_feedback_instruction', 'sound_feedback_encouragement'];
+  const isFeedbackPrompt = activityType && feedbackPromptTypes.includes(activityType);
   
-  if (activityType && activities[activityType as keyof typeof activities]) {
-    const activityPrompt = activities[activityType as keyof typeof activities];
-    prompt += activityPrompt;
-    console.log(`✅ Added activity-specific prompt for: ${activityType}`);
-    console.log('  - Activity prompt length:', activityPrompt.length);
+  let prompt: string;
+  
+  if (isFeedbackPrompt && activities[activityType as keyof typeof activities]) {
+    // Use feedback prompt as complete standalone prompt
+    prompt = activities[activityType as keyof typeof activities];
+    console.log(`✅ Using standalone feedback prompt for: ${activityType}`);
+    console.log('  - Feedback prompt length:', prompt.length);
   } else {
-    const defaultPrompt = activities.default;
-    prompt += defaultPrompt;
-    console.log('✅ Using default activity prompt');
-    console.log('  - Default prompt length:', defaultPrompt.length);
+    // Use normal flow: base + intro + activity
+    prompt = basePrompt + '\n' + introduction + '\n';
+    
+    if (activityType && activities[activityType as keyof typeof activities]) {
+      const activityPrompt = activities[activityType as keyof typeof activities];
+      prompt += activityPrompt;
+      console.log(`✅ Added activity-specific prompt for: ${activityType}`);
+      console.log('  - Activity prompt length:', activityPrompt.length);
+    } else {
+      const defaultPrompt = activities.default;
+      prompt += defaultPrompt;
+      console.log('✅ Using default activity prompt');
+      console.log('  - Default prompt length:', defaultPrompt.length);
+    }
   }
   
   if (customInstructions) {
