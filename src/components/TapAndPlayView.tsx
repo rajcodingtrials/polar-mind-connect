@@ -167,7 +167,7 @@ const TapAndPlayView = ({
             messages: [
               {
                 role: 'user',
-                content: `The child selected the correct answer "${question.answer}" for the question "${question.question}".`
+                content: 'Generate tap feedback for correct answer'
               }
             ],
             promptType: 'tap_feedback_correct',
@@ -225,7 +225,7 @@ const TapAndPlayView = ({
             messages: [
               {
                 role: 'user',
-                content: `The child selected an incorrect answer for the question "${question.question}". The correct answer is "${question.answer}".`
+                content: 'Generate tap feedback for incorrect answer'
               }
             ],
             promptType: 'tap_feedback_incorrect',

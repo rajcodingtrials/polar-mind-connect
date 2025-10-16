@@ -289,33 +289,18 @@ export const createSystemPrompt = async (
   console.log('    * Contains "That\'s amazing!":', basePrompt.includes("That's amazing!"));
   console.log('    * Total length:', basePrompt.length);
   
-  // Standalone feedback prompt types (do NOT prepend base prompt)
-  const STANDALONE_TYPES = new Set([
-    'tap_feedback_incorrect',
-    'tap_feedback_correct',
-    'sound_feedback_correct',
-    'sound_feedback_incorrect',
-    'sound_feedback_instruction',
-    'sound_feedback_encouragement',
-    'sound_feedback_correct_speech_delay'
-  ]);
-
-  let prompt: string;
+  let prompt = basePrompt + '\n' + introduction + '\n';
+  
   if (activityType && activities[activityType as keyof typeof activities]) {
     const activityPrompt = activities[activityType as keyof typeof activities];
-    if (STANDALONE_TYPES.has(activityType)) {
-      prompt = String(activityPrompt);
-      console.log(`✅ Using standalone feedback prompt for: ${activityType}`);
-    } else {
-      prompt = basePrompt + '\n' + introduction + '\n' + String(activityPrompt);
-      console.log(`✅ Added activity-specific prompt for: ${activityType}`);
-    }
-    console.log('  - Activity prompt length:', String(activityPrompt).length);
+    prompt += activityPrompt;
+    console.log(`✅ Added activity-specific prompt for: ${activityType}`);
+    console.log('  - Activity prompt length:', activityPrompt.length);
   } else {
     const defaultPrompt = activities.default;
-    prompt = basePrompt + '\n' + introduction + '\n' + String(defaultPrompt);
+    prompt += defaultPrompt;
     console.log('✅ Using default activity prompt');
-    console.log('  - Default prompt length:', String(defaultPrompt).length);
+    console.log('  - Default prompt length:', defaultPrompt.length);
   }
   
   if (customInstructions) {
@@ -331,35 +316,15 @@ export const createSystemPrompt = async (
   prompt = prompt.replace(/{child_name}/g, nameToUse).replace(/{therapist_name}/g, therapistToUse);
 
   // Apply any custom variable placeholders like {correct_answer}, {question}, etc.
-  console.log('🔄 === APPLYING CUSTOM VARIABLES ===');
-  console.log('Custom variables received:', customVariables);
   if (customVariables && typeof customVariables === 'object') {
-    console.log('Processing custom variables...');
     for (const [key, value] of Object.entries(customVariables)) {
       try {
         const token = new RegExp(`\\{${key}\\}`, 'g');
-        const beforeReplace = prompt;
         prompt = prompt.replace(token, String(value));
-        const wasReplaced = beforeReplace !== prompt;
-        console.log(`  - ${key}: "${value}" (replaced: ${wasReplaced})`);
       } catch (e) {
-        console.warn('Variable replacement failed for key:', key, e);
+        console.warn('Variable replacement failed for key:', key);
       }
     }
-    // Safety: normalize bracket-style placeholders if present in any DB text
-    if (customVariables['correct_answer']) {
-      const ca = String(customVariables['correct_answer']);
-      prompt = prompt
-        .replace(/\[insert\s+correct\s+answer\]/gi, ca)
-        .replace(/\[correct\s+answer\]/gi, ca);
-    }
-    if (customVariables['question']) {
-      const q = String(customVariables['question']);
-      prompt = prompt.replace(/\[question\]/gi, q);
-    }
-    console.log('Prompt after variable replacement (first 500 chars):', prompt.substring(0, 500));
-  } else {
-    console.log('No custom variables to apply');
   }
   
   console.log('🎯 === FINAL PROMPT SUMMARY ===');
