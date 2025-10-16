@@ -289,16 +289,24 @@ export const createSystemPrompt = async (
   console.log('    * Contains "That\'s amazing!":', basePrompt.includes("That's amazing!"));
   console.log('    * Total length:', basePrompt.length);
   
-  let prompt = basePrompt + '\n' + introduction + '\n';
-  
-  if (activityType && activities[activityType as keyof typeof activities]) {
-    const activityPrompt = activities[activityType as keyof typeof activities];
-    prompt += activityPrompt;
-    console.log(`✅ Added activity-specific prompt for: ${activityType}`);
-    console.log('  - Activity prompt length:', activityPrompt.length);
+  // Build prompt depending on type (feedback prompts are standalone)
+  const isFeedbackType = (t?: string) => !!t && (/feedback/.test(t) || /^tap_feedback_/.test(t) || /^sound_feedback_/.test(t));
+
+  let prompt = '';
+  if (activityType && (activities as any)[activityType]) {
+    const activityPrompt = (activities as any)[activityType] as string;
+    if (isFeedbackType(activityType)) {
+      prompt = activityPrompt;
+      console.log(`✅ Using standalone feedback prompt for: ${activityType}`);
+      console.log('  - Feedback prompt length:', activityPrompt.length);
+    } else {
+      prompt = basePrompt + '\n' + introduction + '\n' + activityPrompt;
+      console.log(`✅ Added activity-specific prompt for: ${activityType}`);
+      console.log('  - Activity prompt length:', activityPrompt.length);
+    }
   } else {
-    const defaultPrompt = activities.default;
-    prompt += defaultPrompt;
+    const defaultPrompt = (activities as any).default as string;
+    prompt = basePrompt + '\n' + introduction + '\n' + defaultPrompt;
     console.log('✅ Using default activity prompt');
     console.log('  - Default prompt length:', defaultPrompt.length);
   }
