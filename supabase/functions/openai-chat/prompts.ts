@@ -289,18 +289,33 @@ export const createSystemPrompt = async (
   console.log('    * Contains "That\'s amazing!":', basePrompt.includes("That's amazing!"));
   console.log('    * Total length:', basePrompt.length);
   
-  let prompt = basePrompt + '\n' + introduction + '\n';
-  
+  // Standalone feedback prompt types (do NOT prepend base prompt)
+  const STANDALONE_TYPES = new Set([
+    'tap_feedback_incorrect',
+    'tap_feedback_correct',
+    'sound_feedback_correct',
+    'sound_feedback_incorrect',
+    'sound_feedback_instruction',
+    'sound_feedback_encouragement',
+    'sound_feedback_correct_speech_delay'
+  ]);
+
+  let prompt: string;
   if (activityType && activities[activityType as keyof typeof activities]) {
     const activityPrompt = activities[activityType as keyof typeof activities];
-    prompt += activityPrompt;
-    console.log(`✅ Added activity-specific prompt for: ${activityType}`);
-    console.log('  - Activity prompt length:', activityPrompt.length);
+    if (STANDALONE_TYPES.has(activityType)) {
+      prompt = String(activityPrompt);
+      console.log(`✅ Using standalone feedback prompt for: ${activityType}`);
+    } else {
+      prompt = basePrompt + '\n' + introduction + '\n' + String(activityPrompt);
+      console.log(`✅ Added activity-specific prompt for: ${activityType}`);
+    }
+    console.log('  - Activity prompt length:', String(activityPrompt).length);
   } else {
     const defaultPrompt = activities.default;
-    prompt += defaultPrompt;
+    prompt = basePrompt + '\n' + introduction + '\n' + String(defaultPrompt);
     console.log('✅ Using default activity prompt');
-    console.log('  - Default prompt length:', defaultPrompt.length);
+    console.log('  - Default prompt length:', String(defaultPrompt).length);
   }
   
   if (customInstructions) {
@@ -330,6 +345,17 @@ export const createSystemPrompt = async (
       } catch (e) {
         console.warn('Variable replacement failed for key:', key, e);
       }
+    }
+    // Safety: normalize bracket-style placeholders if present in any DB text
+    if (customVariables['correct_answer']) {
+      const ca = String(customVariables['correct_answer']);
+      prompt = prompt
+        .replace(/\[insert\s+correct\s+answer\]/gi, ca)
+        .replace(/\[correct\s+answer\]/gi, ca);
+    }
+    if (customVariables['question']) {
+      const q = String(customVariables['question']);
+      prompt = prompt.replace(/\[question\]/gi, q);
     }
     console.log('Prompt after variable replacement (first 500 chars):', prompt.substring(0, 500));
   } else {
