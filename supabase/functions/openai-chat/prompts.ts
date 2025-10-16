@@ -316,15 +316,24 @@ export const createSystemPrompt = async (
   prompt = prompt.replace(/{child_name}/g, nameToUse).replace(/{therapist_name}/g, therapistToUse);
 
   // Apply any custom variable placeholders like {correct_answer}, {question}, etc.
+  console.log('🔄 === APPLYING CUSTOM VARIABLES ===');
+  console.log('Custom variables received:', customVariables);
   if (customVariables && typeof customVariables === 'object') {
+    console.log('Processing custom variables...');
     for (const [key, value] of Object.entries(customVariables)) {
       try {
         const token = new RegExp(`\\{${key}\\}`, 'g');
+        const beforeReplace = prompt;
         prompt = prompt.replace(token, String(value));
+        const wasReplaced = beforeReplace !== prompt;
+        console.log(`  - ${key}: "${value}" (replaced: ${wasReplaced})`);
       } catch (e) {
-        console.warn('Variable replacement failed for key:', key);
+        console.warn('Variable replacement failed for key:', key, e);
       }
     }
+    console.log('Prompt after variable replacement (first 500 chars):', prompt.substring(0, 500));
+  } else {
+    console.log('No custom variables to apply');
   }
   
   console.log('🎯 === FINAL PROMPT SUMMARY ===');
