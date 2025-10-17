@@ -167,7 +167,7 @@ const TapAndPlayView = ({
             messages: [
               {
                 role: 'user',
-                content: 'Generate tap feedback for correct answer'
+                content: `The child selected the correct image for the question "${question.question}". The correct answer is "${question.answer}". Please provide brief, celebratory feedback.`
               }
             ],
             promptType: 'tap_feedback_correct',
@@ -225,7 +225,7 @@ const TapAndPlayView = ({
             messages: [
               {
                 role: 'user',
-                content: 'Generate tap feedback for incorrect answer'
+                content: `The child selected an incorrect image. The question was "${question.question}" and the correct answer is "${question.answer}". Please provide brief, encouraging feedback.`
               }
             ],
             promptType: 'tap_feedback_incorrect',
