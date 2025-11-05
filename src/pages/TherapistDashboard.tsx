@@ -45,6 +45,12 @@ const TherapistDashboard = () => {
   const [isEditing, setIsEditing] = useState(!therapistProfile); // Start in edit mode if no profile
   const [editedProfile, setEditedProfile] = useState(therapistProfile || {
     name: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    date_of_birth: '',
+    phone: '',
+    country: '',
     bio: '',
     headline: '',
     years_experience: 0,
@@ -79,6 +85,7 @@ const TherapistDashboard = () => {
           first_name: firstName,
           last_name: lastName,
           email: email,
+          date_of_birth: (user.user_metadata?.date_of_birth || user.user_metadata?.dob || ''),
           bio: '',
           headline: '',
           years_experience: 0,
@@ -114,6 +121,12 @@ const TherapistDashboard = () => {
 
     const profileData = {
       name: editedProfile.name,
+      first_name: editedProfile.first_name,
+      last_name: editedProfile.last_name,
+      email: editedProfile.email,
+      date_of_birth: editedProfile.date_of_birth || null,
+      phone: editedProfile.phone,
+      country: editedProfile.country,
       headline: editedProfile.headline,
       bio: editedProfile.bio,
       years_experience: editedProfile.years_experience,
@@ -147,6 +160,12 @@ const TherapistDashboard = () => {
       // If no profile exists, reset to empty form
       setEditedProfile({
         name: '',
+        first_name: '',
+        last_name: '',
+        email: '',
+        date_of_birth: '',
+        phone: '',
+        country: '',
         bio: '',
         headline: '',
         years_experience: 0,
