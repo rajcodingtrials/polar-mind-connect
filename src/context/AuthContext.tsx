@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, firstName: string, lastName: string, age: number, isTherapist?: boolean) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, firstName: string, lastName: string, age: number, isTherapist?: boolean, dateOfBirth?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   login: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string, age: number, isTherapist: boolean = false) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, age: number, isTherapist: boolean = false, dateOfBirth?: string) => {
     try {
       const redirectUrl = isTherapist 
         ? `${window.location.origin}/therapist-dashboard`
@@ -73,9 +73,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            name: firstName,
+            first_name: firstName,
             last_name: lastName,
             age: age.toString(),
+            date_of_birth: dateOfBirth || '',
             is_therapist: isTherapist.toString(),
           },
         },

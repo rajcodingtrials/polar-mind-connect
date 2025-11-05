@@ -74,7 +74,7 @@ const TherapistAuth = () => {
         return;
       }
 
-      const { error } = await signUp(email, password, firstName, lastName, age, true);
+      const { error } = await signUp(email, password, firstName, lastName, age, true, dateOfBirth);
       if (error) {
         toast({
           variant: "destructive",
