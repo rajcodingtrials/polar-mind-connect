@@ -155,7 +155,7 @@ const TherapistAuth = () => {
     );
   };
 
-  if (user && (showCreateProfile || isVerified || role === 'therapist')) {
+  if (user && (showCreateProfile || isVerified) && !therapistProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <Card className="w-full max-w-2xl">
