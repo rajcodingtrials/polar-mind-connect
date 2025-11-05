@@ -25,7 +25,7 @@ const Home = () => {
     
     // If user has therapist role but no profile yet, redirect to complete profile
     if (role === 'therapist' && !therapistProfile) {
-      navigate("/therapist-dashboard", { replace: true });
+      navigate("/therapist-auth", { replace: true });
       return;
     }
     
