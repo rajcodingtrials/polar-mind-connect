@@ -51,9 +51,10 @@ const TherapistDashboard = () => {
       return;
     }
     
-    if (!loading && !therapistProfile) {
-      navigate("/therapist-auth");
-    }
+    // Stay on dashboard even if profile doesn't exist yet; allow completing profile here
+    // if (!loading && !therapistProfile) {
+    //   navigate("/therapist-auth");
+    // }
   }, [user, therapistProfile, loading, navigate]);
 
   useEffect(() => {
