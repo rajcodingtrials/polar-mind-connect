@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUp = async (email: string, password: string, firstName: string, lastName: string, age: number, isTherapist: boolean = false) => {
     try {
       const redirectUrl = isTherapist 
-        ? `${window.location.origin}/therapist-auth?verified=true`
+        ? `${window.location.origin}/therapist-dashboard`
         : `${window.location.origin}/`;
       
       const { data, error } = await supabase.auth.signUp({

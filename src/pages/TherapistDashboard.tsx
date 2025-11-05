@@ -47,14 +47,9 @@ const TherapistDashboard = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate("/therapist-auth");
-      return;
+      navigate("/auth", { replace: true });
     }
-    
-    if (!loading && !therapistProfile) {
-      navigate("/therapist-auth");
-    }
-  }, [user, therapistProfile, loading, navigate]);
+  }, [user, navigate]);
 
   useEffect(() => {
     setEditedProfile(therapistProfile);
