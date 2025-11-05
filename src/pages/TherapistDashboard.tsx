@@ -54,12 +54,48 @@ const TherapistDashboard = () => {
     specializations: [],
     avatar_url: '',
   });
+  const [profileInitialized, setProfileInitialized] = useState(false);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth", { replace: true });
     }
   }, [user, navigate]);
+
+  // Auto-create minimal profile for new therapists with prefilled data from sign-up
+  useEffect(() => {
+    const initializeProfile = async () => {
+      if (user && !therapistProfile && !loading && !profileInitialized) {
+        setProfileInitialized(true);
+        
+        // Get user metadata from sign-up
+        const firstName = user.user_metadata?.first_name || '';
+        const lastName = user.user_metadata?.last_name || '';
+        const email = user.email || '';
+        
+        // Create minimal profile with sign-up data
+        const minimalProfile = {
+          name: firstName && lastName ? `${firstName} ${lastName}` : firstName || '',
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          bio: '',
+          headline: '',
+          years_experience: 0,
+          certification: '',
+          education: '',
+          languages: [],
+          specializations: [],
+          avatar_url: '',
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        };
+        
+        await createTherapistProfile(minimalProfile);
+      }
+    };
+    
+    initializeProfile();
+  }, [user, therapistProfile, loading, createTherapistProfile, profileInitialized]);
 
   useEffect(() => {
     if (therapistProfile) {
