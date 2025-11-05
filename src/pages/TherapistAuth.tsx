@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { Stethoscope, UserPlus } from "lucide-react";
 
 const TherapistAuth = () => {
+  const [searchParams] = useSearchParams();
+  const isVerified = searchParams.get('verified') === 'true';
+  
   const [showCreateProfile, setShowCreateProfile] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -71,7 +74,7 @@ const TherapistAuth = () => {
         return;
       }
 
-      const { error } = await signUp(email, password, firstName, `${firstName} ${lastName}`, age);
+      const { error } = await signUp(email, password, firstName, lastName, age, true);
       if (error) {
         toast({
           variant: "destructive",
@@ -143,7 +146,7 @@ const TherapistAuth = () => {
     );
   };
 
-  if (user && showCreateProfile) {
+  if (user && (showCreateProfile || isVerified)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <Card className="w-full max-w-2xl">
@@ -153,6 +156,11 @@ const TherapistAuth = () => {
             </div>
             <CardTitle className="text-2xl text-center">Create Therapist Profile</CardTitle>
             <CardDescription className="text-center">
+              {isVerified && (
+                <div className="text-green-600 font-medium mb-2">
+                  ✓ Email verified! Complete your therapist profile below.
+                </div>
+              )}
               Complete your professional profile to start accepting clients
             </CardDescription>
           </CardHeader>

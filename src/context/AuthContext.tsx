@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, firstName: string, lastName: string, age: number) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, firstName: string, lastName: string, age: number, isTherapist?: boolean) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   login: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -61,23 +61,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string, age: number) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name: firstName,
-          last_name: lastName,
-          age: age.toString()
-        }
-      }
-    });
-    
-    return { error };
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, age: number, isTherapist: boolean = false) => {
+    try {
+      const redirectUrl = isTherapist 
+        ? `${window.location.origin}/therapist-auth?verified=true`
+        : `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name: firstName,
+            last_name: lastName,
+            age: age.toString(),
+            is_therapist: isTherapist.toString(),
+          },
+        },
+      });
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
