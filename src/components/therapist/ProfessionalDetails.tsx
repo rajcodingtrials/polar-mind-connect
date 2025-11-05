@@ -14,11 +14,11 @@ interface ProfessionalDetailsProps {
     bio?: string;
     hourly_rate_30min?: number;
     hourly_rate_60min?: number;
-    specializations: string[];
+    specializations?: string[];
     certification?: string;
     education?: string;
     languages?: string[];
-  };
+  } | null;
   editedProfile: any;
   setEditedProfile: (profile: any) => void;
   isEditing: boolean;
@@ -70,7 +70,7 @@ export const ProfessionalDetails = ({
               placeholder="e.g., Speech and Language Therapist"
             />
           ) : (
-            <p className="text-foreground leading-relaxed">{therapistProfile.headline || 'Not specified'}</p>
+            <p className="text-foreground leading-relaxed">{therapistProfile?.headline || 'Not specified'}</p>
           )}
         </div>
 
@@ -84,7 +84,7 @@ export const ProfessionalDetails = ({
               placeholder="Tell clients about your background and approach..."
             />
           ) : (
-            <p className="text-foreground leading-relaxed">{therapistProfile.bio || 'No bio provided'}</p>
+            <p className="text-foreground leading-relaxed">{therapistProfile?.bio || 'No bio provided'}</p>
           )}
         </div>
 
@@ -98,7 +98,7 @@ export const ProfessionalDetails = ({
               placeholder="List your degrees and licenses..."
             />
           ) : (
-            <p className="text-foreground leading-relaxed">{therapistProfile.certification || 'Not specified'}</p>
+            <p className="text-foreground leading-relaxed">{therapistProfile?.certification || 'Not specified'}</p>
           )}
         </div>
 
@@ -112,7 +112,7 @@ export const ProfessionalDetails = ({
               placeholder="Describe your educational background..."
             />
           ) : (
-            <p className="text-foreground leading-relaxed">{therapistProfile.education || 'Not specified'}</p>
+            <p className="text-foreground leading-relaxed">{therapistProfile?.education || 'Not specified'}</p>
           )}
         </div>
 
@@ -129,7 +129,7 @@ export const ProfessionalDetails = ({
             />
           ) : (
             <div className="flex flex-wrap gap-2">
-              {therapistProfile.languages && therapistProfile.languages.length > 0 ? (
+              {therapistProfile?.languages && therapistProfile.languages.length > 0 ? (
                 therapistProfile.languages.map((lang, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {lang}
@@ -193,11 +193,15 @@ export const ProfessionalDetails = ({
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {therapistProfile.specializations.map((spec, index) => (
-                <Badge key={index} variant="secondary" className="text-xs">
-                  {spec}
-                </Badge>
-              ))}
+              {therapistProfile?.specializations && therapistProfile.specializations.length > 0 ? (
+                therapistProfile.specializations.map((spec, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {spec}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">Not specified</p>
+              )}
             </div>
           )}
         </div>
@@ -206,7 +210,7 @@ export const ProfessionalDetails = ({
           <div className="space-y-1">
             <Label className="text-sm font-medium text-muted-foreground">30-min Session Rate</Label>
             <p className="text-foreground font-medium">
-              ${therapistProfile.hourly_rate_30min || 'Not set'}
+              ${therapistProfile?.hourly_rate_30min || 'Not set'}
             </p>
             <p className="text-xs text-muted-foreground">Contact admin to change rates</p>
           </div>
@@ -214,7 +218,7 @@ export const ProfessionalDetails = ({
           <div className="space-y-1">
             <Label className="text-sm font-medium text-muted-foreground">60-min Session Rate</Label>
             <p className="text-foreground font-medium">
-              ${therapistProfile.hourly_rate_60min || 'Not set'}
+              ${therapistProfile?.hourly_rate_60min || 'Not set'}
             </p>
             <p className="text-xs text-muted-foreground">Contact admin to change rates</p>
           </div>

@@ -36,35 +36,24 @@ import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails"
 
 const TherapistDashboard = () => {
   const { user, signOut } = useAuth();
-  const { therapistProfile, updateTherapistProfile, loading, createTherapistProfile } = useTherapistAuth();
+  const { therapistProfile, updateTherapistProfile, createTherapistProfile, loading } = useTherapistAuth();
   const { todaySessions, totalSessions, sessions, loading: sessionsLoading } = useTherapistSessions(therapistProfile?.id || null);
   const { getRatingForTherapist } = useTherapistRatings(therapistProfile?.id ? [therapistProfile.id] : []);
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState(therapistProfile);
-  // New profile creation state
-  const [newName, setNewName] = useState("");
-  const [newBio, setNewBio] = useState("");
-  const [newYears, setNewYears] = useState<string>("");
-
-  const handleCreateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const years = parseInt(newYears || "0", 10) || 0;
-    const { error } = await createTherapistProfile({
-      name: newName,
-      bio: newBio || null,
-      years_experience: years,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    });
-    if (!error) {
-      // Success toast is handled in the hook; reset local state
-      setNewName("");
-      setNewBio("");
-      setNewYears("");
-    }
-  };
+  const [isEditing, setIsEditing] = useState(!therapistProfile); // Start in edit mode if no profile
+  const [editedProfile, setEditedProfile] = useState(therapistProfile || {
+    name: '',
+    bio: '',
+    headline: '',
+    years_experience: 0,
+    certification: '',
+    education: '',
+    languages: [],
+    specializations: [],
+    avatar_url: '',
+  });
 
   useEffect(() => {
     if (!user) {
@@ -84,7 +73,7 @@ const TherapistDashboard = () => {
   const handleSaveProfile = async () => {
     if (!editedProfile) return;
 
-    const updates = {
+    const profileData = {
       name: editedProfile.name,
       headline: editedProfile.headline,
       bio: editedProfile.bio,
@@ -94,10 +83,19 @@ const TherapistDashboard = () => {
       languages: editedProfile.languages,
       specializations: editedProfile.specializations,
       avatar_url: editedProfile.avatar_url,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
 
-    const { error } = await updateTherapistProfile(updates);
-    if (!error) {
+    let result;
+    if (therapistProfile) {
+      // Update existing profile
+      result = await updateTherapistProfile(profileData);
+    } else {
+      // Create new profile
+      result = await createTherapistProfile(profileData);
+    }
+
+    if (!result.error) {
       setIsEditing(false);
     }
   };
@@ -135,35 +133,6 @@ const TherapistDashboard = () => {
     );
   }
 
-  if (!therapistProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-xl">
-          <CardHeader>
-            <CardTitle>Complete your therapist profile</CardTitle>
-            <CardDescription>Just a few details to get your dashboard set up.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateProfile} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Professional Name</Label>
-                <Input id="name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Dr. Jane Smith" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="years">Years of Experience</Label>
-                <Input id="years" type="number" min={0} value={newYears} onChange={(e) => setNewYears(e.target.value)} placeholder="5" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bio">Short Bio</Label>
-                <Textarea id="bio" value={newBio} onChange={(e) => setNewBio(e.target.value)} placeholder="Tell clients about your background and approach" rows={4} />
-              </div>
-              <Button type="submit" className="w-full">Create Profile</Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -180,10 +149,12 @@ const TherapistDashboard = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
-                <User className="h-4 w-4 text-white" />
-                <span className="text-sm text-white">{therapistProfile.name}</span>
-              </div>
+              {therapistProfile && (
+                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
+                  <User className="h-4 w-4 text-white" />
+                  <span className="text-sm text-white">{therapistProfile.name}</span>
+                </div>
+              )}
               <Button onClick={handleSignOut} variant="outline" size="sm" className="border-white/50 text-white hover:bg-white/20 hover:text-white bg-white/10">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
@@ -201,10 +172,12 @@ const TherapistDashboard = () => {
           </h1>
           <div className="max-w-2xl mx-auto">
             <h2 className="text-xl sm:text-2xl font-semibold text-muted-foreground mb-2">
-              Welcome back, {therapistProfile.name}!
+              {therapistProfile ? `Welcome back, ${therapistProfile.name}!` : "Welcome! Complete your profile to get started"}
             </h2>
             <p className="text-muted-foreground text-base sm:text-lg">
-              Manage your practice, schedule, and client sessions from your dashboard.
+              {therapistProfile 
+                ? "Manage your practice, schedule, and client sessions from your dashboard."
+                : "Fill in your professional details in the Profile tab to start accepting clients."}
             </p>
           </div>
         </div>
@@ -327,17 +300,33 @@ const TherapistDashboard = () => {
           </TabsContent>
           
           <TabsContent value="files">
-            <TherapistFileUpload 
-              therapistId={therapistProfile.id}
-              currentAvatarUrl={therapistProfile.avatar_url}
-              onAvatarUpdate={(url) => {
-                setEditedProfile(prev => prev ? {...prev, avatar_url: url} : null);
-              }}
-            />
+            {therapistProfile ? (
+              <TherapistFileUpload 
+                therapistId={therapistProfile.id}
+                currentAvatarUrl={therapistProfile.avatar_url}
+                onAvatarUpdate={(url) => {
+                  setEditedProfile(prev => prev ? {...prev, avatar_url: url} : null);
+                }}
+              />
+            ) : (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <p className="text-muted-foreground">Please complete your profile first to upload files.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
           
           <TabsContent value="schedule">
-            <TherapistAvailabilityCalendar therapistId={therapistProfile.id} />
+            {therapistProfile ? (
+              <TherapistAvailabilityCalendar therapistId={therapistProfile.id} />
+            ) : (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <p className="text-muted-foreground">Please complete your profile first to set availability.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
           
           <TabsContent value="sessions">

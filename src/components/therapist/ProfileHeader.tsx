@@ -11,9 +11,9 @@ interface ProfileHeaderProps {
     name?: string;
     headline?: string;
     certification?: string;
-    is_verified: boolean;
-    is_active: boolean;
-  };
+    is_verified?: boolean;
+    is_active?: boolean;
+  } | null;
 }
 
 export const ProfileHeader = ({ therapistProfile }: ProfileHeaderProps) => {
@@ -31,19 +31,19 @@ export const ProfileHeader = ({ therapistProfile }: ProfileHeaderProps) => {
       </Avatar>
       <div className="flex-1 space-y-2">
         <h2 className="text-2xl font-bold text-foreground">
-          {therapistProfile.first_name && therapistProfile.last_name 
+          {therapistProfile?.first_name && therapistProfile?.last_name 
             ? `${therapistProfile.first_name} ${therapistProfile.last_name}`
-            : therapistProfile.name || 'Unnamed Therapist'}
+            : therapistProfile?.name || 'New Therapist'}
         </h2>
-        {therapistProfile.headline && (
+        {therapistProfile?.headline && (
           <p className="text-lg text-muted-foreground font-medium">{therapistProfile.headline}</p>
         )}
-        {therapistProfile.certification && (
+        {therapistProfile?.certification && (
           <p className="text-sm text-muted-foreground">{therapistProfile.certification}</p>
         )}
         <div className="flex items-center space-x-2">
-          <Badge variant={therapistProfile.is_verified ? "default" : "secondary"}>
-            {therapistProfile.is_verified ? "Active" : "Pending Verification"}
+          <Badge variant={therapistProfile?.is_verified ? "default" : "secondary"}>
+            {therapistProfile?.is_verified ? "Active" : "Pending Verification"}
           </Badge>
         </div>
       </div>
