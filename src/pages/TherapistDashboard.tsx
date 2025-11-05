@@ -62,7 +62,10 @@ const TherapistDashboard = () => {
   }, [user, navigate]);
 
   useEffect(() => {
-    setEditedProfile(therapistProfile);
+    if (therapistProfile) {
+      setEditedProfile(therapistProfile);
+      setIsEditing(false); // Exit edit mode when profile loads
+    }
   }, [therapistProfile]);
 
   const handleSignOut = async () => {
@@ -101,8 +104,23 @@ const TherapistDashboard = () => {
   };
 
   const handleCancelEdit = () => {
-    setEditedProfile(therapistProfile);
-    setIsEditing(false);
+    if (therapistProfile) {
+      setEditedProfile(therapistProfile);
+      setIsEditing(false);
+    } else {
+      // If no profile exists, reset to empty form
+      setEditedProfile({
+        name: '',
+        bio: '',
+        headline: '',
+        years_experience: 0,
+        certification: '',
+        education: '',
+        languages: [],
+        specializations: [],
+        avatar_url: '',
+      });
+    }
   };
 
   // Calculate monthly earnings from completed sessions
