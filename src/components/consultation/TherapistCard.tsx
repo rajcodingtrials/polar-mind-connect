@@ -37,8 +37,6 @@ interface TherapistCardProps {
 }
 
 const TherapistCard = ({ therapist, rating, onViewProfile }: TherapistCardProps) => {
-  const isOnline = Math.random() > 0.3; // 70% chance of being online
-
   return (
     <div className="flex gap-10 group hover:bg-gradient-to-r hover:from-surface-elevated/70 hover:to-surface-elevated/40 rounded-2xl p-8 transition-all duration-500 max-w-7xl mx-auto border border-border/20 hover:border-border/40 hover:shadow-xl backdrop-blur-sm">
       {/* Therapist Photo Card */}
@@ -61,20 +59,6 @@ const TherapistCard = ({ therapist, rating, onViewProfile }: TherapistCardProps)
               {therapist.first_name?.[0]}{therapist.last_name?.[0]}
             </div>
             
-            {/* Online Status Indicator */}
-            <div className="absolute top-4 right-4">
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm ${
-                isOnline 
-                  ? 'bg-success text-success-foreground border border-success/20' 
-                  : 'bg-surface-elevated text-emphasis-medium border border-border'
-              }`}>
-                <div className={`w-2 h-2 rounded-full ${
-                  isOnline ? 'bg-success-foreground' : 'bg-offline'
-                }`} />
-                {isOnline ? 'Online' : 'Offline'}
-              </div>
-            </div>
-
             {/* Verification Badge */}
             {therapist.is_verified && (
               <div className="absolute top-4 left-4">
