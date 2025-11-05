@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../context/AuthContext";
 import { useTherapistAuth } from "../hooks/useTherapistAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/components/ui/use-toast";
 import { Stethoscope, UserPlus } from "lucide-react";
 
@@ -38,6 +39,7 @@ const TherapistAuth = () => {
   const [loading, setLoading] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const { therapistProfile, createTherapistProfile, isTherapist } = useTherapistAuth();
+  const { role, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -50,10 +52,17 @@ const TherapistAuth = () => {
   ];
 
   useEffect(() => {
-    if (user && isTherapist()) {
+    if (user && therapistProfile) {
       navigate("/therapist-dashboard");
     }
-  }, [user, isTherapist, navigate]);
+  }, [user, therapistProfile, navigate]);
+
+  // If user has therapist role but no profile yet, show the create profile form
+  useEffect(() => {
+    if (user && role === 'therapist' && !therapistProfile) {
+      setShowCreateProfile(true);
+    }
+  }, [user, role, therapistProfile]);
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,7 +155,7 @@ const TherapistAuth = () => {
     );
   };
 
-  if (user && (showCreateProfile || isVerified)) {
+  if (user && (showCreateProfile || isVerified || role === 'therapist')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <Card className="w-full max-w-2xl">
