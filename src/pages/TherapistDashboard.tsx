@@ -36,7 +36,7 @@ import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails"
 
 const TherapistDashboard = () => {
   const { user, signOut } = useAuth();
-  const { therapistProfile, updateTherapistProfile, loading } = useTherapistAuth();
+  const { therapistProfile, updateTherapistProfile, loading, createTherapistProfile } = useTherapistAuth();
   const { todaySessions, totalSessions, sessions, loading: sessionsLoading } = useTherapistSessions(therapistProfile?.id || null);
   const { getRatingForTherapist } = useTherapistRatings(therapistProfile?.id ? [therapistProfile.id] : []);
   const { toast } = useToast();
@@ -44,6 +44,27 @@ const TherapistDashboard = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState(therapistProfile);
+  // New profile creation state
+  const [newName, setNewName] = useState("");
+  const [newBio, setNewBio] = useState("");
+  const [newYears, setNewYears] = useState<string>("");
+
+  const handleCreateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const years = parseInt(newYears || "0", 10) || 0;
+    const { error } = await createTherapistProfile({
+      name: newName,
+      bio: newBio || null,
+      years_experience: years,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+    if (!error) {
+      // Success toast is handled in the hook; reset local state
+      setNewName("");
+      setNewBio("");
+      setNewYears("");
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -116,8 +137,30 @@ const TherapistDashboard = () => {
 
   if (!therapistProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">No therapist profile found</div>
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-xl">
+          <CardHeader>
+            <CardTitle>Complete your therapist profile</CardTitle>
+            <CardDescription>Just a few details to get your dashboard set up.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCreateProfile} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Professional Name</Label>
+                <Input id="name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Dr. Jane Smith" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="years">Years of Experience</Label>
+                <Input id="years" type="number" min={0} value={newYears} onChange={(e) => setNewYears(e.target.value)} placeholder="5" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bio">Short Bio</Label>
+                <Textarea id="bio" value={newBio} onChange={(e) => setNewBio(e.target.value)} placeholder="Tell clients about your background and approach" rows={4} />
+              </div>
+              <Button type="submit" className="w-full">Create Profile</Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     );
   }
