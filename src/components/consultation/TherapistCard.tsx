@@ -164,8 +164,10 @@ const TherapistCard = ({ therapist, rating, onViewProfile }: TherapistCardProps)
           {/* Bio */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-emphasis-high">About</h3>
-            <p className="text-base text-emphasis-medium leading-relaxed line-clamp-3">
-              {therapist.bio || "Experienced speech therapist specializing in voice therapy and articulation improvement. Dedicated to helping clients achieve clear and confident communication through personalized treatment plans and evidence-based techniques."}
+            <p className={`text-base leading-relaxed line-clamp-3 ${
+              therapist.bio ? 'text-emphasis-medium' : 'text-emphasis-medium/60 italic'
+            }`}>
+              {therapist.bio || "This therapist hasn't added a bio yet."}
             </p>
           </div>
 
