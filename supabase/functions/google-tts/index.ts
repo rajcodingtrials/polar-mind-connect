@@ -88,6 +88,14 @@ serve(async (req) => {
               return 'en-US';
             })(),
             name: voice,
+            ...((() => {
+              // Add model field for Chirp 3 HD voices
+              const namedChirpVoices = ['Aoede', 'Zephyr', 'Puck', 'Charon', 'Algenib'];
+              if (namedChirpVoices.includes(voice) || voice.startsWith('en-US-Chirp-HD')) {
+                return { model: 'chirp-3-hd' };
+              }
+              return {};
+            })())
           },
           audioConfig: audioConfig,
         }),
