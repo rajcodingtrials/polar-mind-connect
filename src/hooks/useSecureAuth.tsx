@@ -11,8 +11,8 @@ export const useSecureAuth = () => {
   const secureSignUp = async (
     email: string, 
     password: string, 
-    username: string, 
-    name: string, 
+    firstName: string, 
+    lastName: string, 
     age: number
   ) => {
     setIsLoading(true);
@@ -32,15 +32,16 @@ export const useSecureAuth = () => {
         return { error: new Error('Invalid email') };
       }
 
-      // Validate other fields
-      if (!username.trim() || username.length < 3) {
-        toast.error('Username must be at least 3 characters long');
-        return { error: new Error('Invalid username') };
+      // Validate first name
+      if (!firstName.trim() || firstName.length < 2) {
+        toast.error('First name must be at least 2 characters long');
+        return { error: new Error('Invalid first name') };
       }
 
-      if (!name.trim() || name.length < 2) {
-        toast.error('Name must be at least 2 characters long');
-        return { error: new Error('Invalid name') };
+      // Validate last name
+      if (!lastName.trim() || lastName.length < 2) {
+        toast.error('Last name must be at least 2 characters long');
+        return { error: new Error('Invalid last name') };
       }
 
       if (age < 1 || age > 120) {
@@ -48,7 +49,7 @@ export const useSecureAuth = () => {
         return { error: new Error('Invalid age') };
       }
 
-      const result = await auth.signUp(email, password, username, name, age);
+      const result = await auth.signUp(email, password, firstName, lastName, age);
       
       if (result.error) {
         toast.error(result.error.message || 'Sign up failed');

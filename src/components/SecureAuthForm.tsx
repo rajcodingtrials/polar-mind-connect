@@ -18,8 +18,8 @@ const SecureAuthForm = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    username: '',
-    name: '',
+    firstName: '',
+    lastName: '',
     age: ''
   });
   
@@ -50,8 +50,8 @@ const SecureAuthForm = () => {
     await secureSignUp(
       signUpData.email,
       signUpData.password,
-      signUpData.username,
-      signUpData.name,
+      signUpData.firstName,
+      signUpData.lastName,
       parseInt(signUpData.age)
     );
   };
