@@ -67,9 +67,26 @@ serve(async (req) => {
         body: JSON.stringify({
           input: { text: cleanText },
           voice: {
-            languageCode: voice.startsWith('en-US') ? 'en-US' : 
-                         voice.startsWith('en-GB') ? 'en-GB' : 
-                         voice.startsWith('en-IN') ? 'en-IN' : 'en-US',
+            languageCode: (() => {
+              // Handle named Chirp 3 HD voices (don't have language prefix)
+              const namedChirpVoices = ['Aoede', 'Zephyr', 'Puck', 'Charon', 'Algenib'];
+              if (namedChirpVoices.includes(voice)) {
+                return 'en-US';
+              }
+              
+              // Handle generic Chirp HD voices
+              if (voice.startsWith('en-US-Chirp-HD')) {
+                return 'en-US';
+              }
+              
+              // Handle traditional voices with language prefix
+              if (voice.startsWith('en-GB')) return 'en-GB';
+              if (voice.startsWith('en-IN')) return 'en-IN';
+              if (voice.startsWith('en-US')) return 'en-US';
+              
+              // Default fallback
+              return 'en-US';
+            })(),
             name: voice,
           },
           audioConfig: audioConfig,
