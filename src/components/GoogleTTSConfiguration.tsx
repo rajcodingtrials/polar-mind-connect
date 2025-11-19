@@ -40,6 +40,53 @@ const GoogleTTSConfiguration = () => {
   // Expanded Google TTS voices with therapy-specific descriptions
   const googleVoices = [
     {
+      category: "🌟 Chirp 3 HD (Latest - Most Human-Like)",
+      voices: [
+        {
+          value: 'Aoede',
+          label: 'Aoede (Chirp 3 HD)',
+          gender: 'Female',
+          description: '🌟 Latest AI voice - Ultra-natural, warm & expressive. Perfect for speech therapy!'
+        },
+        {
+          value: 'Zephyr',
+          label: 'Zephyr (Chirp 3 HD)',
+          gender: 'Female',
+          description: '🌟 Latest AI voice - Bright, energetic & engaging. Great for young learners!'
+        },
+        {
+          value: 'Puck',
+          label: 'Puck (Chirp 3 HD)',
+          gender: 'Male',
+          description: '🌟 Latest AI voice - Friendly, warm & encouraging. Ideal for kids!'
+        },
+        {
+          value: 'Algenib',
+          label: 'Algenib (Chirp 3 HD)',
+          gender: 'Male',
+          description: '🌟 Latest AI voice - Clear, professional & approachable. Great for all ages!'
+        },
+        {
+          value: 'Charon',
+          label: 'Charon (Chirp 3 HD)',
+          gender: 'Male',
+          description: '🌟 Latest AI voice - Deep, calm & reassuring. Professional yet approachable!'
+        },
+        {
+          value: 'en-US-Chirp-HD-F',
+          label: 'en-US-Chirp-HD-F (Generic Female)',
+          gender: 'Female',
+          description: '🌟 Latest AI voice - Generic female, ultra-natural & clear'
+        },
+        {
+          value: 'en-US-Chirp-HD-D',
+          label: 'en-US-Chirp-HD-D (Generic Male)',
+          gender: 'Male',
+          description: '🌟 Latest AI voice - Generic male, ultra-natural & clear'
+        }
+      ]
+    },
+    {
       category: "🎯 Kid-Friendly US English",
       voices: [
         {

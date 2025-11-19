@@ -48,7 +48,7 @@ export const useTTSSettings = (therapistName: string) => {
           });
         } else {
           // Fallback: Set default voice and provider based on therapist name
-          const defaultVoice = therapistName === 'Lawrence' ? 'en-US-Neural2-I' : 'en-US-Neural2-J';
+          const defaultVoice = therapistName === 'Lawrence' ? 'Algenib' : 'Aoede';
           const defaultProvider = 'google'; // Both therapists now use Google TTS
           setTtsSettings({
             voice: defaultVoice,
@@ -66,7 +66,7 @@ export const useTTSSettings = (therapistName: string) => {
       } catch (error) {
         console.error('Error loading TTS settings:', error);
         // Fallback: Set default voice and provider based on therapist name
-        const defaultVoice = therapistName === 'Lawrence' ? 'en-US-Neural2-I' : 'en-US-Neural2-J';
+        const defaultVoice = therapistName === 'Lawrence' ? 'Algenib' : 'Aoede';
         const defaultProvider = 'google'; // Both therapists now use Google TTS
         setTtsSettings({
           voice: defaultVoice,
