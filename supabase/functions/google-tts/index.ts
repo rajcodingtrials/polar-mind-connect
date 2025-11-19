@@ -48,6 +48,19 @@ serve(async (req) => {
     console.log('🌐 Making Google TTS API call...');
     
     try {
+      // Convert named Chirp voices to full format
+      const namedChirpVoices = ['Aoede', 'Zephyr', 'Puck', 'Charon', 'Algenib'];
+      let finalVoiceName = voice;
+      
+      if (namedChirpVoices.includes(voice)) {
+        finalVoiceName = `en-US-Chirp3-HD-${voice}`;
+        console.log(`🎤 Converted voice name from "${voice}" to "${finalVoiceName}"`);
+      } else if (voice.startsWith('en-US-Chirp-HD')) {
+        // Convert en-US-Chirp-HD-F to en-US-Chirp3-HD-F format
+        finalVoiceName = voice.replace('Chirp-HD', 'Chirp3-HD');
+        console.log(`🎤 Converted voice name from "${voice}" to "${finalVoiceName}"`);
+      }
+      
       // Build audioConfig object conditionally
       const audioConfig: any = {
         audioEncoding: 'MP3',
@@ -68,14 +81,8 @@ serve(async (req) => {
           input: { text: cleanText },
           voice: {
             languageCode: (() => {
-              // Handle named Chirp 3 HD voices (don't have language prefix)
-              const namedChirpVoices = ['Aoede', 'Zephyr', 'Puck', 'Charon', 'Algenib'];
-              if (namedChirpVoices.includes(voice)) {
-                return 'en-US';
-              }
-              
-              // Handle generic Chirp HD voices
-              if (voice.startsWith('en-US-Chirp-HD')) {
+              // Handle Chirp voices (both named and generic)
+              if (voice.startsWith('en-US-Chirp')) {
                 return 'en-US';
               }
               
@@ -84,18 +91,10 @@ serve(async (req) => {
               if (voice.startsWith('en-IN')) return 'en-IN';
               if (voice.startsWith('en-US')) return 'en-US';
               
-              // Default fallback
+              // Default fallback for named voices
               return 'en-US';
             })(),
-            name: voice,
-            ...((() => {
-              // Add model field for Chirp 3 HD voices
-              const namedChirpVoices = ['Aoede', 'Zephyr', 'Puck', 'Charon', 'Algenib'];
-              if (namedChirpVoices.includes(voice) || voice.startsWith('en-US-Chirp-HD')) {
-                return { model: 'chirp-3-hd' };
-              }
-              return {};
-            })())
+            name: finalVoiceName,
           },
           audioConfig: audioConfig,
         }),
