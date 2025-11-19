@@ -138,40 +138,40 @@ const SecureAuthForm = () => {
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Name</Label>
+                    <Label htmlFor="signup-firstname">First Name</Label>
                     <Input
-                      id="signup-name"
-                      placeholder="Full name"
-                      value={signUpData.name}
-                      onChange={(e) => setSignUpData({...signUpData, name: e.target.value})}
+                      id="signup-firstname"
+                      placeholder="First name"
+                      value={signUpData.firstName}
+                      onChange={(e) => setSignUpData({...signUpData, firstName: e.target.value})}
                       required
                       minLength={2}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-age">Age</Label>
+                    <Label htmlFor="signup-lastname">Last Name</Label>
                     <Input
-                      id="signup-age"
-                      type="number"
-                      placeholder="Age"
-                      value={signUpData.age}
-                      onChange={(e) => setSignUpData({...signUpData, age: e.target.value})}
+                      id="signup-lastname"
+                      placeholder="Last name"
+                      value={signUpData.lastName}
+                      onChange={(e) => setSignUpData({...signUpData, lastName: e.target.value})}
                       required
-                      min={1}
-                      max={120}
+                      minLength={2}
                     />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-username">Username</Label>
+                  <Label htmlFor="signup-age">Age</Label>
                   <Input
-                    id="signup-username"
-                    placeholder="Choose a username"
-                    value={signUpData.username}
-                    onChange={(e) => setSignUpData({...signUpData, username: e.target.value})}
+                    id="signup-age"
+                    type="number"
+                    placeholder="Age"
+                    value={signUpData.age}
+                    onChange={(e) => setSignUpData({...signUpData, age: e.target.value})}
                     required
-                    minLength={3}
+                    min={1}
+                    max={120}
                   />
                 </div>
                 
