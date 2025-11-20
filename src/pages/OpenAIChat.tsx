@@ -194,9 +194,20 @@ const OpenAIChatPage = () => {
             // Story activity fields
             scene_image: q.scene_image,
             scene_narration: q.scene_narration,
-            sequence_number: q.sequence_number ?? 0,
-            is_scene: q.is_scene ?? false
+            sequence_number: q.sequence_number,
+            is_scene: q.is_scene
           }));
+          
+          // Log story activity entries to verify sequence_number mapping
+          const storyEntries = formattedQuestions.filter(q => q.questionType === 'story_activity');
+          if (storyEntries.length > 0) {
+            console.log('📖 Loaded story entries:', storyEntries.map(q => ({
+              id: q.id.substring(0, 8),
+              seq: q.sequence_number,
+              isScene: q.is_scene,
+              question: q.question.substring(0, 30)
+            })));
+          }
           
           setQuestions(formattedQuestions);
           console.log('Loaded questions from Supabase:', formattedQuestions.length);
@@ -418,10 +429,21 @@ const OpenAIChatPage = () => {
     
     // Sort story_activity by sequence_number
     if (selectedQuestionType === 'story_activity') {
+      console.log('📖 Before sort:', filteredQuestions.map(q => ({ 
+        seq: q.sequence_number, 
+        isScene: q.is_scene,
+        question: q.question 
+      })));
+      
       filteredQuestions = filteredQuestions.sort((a, b) => 
         (a.sequence_number || 0) - (b.sequence_number || 0)
       );
-      console.log('📖 Story entries sorted by sequence');
+      
+      console.log('📖 After sort:', filteredQuestions.map(q => ({ 
+        seq: q.sequence_number, 
+        isScene: q.is_scene,
+        question: q.question 
+      })));
     }
     
     setAvailableQuestions(filteredQuestions);
@@ -441,9 +463,19 @@ const OpenAIChatPage = () => {
   const handleStartQuestions = () => {
     // For story_activity, start at first entry (no randomization)
     if (selectedQuestionType === 'story_activity') {
+      console.log('📖 Available questions for story:', availableQuestions.map(q => ({
+        seq: q.sequence_number,
+        isScene: q.is_scene,
+        question: q.question.substring(0, 30)
+      })));
+      
       const firstEntry = availableQuestions[0];
       if (firstEntry) {
-        console.log('📖 Starting story from beginning');
+        console.log('📖 Starting story from beginning with entry:', {
+          seq: firstEntry.sequence_number,
+          isScene: firstEntry.is_scene,
+          question: firstEntry.question
+        });
         setCurrentQuestion(firstEntry);
         setAskedQuestionIds(new Set([firstEntry.id]));
         setSessionQuestionCount(1);
