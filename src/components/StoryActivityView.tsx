@@ -243,25 +243,14 @@ const StoryActivityView = ({
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-        <div className="w-full max-w-4xl">
-          <div className="mb-6 text-center">
-            <p className="text-2xl font-bold text-purple-800">
-              Scene {currentSceneNumber} of {totalScenes}
-            </p>
-            <div className="w-full bg-gray-200 rounded-full h-3 mt-3">
-              <div 
-                className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${(currentSceneNumber / totalScenes) * 100}%` }}
-              />
-            </div>
-          </div>
-
+        <div className="w-full max-w-6xl">
           <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden">
             {sceneImageUrl && (
               <img
                 src={sceneImageUrl}
                 alt={`Scene ${currentSceneNumber}`}
-                className="w-full h-auto object-contain max-h-[60vh]"
+                className="w-full h-auto object-contain"
+                style={{ maxHeight: '85vh' }}
               />
             )}
             {isPlaying && (
@@ -272,7 +261,7 @@ const StoryActivityView = ({
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-xl text-gray-700 italic">
+            <p className="text-2xl text-gray-700 italic font-medium">
               {currentEntry.scene_narration}
             </p>
           </div>
