@@ -299,9 +299,13 @@ export type Database = {
           id: string
           image_name: string | null
           images: Json | null
+          is_scene: boolean | null
           lesson_id: string | null
           question: string
           question_type: Database["public"]["Enums"]["question_type_enum"]
+          scene_image: string | null
+          scene_narration: string | null
+          sequence_number: number | null
           updated_at: string | null
         }
         Insert: {
@@ -312,9 +316,13 @@ export type Database = {
           id?: string
           image_name?: string | null
           images?: Json | null
+          is_scene?: boolean | null
           lesson_id?: string | null
           question: string
           question_type?: Database["public"]["Enums"]["question_type_enum"]
+          scene_image?: string | null
+          scene_narration?: string | null
+          sequence_number?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -325,9 +333,13 @@ export type Database = {
           id?: string
           image_name?: string | null
           images?: Json | null
+          is_scene?: boolean | null
           lesson_id?: string | null
           question?: string
           question_type?: Database["public"]["Enums"]["question_type_enum"]
+          scene_image?: string | null
+          scene_narration?: string | null
+          sequence_number?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -856,6 +868,7 @@ export type Database = {
         | "build_sentence"
         | "lets_chat"
         | "tap_and_play"
+        | "story_activity"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -990,6 +1003,7 @@ export const Constants = {
         "build_sentence",
         "lets_chat",
         "tap_and_play",
+        "story_activity",
       ],
     },
   },

@@ -13,6 +13,7 @@ import ProgressCharacter from '../components/ProgressCharacter';
 import IntroductionScreen from '../components/IntroductionScreen';
 import SingleQuestionView from '../components/SingleQuestionView';
 import TapAndPlayView from '../components/TapAndPlayView';
+import StoryActivityView from '../components/StoryActivityView';
 import MiniCelebration from '../components/MiniCelebration';
 import LessonSelection from '../components/LessonSelection';
 import Footer from '../components/Footer';
@@ -23,9 +24,9 @@ interface Question {
   id: string;
   question: string;
   answer: string;
-  imageName?: string; // Keep for backward compatibility with single-image activities
-  images?: string[]; // Array of image names for multi-image activities like tap_and_play
-  correctImageIndex?: number; // Index of the correct image in the images array (0-based)
+  imageName?: string;
+  images?: string[];
+  correctImageIndex?: number;
   questionType?: QuestionType;
   lessonId?: string | null;
   lesson?: {
@@ -34,6 +35,11 @@ interface Question {
     description: string | null;
     difficulty_level: string;
   } | null;
+  // Story activity fields
+  scene_image?: string;
+  scene_narration?: string;
+  sequence_number?: number;
+  is_scene?: boolean;
 }
 
 const OpenAIChatPage = () => {
@@ -141,6 +147,14 @@ const OpenAIChatPage = () => {
       color: 'bg-orange-100 hover:bg-orange-200 border-orange-200',
       textColor: 'text-orange-800',
       icon: Heart
+    },
+    { 
+      value: 'story_activity' as QuestionType, 
+      label: 'Story Activity', 
+      description: 'Follow along with interactive story scenes', 
+      color: 'bg-rose-100 hover:bg-rose-200 border-rose-200',
+      textColor: 'text-rose-800',
+      icon: BookOpen
     }
   ];
 
@@ -172,11 +186,16 @@ const OpenAIChatPage = () => {
             question: q.question,
             answer: q.answer,
             imageName: q.image_name,
-            images: q.images ? (Array.isArray(q.images) ? q.images.map(img => String(img)) : []) : undefined, // Convert Json[] to string[]
-            correctImageIndex: q.correct_image_index ?? undefined, // Handle new correct image index
+            images: q.images ? (Array.isArray(q.images) ? q.images.map(img => String(img)) : []) : undefined,
+            correctImageIndex: q.correct_image_index ?? undefined,
             questionType: q.question_type,
             lessonId: q.lesson_id,
-            lesson: q.lessons
+            lesson: q.lessons,
+            // Story activity fields
+            scene_image: q.scene_image,
+            scene_narration: q.scene_narration,
+            sequence_number: q.sequence_number ?? 0,
+            is_scene: q.is_scene ?? false
           }));
           
           setQuestions(formattedQuestions);
@@ -215,6 +234,18 @@ const OpenAIChatPage = () => {
                     console.log(`Loaded image URL for ${imageName}:`, data.publicUrl);
                   }
                 }
+              }
+            }
+            
+            // Handle scene images for story_activity
+            if (question.scene_image && !imageUrlMap[question.scene_image]) {
+              const { data } = supabase.storage
+                .from('question-images')
+                .getPublicUrl(question.scene_image);
+              
+              if (data?.publicUrl) {
+                imageUrlMap[question.scene_image] = data.publicUrl;
+                console.log(`Loaded scene image URL for ${question.scene_image}:`, data.publicUrl);
               }
             }
           }
@@ -385,6 +416,14 @@ const OpenAIChatPage = () => {
       console.log('🎯 All questions for type:', filteredQuestions.length);
     }
     
+    // Sort story_activity by sequence_number
+    if (selectedQuestionType === 'story_activity') {
+      filteredQuestions = filteredQuestions.sort((a, b) => 
+        (a.sequence_number || 0) - (b.sequence_number || 0)
+      );
+      console.log('📖 Story entries sorted by sequence');
+    }
+    
     setAvailableQuestions(filteredQuestions);
     // If skip_introduction is true, go straight to question
     if (adminSettings && adminSettings.skip_introduction) {
@@ -400,14 +439,28 @@ const OpenAIChatPage = () => {
   };
 
   const handleStartQuestions = () => {
-    // Select first random question
+    // For story_activity, start at first entry (no randomization)
+    if (selectedQuestionType === 'story_activity') {
+      const firstEntry = availableQuestions[0];
+      if (firstEntry) {
+        console.log('📖 Starting story from beginning');
+        setCurrentQuestion(firstEntry);
+        setAskedQuestionIds(new Set([firstEntry.id]));
+        setSessionQuestionCount(1);
+        setComingFromCelebration(false);
+        setCurrentScreen('question');
+      }
+      return;
+    }
+    
+    // For other activities, use random selection
     const firstQuestion = selectRandomQuestion(availableQuestions);
     if (firstQuestion) {
       console.log('🎯 Starting with question:', firstQuestion.question);
       setCurrentQuestion(firstQuestion);
       setAskedQuestionIds(new Set([firstQuestion.id]));
       setSessionQuestionCount(1);
-      setComingFromCelebration(false); // Ensure first question is not from celebration
+      setComingFromCelebration(false);
       console.log('🔄 comingFromCelebration set to false for first question');
       setCurrentScreen('question');
     }
@@ -852,7 +905,23 @@ const OpenAIChatPage = () => {
           {/* Question View - render different components based on question type */}
           {currentScreen === 'question' && selectedQuestionType && currentQuestion && (
             <>
-              {currentQuestion.questionType === 'tap_and_play' ? (
+              {/* Story Activity View */}
+              {currentQuestion.questionType === 'story_activity' && (
+                <StoryActivityView
+                  storyEntries={availableQuestions}
+                  imageUrls={imageUrls}
+                  questionNumber={sessionQuestionCount}
+                  totalQuestions={maxQuestionsPerSession}
+                  therapistName={therapistName}
+                  childName={childName}
+                  onCorrectAnswer={handleCorrectAnswer}
+                  onComplete={handleCompleteSession}
+                  comingFromCelebration={comingFromCelebration}
+                />
+              )}
+              
+              {/* Tap and Play View */}
+              {currentQuestion.questionType === 'tap_and_play' && (
                 <TapAndPlayView
                   question={currentQuestion}
                   imageUrls={imageUrls}
@@ -867,7 +936,10 @@ const OpenAIChatPage = () => {
                   onRetryCountChange={setRetryCount}
                   comingFromCelebration={comingFromCelebration}
                 />
-              ) : (
+              )}
+              
+              {/* All other question types */}
+              {!['tap_and_play', 'story_activity'].includes(currentQuestion.questionType || '') && (
                 <SingleQuestionView
                   question={currentQuestion}
                   imageUrl={currentQuestion.imageName ? imageUrls[currentQuestion.imageName] : undefined}

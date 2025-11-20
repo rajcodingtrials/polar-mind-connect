@@ -26,10 +26,15 @@ interface Question {
   id: string;
   question: string;
   answer: string;
-  imageName?: string; // Keep for backward compatibility with single-image activities  
-  images?: string[]; // Array of image names for multi-image activities like tap_and_play
-  correctImageIndex?: number; // Index of the correct image in the images array (0-based)
+  imageName?: string;
+  images?: string[];
+  correctImageIndex?: number;
   questionType?: string;
+  // Story activity fields
+  scene_image?: string;
+  scene_narration?: string;
+  sequence_number?: number;
+  is_scene?: boolean;
 }
 
 interface QuestionUploadProps {
@@ -80,7 +85,8 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
     { value: 'question_time' as QuestionType, label: 'Question Time' },
     { value: 'tap_and_play' as QuestionType, label: 'Tap and Play' },
     { value: 'build_sentence' as QuestionType, label: 'Build a Sentence' },
-    { value: 'lets_chat' as QuestionType, label: 'Lets Chat' }
+    { value: 'lets_chat' as QuestionType, label: 'Lets Chat' },
+    { value: 'story_activity' as QuestionType, label: 'Story Activity (5 Scenes + 4 Questions)' }
   ];
 
   const difficultyLevels = [
@@ -146,10 +152,85 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
             question: item.question || '',
             answer: item.answer || '',
             imageName: item.imageName || item.image || '',
-            images: item.images || undefined, // Handle new images array for tap_and_play
-            correctImageIndex: item.correctImageIndex ?? undefined, // Handle correct image index
-            questionType: item.questionType || selectedQuestionType
+            images: item.images || undefined,
+            correctImageIndex: item.correctImageIndex ?? undefined,
+            questionType: item.questionType || selectedQuestionType,
+            // Story activity fields
+            scene_image: item.scene_image || item.sceneImage,
+            scene_narration: item.scene_narration || item.sceneNarration,
+            sequence_number: item.sequence_number ?? item.sequenceNumber ?? (index + 1),
+            is_scene: item.is_scene ?? item.isScene ?? false
           }));
+          
+          // Validate story_activity questions
+          if (selectedQuestionType === 'story_activity') {
+            if (formattedQuestions.length !== 9) {
+              toast({
+                title: "Invalid Story Format",
+                description: `Story Activity must have exactly 9 entries (5 scenes + 4 questions). You provided ${formattedQuestions.length} entries.`,
+                variant: "destructive",
+              });
+              return;
+            }
+
+            const sequences = formattedQuestions.map(q => q.sequence_number).sort((a, b) => (a || 0) - (b || 0));
+            const expectedSequences = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            if (JSON.stringify(sequences) !== JSON.stringify(expectedSequences)) {
+              toast({
+                title: "Invalid Sequence Numbers",
+                description: "Story must have sequence_numbers from 1 to 9 with no gaps or duplicates",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            const oddEntries = formattedQuestions.filter(q => q.sequence_number && q.sequence_number % 2 === 1);
+            const evenEntries = formattedQuestions.filter(q => q.sequence_number && q.sequence_number % 2 === 0);
+
+            if (oddEntries.length !== 5 || oddEntries.some(q => !q.is_scene)) {
+              toast({
+                title: "Invalid Story Structure",
+                description: "Sequence numbers 1,3,5,7,9 must be scenes with is_scene: true",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            if (evenEntries.length !== 4 || evenEntries.some(q => q.is_scene)) {
+              toast({
+                title: "Invalid Story Structure",
+                description: "Sequence numbers 2,4,6,8 must be questions with is_scene: false",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            const invalidScenes = oddEntries.filter(q => !q.scene_image || !q.scene_narration);
+            if (invalidScenes.length > 0) {
+              toast({
+                title: "Invalid Scene Data",
+                description: "All scenes (1,3,5,7,9) must have scene_image and scene_narration fields",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            const invalidQuestions = evenEntries.filter(q => 
+              !q.images || 
+              q.images.length !== 2 || 
+              q.correctImageIndex === undefined ||
+              q.correctImageIndex < 0 ||
+              q.correctImageIndex > 1
+            );
+            if (invalidQuestions.length > 0) {
+              toast({
+                title: "Invalid Question Data",
+                description: "All questions (2,4,6,8) must have exactly 2 images and correctImageIndex (0 or 1)",
+                variant: "destructive",
+              });
+              return;
+            }
+          }
           
           // Validate tap_and_play questions
           if (selectedQuestionType === 'tap_and_play') {
@@ -304,15 +385,20 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
         return acc;
       }, {} as Record<string, string>);
 
-      // Prepare questions with lesson_id and new tap_and_play fields
+      // Prepare questions with lesson_id and new tap_and_play/story_activity fields
       const questionsToInsert = questions.map(q => ({
         question: q.question,
         answer: q.answer,
         image_name: q.imageName ? imageNameMap[q.imageName] : null,
-        images: q.images ? q.images.map(img => imageNameMap[img] || img) : null, // Map image names to storage names
-        correct_image_index: q.correctImageIndex ?? null, // Include correct image index for tap_and_play
+        images: q.images ? q.images.map(img => imageNameMap[img] || img) : null,
+        correct_image_index: q.correctImageIndex ?? null,
         question_type: selectedQuestionType,
-        lesson_id: lessonId // This is the key fix - include lesson_id
+        lesson_id: lessonId,
+        // Story activity fields
+        scene_image: q.scene_image ? imageNameMap[q.scene_image] || q.scene_image : null,
+        scene_narration: q.scene_narration || null,
+        sequence_number: q.sequence_number || 0,
+        is_scene: q.is_scene || false
       }));
 
       // Insert questions with lesson assignment
