@@ -10,6 +10,7 @@ import ProgressCharacter from './ProgressCharacter';
 import IntroductionScreen from './IntroductionScreen';
 import SingleQuestionView from './SingleQuestionView';
 import TapAndPlayView from './TapAndPlayView';
+import StoryActivityView from './StoryActivityView';
 import MiniCelebration from './MiniCelebration';
 import LessonSelection from './LessonSelection';
 
@@ -30,6 +31,11 @@ interface Question {
     description: string | null;
     difficulty_level: string;
   } | null;
+  // Story activity fields
+  scene_image?: string;
+  scene_narration?: string;
+  sequence_number?: number;
+  is_scene?: boolean;
 }
 
 interface AILearningAdventureProps {
@@ -52,6 +58,7 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
   const [retryCount, setRetryCount] = useState(0);
   const [sessionQuestionCount, setSessionQuestionCount] = useState(0);
   const [comingFromCelebration, setComingFromCelebration] = useState(false);
+  const [storyActivityComplete, setStoryActivityComplete] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const maxQuestionsPerSession = 6;
 
@@ -132,6 +139,14 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
       color: 'bg-orange-100 hover:bg-orange-200 border-orange-200',
       textColor: 'text-orange-800',
       icon: Heart
+    },
+    { 
+      value: 'story_activity' as QuestionType, 
+      label: 'Story Activity', 
+      description: 'Follow along with interactive story scenes', 
+      color: 'bg-rose-100 hover:bg-rose-200 border-rose-200',
+      textColor: 'text-rose-800',
+      icon: BookOpen
     }
   ];
 
@@ -166,7 +181,12 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
             correctImageIndex: q.correct_image_index ?? undefined,
             questionType: q.question_type,
             lessonId: q.lesson_id,
-            lesson: q.lessons
+            lesson: q.lessons,
+            // Story activity fields
+            scene_image: q.scene_image,
+            scene_narration: q.scene_narration,
+            sequence_number: q.sequence_number,
+            is_scene: q.is_scene
           }));
           
           setQuestions(formattedQuestions);
@@ -195,6 +215,17 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
                     imageUrlMap[imageName] = data.publicUrl;
                   }
                 }
+              }
+            }
+            
+            // Handle scene images for story_activity
+            if (question.scene_image && !imageUrlMap[question.scene_image]) {
+              const { data } = supabase.storage
+                .from('question-images')
+                .getPublicUrl(question.scene_image);
+              
+              if (data?.publicUrl) {
+                imageUrlMap[question.scene_image] = data.publicUrl;
               }
             }
           }
@@ -320,6 +351,13 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
       filteredQuestions = questions.filter(q => q.questionType === questionType);
     }
     
+    // Sort story_activity by sequence_number
+    if (questionType === 'story_activity') {
+      filteredQuestions = [...filteredQuestions].sort((a, b) => 
+        (a.sequence_number || 0) - (b.sequence_number || 0)
+      );
+    }
+    
     setAvailableQuestions(filteredQuestions);
     setCurrentScreen('introduction');
   };
@@ -336,6 +374,13 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
       );
     } else {
       filteredQuestions = questions.filter(q => q.questionType === selectedQuestionType);
+    }
+    
+    // Sort story_activity by sequence_number
+    if (selectedQuestionType === 'story_activity') {
+      filteredQuestions = [...filteredQuestions].sort((a, b) => 
+        (a.sequence_number || 0) - (b.sequence_number || 0)
+      );
     }
     
     setAvailableQuestions(filteredQuestions);
@@ -356,6 +401,20 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
   };
 
   const handleStartQuestions = () => {
+    // For story_activity, start at first entry (no randomization)
+    if (selectedQuestionType === 'story_activity') {
+      const firstEntry = availableQuestions[0];
+      if (firstEntry) {
+        setCurrentQuestion(firstEntry);
+        setAskedQuestionIds(new Set([firstEntry.id]));
+        setSessionQuestionCount(1);
+        setComingFromCelebration(false);
+        setCurrentScreen('question');
+      }
+      return;
+    }
+    
+    // For other activities, use random selection
     const firstQuestion = selectRandomQuestion(availableQuestions);
     if (firstQuestion) {
       setCurrentQuestion(firstQuestion);
@@ -368,6 +427,12 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
 
   const handleCorrectAnswer = () => {
     setCorrectAnswers(prev => prev + 1);
+    
+    // For story_activity during the story, don't show celebration - it handles its own flow internally
+    if (selectedQuestionType === 'story_activity') {
+      return;
+    }
+    
     setComingFromCelebration(true);
     setCurrentScreen('celebration');
     setRetryCount(0);
@@ -400,6 +465,13 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
   };
 
   const handleCelebrationComplete = () => {
+    // If story activity just completed, finish the session instead of next question
+    if (storyActivityComplete) {
+      setStoryActivityComplete(false); // Reset for next time
+      handleCompleteSession();
+      return;
+    }
+    
     handleNextQuestion();
   };
 
@@ -456,8 +528,8 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
               
               <div className="flex max-w-7xl mx-auto gap-8 min-h-[500px]">
                 {/* Activity Cards Section */}
-                <div className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-2/5' : 'w-full'}`}>
-                  <div className={`grid gap-8 ${showLessonsPanel ? 'grid-cols-1' : 'grid-cols-5'} justify-items-center`}>
+                <div className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-2/5' : 'w-full'} overflow-y-auto max-h-[calc(100vh-300px)]`}>
+                  <div className={`grid gap-8 ${showLessonsPanel ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'} justify-items-center`}>
                     {showLessonsPanel && hoveredActivityType && (() => {
                       const selectedType = questionTypes.find(type => type.value === hoveredActivityType);
                       if (!selectedType) return null;
@@ -467,15 +539,15 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
                       return (
                         <div
                           key={`selected-${selectedType.value}`}
-                          className={`${selectedType.color} ${selectedType.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[360px] flex flex-col justify-between shadow-2xl border-white scale-105 w-80 ring-4 ring-blue-300`}
+                          className={`${selectedType.color} ${selectedType.textColor} rounded-3xl p-6 cursor-pointer border-3 transition-all duration-300 ease-out h-[240px] flex flex-col items-center justify-center shadow-2xl border-white scale-105 w-80 ring-4 ring-blue-300`}
                           onClick={() => handleActivityClick(selectedType.value)}
                         >
-                          <div className="flex flex-col items-center text-center">
-                            <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
-                              <IconComponent className={`w-8 h-8 ${selectedType.textColor}`} />
+                          <div className="flex flex-col items-center justify-center text-center h-full">
+                            <div className="bg-white rounded-full p-3 mb-3 shadow-lg">
+                              <IconComponent className={`w-6 h-6 ${selectedType.textColor}`} />
                             </div>
-                            <h3 className="font-bold text-xl mb-3">{selectedType.label} ✨</h3>
-                            <p className="text-sm opacity-90 leading-relaxed mt-4">{selectedType.description}</p>
+                            <h3 className="font-bold text-lg mb-2">{selectedType.label} ✨</h3>
+                            <p className="text-xs opacity-90 leading-relaxed">{selectedType.description}</p>
                           </div>
                         </div>
                       );
@@ -490,19 +562,19 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
                         return (
                           <div
                             key={type.value}
-                            className={`${type.color} ${type.textColor} rounded-3xl p-8 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[360px] flex flex-col justify-between ${
+                            className={`${type.color} ${type.textColor} rounded-3xl p-6 cursor-pointer border-3 transition-all duration-300 ease-out h-[240px] flex flex-col items-center justify-center ${
                               isOtherHovered 
                                 ? 'opacity-40 scale-95' 
                                 : 'hover:shadow-xl hover:scale-105 hover:border-white'
                             } ${showLessonsPanel ? 'w-80' : 'w-full max-w-80'}`}
                             onClick={() => handleActivityClick(type.value)}
                           >
-                            <div className="flex flex-col items-center text-center">
-                              <div className="bg-white rounded-full p-4 mb-4 shadow-lg">
-                                <IconComponent className={`w-8 h-8 ${type.textColor}`} />
+                            <div className="flex flex-col items-center justify-center text-center h-full">
+                              <div className="bg-white rounded-full p-3 mb-3 shadow-lg">
+                                <IconComponent className={`w-6 h-6 ${type.textColor}`} />
                               </div>
-                              <h3 className="font-bold text-xl mb-3">{type.label}</h3>
-                              <p className="text-sm opacity-90 leading-relaxed mt-4">{type.description}</p>
+                              <h3 className="font-bold text-lg mb-2">{type.label}</h3>
+                              <p className="text-xs opacity-90 leading-relaxed">{type.description}</p>
                             </div>
                           </div>
                         );
@@ -641,7 +713,28 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
           {/* Question View */}
           {currentScreen === 'question' && selectedQuestionType && currentQuestion && (
             <>
-              {currentQuestion.questionType === 'tap_and_play' ? (
+              {/* Story Activity View */}
+              {currentQuestion.questionType === 'story_activity' && (
+                <StoryActivityView
+                  storyEntries={availableQuestions}
+                  imageUrls={imageUrls}
+                  questionNumber={sessionQuestionCount}
+                  totalQuestions={maxQuestionsPerSession}
+                  therapistName={therapistName}
+                  childName={childName}
+                  onCorrectAnswer={handleCorrectAnswer}
+                  onComplete={handleCompleteSession}
+                  onStoryComplete={() => {
+                    setStoryActivityComplete(true);
+                    setComingFromCelebration(true);
+                    setCurrentScreen('celebration');
+                  }}
+                  comingFromCelebration={comingFromCelebration}
+                />
+              )}
+              
+              {/* Tap and Play View */}
+              {currentQuestion.questionType === 'tap_and_play' && (
                 <TapAndPlayView
                   question={currentQuestion}
                   imageUrls={imageUrls}
@@ -656,7 +749,10 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
                   onRetryCountChange={setRetryCount}
                   comingFromCelebration={comingFromCelebration}
                 />
-              ) : (
+              )}
+              
+              {/* All other question types */}
+              {!['tap_and_play', 'story_activity'].includes(currentQuestion.questionType || '') && (
                 <SingleQuestionView
                   question={currentQuestion}
                   imageUrl={currentQuestion.imageName ? imageUrls[currentQuestion.imageName] : undefined}
