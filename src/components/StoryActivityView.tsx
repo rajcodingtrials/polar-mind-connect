@@ -28,6 +28,7 @@ interface StoryActivityViewProps {
   childName: string;
   onCorrectAnswer: () => void;
   onComplete: () => void;
+  onStoryComplete?: () => void; // Called when final scene ends to mark story as complete
   comingFromCelebration?: boolean;
 }
 
@@ -38,6 +39,7 @@ const StoryActivityView = ({
   childName,
   onCorrectAnswer,
   onComplete,
+  onStoryComplete,
 }: StoryActivityViewProps) => {
   const [currentSequenceIndex, setCurrentSequenceIndex] = useState(0);
   const [currentStep, setCurrentStep] = useState<'scene' | 'question'>('scene');
@@ -110,8 +112,13 @@ const StoryActivityView = ({
                 setIsPlaying(false);
                 console.log('✅ Scene narration ended for sequence:', currentEntry.sequence_number);
                 if (currentEntry.sequence_number === 9) {
+                  // Story complete - mark as complete and trigger celebration
                   setTimeout(() => {
-                    onComplete();
+                    console.log('📖 Story complete - triggering celebration');
+                    if (onStoryComplete) {
+                      onStoryComplete(); // Mark story as complete
+                    }
+                    onCorrectAnswer(); // This will show celebration before completing
                   }, 2000);
                 } else {
                   setTimeout(() => {
