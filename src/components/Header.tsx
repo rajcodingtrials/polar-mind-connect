@@ -26,7 +26,7 @@ const Header = () => {
           )}
           {isAuthenticated && (
             <>
-              <Link to="/user-dashboard" className="text-white hover:text-white/80 transition-colors font-medium">Progress</Link>
+              <Link to="/user-dashboard" className="text-white hover:text-white/80 transition-colors font-medium">Dashboard</Link>
               <Link to="/consultation" className="text-white hover:text-white/80 transition-colors font-medium">Coaches</Link>
               {isAdmin() && (
                 <Link to="/admin" className="text-white hover:text-white/80 transition-colors font-medium">Admin</Link>

@@ -69,7 +69,7 @@ const FindCoaches = () => {
       
       {/* Merged Section */}
       <div className="container mx-auto px-4 py-10 lg:py-16">
-        <Card className="bg-white border-slate-200 shadow-sm">
+        <Card className="bg-white border-slate-200 shadow-sm max-w-7xl mx-auto">
           <CardContent className="p-6 lg:p-8">
             <div className="space-y-6">
               {/* Title */}

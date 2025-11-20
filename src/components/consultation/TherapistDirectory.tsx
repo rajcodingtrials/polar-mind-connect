@@ -159,19 +159,19 @@ const TherapistDirectory = ({
       {/* Enhanced Results Section */}
       <div className="space-y-8">
         {filteredTherapists.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 bg-gradient-to-r from-surface-elevated/70 to-surface-elevated/50 backdrop-blur-sm rounded-2xl border border-border/20 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 bg-white rounded-2xl border border-slate-200 shadow-sm max-w-7xl mx-auto">
             <div className="space-y-1">
-              <p className="text-lg font-semibold text-emphasis-high">
+              <p className="text-lg font-semibold text-slate-700">
                 {filteredTherapists.length} Therapist{filteredTherapists.length !== 1 ? 's' : ''} Found
               </p>
-              <p className="text-sm text-emphasis-medium">
+              <p className="text-sm text-slate-600">
                 Discover qualified professionals ready to help you achieve your communication goals
               </p>
             </div>
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
-                className="text-sm text-primary hover:text-primary/80 font-medium transition-all duration-200 px-4 py-2 bg-primary/10 hover:bg-primary/20 rounded-lg border border-primary/20 hover:border-primary/30"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-all duration-200 px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 hover:border-blue-300"
               >
                 Clear all filters
               </button>

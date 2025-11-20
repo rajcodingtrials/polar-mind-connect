@@ -231,7 +231,7 @@ const ParentHome = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-10">
-        <div className="max-w-5xl mx-auto space-y-8 text-center">
+        <div className="w-full space-y-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-slate-800">
             Welcome, {profile?.name || profile?.username || "User"}!
           </h1>
