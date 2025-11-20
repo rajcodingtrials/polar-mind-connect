@@ -23,9 +23,30 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
   const [isLoading, setIsLoading] = useState(true);
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [shouldSkip, setShouldSkip] = useState(false);
   
   // Use the new TTS settings hook
   const { ttsSettings, isLoaded, callTTS } = useTTSSettings(therapistName);
+
+  // Check skip setting immediately on mount
+  useEffect(() => {
+    const checkSkipSetting = async () => {
+      const { data: adminData } = await supabase
+        .from('admin_settings')
+        .select('skip_introduction')
+        .limit(1)
+        .single();
+      
+      if (adminData?.skip_introduction) {
+        console.log('⏭️ Skip introduction enabled - starting questions immediately');
+        setShouldSkip(true);
+        stopAllAudio();
+        onStartQuestions();
+      }
+    };
+    
+    checkSkipSetting();
+  }, [onStartQuestions]);
 
 
   const getActivityName = (type: QuestionType) => {
@@ -41,24 +62,14 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
   // TTS settings are now handled by the useTTSSettings hook
 
   useEffect(() => {
+    // Don't generate introduction if we should skip
+    if (shouldSkip) {
+      return;
+    }
+    
     const generateIntroduction = async () => {
       try {
         const activityName = getActivityName(selectedQuestionType);
-        
-        // Check if admin settings skip introduction
-        const { data: adminData } = await supabase
-          .from('admin_settings')
-          .select('skip_introduction')
-          .limit(1)
-          .single();
-        
-        // If skip is enabled, don't generate or play anything
-        if (adminData?.skip_introduction) {
-          console.log('⏭️ Skipping introduction per admin settings');
-          setIsLoading(false);
-          onStartQuestions();
-          return;
-        }
         
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
@@ -89,52 +100,60 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
     };
 
     generateIntroduction();
-  }, [selectedQuestionType, therapistName, childName, onStartQuestions]);
+  }, [selectedQuestionType, therapistName, childName, shouldSkip]);
 
   // Separate effect for TTS that runs after intro message is set and TTS settings are loaded
   useEffect(() => {
-    if (!isLoading && introMessage && isLoaded && ttsSettings.voice) {
-      const playTTS = async () => {
-        try {
-          console.log(`🎯 [${therapistName}] Introduction TTS Request:`, {
-            voice: ttsSettings.voice,
-            speed: ttsSettings.speed,
-            provider: ttsSettings.provider || 'openai'
-          });
-          
-          // Stop any previous audio
-          stopGlobalAudio();
-          
-          // Use the new TTS hook to call the appropriate provider
-          const ttsResponse = await callTTS(introMessage, ttsSettings.voice, ttsSettings.speed);
+    // Don't play TTS if we should skip
+    if (shouldSkip || !introMessage || isLoading || !isLoaded || !ttsSettings.voice) {
+      return;
+    }
+    
+    const playTTS = async () => {
+      try {
+        console.log(`🎯 [${therapistName}] Introduction TTS Request:`, {
+          voice: ttsSettings.voice,
+          speed: ttsSettings.speed,
+          provider: ttsSettings.provider || 'openai'
+        });
+        
+        // Stop any previous audio
+        stopGlobalAudio();
+        
+        // Use the new TTS hook to call the appropriate provider
+        const ttsResponse = await callTTS(introMessage, ttsSettings.voice, ttsSettings.speed);
 
-          if (ttsResponse.data?.audioContent) {
-            console.log(`✅ Introduction TTS generated successfully for ${therapistName}`);
-            await playGlobalTTS(ttsResponse.data.audioContent, 'IntroductionScreen');
-            // Show continue button after TTS finishes
-            setTimeout(() => {
-              setShowContinueButton(true);
-              if (onTTSEnd) {
-                onTTSEnd();
-              }
-            }, 3000);
-          } else {
-            console.error(`❌ No introduction audio content returned for ${therapistName}`);
+        if (ttsResponse.data?.audioContent) {
+          console.log(`✅ Introduction TTS generated successfully for ${therapistName}`);
+          await playGlobalTTS(ttsResponse.data.audioContent, 'IntroductionScreen');
+          // Show continue button after TTS finishes
+          setTimeout(() => {
             setShowContinueButton(true);
             if (onTTSEnd) {
               onTTSEnd();
             }
-          }
-        } catch (error) {
-          console.error('TTS error:', error);
+          }, 3000);
+        } else {
+          console.error(`❌ No introduction audio content returned for ${therapistName}`);
           setShowContinueButton(true);
+          if (onTTSEnd) {
+            onTTSEnd();
+          }
         }
-      };
+      } catch (error) {
+        console.error('TTS error:', error);
+        setShowContinueButton(true);
+      }
+    };
 
-      // Add a small delay to ensure everything is ready
-      setTimeout(playTTS, 500);
-    }
-  }, [isLoading, introMessage, isLoaded, ttsSettings, therapistName]);
+    // Add a small delay to ensure everything is ready
+    setTimeout(playTTS, 500);
+  }, [shouldSkip, isLoading, introMessage, isLoaded, ttsSettings, therapistName, callTTS, onTTSEnd]);
+
+  // Don't render anything if we should skip
+  if (shouldSkip) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-6 animate-fade-in relative">
