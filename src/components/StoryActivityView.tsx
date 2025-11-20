@@ -42,6 +42,7 @@ const StoryActivityView = ({
   const [currentSequenceIndex, setCurrentSequenceIndex] = useState(0);
   const [currentStep, setCurrentStep] = useState<'scene' | 'question'>('scene');
   const [hasReadScene, setHasReadScene] = useState(false);
+  const [hasReadQuestion, setHasReadQuestion] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -57,12 +58,26 @@ const StoryActivityView = ({
   const currentSceneNumber = Math.floor(currentSequenceIndex / 2) + 1;
   const currentQuestionNumber = Math.floor(currentSequenceIndex / 2);
 
+  // Debug log for sequencing
+  useEffect(() => {
+    if (currentEntry) {
+      console.log('📍 Current state:', {
+        arrayIndex: currentSequenceIndex,
+        sequenceNumber: currentEntry.sequence_number,
+        isScene: currentEntry.is_scene,
+        currentStep,
+      });
+    }
+  }, [currentSequenceIndex, currentEntry, currentStep]);
+
   // Read scene narration automatically
   useEffect(() => {
-    if (currentStep === 'scene' && currentEntry?.is_scene && !hasReadScene && !isPlaying) {
+    if (currentStep === 'scene' && currentEntry?.is_scene && !hasReadScene && !isPlaying && ttsSettingsLoaded) {
       const narration = currentEntry.scene_narration || '';
-      if (narration && ttsSettingsLoaded) {
+      if (narration) {
+        console.log('🎬 Playing scene narration for sequence:', currentEntry.sequence_number);
         setIsPlaying(true);
+        setHasReadScene(true); // Mark as read immediately to prevent retriggering
         const voiceToUse = ttsSettings.voice;
         callTTS(narration, voiceToUse, ttsSettings.speed)
           .then((response) => {
@@ -70,8 +85,8 @@ const StoryActivityView = ({
               const audio = new Audio(`data:audio/mp3;base64,${response.data.audioContent}`);
               audio.play();
               audio.onended = () => {
-                setHasReadScene(true);
                 setIsPlaying(false);
+                console.log('✅ Scene narration ended for sequence:', currentEntry.sequence_number);
                 if (currentEntry.sequence_number === 9) {
                   setTimeout(() => {
                     onComplete();
@@ -80,7 +95,7 @@ const StoryActivityView = ({
                   setTimeout(() => {
                     setCurrentStep('question');
                     setCurrentSequenceIndex(prev => prev + 1);
-                    setHasReadScene(false);
+                    setHasReadQuestion(false); // Reset for next question
                   }, 1000);
                 }
               };
@@ -98,10 +113,12 @@ const StoryActivityView = ({
 
   // Read question
   useEffect(() => {
-    if (currentStep === 'question' && currentEntry && !currentEntry.is_scene && !isPlaying && !showFeedback) {
+    if (currentStep === 'question' && currentEntry && !currentEntry.is_scene && !hasReadQuestion && !isPlaying && !showFeedback && ttsSettingsLoaded) {
       const question = currentEntry.question || '';
-      if (question && ttsSettingsLoaded) {
+      if (question) {
+        console.log('❓ Playing question for sequence:', currentEntry.sequence_number);
         setIsPlaying(true);
+        setHasReadQuestion(true); // Mark as read immediately to prevent retriggering
         const voiceToUse = ttsSettings.voice;
         callTTS(question, voiceToUse, ttsSettings.speed)
           .then((response) => {
@@ -110,6 +127,7 @@ const StoryActivityView = ({
               audio.play();
               audio.onended = () => {
                 setIsPlaying(false);
+                console.log('✅ Question ended for sequence:', currentEntry.sequence_number);
               };
             } else {
               setIsPlaying(false);
@@ -121,7 +139,7 @@ const StoryActivityView = ({
           });
       }
     }
-  }, [currentStep, currentEntry, isPlaying, showFeedback, ttsSettingsLoaded, callTTS, ttsSettings]);
+  }, [currentStep, currentEntry, hasReadQuestion, isPlaying, showFeedback, ttsSettingsLoaded, callTTS, ttsSettings]);
 
   const handleImageClick = async (index: number) => {
     if (isProcessingAnswer || showFeedback || !currentEntry) return;
@@ -152,12 +170,14 @@ const StoryActivityView = ({
             
             setTimeout(() => {
               const nextIndex = currentSequenceIndex + 1;
+              console.log('➡️ Moving to next entry, index:', nextIndex);
               if (nextIndex < storyEntries.length) {
                 setCurrentSequenceIndex(nextIndex);
                 setCurrentStep('scene');
                 setShowFeedback(false);
                 setSelectedImageIndex(null);
                 setIsProcessingAnswer(false);
+                setHasReadScene(false); // Reset for next scene
               } else {
                 onComplete();
               }
