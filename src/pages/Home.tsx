@@ -1,60 +1,32 @@
 
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useUserProfile } from "../hooks/useUserProfile";
-import { useTherapistAuth } from "../hooks/useTherapistAuth";
+import React from "react";
 import { useUserRole } from "../hooks/useUserRole";
+import ParentHome from "./ParentHome";
+import TherapistHome from "./TherapistHome";
 import Header from "../components/Header";
 
 const Home = () => {
-  const { isAuthenticated, user } = useAuth();
-  const { profile, loading: profileLoading } = useUserProfile();
-  const { therapistProfile, loading: therapistLoading } = useTherapistAuth();
-  const { role, loading: roleLoading } = useUserRole();
-  const navigate = useNavigate();
+  const { role, loading } = useUserRole();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/", { replace: true });
-      return;
-    }
-    
-    // Wait for role and therapist checks to complete
-    if (roleLoading || therapistLoading) return;
-    
-    // If user has therapist role but no profile yet, redirect to complete profile
-    if (role === 'therapist' && !therapistProfile) {
-      navigate("/therapist-dashboard", { replace: true });
-      return;
-    }
-    
-    // Redirect therapists with profile to their dashboard
-    if (therapistProfile) {
-      navigate("/therapist-dashboard", { replace: true });
-      return;
-    }
-    
-    // Redirect regular users to the OpenAI chat page
-    navigate("/openai-chat", { replace: true });
-  }, [isAuthenticated, role, roleLoading, therapistProfile, therapistLoading, navigate]);
-
-  if (profileLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
         <Header />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-semibold mb-4">Loading...</h1>
-            <p className="text-gray-600">Please wait while we load your profile.</p>
+            <h1 className="text-2xl font-semibold mb-4 text-slate-700">Loading...</h1>
+            <p className="text-gray-600">Please wait while we load your home experience.</p>
           </div>
         </main>
       </div>
     );
   }
 
-  // This component will redirect, so we don't need to render anything
-  return null;
+  if (role === "therapist") {
+    return <TherapistHome />;
+  }
+
+  return <ParentHome />;
 };
 
 export default Home;

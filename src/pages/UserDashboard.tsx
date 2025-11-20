@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -8,22 +8,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
-  Calendar, 
   Clock, 
   Star, 
-  User, 
   FileText, 
   BookOpen,
   TrendingUp,
   Timer,
   Flame,
-  LayoutDashboard,
   Award
 } from "lucide-react";
 import { format } from "date-fns";
 import SessionRatingModal from "@/components/SessionRatingModal";
 import UserProfileEditor from "@/components/UserProfileEditor";
 import Footer from "@/components/Footer";
+import { useLocation } from "react-router-dom";
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -31,6 +29,15 @@ const UserDashboard = () => {
   const { upcomingSessions, completedSessions, sessionRatings, loading, submitRating } = useClientSessions(user?.id || null);
   const [selectedSessionForRating, setSelectedSessionForRating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sessions' | 'ratings' | 'profile'>('dashboard');
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab && ['dashboard', 'sessions', 'ratings', 'profile'].includes(tab)) {
+      setActiveTab(tab as 'dashboard' | 'sessions' | 'ratings' | 'profile');
+    }
+  }, [location.search]);
 
   if (profileLoading || loading) {
     return (
@@ -82,82 +89,85 @@ const UserDashboard = () => {
     ? Math.round((sessionRatings.reduce((acc, rating) => acc + rating.rating, 0) / sessionRatings.length) * 10) / 10
     : 0;
 
-  const sidebarItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'sessions', label: 'My Sessions', icon: Calendar },
-    { id: 'ratings', label: 'Ratings & Feedback', icon: Star },
-    { id: 'profile', label: 'My Profile', icon: User },
-  ];
-
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return (
           <div className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card className="bg-blue-50 border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-blue-100">
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-2 rounded-lg bg-blue-100">
-                      <TrendingUp className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-blue-700">Progress Rating</p>
-                      <p className="text-2xl font-bold text-blue-900">
-                        {averageRating > 0 ? `${averageRating}/5` : 'N/A'}
-                      </p>
-                      <p className="text-xs text-blue-600">Average rating</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Learning Progress Section */}
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-slate-700 flex items-center">
+                  <TrendingUp className="w-5 h-5 mr-2" />
+                  Learning Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <Card className="bg-blue-50 border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-blue-100">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-lg bg-blue-100">
+                          <TrendingUp className="h-8 w-8 text-blue-600" />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-blue-700">Progress Rating</p>
+                          <p className="text-2xl font-bold text-blue-900">
+                            {averageRating > 0 ? `${averageRating}/5` : 'N/A'}
+                          </p>
+                          <p className="text-xs text-blue-600">Average rating</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="bg-purple-50 border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-100">
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-2 rounded-lg bg-purple-100">
-                      <BookOpen className="h-8 w-8 text-purple-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-purple-700">Lessons Completed</p>
-                      <p className="text-2xl font-bold text-purple-900">{totalCompletedSessions}</p>
-                      <p className="text-xs text-purple-600">Total sessions</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="bg-purple-50 border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-100">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-lg bg-purple-100">
+                          <BookOpen className="h-8 w-8 text-purple-600" />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-purple-700">Lessons Completed</p>
+                          <p className="text-2xl font-bold text-purple-900">{totalCompletedSessions}</p>
+                          <p className="text-xs text-purple-600">Total sessions</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="bg-orange-50 border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-orange-100">
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-2 rounded-lg bg-orange-100">
-                      <Flame className="h-8 w-8 text-orange-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-orange-700">Streak</p>
-                      <p className="text-2xl font-bold text-orange-900">{streakDays} days</p>
-                      <p className="text-xs text-orange-600">Current streak</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="bg-orange-50 border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-orange-100">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-lg bg-orange-100">
+                          <Flame className="h-8 w-8 text-orange-600" />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-orange-700">Streak</p>
+                          <p className="text-2xl font-bold text-orange-900">{streakDays} days</p>
+                          <p className="text-xs text-orange-600">Current streak</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="bg-green-50 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-green-100">
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-2 rounded-lg bg-green-100">
-                      <Timer className="h-8 w-8 text-green-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-green-700">Total Time</p>
-                      <p className="text-2xl font-bold text-green-900">{totalTimeHours}h</p>
-                      <p className="text-xs text-green-600">Hours completed</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  <Card className="bg-green-50 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-green-100">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-lg bg-green-100">
+                          <Timer className="h-8 w-8 text-green-600" />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-green-700">Total Time</p>
+                          <p className="text-2xl font-bold text-green-900">{totalTimeHours}h</p>
+                          <p className="text-xs text-green-600">Hours completed</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Badges Section */}
             <Card className="bg-white border-slate-200 shadow-sm">
@@ -168,32 +178,64 @@ const UserDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {/* Sample badges - replace with actual badge data */}
-                  <div className="flex flex-col items-center p-4 bg-gradient-to-br from-yellow-100 to-amber-100 rounded-lg border border-yellow-200">
-                    <Award className="w-8 h-8 text-amber-600 mb-2" />
-                    <p className="text-xs font-medium text-amber-800">First Session</p>
-                  </div>
-                  <div className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg border border-blue-200">
-                    <Flame className="w-8 h-8 text-blue-600 mb-2" />
-                    <p className="text-xs font-medium text-blue-800">5 Day Streak</p>
-                  </div>
-                  <div className="flex flex-col items-center p-4 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg border border-green-200">
-                    <BookOpen className="w-8 h-8 text-green-600 mb-2" />
-                    <p className="text-xs font-medium text-green-800">10 Sessions</p>
-                  </div>
-                  <div className="flex flex-col items-center p-4 bg-gradient-to-br from-purple-100 to-violet-100 rounded-lg border border-purple-200">
-                    <Star className="w-8 h-8 text-purple-600 mb-2" />
-                    <p className="text-xs font-medium text-purple-800">High Rating</p>
-                  </div>
-                  <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg border border-gray-200 opacity-50">
-                    <Timer className="w-8 h-8 text-gray-400 mb-2" />
-                    <p className="text-xs font-medium text-gray-500">50 Hours</p>
-                  </div>
-                  <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg border border-gray-200 opacity-50">
-                    <TrendingUp className="w-8 h-8 text-gray-400 mb-2" />
-                    <p className="text-xs font-medium text-gray-500">Progress Master</p>
-                  </div>
+                  <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 border border-yellow-200 hover:border-yellow-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-lg bg-yellow-100">
+                          <Award className="h-8 w-8 text-amber-600" />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-amber-700">First Session</p>
+                          <p className="text-2xl font-bold text-amber-900">✓</p>
+                          <p className="text-xs text-amber-600">Badge earned</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200 hover:border-blue-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-lg bg-blue-100">
+                          <Flame className="h-8 w-8 text-blue-600" />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-blue-700">5 Day Streak</p>
+                          <p className="text-2xl font-bold text-blue-900">✓</p>
+                          <p className="text-xs text-blue-600">Badge earned</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 hover:border-green-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-lg bg-green-100">
+                          <BookOpen className="h-8 w-8 text-green-600" />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-green-700">10 Sessions</p>
+                          <p className="text-2xl font-bold text-green-900">✓</p>
+                          <p className="text-xs text-green-600">Badge earned</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-gradient-to-br from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 border border-purple-200 hover:border-purple-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <CardContent className="p-6">
+                      <div className="flex items-center">
+                        <div className="p-2 rounded-lg bg-purple-100">
+                          <Star className="h-8 w-8 text-purple-600" />
+                        </div>
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-purple-700">High Rating</p>
+                          <p className="text-2xl font-bold text-purple-900">✓</p>
+                          <p className="text-xs text-purple-600">Badge earned</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </CardContent>
             </Card>
@@ -374,51 +416,22 @@ const UserDashboard = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 shadow-sm">
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Dashboard</h2>
-            <nav className="space-y-2">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id as any)}
-                    className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      activeTab === item.id
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 mr-3" />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </nav>
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          {/* Welcome Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Welcome {profile?.name || profile?.username || 'User'}
+            </h1>
+            <p className="text-gray-600">All systems are running smoothly! You have {upcomingSessions.length} upcoming sessions.</p>
+            <p className="text-sm text-gray-500 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
           </div>
+
+          {/* Dynamic Content */}
+          {renderContent()}
         </div>
-
-        {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-6">
-            {/* Welcome Header */}
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Welcome {profile?.name || profile?.username || 'User'}
-              </h1>
-              <p className="text-gray-600">All systems are running smoothly! You have {upcomingSessions.length} upcoming sessions.</p>
-              <p className="text-sm text-gray-500 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
-            </div>
-
-
-            {/* Dynamic Content */}
-            {renderContent()}
-          </div>
-        </div>
-      </div>
+      </main>
 
       {selectedSessionForRating && (
         <SessionRatingModal

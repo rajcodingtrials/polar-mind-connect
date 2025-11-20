@@ -22,6 +22,7 @@ import TherapistAuth from "./pages/TherapistAuth";
 import TherapistDashboard from "./pages/TherapistDashboard";
 import Consultation from "./pages/Consultation";
 import UserDashboard from "./pages/UserDashboard";
+import MyProfile from "./pages/MyProfile";
 import FooterDemo from "./pages/FooterDemo";
 import EmailTemplatePreview from "./pages/EmailTemplatePreview";
 import EmailTemplatesPreview from "./pages/EmailTemplatesPreview";
@@ -86,6 +87,7 @@ function App() {
               <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
               <Route path="/consultation" element={<Consultation />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route path="/my-profile" element={<MyProfile />} />
               <Route path="/footer-demo" element={<FooterDemo />} />
           <Route path="/email-preview" element={<EmailTemplatePreview />} />
           <Route path="/email-templates-preview" element={<EmailTemplatesPreview />} />

@@ -1,0 +1,279 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useUserProfile } from "../hooks/useUserProfile";
+import Header from "../components/Header";
+import Footer from "@/components/Footer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useClientSessions } from "@/hooks/useClientSessions";
+import AffirmationCard from "@/components/AffirmationCard";
+import AILearningAdventure from "@/components/AILearningAdventure";
+import { format } from "date-fns";
+
+const ParentHome = () => {
+  const { isAuthenticated, user } = useAuth();
+  const { profile, loading: profileLoading } = useUserProfile();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { upcomingSessions, completedSessions, loading: sessionsLoading } = useClientSessions(user?.id || null);
+  const [activeTab, setActiveTab] = useState<"ai" | "human">("ai");
+  const [selectedTherapist, setSelectedTherapist] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Reset selected therapist when navigating back from AILearningAdventure
+  useEffect(() => {
+    if (location.state?.resetTherapist) {
+      setSelectedTherapist(null);
+      // Clear the state to prevent resetting on subsequent renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const handleAITherapySelect = (therapistName: string) => {
+    setSelectedTherapist(therapistName);
+  };
+
+  const handleBookSession = () => {
+    navigate("/consultation");
+  };
+
+  const getSessionStatusColor = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "completed":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const formatSessionDateTime = (date: string, startTime: string) => {
+    const sessionDate = new Date(`${date}T${startTime}`);
+    return {
+      date: format(sessionDate, "MMM dd, yyyy"),
+      time: format(sessionDate, "h:mm a"),
+    };
+  };
+
+  const renderAiTherapy = (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div
+        className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 p-6 rounded-2xl transition-all duration-300 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01]"
+        onClick={() => handleAITherapySelect('Laura')}
+      >
+        <Avatar className="h-20 w-20 border-2 border-blue-200">
+          <AvatarImage src="/lovable-uploads/Laura.png" alt="Laura" />
+          <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">L</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <h3 className="font-semibold text-slate-700 text-xl mb-2">Laura 💫</h3>
+          <p className="text-slate-600 text-base">Lead Speech Language Pathologist</p>
+        </div>
+      </div>
+      <div
+        className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 p-6 rounded-2xl transition-all duration-300 border border-green-200 hover:border-green-300 shadow-sm hover:shadow-xl hover:scale-[1.01]"
+        onClick={() => handleAITherapySelect('Lawrence')}
+      >
+        <Avatar className="h-20 w-20 border-2 border-green-200">
+          <AvatarImage src="/lovable-uploads/Lawrence.png" alt="Lawrence" />
+          <AvatarFallback className="bg-green-100 text-green-600 text-lg">L</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <h3 className="font-semibold text-slate-700 text-xl mb-2">Lawrence 🌟</h3>
+          <p className="text-slate-600 text-base">Associate Speech Language Pathologist</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderHumanTherapy = (
+    <div className="space-y-6">
+      <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01] transition-all duration-300">
+        <CardHeader>
+          <CardTitle className="text-slate-700 flex items-center justify-between">
+            <span>Upcoming Sessions ({upcomingSessions.length})</span>
+            <Button size="sm" variant="outline" onClick={handleBookSession}>
+              Book a Session
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {upcomingSessions.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-slate-600 mb-4">No upcoming sessions scheduled.</p>
+              <Button onClick={handleBookSession}>Find a Therapist</Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {upcomingSessions.map((session) => {
+                const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
+                return (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between p-4 bg-blue-100 rounded-lg border border-blue-200"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <Avatar>
+                        <AvatarImage src={session.therapist.avatar_url} />
+                        <AvatarFallback>
+                          {session.therapist.name?.charAt(0) ||
+                            session.therapist.first_name?.charAt(0) ||
+                            "T"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-medium">
+                          {session.therapist.name ||
+                            `${session.therapist.first_name} ${session.therapist.last_name}`}
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          {date} at {time}
+                        </p>
+                        <p className="text-xs text-slate-500">{session.duration_minutes} minutes</p>
+                      </div>
+                    </div>
+                    <Badge className={getSessionStatusColor(session.status)}>{session.status}</Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01] transition-all duration-300">
+        <CardHeader>
+          <CardTitle className="text-slate-700 flex items-center">
+            Session History ({completedSessions.length})
+          </CardTitle>
+          <CardDescription>Recent sessions with your human therapists</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {completedSessions.length === 0 ? (
+            <p className="text-center text-slate-600 py-8">No completed sessions yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {completedSessions.slice(0, 10).map((session) => {
+                const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
+                return (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between p-4 bg-blue-100 rounded-lg border border-blue-200"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <Avatar>
+                        <AvatarImage src={session.therapist.avatar_url} />
+                        <AvatarFallback>
+                          {session.therapist.name?.charAt(0) ||
+                            session.therapist.first_name?.charAt(0) ||
+                            "T"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-medium">
+                          {session.therapist.name ||
+                            `${session.therapist.first_name} ${session.therapist.last_name}`}
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          {date} at {time}
+                        </p>
+                        <p className="text-xs text-slate-500">{session.duration_minutes} minutes</p>
+                      </div>
+                    </div>
+                    <Badge className={getSessionStatusColor(session.status)}>{session.status}</Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold mb-4 text-slate-700">Loading...</h1>
+            <p className="text-gray-600">Please wait while we load your profile.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (selectedTherapist) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
+        <Header />
+        <AILearningAdventure therapistName={selectedTherapist} />
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
+      <Header />
+      <main className="flex-grow container mx-auto px-4 py-10">
+        <div className="max-w-5xl mx-auto space-y-8 text-center">
+          <h1 className="text-4xl sm:text-5xl font-bold text-slate-800">
+            Welcome, {profile?.name || profile?.username || "User"}!
+          </h1>
+          <AffirmationCard />
+          <Card className="bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200 shadow-sm">
+            <CardContent className="pt-6">
+              <Tabs
+                value={activeTab}
+                onValueChange={(value) => setActiveTab(value as "ai" | "human")}
+                className="space-y-6"
+              >
+                <TabsList className="grid grid-cols-2 bg-white/40 backdrop-blur rounded-2xl shadow-sm">
+                  <TabsTrigger
+                    value="ai"
+                    className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:border-blue-300 hover:border-blue-200 hover:scale-[1.01] hover:shadow-xl transition-all duration-300"
+                  >
+                    AI Therapy
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="human"
+                    className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:border-blue-300 hover:border-blue-200 hover:scale-[1.01] hover:shadow-xl transition-all duration-300"
+                  >
+                    Human Therapy
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="ai">{renderAiTherapy}</TabsContent>
+                <TabsContent value="human">
+                  {sessionsLoading ? (
+                    <div className="text-center py-12 text-slate-600">Loading your sessions...</div>
+                  ) : (
+                    renderHumanTherapy
+                  )}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default ParentHome;
+

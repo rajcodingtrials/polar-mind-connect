@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import Header from '../components/Header';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { useUserPreferences } from '../hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, MessageCircle, Building, Heart, User, LayoutDashboard } from 'lucide-react';
+import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
-import ProgressCharacter from '../components/ProgressCharacter';
-import IntroductionScreen from '../components/IntroductionScreen';
-import SingleQuestionView from '../components/SingleQuestionView';
-import TapAndPlayView from '../components/TapAndPlayView';
-import StoryActivityView from '../components/StoryActivityView';
-import MiniCelebration from '../components/MiniCelebration';
-import LessonSelection from '../components/LessonSelection';
-import Footer from '../components/Footer';
+import ProgressCharacter from './ProgressCharacter';
+import IntroductionScreen from './IntroductionScreen';
+import SingleQuestionView from './SingleQuestionView';
+import TapAndPlayView from './TapAndPlayView';
+import MiniCelebration from './MiniCelebration';
+import LessonSelection from './LessonSelection';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -36,26 +30,21 @@ interface Question {
     description: string | null;
     difficulty_level: string;
   } | null;
-  // Story activity fields
-  scene_image?: string;
-  scene_narration?: string;
-  sequence_number?: number;
-  is_scene?: boolean;
 }
 
-const OpenAIChatPage = () => {
-  const [searchParams] = useSearchParams();
+interface AILearningAdventureProps {
+  therapistName: string;
+}
+
+const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName }) => {
+  const navigate = useNavigate();
   const { profile } = useUserProfile();
-  const { preferences, updateSpeechDelayMode } = useUserPreferences();
-  const [showChat, setShowChat] = useState(false);
-  const [showQuestionTypes, setShowQuestionTypes] = useState(false);
+  const [showQuestionTypes, setShowQuestionTypes] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [imageUrls, setImageUrls] = useState<{[key: string]: string}>({});
   const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType | null>(null);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [therapistName, setTherapistName] = useState('Laura');
   
-  // Updated state for better question management
   const [currentScreen, setCurrentScreen] = useState<'home' | 'lesson-selection' | 'introduction' | 'question' | 'celebration' | 'complete'>('home');
   const [availableQuestions, setAvailableQuestions] = useState<Question[]>([]);
   const [askedQuestionIds, setAskedQuestionIds] = useState<Set<string>>(new Set());
@@ -63,39 +52,24 @@ const OpenAIChatPage = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [sessionQuestionCount, setSessionQuestionCount] = useState(0);
   const [comingFromCelebration, setComingFromCelebration] = useState(false);
-  const [storyActivityComplete, setStoryActivityComplete] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const maxQuestionsPerSession = 6;
 
-  // New state for enhanced activity selection
   const [hoveredActivityType, setHoveredActivityType] = useState<QuestionType | null>(null);
   const [showLessonsPanel, setShowLessonsPanel] = useState(false);
   const [lessons, setLessons] = useState<any[]>([]);
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
   
-  // Admin settings state
   const [adminSettings, setAdminSettings] = useState<{ skip_introduction: boolean; show_mic_input: boolean; amplify_mic: boolean; mic_gain: number } | null>(null);
   const [adminSettingsLoading, setAdminSettingsLoading] = useState(true);
 
-  // State for reward video and confetti
   const [showRewardVideo, setShowRewardVideo] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [hasPlayedChime, setHasPlayedChime] = useState(false);
 
-  // Local mic amplification state (overrides admin settings)
   const [localAmplifyMic, setLocalAmplifyMic] = useState(false);
   const [localMicGain, setLocalMicGain] = useState(1.0);
 
-  // Jump directly to question-type view when requested
-  useEffect(() => {
-    const view = searchParams.get('view');
-    if (view === 'question-types') {
-      setCurrentScreen('home');
-      setShowQuestionTypes(true);
-    }
-  }, [searchParams]);
-
-  // Fetch admin settings on mount
   useEffect(() => {
     const fetchSettings = async () => {
       setAdminSettingsLoading(true);
@@ -116,7 +90,6 @@ const OpenAIChatPage = () => {
     fetchSettings();
   }, []);
 
-  // Set childName from profile (fallback to 'friend' if not available)
   const childName = profile?.name || profile?.username || 'friend';
 
   const questionTypes = [
@@ -159,21 +132,12 @@ const OpenAIChatPage = () => {
       color: 'bg-orange-100 hover:bg-orange-200 border-orange-200',
       textColor: 'text-orange-800',
       icon: Heart
-    },
-    { 
-      value: 'story_activity' as QuestionType, 
-      label: 'Story Activity', 
-      description: 'Follow along with interactive story scenes', 
-      color: 'bg-rose-100 hover:bg-rose-200 border-rose-200',
-      textColor: 'text-rose-800',
-      icon: BookOpen
     }
   ];
 
   useEffect(() => {
     const loadQuestionsAndImages = async () => {
       try {
-        // Load questions from Supabase with lesson information
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
           .select(`
@@ -184,7 +148,8 @@ const OpenAIChatPage = () => {
               description,
               difficulty_level
             )
-          `);
+          `)
+          .order('created_at', { ascending: false });
 
         if (questionsError) {
           console.error('Error loading questions:', questionsError);
@@ -201,48 +166,14 @@ const OpenAIChatPage = () => {
             correctImageIndex: q.correct_image_index ?? undefined,
             questionType: q.question_type,
             lessonId: q.lesson_id,
-            lesson: q.lessons,
-            // Story activity fields
-            scene_image: q.scene_image,
-            scene_narration: q.scene_narration,
-            sequence_number: q.sequence_number,
-            is_scene: q.is_scene
+            lesson: q.lessons
           }));
           
-          // Log story activity entries to verify sequence_number mapping
-          const storyEntries = formattedQuestions.filter(q => q.questionType === 'story_activity');
-          if (storyEntries.length > 0) {
-            console.log('📖 Loaded story entries BEFORE sort:', storyEntries.map(q => ({
-              id: q.id.substring(0, 8),
-              seq: q.sequence_number,
-              isScene: q.is_scene,
-              question: q.question.substring(0, 30)
-            })));
-            
-            // Sort story activities immediately by sequence_number
-            const sortedStories = storyEntries.sort((a, b) => 
-              (a.sequence_number || 0) - (b.sequence_number || 0)
-            );
-            
-            console.log('📖 Story entries AFTER sort:', sortedStories.map(q => ({
-              seq: q.sequence_number,
-              isScene: q.is_scene,
-              question: q.question.substring(0, 30)
-            })));
-          }
-          
           setQuestions(formattedQuestions);
-          console.log('Loaded questions from Supabase:', formattedQuestions.length);
-          console.log('Questions by type:', formattedQuestions.reduce((acc, q) => {
-            acc[q.questionType || 'unknown'] = (acc[q.questionType || 'unknown'] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>));
 
-          // Load image URLs for questions that have images
           const imageUrlMap: {[key: string]: string} = {};
           
           for (const question of formattedQuestions) {
-            // Handle single image (backward compatibility)
             if (question.imageName) {
               const { data } = supabase.storage
                 .from('question-images')
@@ -250,11 +181,9 @@ const OpenAIChatPage = () => {
               
               if (data?.publicUrl) {
                 imageUrlMap[question.imageName] = data.publicUrl;
-                console.log(`Loaded image URL for ${question.imageName}:`, data.publicUrl);
               }
             }
             
-            // Handle multiple images for tap_and_play
             if (question.images && Array.isArray(question.images)) {
               for (const imageName of question.images) {
                 if (!imageUrlMap[imageName]) {
@@ -264,30 +193,15 @@ const OpenAIChatPage = () => {
                   
                   if (data?.publicUrl) {
                     imageUrlMap[imageName] = data.publicUrl;
-                    console.log(`Loaded image URL for ${imageName}:`, data.publicUrl);
                   }
                 }
-              }
-            }
-            
-            // Handle scene images for story_activity
-            if (question.scene_image && !imageUrlMap[question.scene_image]) {
-              const { data } = supabase.storage
-                .from('question-images')
-                .getPublicUrl(question.scene_image);
-              
-              if (data?.publicUrl) {
-                imageUrlMap[question.scene_image] = data.publicUrl;
-                console.log(`Loaded scene image URL for ${question.scene_image}:`, data.publicUrl);
               }
             }
           }
           
           setImageUrls(imageUrlMap);
-          console.log('Loaded image URLs:', Object.keys(imageUrlMap).length);
         }
 
-        // Load all lessons
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('lessons')
           .select('*')
@@ -297,7 +211,6 @@ const OpenAIChatPage = () => {
         if (!lessonsError && lessonsData) {
           setLessons(lessonsData);
           
-          // Fetch question counts for each lesson
           const counts: Record<string, number> = {};
           for (const lesson of lessonsData) {
             const { count, error: countError } = await supabase
@@ -330,7 +243,6 @@ const OpenAIChatPage = () => {
           const urlMap: {[key: string]: string} = {};
           
           imageData.forEach((item: any) => {
-            // Create object URL from base64 data
             const byteCharacters = atob(item.data);
             const byteNumbers = new Array(byteCharacters.length);
             for (let i = 0; i < byteCharacters.length; i++) {
@@ -342,7 +254,6 @@ const OpenAIChatPage = () => {
           });
           
           setImageUrls(urlMap);
-          console.log('Updated image URLs from storage event:', Object.keys(urlMap).length);
         } catch (error) {
           console.error('Error processing updated images:', error);
         }
@@ -355,7 +266,6 @@ const OpenAIChatPage = () => {
 
   useEffect(() => {
     if (currentScreen === 'complete' && !showRewardVideo) {
-      // Show cartoon for 2.5s, then show video
       const timer = setTimeout(() => {
         setShowRewardVideo(true);
         setShowConfetti(true);
@@ -373,11 +283,6 @@ const OpenAIChatPage = () => {
     }
   }, [showRewardVideo, hasPlayedChime]);
 
-  const handleLauraClick = () => {
-    setTherapistName('Laura');
-    setShowQuestionTypes(true);
-  };
-
   const selectRandomQuestion = (questionsPool: Question[]): Question | null => {
     if (questionsPool.length === 0) return null;
     const randomIndex = Math.floor(Math.random() * questionsPool.length);
@@ -385,43 +290,33 @@ const OpenAIChatPage = () => {
   };
 
   const handleQuestionTypeSelect = (questionType: QuestionType) => {
-    console.log('🎯 Selected question type:', questionType);
     setSelectedQuestionType(questionType);
     setShowQuestionTypes(false);
     setCorrectAnswers(0);
     setRetryCount(0);
-    setStoryActivityComplete(false); // Reset story flag
-    // Speech delay mode persists across sessions
     setSessionQuestionCount(0);
     setAskedQuestionIds(new Set());
     setSelectedLessonId(null);
-    
-    // Move to lesson selection screen
     setCurrentScreen('lesson-selection');
   };
 
   const handleDirectLessonSelect = (lessonId: string | null, questionType: QuestionType) => {
-    console.log('📚 Direct lesson select:', lessonId, questionType);
     setSelectedQuestionType(questionType);
     setSelectedLessonId(lessonId);
     setShowQuestionTypes(false);
     setCorrectAnswers(0);
     setRetryCount(0);
-    // Speech delay mode persists across sessions
     setSessionQuestionCount(0);
     setAskedQuestionIds(new Set());
     
-    // Filter questions based on lesson selection
     let filteredQuestions: Question[];
     
     if (lessonId) {
-      // Filter by specific lesson
       filteredQuestions = questions.filter(q => 
         q.questionType === questionType && 
         q.lessonId === lessonId
       );
     } else {
-      // Filter by question type only (all questions for this type)
       filteredQuestions = questions.filter(q => q.questionType === questionType);
     }
     
@@ -429,48 +324,21 @@ const OpenAIChatPage = () => {
     setCurrentScreen('introduction');
   };
 
-  // When lesson is selected, skip intro if admin setting is on
   const handleLessonSelect = (lessonId: string | null) => {
-    console.log('📚 Selected lesson:', lessonId);
     setSelectedLessonId(lessonId);
     
-    // Filter questions based on lesson selection
     let filteredQuestions: Question[];
     
     if (lessonId) {
-      // Filter by specific lesson
       filteredQuestions = questions.filter(q => 
         q.questionType === selectedQuestionType && 
         q.lessonId === lessonId
       );
-      console.log('🎯 Questions for specific lesson:', filteredQuestions.length);
     } else {
-      // Filter by question type only (all questions for this type)
       filteredQuestions = questions.filter(q => q.questionType === selectedQuestionType);
-      console.log('🎯 All questions for type:', filteredQuestions.length);
-    }
-    
-    // Sort story_activity by sequence_number
-    if (selectedQuestionType === 'story_activity') {
-      console.log('📖 Before lesson select sort:', filteredQuestions.map(q => ({ 
-        seq: q.sequence_number, 
-        isScene: q.is_scene,
-        question: q.question 
-      })));
-      
-      filteredQuestions = [...filteredQuestions].sort((a, b) => 
-        (a.sequence_number || 0) - (b.sequence_number || 0)
-      );
-      
-      console.log('📖 After lesson select sort:', filteredQuestions.map(q => ({ 
-        seq: q.sequence_number, 
-        isScene: q.is_scene,
-        question: q.question 
-      })));
     }
     
     setAvailableQuestions(filteredQuestions);
-    // If skip_introduction is true, go straight to question
     if (adminSettings && adminSettings.skip_introduction) {
       handleStartQuestions();
     } else {
@@ -483,169 +351,75 @@ const OpenAIChatPage = () => {
     setShowQuestionTypes(true);
   };
 
+  const handleBackToTherapists = () => {
+    navigate('/home', { state: { resetTherapist: true } });
+  };
+
   const handleStartQuestions = () => {
-    // For story_activity, start at first entry (no randomization)
-    if (selectedQuestionType === 'story_activity') {
-      console.log('📖 Available questions for story:', availableQuestions.map(q => ({
-        seq: q.sequence_number,
-        isScene: q.is_scene,
-        question: q.question.substring(0, 30)
-      })));
-      
-      const firstEntry = availableQuestions[0];
-      if (firstEntry) {
-        console.log('📖 Starting story from beginning with entry:', {
-          seq: firstEntry.sequence_number,
-          isScene: firstEntry.is_scene,
-          question: firstEntry.question
-        });
-        setCurrentQuestion(firstEntry);
-        setAskedQuestionIds(new Set([firstEntry.id]));
-        setSessionQuestionCount(1);
-        setComingFromCelebration(false);
-        setCurrentScreen('question');
-      }
-      return;
-    }
-    
-    // For other activities, use random selection
     const firstQuestion = selectRandomQuestion(availableQuestions);
     if (firstQuestion) {
-      console.log('🎯 Starting with question:', firstQuestion.question);
       setCurrentQuestion(firstQuestion);
       setAskedQuestionIds(new Set([firstQuestion.id]));
       setSessionQuestionCount(1);
       setComingFromCelebration(false);
-      console.log('🔄 comingFromCelebration set to false for first question');
       setCurrentScreen('question');
     }
   };
 
   const handleCorrectAnswer = () => {
-    console.log('🎉 Correct answer! Moving to celebration...');
-    console.log('📊 Correct answer state:', {
-      currentQuestionId: currentQuestion?.id,
-      sessionQuestionCount,
-      correctAnswers: correctAnswers + 1,
-      questionType: selectedQuestionType
-    });
     setCorrectAnswers(prev => prev + 1);
-    
-    // For story_activity during the story, don't show celebration - it handles its own flow internally
-    if (selectedQuestionType === 'story_activity') {
-      console.log('📖 Story activity - skipping celebration, internal flow continues');
-      return;
-    }
-    
     setComingFromCelebration(true);
-    console.log('🔄 comingFromCelebration set to true for celebration');
     setCurrentScreen('celebration');
     setRetryCount(0);
   };
 
   const handleNextQuestion = () => {
-    console.log('🔄 Moving to next question...');
-    console.log('📊 Current session state:', {
-      sessionQuestionCount,
-      maxQuestionsPerSession,
-      askedQuestionIds: Array.from(askedQuestionIds),
-      availableQuestionsCount: availableQuestions.length
-    });
-    
     if (sessionQuestionCount >= maxQuestionsPerSession) {
-      console.log('🏁 Session complete - reached max questions');
       setCurrentScreen('complete');
       return;
     }
 
-    // Get remaining questions (not asked yet)
     const remainingQuestions = availableQuestions.filter(q => !askedQuestionIds.has(q.id));
-    console.log('🎯 Remaining questions:', remainingQuestions.length);
-    console.log('🎯 Remaining question IDs:', remainingQuestions.map(q => q.id));
     
     if (remainingQuestions.length === 0) {
-      console.log('🏁 No more questions available - session complete');
       setCurrentScreen('complete');
       return;
     }
 
-    // Select next random question
     const nextQuestion = selectRandomQuestion(remainingQuestions);
     if (nextQuestion) {
-      console.log('🎯 Next question selected:', {
-        id: nextQuestion.id,
-        question: nextQuestion.question,
-        newSessionCount: sessionQuestionCount + 1
-      });
       setCurrentQuestion(nextQuestion);
       setAskedQuestionIds(prev => new Set([...prev, nextQuestion.id]));
       setSessionQuestionCount(prev => prev + 1);
       setRetryCount(0);
-      setComingFromCelebration(false); // Reset immediately
-      console.log('🔄 comingFromCelebration reset to false for next question');
+      setComingFromCelebration(false);
       setCurrentScreen('question');
     } else {
-      console.log('🏁 No valid next question - session complete');
       setCurrentScreen('complete');
     }
   };
 
   const handleCelebrationComplete = () => {
-    console.log('🎊 Celebration complete - moving to next question or completing');
-    console.log('📊 Celebration state:', {
-      sessionQuestionCount,
-      correctAnswers,
-      currentQuestionId: currentQuestion?.id,
-      questionType: selectedQuestionType,
-      storyActivityComplete
-    });
-    
-    // If story activity just completed, finish the session instead of next question
-    if (storyActivityComplete) {
-      console.log('📖 Story complete - finishing session');
-      setStoryActivityComplete(false); // Reset for next time
-      handleCompleteSession();
-      return;
-    }
-    
     handleNextQuestion();
   };
 
   const handleCompleteSession = () => {
-    console.log('🔄 Resetting session...');
     setCurrentScreen('home');
-    setShowQuestionTypes(false);
+    setShowQuestionTypes(true);
     setSelectedQuestionType(null);
     setCorrectAnswers(0);
     setRetryCount(0);
-    setStoryActivityComplete(false); // Reset story flag
-    // Speech delay mode persists across sessions
-    setTherapistName('Laura');
     setCurrentQuestion(null);
     setAvailableQuestions([]);
     setAskedQuestionIds(new Set());
     setSessionQuestionCount(0);
   };
 
-  const handleCloseChat = () => {
-    handleCompleteSession();
-  };
-
-  const handleLawrenceClick = () => {
-    console.log('Lawrence clicked - setting Lawrence as therapist');
-    setTherapistName('Lawrence');
-    setShowQuestionTypes(true);
-    setCurrentScreen('home');
-  };
-
-  // Click handlers for activity selection
   const handleActivityClick = (questionType: QuestionType) => {
     if (hoveredActivityType === questionType && showLessonsPanel) {
-      // If clicking the same activity that's already open, close the panel
       setHoveredActivityType(null);
       setShowLessonsPanel(false);
     } else {
-      // Show lessons for the clicked activity
       setHoveredActivityType(questionType);
       setShowLessonsPanel(true);
     }
@@ -656,7 +430,6 @@ const OpenAIChatPage = () => {
     setShowLessonsPanel(false);
   };
 
-  // Mic amplification handlers
   const handleAmplifyMicChange = (enabled: boolean) => {
     setLocalAmplifyMic(enabled);
   };
@@ -667,69 +440,8 @@ const OpenAIChatPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
-      <Header />
-      
-      
       <main className="flex-grow p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
-          {/* Home Screen */}
-          {currentScreen === 'home' && !showQuestionTypes && (
-            <>
-              <div className="mb-8 relative">
-                <div className="flex items-center justify-center">
-                  <h1 className="text-5xl font-bold text-slate-700 text-center">
-                    Welcome, {profile?.name || 'User'}!
-                  </h1>
-                </div>
-              </div>
-
-              {/* Your Therapists Section */}
-              <Card className="mb-8 bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-slate-700 flex items-center gap-2">
-                    Your AI Therapists
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div 
-                      className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 p-6 rounded-2xl transition-all duration-300 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-105 min-h-[120px]"
-                      onClick={handleLauraClick}
-                    >
-                      <Avatar className="h-20 w-20 border-2 border-blue-200">
-                        <AvatarImage 
-                          src="/lovable-uploads/Laura.png" 
-                          alt="Laura" 
-                        />
-                        <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">L</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-slate-700 text-xl mb-2">Laura 💫</h3>
-                        <p className="text-slate-600 text-base">Lead Speech Language Pathologist</p>
-                      </div>
-                    </div>
-                    <div 
-                      className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 p-6 rounded-2xl transition-all duration-300 border border-green-200 hover:border-green-300 shadow-sm hover:shadow-xl hover:scale-105 min-h-[120px]"
-                      onClick={handleLawrenceClick}
-                    >
-                      <Avatar className="h-20 w-20 border-2 border-green-200">
-                        <AvatarImage 
-                          src="/lovable-uploads/Lawrence.png" 
-                          alt="Lawrence" 
-                        />
-                        <AvatarFallback className="bg-green-100 text-green-600 text-lg">L</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-slate-700 text-xl mb-2">Lawrence 🌟</h3>
-                        <p className="text-slate-600 text-base">Associate Speech Language Pathologist</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
-
           {/* Enhanced Activity Selection Screen */}
           {showQuestionTypes && currentScreen === 'home' && (
             <div className="mb-8 flex flex-col items-center">
@@ -746,13 +458,10 @@ const OpenAIChatPage = () => {
                 {/* Activity Cards Section */}
                 <div className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-2/5' : 'w-full'}`}>
                   <div className={`grid gap-8 ${showLessonsPanel ? 'grid-cols-1' : 'grid-cols-5'} justify-items-center`}>
-                    {/* Show selected activity first when panel is open */}
                     {showLessonsPanel && hoveredActivityType && (() => {
                       const selectedType = questionTypes.find(type => type.value === hoveredActivityType);
                       if (!selectedType) return null;
                       
-                      const questionsOfType = questions.filter(q => q.questionType === selectedType.value).length;
-                      const lessonsOfType = questions.filter(q => q.questionType === selectedType.value && q.lessonId).length;
                       const IconComponent = selectedType.icon;
                       
                       return (
@@ -768,18 +477,13 @@ const OpenAIChatPage = () => {
                             <h3 className="font-bold text-xl mb-3">{selectedType.label} ✨</h3>
                             <p className="text-sm opacity-90 leading-relaxed mt-4">{selectedType.description}</p>
                           </div>
-                          
-                          {/* Remove question/lesson/AI info from activity card */}
                         </div>
                       );
                     })()}
                     
-                    {/* Show other activities */}
                     {questionTypes
                       .filter(type => !showLessonsPanel || type.value !== hoveredActivityType)
                       .map((type) => {
-                        const questionsOfType = questions.filter(q => q.questionType === type.value).length;
-                        const lessonsOfType = questions.filter(q => q.questionType === type.value && q.lessonId).length;
                         const IconComponent = type.icon;
                         const isOtherHovered = showLessonsPanel && hoveredActivityType && hoveredActivityType !== type.value;
                         
@@ -800,8 +504,6 @@ const OpenAIChatPage = () => {
                               <h3 className="font-bold text-xl mb-3">{type.label}</h3>
                               <p className="text-sm opacity-90 leading-relaxed mt-4">{type.description}</p>
                             </div>
-                            
-                            {/* Remove question/lesson/AI info from activity card */}
                           </div>
                         );
                       })}
@@ -818,7 +520,6 @@ const OpenAIChatPage = () => {
                     
                     return (
                       <div className={`${selectedType.color.replace('hover:bg-', 'bg-').replace('border-', '')} rounded-2xl shadow-xl border-3 border-white p-6 h-full relative overflow-y-auto`}>
-                        {/* Close button */}
                         <button
                           onClick={handleCloseLessons}
                           className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors bg-white rounded-full p-1 shadow-md z-10"
@@ -833,7 +534,6 @@ const OpenAIChatPage = () => {
                         </div>
                         
                         <div className="space-y-4">
-                          {/* Practice All Questions Option */}
                           <div
                             className="bg-white bg-opacity-70 hover:bg-opacity-90 border border-white border-opacity-50 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md"
                             onClick={() => handleDirectLessonSelect(null, hoveredActivityType)}
@@ -852,7 +552,6 @@ const OpenAIChatPage = () => {
                             </div>
                           </div>
 
-                          {/* Individual Lessons */}
                           {lessons
                             .filter(lesson => lesson.question_type === hoveredActivityType)
                             .map((lesson, idx) => {
@@ -910,10 +609,7 @@ const OpenAIChatPage = () => {
               
               <div className="mt-8 text-center">
                 <button
-                  onClick={() => {
-                    setShowQuestionTypes(false);
-                    setHoveredActivityType(null);
-                  }}
+                  onClick={handleBackToTherapists}
                   className="text-gray-600 hover:text-gray-800 text-lg font-medium bg-white px-6 py-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   ← Back to Therapists
@@ -932,8 +628,8 @@ const OpenAIChatPage = () => {
             />
           )}
 
-          {/* Introduction Screen - Only show if skip_introduction is false */}
-          {currentScreen === 'introduction' && selectedQuestionType && !adminSettings?.skip_introduction && (
+          {/* Introduction Screen */}
+          {currentScreen === 'introduction' && selectedQuestionType && (
             <IntroductionScreen
               selectedQuestionType={selectedQuestionType}
               therapistName={therapistName}
@@ -942,32 +638,10 @@ const OpenAIChatPage = () => {
             />
           )}
 
-          {/* Question View - render different components based on question type */}
+          {/* Question View */}
           {currentScreen === 'question' && selectedQuestionType && currentQuestion && (
             <>
-              {/* Story Activity View */}
-              {currentQuestion.questionType === 'story_activity' && (
-                <StoryActivityView
-                  storyEntries={availableQuestions}
-                  imageUrls={imageUrls}
-                  questionNumber={sessionQuestionCount}
-                  totalQuestions={maxQuestionsPerSession}
-                  therapistName={therapistName}
-                  childName={childName}
-                  onCorrectAnswer={handleCorrectAnswer}
-                  onComplete={handleCompleteSession}
-                  onStoryComplete={() => {
-                    console.log('📖 Story complete - showing celebration');
-                    setStoryActivityComplete(true);
-                    setComingFromCelebration(true);
-                    setCurrentScreen('celebration');
-                  }}
-                  comingFromCelebration={comingFromCelebration}
-                />
-              )}
-              
-              {/* Tap and Play View */}
-              {currentQuestion.questionType === 'tap_and_play' && (
+              {currentQuestion.questionType === 'tap_and_play' ? (
                 <TapAndPlayView
                   question={currentQuestion}
                   imageUrls={imageUrls}
@@ -982,10 +656,7 @@ const OpenAIChatPage = () => {
                   onRetryCountChange={setRetryCount}
                   comingFromCelebration={comingFromCelebration}
                 />
-              )}
-              
-              {/* All other question types */}
-              {!['tap_and_play', 'story_activity'].includes(currentQuestion.questionType || '') && (
+              ) : (
                 <SingleQuestionView
                   question={currentQuestion}
                   imageUrl={currentQuestion.imageName ? imageUrls[currentQuestion.imageName] : undefined}
@@ -1018,10 +689,9 @@ const OpenAIChatPage = () => {
             />
           )}
 
-          {/* Complete Session with Progress Character */}
+          {/* Complete Session */}
           {currentScreen === 'complete' && (
             <div className="flex flex-col items-center justify-center min-h-[80vh] relative">
-              {/* Step 1: Show cartoon/progress character celebration */}
               {!showRewardVideo && (
                 <div className="fade-in-out">
                   <ProgressCharacter 
@@ -1030,7 +700,6 @@ const OpenAIChatPage = () => {
                     questionType={selectedQuestionType}
                   />
                   <div className="text-2xl font-bold mt-6 mb-2 text-emerald-600 animate-pulse">You did it!</div>
-                  {/* Optionally, reuse confetti from MiniCelebration */}
                   {showConfetti && (
                     <div className="fixed inset-0 pointer-events-none z-50">
                       {Array.from({ length: 30 }).map((_, i) => (
@@ -1064,13 +733,12 @@ const OpenAIChatPage = () => {
                   `}</style>
                 </div>
               )}
-              {/* Step 2: Fade in video reward with confetti and chime */}
               {showRewardVideo && (() => {
                 const selectedLesson = lessons.find(lesson => lesson.id === selectedLessonId);
                 if (selectedLesson?.youtube_video_id) {
                   return (
                     <div className="fade-in flex flex-col items-center">
-                      <h3 className="text-2xl font-bold mb-4">🎵 Surprise! Here’s a special song as your reward!</h3>
+                      <h3 className="text-2xl font-bold mb-4">🎵 Surprise! Here's a special song as your reward!</h3>
                       <iframe
                         width="800"
                         height="450"
@@ -1106,10 +774,9 @@ const OpenAIChatPage = () => {
           )}
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };
 
-export default OpenAIChatPage;
+export default AILearningAdventure;
+
