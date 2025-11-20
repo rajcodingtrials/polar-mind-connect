@@ -172,8 +172,7 @@ const OpenAIChatPage = () => {
               description,
               difficulty_level
             )
-          `)
-          .order('created_at', { ascending: false });
+          `);
 
         if (questionsError) {
           console.error('Error loading questions:', questionsError);
@@ -201,8 +200,19 @@ const OpenAIChatPage = () => {
           // Log story activity entries to verify sequence_number mapping
           const storyEntries = formattedQuestions.filter(q => q.questionType === 'story_activity');
           if (storyEntries.length > 0) {
-            console.log('📖 Loaded story entries:', storyEntries.map(q => ({
+            console.log('📖 Loaded story entries BEFORE sort:', storyEntries.map(q => ({
               id: q.id.substring(0, 8),
+              seq: q.sequence_number,
+              isScene: q.is_scene,
+              question: q.question.substring(0, 30)
+            })));
+            
+            // Sort story activities immediately by sequence_number
+            const sortedStories = storyEntries.sort((a, b) => 
+              (a.sequence_number || 0) - (b.sequence_number || 0)
+            );
+            
+            console.log('📖 Story entries AFTER sort:', sortedStories.map(q => ({
               seq: q.sequence_number,
               isScene: q.is_scene,
               question: q.question.substring(0, 30)
@@ -429,17 +439,17 @@ const OpenAIChatPage = () => {
     
     // Sort story_activity by sequence_number
     if (selectedQuestionType === 'story_activity') {
-      console.log('📖 Before sort:', filteredQuestions.map(q => ({ 
+      console.log('📖 Before lesson select sort:', filteredQuestions.map(q => ({ 
         seq: q.sequence_number, 
         isScene: q.is_scene,
         question: q.question 
       })));
       
-      filteredQuestions = filteredQuestions.sort((a, b) => 
+      filteredQuestions = [...filteredQuestions].sort((a, b) => 
         (a.sequence_number || 0) - (b.sequence_number || 0)
       );
       
-      console.log('📖 After sort:', filteredQuestions.map(q => ({ 
+      console.log('📖 After lesson select sort:', filteredQuestions.map(q => ({ 
         seq: q.sequence_number, 
         isScene: q.is_scene,
         question: q.question 
