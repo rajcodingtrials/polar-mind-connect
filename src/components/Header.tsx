@@ -55,28 +55,7 @@ const Header = () => {
           )}
         </nav>
       </div>
-
-      {!isAuthenticated && (
-        <div className="h-[70vh] overflow-hidden relative">
-          <img
-            src="/lovable-uploads/frontpage1.png"
-            alt="Banner image" 
-            className="w-full object-cover object-center"
-          />
-        
-          {/* Gray overlay */}
-          <div className="absolute inset-0 bg-black/20"></div>
-
-          <div className="absolute top-1/2 transform -translate-y-1/2 right-12 md:right-24 lg:right-32 max-w-md text-right z-10">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-loose tracking-wide mb-6">
-              Shaping future one word at a time
-            </h2>
-            <p className="text-sm md:text-base text-white leading-loose tracking-wide">
-              AI speech therapists that turn home into learning hubs and parents into expert teachers
-            </p>
-          </div>
-        </div>
-      )}
+      {/* The large banner image and text underneath is removed, as now shown in Index.tsx */}
     </header>
   );
 };
