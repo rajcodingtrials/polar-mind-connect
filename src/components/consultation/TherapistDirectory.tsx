@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
 import TherapistProfileModal from "./TherapistProfileModal";
 import TherapistCard from "./TherapistCard";
 import TherapistSkeleton from "./TherapistSkeleton";
@@ -31,14 +28,22 @@ interface Therapist {
   headline: string;
 }
 
-const TherapistDirectory = () => {
+interface TherapistDirectoryProps {
+  searchQuery?: string;
+  selectedSpecialization?: string;
+  priceRange?: string;
+  sortBy?: string;
+}
+
+const TherapistDirectory = ({ 
+  searchQuery = "", 
+  selectedSpecialization = "all", 
+  priceRange = "all", 
+  sortBy = "name" 
+}: TherapistDirectoryProps) => {
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [filteredTherapists, setFilteredTherapists] = useState<Therapist[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSpecialization, setSelectedSpecialization] = useState("all");
-  const [priceRange, setPriceRange] = useState("all");
-  const [sortBy, setSortBy] = useState("name");
   const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
   const { toast } = useToast();
   
@@ -135,10 +140,8 @@ const TherapistDirectory = () => {
   const hasActiveFilters = searchQuery || selectedSpecialization !== "all" || priceRange !== "all";
 
   const clearAllFilters = () => {
-    setSearchQuery("");
-    setSelectedSpecialization("all");
-    setPriceRange("all");
-    setSortBy("name");
+    // Filters are controlled by parent component
+    window.location.reload();
   };
 
   if (loading) {
@@ -153,71 +156,6 @@ const TherapistDirectory = () => {
 
   return (
     <div className="space-y-8">
-      {/* Enhanced Filters Section */}
-      <Card className="bg-gradient-to-br from-background via-surface-elevated/60 to-surface-elevated/40 backdrop-blur-xl border-border/20 shadow-xl hover:shadow-2xl transition-all duration-500">
-        <CardContent className="p-6 lg:p-8">
-          <div className="space-y-6">
-            <div className="space-y-3 text-center lg:text-left">
-              <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emphasis-high via-primary to-emphasis-high bg-clip-text text-transparent">
-                Find Your Perfect Therapist
-              </h2>
-              <p className="text-sm lg:text-base text-emphasis-medium leading-relaxed max-w-3xl">
-                Use the filters below to find therapists that match your needs and preferences. Discover qualified professionals ready to help you.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-              <div className="relative group lg:col-span-2">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-emphasis-medium group-focus-within:text-primary transition-all duration-300" />
-                <Input
-                  placeholder="Search by name or specialty..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-12 bg-gradient-to-r from-card/90 to-card/70 backdrop-blur-lg border-border/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 rounded-xl shadow-md hover:shadow-lg focus:shadow-lg"
-                />
-              </div>
-              
-              <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
-                <SelectTrigger className="h-12 bg-gradient-to-r from-card/90 to-card/70 backdrop-blur-lg border-border/40 focus:border-primary rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-                  <SelectValue placeholder="All Specializations" />
-                </SelectTrigger>
-                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl shadow-2xl">
-                  <SelectItem value="all" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">All Specializations</SelectItem>
-                  {getUniqueSpecializations().map(spec => (
-                    <SelectItem key={spec} value={spec} className="focus:bg-surface-elevated/80 rounded-lg transition-colors">{spec}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={priceRange} onValueChange={setPriceRange}>
-                <SelectTrigger className="h-12 bg-gradient-to-r from-card/90 to-card/70 backdrop-blur-lg border-border/40 focus:border-primary rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-                  <SelectValue placeholder="All Price Ranges" />
-                </SelectTrigger>
-                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl shadow-2xl">
-                  <SelectItem value="all" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">All Prices</SelectItem>
-                  <SelectItem value="0-50" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">$0 - $50/session</SelectItem>
-                  <SelectItem value="50-100" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">$50 - $100/session</SelectItem>
-                  <SelectItem value="100-150" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">$100 - $150/session</SelectItem>
-                  <SelectItem value="150" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">$150+/session</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="h-12 bg-gradient-to-r from-card/90 to-card/70 backdrop-blur-lg border-border/40 focus:border-primary rounded-xl shadow-md hover:shadow-lg transition-all duration-300 md:col-start-2 lg:col-start-auto">
-                  <SelectValue placeholder="Sort By" />
-                </SelectTrigger>
-                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl shadow-2xl">
-                  <SelectItem value="name" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">Name (A-Z)</SelectItem>
-                  <SelectItem value="price-low" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">Price: High to Low</SelectItem>
-                  <SelectItem value="experience" className="focus:bg-surface-elevated/80 rounded-lg transition-colors">Most Experienced</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Enhanced Results Section */}
       <div className="space-y-8">
         {filteredTherapists.length > 0 && (

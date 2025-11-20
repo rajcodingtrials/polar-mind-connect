@@ -419,15 +419,6 @@ const UserDashboard = () => {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
-          {/* Welcome Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Welcome {profile?.name || profile?.username || 'User'}
-            </h1>
-            <p className="text-gray-600">All systems are running smoothly! You have {upcomingSessions.length} upcoming sessions.</p>
-            <p className="text-sm text-gray-500 mt-1">Today ({format(new Date(), 'dd MMM yyyy')})</p>
-          </div>
-
           {/* Dynamic Content */}
           {renderContent()}
         </div>

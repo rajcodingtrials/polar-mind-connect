@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Star, CheckCircle, Users, ArrowRight, Clock } from "lucide-react";
 
 interface TherapistHeroProps {
@@ -26,11 +27,40 @@ const TherapistHero = ({ therapistCount = 150, onBrowseTherapists }: TherapistHe
                 Speech Therapist
               </span>
             </h1>
-            <p className="text-lg sm:text-xl lg:text-2xl text-emphasis-medium max-w-4xl mx-auto leading-relaxed font-medium">
-              Connect with verified, licensed speech therapists for personalized therapy sessions. 
-              Start your journey to better communication today.
-            </p>
           </div>
+
+          {/* White Rectangle Section */}
+          <Card className="bg-white border-slate-200 shadow-sm animate-fade-in">
+            <CardContent className="p-6 lg:p-8">
+              <div className="space-y-6">
+                {/* Description Text */}
+                <p className="text-lg sm:text-xl lg:text-2xl text-slate-700 max-w-4xl mx-auto leading-relaxed font-medium text-center">
+                  Connect with verified, licensed speech therapists for personalized therapy sessions. 
+                  Start your journey to better communication today.
+                </p>
+
+                {/* Trust Indicators */}
+                <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-6">
+                  <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <span className="text-sm font-medium text-slate-700">Verified Therapists</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    <span className="text-sm font-medium text-slate-700">{therapistCount}+ Professionals</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
+                    <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+                    <span className="text-sm font-medium text-slate-700">4.9 Average Rating</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                    <span className="text-sm font-medium text-slate-700">24/7 Support</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Call to Action */}
           <div className="flex items-center justify-center animate-fade-in pt-4">
@@ -42,26 +72,6 @@ const TherapistHero = ({ therapistCount = 150, onBrowseTherapists }: TherapistHe
               Browse Therapists
               <ArrowRight className="ml-3 h-5 w-5" />
             </Button>
-          </div>
-
-          {/* Enhanced Trust Indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-6 pt-6">
-            <div className="flex items-center gap-3 bg-surface-elevated/80 backdrop-blur-sm px-5 py-3 rounded-full border border-border/30 shadow-sm hover:bg-surface-elevated/90 transition-colors duration-200">
-              <CheckCircle className="h-5 w-5 text-success" />
-              <span className="text-sm font-medium text-emphasis-high">Verified Therapists</span>
-            </div>
-            <div className="flex items-center gap-3 bg-surface-elevated/80 backdrop-blur-sm px-5 py-3 rounded-full border border-border/30 shadow-sm hover:bg-surface-elevated/90 transition-colors duration-200">
-              <Users className="h-5 w-5 text-info" />
-              <span className="text-sm font-medium text-emphasis-high">{therapistCount}+ Professionals</span>
-            </div>
-            <div className="flex items-center gap-3 bg-surface-elevated/80 backdrop-blur-sm px-5 py-3 rounded-full border border-border/30 shadow-sm hover:bg-surface-elevated/90 transition-colors duration-200">
-              <Star className="h-5 w-5 text-warning fill-warning" />
-              <span className="text-sm font-medium text-emphasis-high">4.9 Average Rating</span>
-            </div>
-            <div className="flex items-center gap-3 bg-surface-elevated/80 backdrop-blur-sm px-5 py-3 rounded-full border border-border/30 shadow-sm hover:bg-surface-elevated/90 transition-colors duration-200">
-              <Clock className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium text-emphasis-high">24/7 Support</span>
-            </div>
           </div>
         </div>
       </div>

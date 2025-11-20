@@ -20,7 +20,7 @@ import OpenAIChatPage from "./pages/OpenAIChat";
 import Admin from "./pages/Admin";
 import TherapistAuth from "./pages/TherapistAuth";
 import TherapistDashboard from "./pages/TherapistDashboard";
-import Consultation from "./pages/Consultation";
+import FindCoaches from "./pages/FindCoaches";
 import UserDashboard from "./pages/UserDashboard";
 import MyProfile from "./pages/MyProfile";
 import FooterDemo from "./pages/FooterDemo";
@@ -85,7 +85,7 @@ function App() {
               <Route path="/admin" element={<Admin />} />
               <Route path="/therapist-auth" element={<TherapistAuth />} />
               <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
-              <Route path="/consultation" element={<Consultation />} />
+              <Route path="/consultation" element={<FindCoaches />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />
               <Route path="/my-profile" element={<MyProfile />} />
               <Route path="/footer-demo" element={<FooterDemo />} />

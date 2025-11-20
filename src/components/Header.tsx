@@ -1,20 +1,11 @@
 import React from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useUserRole } from "../hooks/useUserRole";
-import { Button } from "@/components/ui/button";
 
 const Header = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { isAdmin } = useUserRole();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isIndexPage = location.pathname === "/";
-
-  const handleLogout = async () => {
-    console.log('Header logout clicked');
-    await logout();
-  };
 
   return (
     <header>
@@ -36,22 +27,11 @@ const Header = () => {
           {isAuthenticated && (
             <>
               <Link to="/user-dashboard" className="text-white hover:text-white/80 transition-colors font-medium">Progress</Link>
-              <Link to="/my-profile" className="text-white hover:text-white/80 transition-colors font-medium">My Profile</Link>
               <Link to="/consultation" className="text-white hover:text-white/80 transition-colors font-medium">Coaches</Link>
-            </>
-          )}
-          {isAuthenticated && (
-            <>
               {isAdmin() && (
                 <Link to="/admin" className="text-white hover:text-white/80 transition-colors font-medium">Admin</Link>
               )}
-              <Button 
-                onClick={handleLogout} 
-                variant="link" 
-                className="text-white hover:text-white/80 transition-colors p-0 font-medium text-base"
-              >
-                Logout
-              </Button>
+              <Link to="/my-profile" className="text-white hover:text-white/80 transition-colors font-medium">My Profile</Link>
             </>
           )}
         </nav>
