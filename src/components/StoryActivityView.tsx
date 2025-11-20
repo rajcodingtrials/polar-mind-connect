@@ -112,13 +112,12 @@ const StoryActivityView = ({
                 setIsPlaying(false);
                 console.log('✅ Scene narration ended for sequence:', currentEntry.sequence_number);
                 if (currentEntry.sequence_number === 9) {
-                  // Story complete - mark as complete and trigger celebration
+                  // Story complete - show celebration
                   setTimeout(() => {
-                    console.log('📖 Story complete - triggering celebration');
+                    console.log('📖 Story complete - showing celebration');
                     if (onStoryComplete) {
-                      onStoryComplete(); // Mark story as complete
+                      onStoryComplete(); // This will trigger celebration
                     }
-                    onCorrectAnswer(); // This will show celebration before completing
                   }, 2000);
                 } else {
                   setTimeout(() => {

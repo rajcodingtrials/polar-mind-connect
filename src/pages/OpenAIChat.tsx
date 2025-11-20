@@ -516,14 +516,12 @@ const OpenAIChatPage = () => {
       currentQuestionId: currentQuestion?.id,
       sessionQuestionCount,
       correctAnswers: correctAnswers + 1,
-      questionType: selectedQuestionType,
-      storyActivityComplete
+      questionType: selectedQuestionType
     });
     setCorrectAnswers(prev => prev + 1);
     
     // For story_activity during the story, don't show celebration - it handles its own flow internally
-    // But if the story is complete, DO show celebration
-    if (selectedQuestionType === 'story_activity' && !storyActivityComplete) {
+    if (selectedQuestionType === 'story_activity') {
       console.log('📖 Story activity - skipping celebration, internal flow continues');
       return;
     }
@@ -592,7 +590,7 @@ const OpenAIChatPage = () => {
     });
     
     // If story activity just completed, finish the session instead of next question
-    if (selectedQuestionType === 'story_activity' && storyActivityComplete) {
+    if (storyActivityComplete) {
       console.log('📖 Story complete - finishing session');
       setStoryActivityComplete(false); // Reset for next time
       handleCompleteSession();
@@ -983,8 +981,10 @@ const OpenAIChatPage = () => {
                   onCorrectAnswer={handleCorrectAnswer}
                   onComplete={handleCompleteSession}
                   onStoryComplete={() => {
-                    console.log('📖 Story marked as complete');
+                    console.log('📖 Story complete - showing celebration');
                     setStoryActivityComplete(true);
+                    setComingFromCelebration(true);
+                    setCurrentScreen('celebration');
                   }}
                   comingFromCelebration={comingFromCelebration}
                 />
