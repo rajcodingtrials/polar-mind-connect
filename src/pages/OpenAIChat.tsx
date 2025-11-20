@@ -594,7 +594,7 @@ const OpenAIChatPage = () => {
               <Card className="mb-8 bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-xl font-semibold text-slate-700 flex items-center gap-2">
-                    Your Therapists
+                    Your AI Therapists
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

@@ -20,7 +20,7 @@ const Consultation = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-md mx-auto">
@@ -40,7 +40,7 @@ const Consultation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       
       {/* Hero Section */}

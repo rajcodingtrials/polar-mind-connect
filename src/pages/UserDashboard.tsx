@@ -34,7 +34,7 @@ const UserDashboard = () => {
 
   if (profileLoading || loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
         <Header />
         <main className="flex-grow p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
@@ -371,7 +371,7 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       
       <div className="flex flex-1">

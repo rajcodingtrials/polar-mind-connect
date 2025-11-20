@@ -63,9 +63,23 @@ const TherapistCard = ({ therapist, onClick }: TherapistCardProps) => {
       <div className="flex">
         {/* Left Column - 25% */}
         <div className="w-1/4 flex justify-center items-center">
-          <Avatar className="h-16 w-16 transition-all duration-300 group-hover:ring-2 group-hover:ring-primary/30">
-            <AvatarImage src={`/lovable-uploads/${therapist.image}`} alt={therapist.name} />
-            <AvatarFallback className={`${colorScheme.bg} ${colorScheme.text}`}>{getInitials(therapist.name)}</AvatarFallback>
+          <Avatar
+            className="
+              h-16 w-16 
+              transition-all duration-300 
+              group-hover:ring-2 group-hover:ring-primary/30 
+              bg-white 
+              flex items-center justify-center
+            "
+          >
+            <AvatarImage
+              src={`/lovable-uploads/${therapist.image}`}
+              alt={therapist.name}
+              className="w-full h-full object-contain p-1"
+            />
+            <AvatarFallback className={`${colorScheme.bg} ${colorScheme.text}`}>
+              {getInitials(therapist.name)}
+            </AvatarFallback>
           </Avatar>
         </div>
 
