@@ -63,6 +63,12 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
           textColor: 'text-orange-800',
           icon: Heart
         };
+      case 'story_activity':
+        return {
+          color: 'bg-rose-100 hover:bg-rose-200 border-rose-200',
+          textColor: 'text-rose-800',
+          icon: BookOpen
+        };
       default:
         return {
           color: 'bg-gray-100 hover:bg-gray-200 border-gray-200',
