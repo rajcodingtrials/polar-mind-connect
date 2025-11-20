@@ -61,6 +61,7 @@ const OpenAIChatPage = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [sessionQuestionCount, setSessionQuestionCount] = useState(0);
   const [comingFromCelebration, setComingFromCelebration] = useState(false);
+  const [storyActivityComplete, setStoryActivityComplete] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const maxQuestionsPerSession = 6;
 
@@ -378,6 +379,7 @@ const OpenAIChatPage = () => {
     setShowQuestionTypes(false);
     setCorrectAnswers(0);
     setRetryCount(0);
+    setStoryActivityComplete(false); // Reset story flag
     // Speech delay mode persists across sessions
     setSessionQuestionCount(0);
     setAskedQuestionIds(new Set());
@@ -514,12 +516,14 @@ const OpenAIChatPage = () => {
       currentQuestionId: currentQuestion?.id,
       sessionQuestionCount,
       correctAnswers: correctAnswers + 1,
-      questionType: selectedQuestionType
+      questionType: selectedQuestionType,
+      storyActivityComplete
     });
     setCorrectAnswers(prev => prev + 1);
     
-    // For story_activity, don't show celebration - it handles its own flow internally
-    if (selectedQuestionType === 'story_activity') {
+    // For story_activity during the story, don't show celebration - it handles its own flow internally
+    // But if the story is complete, DO show celebration
+    if (selectedQuestionType === 'story_activity' && !storyActivityComplete) {
       console.log('📖 Story activity - skipping celebration, internal flow continues');
       return;
     }
@@ -578,12 +582,23 @@ const OpenAIChatPage = () => {
   };
 
   const handleCelebrationComplete = () => {
-    console.log('🎊 Celebration complete - moving to next question');
+    console.log('🎊 Celebration complete - moving to next question or completing');
     console.log('📊 Celebration state:', {
       sessionQuestionCount,
       correctAnswers,
-      currentQuestionId: currentQuestion?.id
+      currentQuestionId: currentQuestion?.id,
+      questionType: selectedQuestionType,
+      storyActivityComplete
     });
+    
+    // If story activity just completed, finish the session instead of next question
+    if (selectedQuestionType === 'story_activity' && storyActivityComplete) {
+      console.log('📖 Story complete - finishing session');
+      setStoryActivityComplete(false); // Reset for next time
+      handleCompleteSession();
+      return;
+    }
+    
     handleNextQuestion();
   };
 
@@ -594,6 +609,7 @@ const OpenAIChatPage = () => {
     setSelectedQuestionType(null);
     setCorrectAnswers(0);
     setRetryCount(0);
+    setStoryActivityComplete(false); // Reset story flag
     // Speech delay mode persists across sessions
     setTherapistName('Laura');
     setCurrentQuestion(null);
@@ -966,6 +982,10 @@ const OpenAIChatPage = () => {
                   childName={childName}
                   onCorrectAnswer={handleCorrectAnswer}
                   onComplete={handleCompleteSession}
+                  onStoryComplete={() => {
+                    console.log('📖 Story marked as complete');
+                    setStoryActivityComplete(true);
+                  }}
                   comingFromCelebration={comingFromCelebration}
                 />
               )}
