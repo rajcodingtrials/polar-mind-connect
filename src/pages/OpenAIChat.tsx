@@ -942,8 +942,8 @@ const OpenAIChatPage = () => {
             />
           )}
 
-          {/* Introduction Screen */}
-          {currentScreen === 'introduction' && selectedQuestionType && (
+          {/* Introduction Screen - Only show if skip_introduction is false */}
+          {currentScreen === 'introduction' && selectedQuestionType && !adminSettings?.skip_introduction && (
             <IntroductionScreen
               selectedQuestionType={selectedQuestionType}
               therapistName={therapistName}

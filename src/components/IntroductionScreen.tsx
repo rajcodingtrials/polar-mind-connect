@@ -45,6 +45,21 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
       try {
         const activityName = getActivityName(selectedQuestionType);
         
+        // Check if admin settings skip introduction
+        const { data: adminData } = await supabase
+          .from('admin_settings')
+          .select('skip_introduction')
+          .limit(1)
+          .single();
+        
+        // If skip is enabled, don't generate or play anything
+        if (adminData?.skip_introduction) {
+          console.log('⏭️ Skipping introduction per admin settings');
+          setIsLoading(false);
+          onStartQuestions();
+          return;
+        }
+        
         const { data, error } = await supabase.functions.invoke('openai-chat', {
           body: {
             messages: [{
@@ -74,7 +89,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
     };
 
     generateIntroduction();
-  }, [selectedQuestionType, therapistName, childName]);
+  }, [selectedQuestionType, therapistName, childName, onStartQuestions]);
 
   // Separate effect for TTS that runs after intro message is set and TTS settings are loaded
   useEffect(() => {
