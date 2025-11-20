@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -10,12 +11,13 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Settings, Shield } from "lucide-react";
+import { User, Settings, Shield, LogOut } from "lucide-react";
 
 const UserProfileEditor = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
   const { preferences, updateSpeechDelayMode } = useUserPreferences();
+  const navigate = useNavigate();
   
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -76,9 +78,20 @@ const UserProfileEditor = () => {
     setIsEditing(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/", { replace: true });
+      toast.success("Logged out successfully");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Failed to log out");
+    }
+  };
+
   if (profileLoading) {
     return (
-      <Card className="bg-card/20 backdrop-blur-sm border-border/40">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardContent className="p-6">
           <div className="text-center">Loading profile...</div>
         </CardContent>
@@ -89,7 +102,7 @@ const UserProfileEditor = () => {
   return (
     <div className="space-y-6">
       {/* Personal Information */}
-      <Card className="bg-card/20 backdrop-blur-sm border-border/40">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center">
             <User className="w-5 h-5 mr-2" />
@@ -167,7 +180,7 @@ const UserProfileEditor = () => {
       </Card>
 
       {/* Therapy Preferences */}
-      <Card className="bg-card/20 backdrop-blur-sm border-border/40">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center">
             <Settings className="w-5 h-5 mr-2" />
@@ -200,7 +213,7 @@ const UserProfileEditor = () => {
       </Card>
 
       {/* Account Security */}
-      <Card className="bg-card/20 backdrop-blur-sm border-border/40">
+      <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center">
             <Shield className="w-5 h-5 mr-2" />
@@ -217,9 +230,19 @@ const UserProfileEditor = () => {
           
           <Separator />
           
-          <Button variant="outline" onClick={() => window.location.href = '/reset-password'}>
-            Change Password
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => window.location.href = '/reset-password'}>
+              Change Password
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
