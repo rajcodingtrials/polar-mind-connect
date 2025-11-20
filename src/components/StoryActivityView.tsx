@@ -58,6 +58,22 @@ const StoryActivityView = ({
   const currentSceneNumber = Math.floor(currentSequenceIndex / 2) + 1;
   const currentQuestionNumber = Math.floor(currentSequenceIndex / 2);
 
+  // Reset to beginning when storyEntries change
+  useEffect(() => {
+    console.log('📖 StoryActivityView received entries:', storyEntries.map(q => ({
+      seq: q.sequence_number,
+      isScene: q.is_scene,
+      question: q.question?.substring(0, 30)
+    })));
+    setCurrentSequenceIndex(0);
+    setCurrentStep('scene');
+    setHasReadScene(false);
+    setHasReadQuestion(false);
+    setShowFeedback(false);
+    setSelectedImageIndex(null);
+    setIsProcessingAnswer(false);
+  }, [storyEntries]);
+
   // Debug log for sequencing
   useEffect(() => {
     if (currentEntry) {
