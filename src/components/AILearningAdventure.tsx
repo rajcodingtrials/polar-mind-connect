@@ -602,28 +602,10 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
                           <h3 className={`text-2xl font-bold mb-2 ${selectedType.textColor}`}>
                             {selectedType.label} Lessons
                           </h3>
-                          <p className={`${selectedType.textColor} opacity-80`}>Choose a specific lesson or practice with all questions</p>
+                          <p className={`${selectedType.textColor} opacity-80`}>Choose a specific lesson</p>
                         </div>
                         
                         <div className="space-y-4">
-                          <div
-                            className="bg-white bg-opacity-70 hover:bg-opacity-90 border border-white border-opacity-50 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md"
-                            onClick={() => handleDirectLessonSelect(null, hoveredActivityType)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="bg-white rounded-full p-2">
-                                <BookOpen className="w-5 h-5 text-gray-600" />
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-gray-800">Practice All Questions</h4>
-                                <p className="text-sm text-gray-600">Mix of all difficulty levels</p>
-                              </div>
-                              <span className="bg-white text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
-                                {questions.filter(q => q.questionType === hoveredActivityType).length} questions
-                              </span>
-                            </div>
-                          </div>
-
                           {lessons
                             .filter(lesson => lesson.question_type === hoveredActivityType)
                             .map((lesson, idx) => {
