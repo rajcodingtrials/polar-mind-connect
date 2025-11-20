@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTTSSettings } from '@/hooks/useTTSSettings';
 import { useToast } from '@/hooks/use-toast';
 import { stopGlobalAudio } from '@/utils/audioUtils';
@@ -58,21 +58,27 @@ const StoryActivityView = ({
   const currentSceneNumber = Math.floor(currentSequenceIndex / 2) + 1;
   const currentQuestionNumber = Math.floor(currentSequenceIndex / 2);
 
-  // Reset to beginning when storyEntries change
+  // Reset to beginning only when storyEntries array reference changes (initial load only)
+  // Use a ref to track if we've initialized
+  const initializedRef = useRef(false);
+  
   useEffect(() => {
-    console.log('📖 StoryActivityView received entries:', storyEntries.map(q => ({
-      seq: q.sequence_number,
-      isScene: q.is_scene,
-      question: q.question?.substring(0, 30)
-    })));
-    setCurrentSequenceIndex(0);
-    setCurrentStep('scene');
-    setHasReadScene(false);
-    setHasReadQuestion(false);
-    setShowFeedback(false);
-    setSelectedImageIndex(null);
-    setIsProcessingAnswer(false);
-  }, [storyEntries]);
+    if (!initializedRef.current && storyEntries.length > 0) {
+      console.log('📖 StoryActivityView initializing with entries:', storyEntries.map(q => ({
+        seq: q.sequence_number,
+        isScene: q.is_scene,
+        question: q.question?.substring(0, 30)
+      })));
+      initializedRef.current = true;
+      setCurrentSequenceIndex(0);
+      setCurrentStep('scene');
+      setHasReadScene(false);
+      setHasReadQuestion(false);
+      setShowFeedback(false);
+      setSelectedImageIndex(null);
+      setIsProcessingAnswer(false);
+    }
+  }, [storyEntries.length]); // Only depend on length, not the array itself
 
   // Debug log for sequencing
   useEffect(() => {

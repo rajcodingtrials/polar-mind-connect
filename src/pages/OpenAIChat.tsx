@@ -513,9 +513,17 @@ const OpenAIChatPage = () => {
     console.log('📊 Correct answer state:', {
       currentQuestionId: currentQuestion?.id,
       sessionQuestionCount,
-      correctAnswers: correctAnswers + 1
+      correctAnswers: correctAnswers + 1,
+      questionType: selectedQuestionType
     });
     setCorrectAnswers(prev => prev + 1);
+    
+    // For story_activity, don't show celebration - it handles its own flow internally
+    if (selectedQuestionType === 'story_activity') {
+      console.log('📖 Story activity - skipping celebration, internal flow continues');
+      return;
+    }
+    
     setComingFromCelebration(true);
     console.log('🔄 comingFromCelebration set to true for celebration');
     setCurrentScreen('celebration');
