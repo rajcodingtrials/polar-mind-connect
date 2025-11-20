@@ -244,12 +244,12 @@ const StoryActivityView = ({
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
         <div className="w-full max-w-6xl">
-          <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden">
+          <div className="relative">
             {sceneImageUrl && (
               <img
                 src={sceneImageUrl}
                 alt={`Scene ${currentSceneNumber}`}
-                className="w-full h-auto object-contain"
+                className="w-full h-auto object-contain rounded-3xl shadow-2xl"
                 style={{ maxHeight: '85vh' }}
               />
             )}
