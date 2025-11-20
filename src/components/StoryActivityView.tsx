@@ -249,7 +249,7 @@ const StoryActivityView = ({
               <img
                 src={sceneImageUrl}
                 alt={`Scene ${currentSceneNumber}`}
-                className="w-full h-auto object-contain rounded-3xl shadow-2xl"
+                className="w-full h-auto object-contain rounded-2xl"
                 style={{ maxHeight: '85vh' }}
               />
             )}
