@@ -255,79 +255,87 @@ const TherapistDashboard = () => {
           </div>
         </div>
 
-        {/* Stats Cards Container */}
-        <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <Card className="bg-surface-elevated border border-border/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-primary/20 hover:bg-surface-elevated/80">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-primary/10 backdrop-blur-sm">
-                    <Calendar className="h-8 w-8 text-primary" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-emphasis-medium">Today's Sessions</p>
-                    <p className="text-2xl font-bold text-emphasis-high">
-                      {sessionsLoading ? "..." : todaySessions}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-surface-elevated border border-border/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-success/20 hover:bg-surface-elevated/80">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-success/10 backdrop-blur-sm">
-                    <Users className="h-8 w-8 text-success" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-emphasis-medium">Total Sessions</p>
-                    <p className="text-2xl font-bold text-emphasis-high">
-                      {sessionsLoading ? "..." : totalSessions}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-surface-elevated border border-border/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-info/20 hover:bg-surface-elevated/80">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-info/10 backdrop-blur-sm">
-                    <DollarSign className="h-8 w-8 text-info" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-emphasis-medium">This Month</p>
-                    <p className="text-2xl font-bold text-emphasis-high">
-                      ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-surface-elevated border border-border/60 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:border-warning/20 hover:bg-surface-elevated/80">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-3 rounded-xl bg-warning/10 backdrop-blur-sm">
-                    <Star className="h-8 w-8 text-warning" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-emphasis-medium">Rating</p>
-                    <p className="text-2xl font-bold text-emphasis-high">
-                      {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
-                    </p>
-                    {therapistRating.reviewCount > 0 && (
-                      <p className="text-xs text-emphasis-low">
-                        ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
+        {/* Your Earnings Section */}
+        <Card className="bg-white border-slate-200 shadow-sm mb-12">
+          <CardHeader>
+            <CardTitle className="text-slate-700 flex items-center">
+              <DollarSign className="w-5 h-5 mr-2" />
+              Your Earnings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 border border-yellow-200 hover:border-yellow-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-lg bg-yellow-100">
+                      <Calendar className="h-8 w-8 text-amber-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-amber-700">Today's Sessions</p>
+                      <p className="text-2xl font-bold text-amber-900">
+                        {sessionsLoading ? "..." : todaySessions}
                       </p>
-                    )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200 hover:border-blue-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-lg bg-blue-100">
+                      <Users className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-blue-700">Total Sessions</p>
+                      <p className="text-2xl font-bold text-blue-900">
+                        {sessionsLoading ? "..." : totalSessions}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 hover:border-green-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-lg bg-green-100">
+                      <DollarSign className="h-8 w-8 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-green-700">This Month</p>
+                      <p className="text-2xl font-bold text-green-900">
+                        ${sessionsLoading ? "..." : calculateMonthlyEarnings().toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 border border-purple-200 hover:border-purple-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-lg bg-purple-100">
+                      <Star className="h-8 w-8 text-purple-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-purple-700">Rating</p>
+                      <p className="text-2xl font-bold text-purple-900">
+                        {therapistRating.reviewCount > 0 ? therapistRating.averageRating.toFixed(1) : "N/A"}
+                      </p>
+                      {therapistRating.reviewCount > 0 && (
+                        <p className="text-xs text-purple-600">
+                          ({therapistRating.reviewCount} review{therapistRating.reviewCount !== 1 ? 's' : ''})
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="profile" className="space-y-6">
