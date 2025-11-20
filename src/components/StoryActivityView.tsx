@@ -242,7 +242,7 @@ const StoryActivityView = ({
       : '';
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
         <div className="w-full max-w-6xl">
           <div className="relative">
             {sceneImageUrl && (
