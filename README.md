@@ -12,7 +12,7 @@ There are several ways of editing your application.
 
 **Use Cursor**
 1. Check out the code using git clone repo name.
-2. Now run ./local_server/start_local_server.sh to run the local server.
+2. Now run ./deployment_scripts/start_local_server.sh to run the local server.
 3. Now polariz can be accessed from the url http://localhost:8080/.
 4. Open polariz in different chrome windows, one for parent and another for therapist.
 

@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const MeetTheTeam = () => {
   return (
-    <div className="min-h-screen flex flex-col gradient-bg stars-bg">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       
       <main className="flex-grow px-4 py-8 max-w-6xl mx-auto w-full">
