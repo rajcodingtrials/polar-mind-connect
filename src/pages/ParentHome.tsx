@@ -124,7 +124,7 @@ const ParentHome = () => {
               <Button onClick={handleBookSession}>Find a Therapist</Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2">
               {upcomingSessions.map((session) => {
                 const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                 const canJoin = isSessionJoinable(session.session_date, session.start_time);
