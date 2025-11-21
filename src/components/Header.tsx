@@ -2,10 +2,23 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useUserRole } from "../hooks/useUserRole";
+import { Home, Users, UserCircle, Book, Shield, User as UserIcon, LayoutDashboard } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { useUserProfile } from "../hooks/useUserProfile";
 
 const Header = () => {
   const { isAuthenticated } = useAuth();
   const { isAdmin } = useUserRole();
+  const { profile } = useUserProfile();
+
+  // Helper for menu icons
+  const NavItem = ({ to, icon, label, children }) => (
+    <Link to={to} className="flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-base px-2">
+      {icon}
+      <span>{label}</span>
+      {children}
+    </Link>
+  );
 
   return (
     <header>
@@ -17,21 +30,32 @@ const Header = () => {
         </div>
 
         <nav className="flex items-center gap-4">
-          <Link to="/" className="text-white hover:text-white/80 transition-colors font-medium">Home</Link>
+          <NavItem to="/" icon={<Home className="h-5 w-5" />} label="Home" />
           {!isAuthenticated && (
             <>
-              <Link to="/our-story" className="text-white hover:text-white/80 transition-colors font-medium">Our Story</Link>
-              <Link to="/meet-the-team" className="text-white hover:text-white/80 transition-colors font-medium">Meet the Team</Link>
+              <NavItem to="/our-story" icon={<Book className="h-5 w-5" />} label="Our Story" />
+              <NavItem to="/meet-the-team" icon={<Users className="h-5 w-5" />} label="Meet the Team" />
             </>
           )}
           {isAuthenticated && (
             <>
-              <Link to="/user-dashboard" className="text-white hover:text-white/80 transition-colors font-medium">Dashboard</Link>
-              <Link to="/consultation" className="text-white hover:text-white/80 transition-colors font-medium">Coaches</Link>
+              <NavItem to="/user-dashboard" icon={<LayoutDashboard className="h-5 w-5" />} label="Dashboard" />
+              <NavItem to="/consultation" icon={<Users className="h-5 w-5" />} label="Coaches" />
               {isAdmin() && (
-                <Link to="/admin" className="text-white hover:text-white/80 transition-colors font-medium">Admin</Link>
+                <NavItem to="/admin" icon={<Shield className="h-5 w-5" />} label="Admin" />
               )}
-              <Link to="/my-profile" className="text-white hover:text-white/80 transition-colors font-medium">My Profile</Link>
+              {/* 'Me' icon & avatar case */}
+              <NavItem to="/my-profile"
+                icon={profile && profile.avatar_url ? (
+                  <Avatar className="h-7 w-7 border-2 border-white">
+                    <AvatarImage src={profile.avatar_url} alt="Me" />
+                    <AvatarFallback><UserIcon className="h-5 w-5" /></AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <UserIcon className="h-5 w-5" />
+                )}
+                label="Me"
+              />
             </>
           )}
         </nav>

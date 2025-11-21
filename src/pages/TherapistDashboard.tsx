@@ -33,6 +33,7 @@ import { TherapistFileUpload } from "@/components/TherapistFileUpload";
 import { ProfileHeader } from "@/components/therapist/ProfileHeader";
 import { PersonalInformation } from "@/components/therapist/PersonalInformation";
 import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails";
+import TherapistHeader from "@/components/therapist/TherapistHeader";
 
 const TherapistDashboard = () => {
   const { user, signOut } = useAuth();
@@ -210,43 +211,15 @@ const TherapistDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <header className="backdrop-blur-md bg-black border-b border-white/10 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                <Star className="h-5 w-5 text-black" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-white">Polariz</h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              {therapistProfile && (
-                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
-                  <User className="h-4 w-4 text-white" />
-                  <span className="text-sm text-white">{therapistProfile.name}</span>
-                </div>
-              )}
-              <Button onClick={handleSignOut} variant="outline" size="sm" className="border-white/50 text-white hover:bg-white/20 hover:text-white bg-white/10">
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <TherapistHeader />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight tracking-tight mb-4">
-            Coach Dashboard
-          </h1>
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-xl sm:text-2xl font-semibold text-muted-foreground mb-2">
+            <h1 className="text-4xl sm:text-5xl font-bold text-slate-800">
               {therapistProfile ? `Welcome back, ${therapistProfile.name}!` : "Welcome! Complete your profile to get started"}
-            </h2>
+            </h1>
             <p className="text-muted-foreground text-base sm:text-lg">
               {therapistProfile 
                 ? "Manage your practice, schedule, and client sessions from your dashboard."

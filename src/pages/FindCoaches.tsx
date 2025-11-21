@@ -1,6 +1,6 @@
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
-import TherapistDirectory from "@/components/consultation/TherapistDirectory";
+import TherapistDirectory from "@/components/therapist/TherapistDirectory";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
