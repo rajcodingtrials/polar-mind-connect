@@ -277,13 +277,6 @@ const UserDashboard = () => {
                       const canJoin = isSessionJoinable(session.session_date, session.start_time);
                       const hasMeetingLink = session.meeting_link;
                       
-                      console.log('Rendering session:', {
-                        id: session.id,
-                        hasMeetingLink,
-                        meeting_link: session.meeting_link,
-                        canJoin
-                      });
-                      
                       return (
                         <Card key={session.id} className="border-slate-200">
                           <CardContent className="p-4">
