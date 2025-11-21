@@ -15,7 +15,9 @@ import {
   TrendingUp,
   Timer,
   Flame,
-  Award
+  Award,
+  Video,
+  Calendar
 } from "lucide-react";
 import { format } from "date-fns";
 import SessionRatingModal from "@/components/SessionRatingModal";
@@ -78,6 +80,13 @@ const UserDashboard = () => {
       date: format(sessionDate, 'MMM dd, yyyy'),
       time: format(sessionDate, 'h:mm a')
     };
+  };
+
+  const isSessionJoinable = (date: string, startTime: string) => {
+    const sessionDate = new Date(`${date}T${startTime}`);
+    const now = new Date();
+    const fifteenMinsBefore = new Date(sessionDate.getTime() - 15 * 60 * 1000);
+    return now >= fifteenMinsBefore;
   };
 
   // Calculate stats
@@ -265,29 +274,77 @@ const UserDashboard = () => {
                   <div className="space-y-4">
                     {upcomingSessions.map((session) => {
                       const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
+                      const canJoin = isSessionJoinable(session.session_date, session.start_time);
+                      const hasMeetingLink = session.meeting_link;
+                      
                       return (
-                        <div key={session.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
-                          <div className="flex items-center space-x-4">
-                            <Avatar>
-                              <AvatarImage src={session.therapist.avatar_url} />
-                              <AvatarFallback>
-                                {session.therapist.name?.charAt(0) || session.therapist.first_name?.charAt(0) || 'T'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-medium">
-                                {session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`}
-                              </h3>
-                              <p className="text-sm text-slate-500">{date} at {time}</p>
-                              <p className="text-xs text-slate-500">{session.duration_minutes} minutes</p>
+                        <Card key={session.id} className="border-slate-200">
+                          <CardContent className="p-4">
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                              <div className="flex items-start space-x-4">
+                                <Avatar className="mt-1">
+                                  <AvatarImage src={session.therapist.avatar_url} />
+                                  <AvatarFallback>
+                                    {session.therapist.name?.charAt(0) || session.therapist.first_name?.charAt(0) || 'T'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                  <h3 className="font-medium text-slate-900">
+                                    {session.therapist.name || `${session.therapist.first_name} ${session.therapist.last_name}`}
+                                  </h3>
+                                  <div className="flex items-center text-sm text-slate-500 mt-1">
+                                    <Calendar className="w-4 h-4 mr-1" />
+                                    {date} at {time}
+                                  </div>
+                                  <p className="text-xs text-slate-500 mt-1">{session.duration_minutes} minutes</p>
+                                  
+                                  {hasMeetingLink && (
+                                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                      <div className="flex items-center text-sm font-medium text-blue-900 mb-2">
+                                        <Video className="w-4 h-4 mr-2" />
+                                        Meeting Details
+                                      </div>
+                                      {session.zoom_meeting_id && (
+                                        <p className="text-xs text-slate-600 mb-1">
+                                          <span className="font-medium">Meeting ID:</span> {session.zoom_meeting_id}
+                                        </p>
+                                      )}
+                                      {session.zoom_password && (
+                                        <p className="text-xs text-slate-600">
+                                          <span className="font-medium">Password:</span> {session.zoom_password}
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="flex flex-col items-end gap-2 md:min-w-[140px]">
+                                <Badge className={getSessionStatusColor(session.status)}>
+                                  {session.status}
+                                </Badge>
+                                
+                                {hasMeetingLink && (
+                                  <Button
+                                    onClick={() => window.open(session.meeting_link, '_blank')}
+                                    disabled={!canJoin}
+                                    className="w-full md:w-auto"
+                                    variant={canJoin ? "default" : "outline"}
+                                  >
+                                    <Video className="w-4 h-4 mr-2" />
+                                    {canJoin ? 'Join Meeting' : 'Not Yet Available'}
+                                  </Button>
+                                )}
+                                
+                                {!hasMeetingLink && (
+                                  <p className="text-xs text-slate-500 text-center">
+                                    Meeting link will be available soon
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <Badge className={getSessionStatusColor(session.status)}>
-                              {session.status}
-                            </Badge>
-                          </div>
-                        </div>
+                          </CardContent>
+                        </Card>
                       );
                     })}
                   </div>
