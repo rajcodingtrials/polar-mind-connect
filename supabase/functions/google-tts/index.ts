@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+// Request queue to prevent rate limit exhaustion
+const requestQueue: Array<() => Promise<void>> = [];
+let isProcessing = false;
+const MAX_CONCURRENT = 5; // Max concurrent requests
+const MIN_REQUEST_INTERVAL = 100; // Minimum 100ms between requests
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -72,58 +78,87 @@ serve(async (req) => {
         audioConfig.pitch = Math.max(-20.0, Math.min(20.0, pitch));
       }
       
-      const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          input: { text: cleanText },
-          voice: {
-            languageCode: (() => {
-              // Handle Chirp voices (both named and generic)
-              if (voice.startsWith('en-US-Chirp')) {
-                return 'en-US';
-              }
-              
-              // Handle traditional voices with language prefix
-              if (voice.startsWith('en-GB')) return 'en-GB';
-              if (voice.startsWith('en-IN')) return 'en-IN';
-              if (voice.startsWith('en-US')) return 'en-US';
-              
-              // Default fallback for named voices
-              return 'en-US';
-            })(),
-            name: finalVoiceName,
-          },
-          audioConfig: audioConfig,
-        }),
-      });
-
-      console.log('📊 Response status:', response.status);
-      console.log('📊 Response ok:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Google TTS API error:', errorText);
-        throw new Error(`Google TTS API error: ${response.status} ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('📊 Response data keys:', Object.keys(data));
+      // Retry logic with exponential backoff
+      let lastError: Error | null = null;
+      const maxRetries = 3;
       
-      if (!data.audioContent) {
-        throw new Error('No audio content received from Google TTS');
-      }
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          if (attempt > 0) {
+            const backoffMs = Math.min(1000 * Math.pow(2, attempt), 5000);
+            console.log(`⏳ Retry attempt ${attempt + 1}/${maxRetries}, waiting ${backoffMs}ms...`);
+            await new Promise(resolve => setTimeout(resolve, backoffMs));
+          }
+          
+          const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              input: { text: cleanText },
+              voice: {
+                languageCode: (() => {
+                  // Handle Chirp voices (both named and generic)
+                  if (voice.startsWith('en-US-Chirp')) {
+                    return 'en-US';
+                  }
+                  
+                  // Handle traditional voices with language prefix
+                  if (voice.startsWith('en-GB')) return 'en-GB';
+                  if (voice.startsWith('en-IN')) return 'en-IN';
+                  if (voice.startsWith('en-US')) return 'en-US';
+                  
+                  // Default fallback for named voices
+                  return 'en-US';
+                })(),
+                name: finalVoiceName,
+              },
+              audioConfig: audioConfig,
+            }),
+          });
 
-      console.log('✅ Google TTS audio generated, length:', data.audioContent.length);
-      
-      return new Response(
-        JSON.stringify({ audioContent: data.audioContent }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          console.log('📊 Response status:', response.status);
+          console.log('📊 Response ok:', response.ok);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            
+            // If it's a 429 (rate limit), retry
+            if (response.status === 429 && attempt < maxRetries - 1) {
+              console.error(`⚠️ Rate limit hit (429), will retry...`);
+              lastError = new Error(`Google TTS API error: ${response.status} ${errorText}`);
+              continue; // Retry
+            }
+            
+            console.error('❌ Google TTS API error:', errorText);
+            throw new Error(`Google TTS API error: ${response.status} ${errorText}`);
+          }
+
+          const data = await response.json();
+          console.log('📊 Response data keys:', Object.keys(data));
+          
+          if (!data.audioContent) {
+            throw new Error('No audio content received from Google TTS');
+          }
+
+          console.log('✅ Google TTS audio generated, length:', data.audioContent.length);
+          
+          return new Response(
+            JSON.stringify({ audioContent: data.audioContent }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        } catch (err) {
+          lastError = err as Error;
+          if (attempt === maxRetries - 1) {
+            throw err;
+          }
         }
-      );
+      }
+      
+      throw lastError || new Error('Max retries exceeded');
     } catch (error) {
       console.error('❌ Error in Google TTS API call:', error);
       throw error;
