@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "npm:resend@4.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const supabase = createClient(
@@ -69,6 +69,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Replace variables in template - support both formats
+    // Fetch the session to get meeting link
+    const { data: session } = await supabase
+      .from('therapy_sessions')
+      .select('meeting_link, zoom_meeting_id, zoom_password')
+      .eq('id', sessionId)
+      .single();
+
     const variables = {
       client_name: clientName,
       clientName,
@@ -83,7 +90,10 @@ const handler = async (req: Request): Promise<Response> => {
       sessionType,
       price: price.toString(),
       booking_id: sessionId,
-      dashboard_url: 'https://polariz.ai/dashboard'
+      dashboard_url: 'https://polariz.ai/dashboard',
+      meeting_link: session?.meeting_link || 'Will be provided shortly',
+      zoom_meeting_id: session?.zoom_meeting_id || '',
+      zoom_password: session?.zoom_password || ''
     };
 
     let htmlContent = template.html_content;

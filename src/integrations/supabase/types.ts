@@ -557,6 +557,7 @@ export type Database = {
           duration_minutes: number
           end_time: string
           id: string
+          meeting_link: string | null
           payment_status: string
           price_paid: number | null
           reminder_sent: boolean
@@ -567,6 +568,8 @@ export type Database = {
           therapist_id: string
           therapist_notes: string | null
           updated_at: string
+          zoom_meeting_id: string | null
+          zoom_password: string | null
         }
         Insert: {
           client_id: string
@@ -576,6 +579,7 @@ export type Database = {
           duration_minutes?: number
           end_time: string
           id?: string
+          meeting_link?: string | null
           payment_status?: string
           price_paid?: number | null
           reminder_sent?: boolean
@@ -586,6 +590,8 @@ export type Database = {
           therapist_id: string
           therapist_notes?: string | null
           updated_at?: string
+          zoom_meeting_id?: string | null
+          zoom_password?: string | null
         }
         Update: {
           client_id?: string
@@ -595,6 +601,7 @@ export type Database = {
           duration_minutes?: number
           end_time?: string
           id?: string
+          meeting_link?: string | null
           payment_status?: string
           price_paid?: number | null
           reminder_sent?: boolean
@@ -605,6 +612,8 @@ export type Database = {
           therapist_id?: string
           therapist_notes?: string | null
           updated_at?: string
+          zoom_meeting_id?: string | null
+          zoom_password?: string | null
         }
         Relationships: [
           {
