@@ -29,10 +29,6 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TherapistAvailabilityCalendar } from "@/components/TherapistAvailabilityCalendar";
-import { TherapistFileUpload } from "@/components/TherapistFileUpload";
-import { ProfileHeader } from "@/components/therapist/ProfileHeader";
-import { PersonalInformation } from "@/components/therapist/PersonalInformation";
-import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails";
 import TherapistHeader from "@/components/therapist/TherapistHeader";
 
 const TherapistDashboard = () => {
@@ -311,65 +307,12 @@ const TherapistDashboard = () => {
         </Card>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-black border border-white/20">
-            <TabsTrigger value="profile" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Profile</TabsTrigger>
-            <TabsTrigger value="files" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Photos & Docs</TabsTrigger>
-            <TabsTrigger value="schedule" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Schedule</TabsTrigger>
-            <TabsTrigger value="sessions" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Sessions</TabsTrigger>
-            <TabsTrigger value="earnings" className="text-white hover:text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">Earnings</TabsTrigger>
+        <Tabs defaultValue="schedule" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 bg-white/40 backdrop-blur rounded-2xl shadow-sm">
+            <TabsTrigger value="schedule" className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:bg-blue-50 data-[state=inactive]:hover:bg-blue-100 hover:scale-[1.01] hover:shadow-xl transition-all duration-300">Schedule</TabsTrigger>
+            <TabsTrigger value="sessions" className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:bg-blue-50 data-[state=inactive]:hover:bg-blue-100 hover:scale-[1.01] hover:shadow-xl transition-all duration-300">Sessions</TabsTrigger>
+            <TabsTrigger value="earnings" className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:bg-blue-50 data-[state=inactive]:hover:bg-blue-100 hover:scale-[1.01] hover:shadow-xl transition-all duration-300">Earnings</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="profile">
-            <div className="space-y-6">
-              {/* Profile Header */}
-              <Card>
-                <CardContent className="pt-6">
-                  <ProfileHeader therapistProfile={therapistProfile} />
-                </CardContent>
-              </Card>
-
-              {/* Personal Information */}
-              <PersonalInformation
-                therapistProfile={therapistProfile}
-                editedProfile={editedProfile}
-                setEditedProfile={setEditedProfile}
-                isEditing={isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={handleSaveProfile}
-                onCancel={handleCancelEdit}
-              />
-
-              {/* Professional Details */}
-              <ProfessionalDetails
-                therapistProfile={therapistProfile}
-                editedProfile={editedProfile}
-                setEditedProfile={setEditedProfile}
-                isEditing={isEditing}
-                onEdit={() => setIsEditing(true)}
-                onSave={handleSaveProfile}
-                onCancel={handleCancelEdit}
-              />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="files">
-            {therapistProfile ? (
-              <TherapistFileUpload 
-                therapistId={therapistProfile.id}
-                currentAvatarUrl={therapistProfile.avatar_url}
-                onAvatarUpdate={(url) => {
-                  setEditedProfile(prev => prev ? {...prev, avatar_url: url} : null);
-                }}
-              />
-            ) : (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <p className="text-muted-foreground">Please complete your profile first to upload files.</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
           
           <TabsContent value="schedule">
             {therapistProfile ? (

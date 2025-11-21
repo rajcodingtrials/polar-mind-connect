@@ -1,19 +1,46 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useUserRole } from "../hooks/useUserRole";
 import Header from "../components/Header";
 import Footer from "@/components/Footer";
 import UserProfileEditor from "@/components/UserProfileEditor";
 
 const MyProfile = () => {
   const { isAuthenticated } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/", { replace: true });
+      return;
     }
-  }, [isAuthenticated, navigate]);
+    
+    // Redirect therapists to their dedicated profile page
+    if (!roleLoading && role === "therapist") {
+      navigate("/therapist-my-profile", { replace: true });
+    }
+  }, [isAuthenticated, role, roleLoading, navigate]);
+
+  // Show loading state while determining role
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold mb-4 text-slate-700">Loading...</h1>
+            <p className="text-gray-600">Please wait while we load your profile.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If therapist, don't render (will redirect)
+  if (role === "therapist") {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">

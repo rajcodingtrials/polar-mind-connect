@@ -33,7 +33,7 @@ const TherapistHeader = () => {
         <nav className="flex items-center gap-4">
           <NavItem to="/therapist-dashboard" icon={<Home className="h-5 w-5" />} label="Home" />
           {/* 'Me' icon & avatar case */}
-          <NavItem to="/my-profile"
+          <NavItem to="/therapist-my-profile"
             icon={profile && (profile as any).avatar_url ? (
               <Avatar className="h-7 w-7 border-2 border-white">
                 <AvatarImage src={(profile as any).avatar_url} alt="Me" />
