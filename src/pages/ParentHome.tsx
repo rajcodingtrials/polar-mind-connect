@@ -217,8 +217,8 @@ const ParentHome = () => {
           {completedSessions.length === 0 ? (
             <p className="text-center text-slate-600 py-8">No completed sessions yet.</p>
           ) : (
-            <div className="space-y-4">
-              {completedSessions.slice(0, 10).map((session) => {
+            <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2">
+              {completedSessions.map((session) => {
                 const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                 return (
                   <div
