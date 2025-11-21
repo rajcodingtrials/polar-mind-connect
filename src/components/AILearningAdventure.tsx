@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useImagePreloader } from '../hooks/useImagePreloader';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
@@ -79,6 +80,10 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
 
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Preload all images in the background
+  const allImageUrls = Object.values(imageUrls);
+  useImagePreloader(allImageUrls);
 
   useEffect(() => {
     const fetchSettings = async () => {
