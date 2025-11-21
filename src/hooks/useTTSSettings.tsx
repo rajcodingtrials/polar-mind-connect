@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAudioCache } from './useAudioCache';
 
 interface TTSSettings {
   voice: string;
@@ -16,6 +17,7 @@ export const useTTSSettings = (therapistName: string) => {
     provider: 'openai'
   });
   const [isLoaded, setIsLoaded] = useState(false);
+  const { getCachedAudio, setCachedAudio } = useAudioCache();
 
   useEffect(() => {
     const loadTTSSettings = async () => {
@@ -105,10 +107,24 @@ export const useTTSSettings = (therapistName: string) => {
     
     if (provider === 'google') {
       console.log(`🔊 [${therapistName}] 🟢 Calling Google TTS with voice: ${voice}`);
+      
+      // Check cache first
+      const cachedAudio = getCachedAudio(text, voice, speed);
+      if (cachedAudio) {
+        console.log(`✅ [${therapistName}] Using cached Google TTS audio`);
+        return { data: { audioContent: cachedAudio }, error: null };
+      }
+      
       const result = await supabase.functions.invoke('google-tts', {
         body: { text, voice, speed }
         // pitch: pitch || ttsSettings.pitch || 0.0 // Temporarily disabled until database column is added
       });
+      
+      // Cache successful results
+      if (!result.error && result.data?.audioContent) {
+        setCachedAudio(text, voice, speed, result.data.audioContent);
+      }
+      
       console.log(`✅ [${therapistName}] Google TTS response:`, {
         success: !result.error,
         audioLength: result.data?.audioContent?.length || 0
