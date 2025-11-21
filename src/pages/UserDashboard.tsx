@@ -85,8 +85,8 @@ const UserDashboard = () => {
   const isSessionJoinable = (date: string, startTime: string) => {
     const sessionDate = new Date(`${date}T${startTime}`);
     const now = new Date();
-    const fifteenMinsBefore = new Date(sessionDate.getTime() - 15 * 60 * 1000);
-    return now >= fifteenMinsBefore;
+    const oneHourBefore = new Date(sessionDate.getTime() - 60 * 60 * 1000);
+    return now >= oneHourBefore;
   };
 
   // Calculate stats
