@@ -1,15 +1,19 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useUserRole } from "../hooks/useUserRole";
 import Header from "../components/Header";
 import Footer from "@/components/Footer";
 import UserProfileEditor from "@/components/UserProfileEditor";
+import UserPayment from "@/components/UserPayment";
+import { Button } from "@/components/ui/button";
+import { CreditCard } from "lucide-react";
 
 const MyProfile = () => {
   const { isAuthenticated } = useAuth();
   const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -46,11 +50,27 @@ const MyProfile = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-10">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto space-y-6">
           <UserProfileEditor />
+          <div className="pt-4">
+            <Button
+              onClick={() => setIsPaymentOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              size="lg"
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Make Payment (Beta)
+            </Button>
+          </div>
         </div>
       </main>
       <Footer />
+      <UserPayment
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        fixedAmount={50}
+        description="Therapy Session Payment"
+      />
     </div>
   );
 };

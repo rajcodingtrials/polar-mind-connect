@@ -13,9 +13,7 @@ import { Video, Calendar } from "lucide-react";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import AffirmationCard from "@/components/AffirmationCard";
 import AILearningAdventure from "@/components/AILearningAdventure";
-import UserPayment from "@/components/UserPayment";
 import { format } from "date-fns";
-import { CreditCard } from "lucide-react";
 
 const ParentHome = () => {
   const { isAuthenticated, user } = useAuth();
@@ -25,7 +23,6 @@ const ParentHome = () => {
   const { upcomingSessions, completedSessions, loading: sessionsLoading } = useClientSessions(user?.id || null);
   const [activeTab, setActiveTab] = useState<"ai" | "human">("ai");
   const [selectedTherapist, setSelectedTherapist] = useState<string | null>(null);
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -324,25 +321,9 @@ const ParentHome = () => {
               </Tabs>
             </CardContent>
           </Card>
-          <div className="pt-4">
-            <Button
-              onClick={() => setIsPaymentOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              size="lg"
-            >
-              <CreditCard className="h-4 w-4 mr-2" />
-              Make Payment
-            </Button>
-          </div>
         </div>
       </main>
       <Footer />
-      <UserPayment
-        isOpen={isPaymentOpen}
-        onClose={() => setIsPaymentOpen(false)}
-        fixedAmount={50}
-        description="Therapy Session Payment"
-      />
     </div>
   );
 };
