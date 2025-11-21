@@ -12,7 +12,7 @@ const Header = () => {
   const { profile } = useUserProfile();
 
   // Helper for menu icons
-  const NavItem = ({ to, icon, label, children }) => (
+  const NavItem = ({ to, icon, label, children = null }: { to: string; icon: React.ReactNode; label: string; children?: React.ReactNode }) => (
     <Link to={to} className="flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-base px-2">
       {icon}
       <span>{label}</span>
@@ -44,16 +44,9 @@ const Header = () => {
               {isAdmin() && (
                 <NavItem to="/admin" icon={<Shield className="h-5 w-5" />} label="Admin" />
               )}
-              {/* 'Me' icon & avatar case */}
+              {/* 'Me' icon */}
               <NavItem to="/my-profile"
-                icon={profile && profile.avatar_url ? (
-                  <Avatar className="h-7 w-7 border-2 border-white">
-                    <AvatarImage src={profile.avatar_url} alt="Me" />
-                    <AvatarFallback><UserIcon className="h-5 w-5" /></AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <UserIcon className="h-5 w-5" />
-                )}
+                icon={<UserIcon className="h-5 w-5" />}
                 label="Me"
               />
             </>
