@@ -114,10 +114,15 @@ const handler = async (req: Request): Promise<Response> => {
     }: ZoomMeetingRequest = await req.json();
 
     console.log('Creating Zoom meeting for session:', sessionId);
+    console.log('Input data:', { sessionDate, startTime, timezone, durationMinutes });
 
     // Format the start time for Zoom (ISO 8601 format)
-    const startDateTime = `${sessionDate}T${startTime}:00`;
+    // startTime comes as "HH:MM:SS", we need "yyyy-MM-ddTHH:mm:ss"
+    const timePart = startTime.substring(0, 5); // Get HH:MM only
+    const startDateTime = `${sessionDate}T${timePart}:00`;
     const topic = `Therapy Session - ${therapistName} & ${clientName}`;
+    
+    console.log('Formatted start time for Zoom:', startDateTime);
 
     // Get Zoom access token
     const accessToken = await getZoomAccessToken();
