@@ -62,7 +62,7 @@ const AuthForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-2xl border-border/20 backdrop-blur-xl bg-background/5 mt-0">
+    <Card className="w-full max-w-md shadow-2xl border-border/20 bg-white mt-0">
       <CardHeader className="p-8 pb-6 border-b border-border/20">
         <CardTitle className="text-2xl text-center font-semibold">Login</CardTitle>
       </CardHeader>

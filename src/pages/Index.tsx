@@ -25,7 +25,7 @@ const Index = () => {
         <div className="flex flex-row w-full h-full bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 flex-grow">
 
           {/* Left: AuthForm (30%) */}
-          <div className="w-full md:w-[30%] flex items-center justify-center p-8 bg-white min-h-[400px]">
+          <div className="w-full md:w-[30%] flex items-center justify-center p-8 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 min-h-[400px]">
             <AuthForm />
           </div>
 
