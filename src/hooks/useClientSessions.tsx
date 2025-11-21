@@ -14,6 +14,9 @@ interface TherapySession {
   price_paid?: number;
   currency?: string;
   created_at: string;
+  meeting_link?: string;
+  zoom_meeting_id?: string;
+  zoom_password?: string;
   therapist: {
     id: string;
     name?: string;

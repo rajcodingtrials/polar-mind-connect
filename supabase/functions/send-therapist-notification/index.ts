@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "npm:resend@4.0.0";
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -86,6 +86,13 @@ const handler = async (req: Request): Promise<Response> => {
       day: 'numeric'
     });
 
+    // Fetch the session to get meeting link
+    const { data: session } = await supabase
+      .from('therapy_sessions')
+      .select('meeting_link, zoom_meeting_id, zoom_password')
+      .eq('id', sessionId)
+      .single();
+
     // Prepare template variables
     const therapistName = therapist.name || `${therapist.first_name || ''} ${therapist.last_name || ''}`.trim() || 'Doctor';
     const templateVars = {
@@ -102,7 +109,10 @@ const handler = async (req: Request): Promise<Response> => {
       sessionType: sessionType,
       amount: amount.toFixed(2),
       client_notes: clientNotes || '',
-      clientNotes: clientNotes || ''
+      clientNotes: clientNotes || '',
+      meeting_link: session?.meeting_link || 'Will be provided shortly',
+      zoom_meeting_id: session?.zoom_meeting_id || '',
+      zoom_password: session?.zoom_password || ''
     };
 
     // Replace placeholders in subject and content

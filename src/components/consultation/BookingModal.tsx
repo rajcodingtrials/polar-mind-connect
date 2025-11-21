@@ -222,6 +222,30 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
 
   const handlePaymentSuccess = async () => {
     try {
+      // Create Zoom meeting
+      const { data: zoomData, error: zoomError } = await supabase.functions.invoke('create-zoom-meeting', {
+        body: {
+          sessionId,
+          sessionDate: format(selectedDate, "yyyy-MM-dd"),
+          startTime: selectedTime,
+          durationMinutes: parseInt(duration),
+          therapistName: `${therapist.first_name} ${therapist.last_name}`,
+          clientName: user?.user_metadata?.name || user?.email || 'Client',
+          timezone: therapist.timezone || 'UTC',
+        }
+      });
+
+      if (zoomError) {
+        console.error("Error creating Zoom meeting:", zoomError);
+        toast({
+          title: "Warning",
+          description: "Session booked but Zoom meeting creation failed. Your therapist will send the meeting link separately.",
+          variant: "default",
+        });
+      } else {
+        console.log("Zoom meeting created:", zoomData);
+      }
+
       // Send booking confirmation email to client
       await supabase.functions.invoke('send-booking-confirmation', {
         body: {
@@ -261,7 +285,7 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
     
     toast({
       title: "Booking Confirmed!",
-      description: "Your therapy session has been booked successfully. Both you and your therapist will receive confirmation emails.",
+      description: "Your therapy session has been booked successfully. Both you and your therapist will receive confirmation emails with the Zoom meeting link.",
     });
     onClose();
   };
