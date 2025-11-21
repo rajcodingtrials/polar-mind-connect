@@ -22,10 +22,10 @@ const Index = () => {
 
       {/* main fills all remaining vertical space */}
       <main className="flex-grow h-full flex items-stretch justify-stretch min-h-0 w-full">
-        <div className="flex flex-row w-full h-full bg-white flex-grow">
+        <div className="flex flex-row w-full h-full bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 flex-grow">
 
           {/* Left: AuthForm (30%) */}
-          <div className="w-full md:w-[30%] flex items-center justify-center p-8 bg-gray-50 min-h-[400px]">
+          <div className="w-full md:w-[30%] flex items-center justify-center p-8 bg-white min-h-[400px]">
             <AuthForm />
           </div>
 

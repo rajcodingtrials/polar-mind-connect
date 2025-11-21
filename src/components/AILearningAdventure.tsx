@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,6 +76,9 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
 
   const [localAmplifyMic, setLocalAmplifyMic] = useState(false);
   const [localMicGain, setLocalMicGain] = useState(1.0);
+
+  const cardsContainerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -314,6 +317,23 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
     }
   }, [showRewardVideo, hasPlayedChime]);
 
+  // Scroll selected card into view when panel opens
+  useEffect(() => {
+    if (showLessonsPanel && hoveredActivityType && cardsContainerRef.current) {
+      const selectedCard = cardRefs.current[hoveredActivityType];
+      if (selectedCard) {
+        // Use setTimeout to ensure DOM is updated
+        setTimeout(() => {
+          selectedCard.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 100);
+      }
+    }
+  }, [showLessonsPanel, hoveredActivityType]);
+
   const selectRandomQuestion = (questionsPool: Question[]): Question | null => {
     if (questionsPool.length === 0) return null;
     const randomIndex = Math.floor(Math.random() * questionsPool.length);
@@ -528,57 +548,43 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
               
               <div className="flex max-w-7xl mx-auto gap-8 min-h-[500px]">
                 {/* Activity Cards Section */}
-                <div className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-2/5' : 'w-full'} overflow-y-auto max-h-[calc(100vh-300px)]`}>
+                <div 
+                  ref={cardsContainerRef}
+                  className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-2/5' : 'w-full'} overflow-y-auto max-h-[calc(100vh-300px)]`}
+                >
                   <div className={`grid gap-8 ${showLessonsPanel ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'} justify-items-center`}>
-                    {showLessonsPanel && hoveredActivityType && (() => {
-                      const selectedType = questionTypes.find(type => type.value === hoveredActivityType);
-                      if (!selectedType) return null;
+                    {questionTypes.map((type) => {
+                      const IconComponent = type.icon;
+                      const isSelected = showLessonsPanel && hoveredActivityType === type.value;
+                      const isOtherHovered = showLessonsPanel && hoveredActivityType && hoveredActivityType !== type.value;
                       
-                      const IconComponent = selectedType.icon;
+                      const borderRadiusClass = 'rounded-xl';
                       
                       return (
                         <div
-                          key={`selected-${selectedType.value}`}
-                          className={`${selectedType.color} ${selectedType.textColor} rounded-3xl p-6 cursor-pointer border-3 transition-all duration-300 ease-out h-[240px] flex flex-col items-center justify-center shadow-2xl border-white scale-105 w-80 ring-4 ring-blue-300`}
-                          onClick={() => handleActivityClick(selectedType.value)}
+                          key={type.value}
+                          ref={(el) => {
+                            cardRefs.current[type.value] = el;
+                          }}
+                          className={`${type.color} ${type.textColor} ${borderRadiusClass} p-6 cursor-pointer ${showLessonsPanel ? 'border-2 border-gray-300' : 'border-3'} transition-all duration-300 ease-out h-[240px] flex flex-col items-center justify-center ${
+                            isOtherHovered 
+                              ? 'opacity-40' 
+                              : showLessonsPanel 
+                                ? 'hover:opacity-80' 
+                                : 'hover:shadow-xl hover:border-white'
+                          } ${showLessonsPanel ? 'w-80' : 'w-full max-w-80'}`}
+                          onClick={() => handleActivityClick(type.value)}
                         >
                           <div className="flex flex-col items-center justify-center text-center h-full">
                             <div className="bg-white rounded-full p-3 mb-3 shadow-lg">
-                              <IconComponent className={`w-6 h-6 ${selectedType.textColor}`} />
+                              <IconComponent className={`w-6 h-6 ${type.textColor}`} />
                             </div>
-                            <h3 className="font-bold text-lg mb-2">{selectedType.label} ✨</h3>
-                            <p className="text-xs opacity-90 leading-relaxed">{selectedType.description}</p>
+                            <h3 className="font-bold text-lg mb-2">{type.label}{isSelected ? ' ✨' : ''}</h3>
+                            <p className="text-xs opacity-90 leading-relaxed">{type.description}</p>
                           </div>
                         </div>
                       );
-                    })()}
-                    
-                    {questionTypes
-                      .filter(type => !showLessonsPanel || type.value !== hoveredActivityType)
-                      .map((type) => {
-                        const IconComponent = type.icon;
-                        const isOtherHovered = showLessonsPanel && hoveredActivityType && hoveredActivityType !== type.value;
-                        
-                        return (
-                          <div
-                            key={type.value}
-                            className={`${type.color} ${type.textColor} rounded-3xl p-6 cursor-pointer border-3 transition-all duration-300 ease-out h-[240px] flex flex-col items-center justify-center ${
-                              isOtherHovered 
-                                ? 'opacity-40 scale-95' 
-                                : 'hover:shadow-xl hover:scale-105 hover:border-white'
-                            } ${showLessonsPanel ? 'w-80' : 'w-full max-w-80'}`}
-                            onClick={() => handleActivityClick(type.value)}
-                          >
-                            <div className="flex flex-col items-center justify-center text-center h-full">
-                              <div className="bg-white rounded-full p-3 mb-3 shadow-lg">
-                                <IconComponent className={`w-6 h-6 ${type.textColor}`} />
-                              </div>
-                              <h3 className="font-bold text-lg mb-2">{type.label}</h3>
-                              <p className="text-xs opacity-90 leading-relaxed">{type.description}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
+                    })}
                   </div>
                 </div>
 
@@ -594,7 +600,7 @@ const AILearningAdventure: React.FC<AILearningAdventureProps> = ({ therapistName
                       <div className={`${selectedType.color.replace('hover:bg-', 'bg-').replace('border-', '')} rounded-2xl shadow-xl border-3 border-white p-6 h-full relative overflow-y-auto`}>
                         <button
                           onClick={handleCloseLessons}
-                          className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors bg-white rounded-full p-1 shadow-md z-10"
+                          className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors bg-transparent rounded-full p-1 z-10"
                         >
                           ✕
                         </button>
