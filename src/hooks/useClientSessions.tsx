@@ -103,6 +103,15 @@ export const useClientSessions = (clientId: string | null) => {
 
         // Separate upcoming and completed sessions
         const now = new Date();
+        console.log('Current time:', now.toISOString());
+        console.log('All sessions:', transformedSessions.map(s => ({
+          id: s.id,
+          date: s.session_date,
+          start: s.start_time,
+          end: s.end_time,
+          meeting_link: s.meeting_link,
+          status: s.status
+        })));
         
         const upcoming = transformedSessions
           .filter(session => {
@@ -111,7 +120,16 @@ export const useClientSessions = (clientId: string | null) => {
             // 2. Session ended within last 2 hours (grace period for late access)
             const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
             const twoHoursAfterEnd = new Date(sessionEndDateTime.getTime() + 2 * 60 * 60 * 1000);
-            return (sessionEndDateTime >= now || twoHoursAfterEnd >= now) && ['confirmed', 'pending'].includes(session.status);
+            const isUpcoming = (sessionEndDateTime >= now || twoHoursAfterEnd >= now) && ['confirmed', 'pending'].includes(session.status);
+            
+            console.log(`Session ${session.id}:`, {
+              endTime: sessionEndDateTime.toISOString(),
+              twoHoursAfter: twoHoursAfterEnd.toISOString(),
+              isUpcoming,
+              hasLink: !!session.meeting_link
+            });
+            
+            return isUpcoming;
           })
           .sort((a, b) => {
             // Sort by date and start time ascending (earliest first)
@@ -119,6 +137,8 @@ export const useClientSessions = (clientId: string | null) => {
             const dateB = new Date(`${b.session_date}T${b.start_time}`);
             return dateA.getTime() - dateB.getTime();
           });
+        
+        console.log('Upcoming sessions count:', upcoming.length);
 
         const completed = transformedSessions
           .filter(session => {
