@@ -106,8 +106,15 @@ export const useClientSessions = (clientId: string | null) => {
         
         const upcoming = transformedSessions
           .filter(session => {
-            const sessionDateTime = new Date(`${session.session_date}T${session.end_time}`);
-            return sessionDateTime >= now && ['confirmed', 'pending'].includes(session.status);
+            // Show session as upcoming if end time hasn't passed yet
+            const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
+            return sessionEndDateTime >= now && ['confirmed', 'pending'].includes(session.status);
+          })
+          .sort((a, b) => {
+            // Sort by date and start time ascending (earliest first)
+            const dateA = new Date(`${a.session_date}T${a.start_time}`);
+            const dateB = new Date(`${b.session_date}T${b.start_time}`);
+            return dateA.getTime() - dateB.getTime();
           });
 
         const completed = transformedSessions
