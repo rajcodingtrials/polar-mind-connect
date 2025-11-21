@@ -246,13 +246,13 @@ const ParentHome = () => {
                 <TabsList className="grid grid-cols-2 bg-white/40 backdrop-blur rounded-2xl shadow-sm">
                   <TabsTrigger
                     value="ai"
-                    className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:border-blue-300 hover:border-blue-200 hover:scale-[1.01] hover:shadow-xl transition-all duration-300"
+                    className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:bg-blue-50 data-[state=inactive]:hover:bg-blue-100 hover:scale-[1.01] hover:shadow-xl transition-all duration-300"
                   >
                     AI Therapy
                   </TabsTrigger>
                   <TabsTrigger
                     value="human"
-                    className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:border-blue-300 hover:border-blue-200 hover:scale-[1.01] hover:shadow-xl transition-all duration-300"
+                    className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:bg-blue-50 data-[state=inactive]:hover:bg-blue-100 hover:scale-[1.01] hover:shadow-xl transition-all duration-300"
                   >
                     Human Therapy
                   </TabsTrigger>
