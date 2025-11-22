@@ -22,7 +22,8 @@ interface TherapySession {
 interface SessionStats {
   todaySessions: number;
   totalSessions: number;
-  sessions: TherapySession[];
+  upcomingSessions: TherapySession[];
+  completedSessions: TherapySession[];
   loading: boolean;
   error: string | null;
 }
@@ -31,7 +32,8 @@ export const useTherapistSessions = (therapistId: string | null) => {
   const [stats, setStats] = useState<SessionStats>({
     todaySessions: 0,
     totalSessions: 0,
-    sessions: [],
+    upcomingSessions: [],
+    completedSessions: [],
     loading: true,
     error: null,
   });
@@ -87,9 +89,16 @@ export const useTherapistSessions = (therapistId: string | null) => {
           return dateA.getTime() - dateB.getTime();
         }) || [];
 
-        const past = allSessions?.filter(session => {
+        const completed = allSessions?.filter(session => {
           const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
-          return sessionEndDateTime < now || session.status === 'completed';
+          return sessionEndDateTime < now || session.status === 'completed' || session.status === 'cancelled';
+        }).map(session => {
+          // Auto-mark past pending sessions as completed for display
+          const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
+          if (sessionEndDateTime < now && session.status === 'pending') {
+            return { ...session, status: 'completed' };
+          }
+          return session;
         }).sort((a, b) => {
           // Sort past sessions by date and start time descending (most recent first)
           const dateA = new Date(`${a.session_date}T${a.start_time}`);
@@ -100,7 +109,8 @@ export const useTherapistSessions = (therapistId: string | null) => {
         setStats({
           todaySessions: todayData?.length || 0,
           totalSessions: completedSessions.length,
-          sessions: [...upcoming, ...past],
+          upcomingSessions: upcoming,
+          completedSessions: completed,
           loading: false,
           error: null,
         });

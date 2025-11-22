@@ -36,7 +36,13 @@ import { format } from "date-fns";
 const TherapistDashboard = () => {
   const { user, signOut } = useAuth();
   const { therapistProfile, updateTherapistProfile, createTherapistProfile, loading } = useTherapistAuth();
-  const { todaySessions, totalSessions, sessions, loading: sessionsLoading } = useTherapistSessions(therapistProfile?.id || null);
+  const { 
+    todaySessions, 
+    totalSessions, 
+    upcomingSessions,
+    completedSessions,
+    loading: sessionsLoading 
+  } = useTherapistSessions(therapistProfile?.id || null);
   const { getRatingForTherapist } = useTherapistRatings(therapistProfile?.id ? [therapistProfile.id] : []);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -219,7 +225,7 @@ const TherapistDashboard = () => {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
-    return sessions
+    return completedSessions
       .filter(session => {
         const sessionDate = new Date(session.session_date);
         return sessionDate.getMonth() === currentMonth && 
@@ -365,135 +371,233 @@ const TherapistDashboard = () => {
           </TabsContent>
           
           <TabsContent value="sessions">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Session History
-                </CardTitle>
-                <CardDescription>
-                  View and manage your therapy sessions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {sessionsLoading ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto mb-4"></div>
-                    <p className="text-gray-500">Loading sessions...</p>
-                  </div>
-                ) : sessions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No sessions yet</p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      Your session history will appear here
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                      {sessions.map((session) => {
+            <div className="space-y-6">
+              {/* Upcoming Sessions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    Upcoming Sessions ({upcomingSessions.length})
+                  </CardTitle>
+                  <CardDescription>
+                    Your scheduled sessions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {sessionsLoading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                      <p className="text-gray-500">Loading sessions...</p>
+                    </div>
+                  ) : upcomingSessions.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No upcoming sessions</p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        Your upcoming sessions will appear here
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                      {upcomingSessions.map((session) => {
                         const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                         const canJoin = isSessionJoinable(session.session_date, session.start_time);
                         const hasPassed = hasSessionPassed(session.session_date, session.end_time);
                         const hasMeetingLink = session.meeting_link;
                       
-                      return (
-                        <Card key={session.id} className="border border-gray-200">
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <Badge className={getSessionStatusColor(session.status)}>
-                                    {session.status}
-                                  </Badge>
-                                  <span className="text-sm text-gray-500">
-                                    {session.session_type}
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                  <div>
-                                    <p className="font-medium text-gray-700">Date</p>
-                                    <p className="text-gray-600">{date}</p>
+                        return (
+                          <Card key={session.id} className="border border-gray-200">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <Badge className={getSessionStatusColor(session.status)}>
+                                      {session.status}
+                                    </Badge>
+                                    <span className="text-sm text-gray-500">
+                                      {session.session_type}
+                                    </span>
                                   </div>
-                                  <div>
-                                    <p className="font-medium text-gray-700">Time</p>
-                                    <p className="text-gray-600">{time}</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-gray-700">Duration</p>
-                                    <p className="text-gray-600">{session.duration_minutes} min</p>
-                                  </div>
-                                  {session.price_paid && (
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                     <div>
-                                      <p className="font-medium text-gray-700">Payment</p>
-                                      <p className="text-gray-600">${session.price_paid} {session.currency}</p>
+                                      <p className="font-medium text-gray-700">Date</p>
+                                      <p className="text-gray-600">{date}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-gray-700">Time</p>
+                                      <p className="text-gray-600">{time}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-gray-700">Duration</p>
+                                      <p className="text-gray-600">{session.duration_minutes} min</p>
+                                    </div>
+                                    {session.price_paid && (
+                                      <div>
+                                        <p className="font-medium text-gray-700">Payment</p>
+                                        <p className="text-gray-600">${session.price_paid} {session.currency}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Meeting Details Section */}
+                                  {hasMeetingLink && (
+                                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                      <div className="flex items-center text-sm font-medium text-blue-900 mb-2">
+                                        <Video className="w-4 h-4 mr-2" />
+                                        Meeting Details
+                                      </div>
+                                      {session.zoom_meeting_id && (
+                                        <p className="text-xs text-slate-600 mb-1">
+                                          <span className="font-medium">Meeting ID:</span> {session.zoom_meeting_id}
+                                        </p>
+                                      )}
+                                      {session.zoom_password && (
+                                        <p className="text-xs text-slate-600">
+                                          <span className="font-medium">Password:</span> {session.zoom_password}
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+                                  
+                                  {session.client_notes && (
+                                    <div className="mt-3">
+                                      <p className="font-medium text-gray-700 text-sm">Client Notes</p>
+                                      <p className="text-gray-600 text-sm">{session.client_notes}</p>
+                                    </div>
+                                  )}
+                                  {session.therapist_notes && (
+                                    <div className="mt-3">
+                                      <p className="font-medium text-gray-700 text-sm">Your Notes</p>
+                                      <p className="text-gray-600 text-sm">{session.therapist_notes}</p>
                                     </div>
                                   )}
                                 </div>
-                                
-                                {/* Meeting Details Section */}
-                                {hasMeetingLink && (
-                                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div className="flex items-center text-sm font-medium text-blue-900 mb-2">
+                                <div className="flex flex-col items-end gap-2 ml-4">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <span className="text-xs text-gray-500">
+                                      {new Date(session.created_at).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Join Video Button */}
+                                  {hasMeetingLink && !hasPassed && (
+                                    <Button
+                                      onClick={() => window.open(session.meeting_link, '_blank')}
+                                      disabled={!canJoin}
+                                      className="w-full md:w-auto"
+                                      variant={canJoin ? "default" : "outline"}
+                                    >
                                       <Video className="w-4 h-4 mr-2" />
-                                      Meeting Details
-                                    </div>
-                                    {session.zoom_meeting_id && (
-                                      <p className="text-xs text-slate-600 mb-1">
-                                        <span className="font-medium">Meeting ID:</span> {session.zoom_meeting_id}
-                                      </p>
-                                    )}
-                                    {session.zoom_password && (
-                                      <p className="text-xs text-slate-600">
-                                        <span className="font-medium">Password:</span> {session.zoom_password}
-                                      </p>
-                                    )}
-                                  </div>
-                                )}
-                                
-                                {session.client_notes && (
-                                  <div className="mt-3">
-                                    <p className="font-medium text-gray-700 text-sm">Client Notes</p>
-                                    <p className="text-gray-600 text-sm">{session.client_notes}</p>
-                                  </div>
-                                )}
-                                {session.therapist_notes && (
-                                  <div className="mt-3">
-                                    <p className="font-medium text-gray-700 text-sm">Your Notes</p>
-                                    <p className="text-gray-600 text-sm">{session.therapist_notes}</p>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex flex-col items-end gap-2 ml-4">
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-gray-400" />
-                                  <span className="text-xs text-gray-500">
-                                    {new Date(session.created_at).toLocaleDateString()}
-                                  </span>
+                                      {canJoin ? 'Join Video Call' : 'Available 12hrs Before'}
+                                    </Button>
+                                  )}
                                 </div>
-                                
-                                {/* Join Video Button */}
-                                {hasMeetingLink && !hasPassed && (
-                                  <Button
-                                    onClick={() => window.open(session.meeting_link, '_blank')}
-                                    disabled={!canJoin}
-                                    className="w-full md:w-auto"
-                                    variant={canJoin ? "default" : "outline"}
-                                  >
-                                    <Video className="w-4 h-4 mr-2" />
-                                    {canJoin ? 'Join Video Call' : 'Available 12hrs Before'}
-                                  </Button>
-                                )}
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Session History */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Session History ({completedSessions.length})
+                  </CardTitle>
+                  <CardDescription>
+                    Your completed and past sessions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {sessionsLoading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                      <p className="text-gray-500">Loading sessions...</p>
+                    </div>
+                  ) : completedSessions.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No session history yet</p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        Your completed sessions will appear here
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                      {completedSessions.map((session) => {
+                        const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
+                      
+                        return (
+                          <Card key={session.id} className="border border-gray-200">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <Badge className={getSessionStatusColor(session.status)}>
+                                      {session.status}
+                                    </Badge>
+                                    <span className="text-sm text-gray-500">
+                                      {session.session_type}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    <div>
+                                      <p className="font-medium text-gray-700">Date</p>
+                                      <p className="text-gray-600">{date}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-gray-700">Time</p>
+                                      <p className="text-gray-600">{time}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-gray-700">Duration</p>
+                                      <p className="text-gray-600">{session.duration_minutes} min</p>
+                                    </div>
+                                    {session.price_paid && (
+                                      <div>
+                                        <p className="font-medium text-gray-700">Payment</p>
+                                        <p className="text-gray-600">${session.price_paid} {session.currency}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {session.client_notes && (
+                                    <div className="mt-3">
+                                      <p className="font-medium text-gray-700 text-sm">Client Notes</p>
+                                      <p className="text-gray-600 text-sm">{session.client_notes}</p>
+                                    </div>
+                                  )}
+                                  {session.therapist_notes && (
+                                    <div className="mt-3">
+                                      <p className="font-medium text-gray-700 text-sm">Your Notes</p>
+                                      <p className="text-gray-600 text-sm">{session.therapist_notes}</p>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-col items-end gap-2 ml-4">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <span className="text-xs text-gray-500">
+                                      {new Date(session.created_at).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
           
           <TabsContent value="earnings">
