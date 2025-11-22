@@ -55,8 +55,8 @@ const TherapistDashboard = () => {
   const isSessionJoinable = (date: string, startTime: string) => {
     const sessionDate = new Date(`${date}T${startTime}`);
     const now = new Date();
-    const oneHourBefore = new Date(sessionDate.getTime() - 60 * 60 * 1000);
-    return now >= oneHourBefore;
+    const twelveHoursBefore = new Date(sessionDate.getTime() - 12 * 60 * 60 * 1000);
+    return now >= twelveHoursBefore;
   };
 
   const hasSessionPassed = (date: string, endTime: string) => {
@@ -481,7 +481,7 @@ const TherapistDashboard = () => {
                                     variant={canJoin ? "default" : "outline"}
                                   >
                                     <Video className="w-4 h-4 mr-2" />
-                                    {canJoin ? 'Join Video Call' : 'Not Yet Available'}
+                                    {canJoin ? 'Join Video Call' : 'Available 12hrs Before'}
                                   </Button>
                                 )}
                               </div>
