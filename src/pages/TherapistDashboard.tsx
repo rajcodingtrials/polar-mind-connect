@@ -25,11 +25,13 @@ import {
   User,
   LogOut,
   Upload,
-  FileText
+  FileText,
+  Video
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TherapistAvailabilityCalendar } from "@/components/TherapistAvailabilityCalendar";
 import TherapistHeader from "@/components/therapist/TherapistHeader";
+import { format } from "date-fns";
 
 const TherapistDashboard = () => {
   const { user, signOut } = useAuth();
@@ -40,6 +42,36 @@ const TherapistDashboard = () => {
   const navigate = useNavigate();
   
   const [isEditing, setIsEditing] = useState(!therapistProfile); // Start in edit mode if no profile
+
+  // Helper functions for session management
+  const formatSessionDateTime = (date: string, startTime: string) => {
+    const sessionDate = new Date(`${date}T${startTime}`);
+    return {
+      date: format(sessionDate, "MMM dd, yyyy"),
+      time: format(sessionDate, "h:mm a"),
+    };
+  };
+
+  const isSessionJoinable = (date: string, startTime: string) => {
+    const sessionDate = new Date(`${date}T${startTime}`);
+    const now = new Date();
+    const oneHourBefore = new Date(sessionDate.getTime() - 60 * 60 * 1000);
+    return now >= oneHourBefore;
+  };
+
+  const getSessionStatusColor = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "completed":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
   const [editedProfile, setEditedProfile] = useState(therapistProfile || {
     name: '',
     first_name: '',
@@ -353,65 +385,104 @@ const TherapistDashboard = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {sessions.map((session) => (
-                      <Card key={session.id} className="border border-gray-200">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <Badge 
-                                  variant={session.status === 'completed' ? 'default' : 
-                                          session.status === 'pending' ? 'secondary' : 'destructive'}
-                                >
-                                  {session.status}
-                                </Badge>
-                                <span className="text-sm text-gray-500">
-                                  {session.session_type}
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                <div>
-                                  <p className="font-medium text-gray-700">Date</p>
-                                  <p className="text-gray-600">{new Date(session.session_date).toLocaleDateString()}</p>
+                    {sessions.map((session) => {
+                      const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
+                      const canJoin = isSessionJoinable(session.session_date, session.start_time);
+                      const hasMeetingLink = session.meeting_link;
+                      
+                      return (
+                        <Card key={session.id} className="border border-gray-200">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <Badge className={getSessionStatusColor(session.status)}>
+                                    {session.status}
+                                  </Badge>
+                                  <span className="text-sm text-gray-500">
+                                    {session.session_type}
+                                  </span>
                                 </div>
-                                <div>
-                                  <p className="font-medium text-gray-700">Time</p>
-                                  <p className="text-gray-600">{session.start_time} - {session.end_time}</p>
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-700">Duration</p>
-                                  <p className="text-gray-600">{session.duration_minutes} min</p>
-                                </div>
-                                {session.price_paid && (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                   <div>
-                                    <p className="font-medium text-gray-700">Payment</p>
-                                    <p className="text-gray-600">${session.price_paid} {session.currency}</p>
+                                    <p className="font-medium text-gray-700">Date</p>
+                                    <p className="text-gray-600">{date}</p>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-700">Time</p>
+                                    <p className="text-gray-600">{time}</p>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-700">Duration</p>
+                                    <p className="text-gray-600">{session.duration_minutes} min</p>
+                                  </div>
+                                  {session.price_paid && (
+                                    <div>
+                                      <p className="font-medium text-gray-700">Payment</p>
+                                      <p className="text-gray-600">${session.price_paid} {session.currency}</p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Meeting Details Section */}
+                                {hasMeetingLink && (
+                                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div className="flex items-center text-sm font-medium text-blue-900 mb-2">
+                                      <Video className="w-4 h-4 mr-2" />
+                                      Meeting Details
+                                    </div>
+                                    {session.zoom_meeting_id && (
+                                      <p className="text-xs text-slate-600 mb-1">
+                                        <span className="font-medium">Meeting ID:</span> {session.zoom_meeting_id}
+                                      </p>
+                                    )}
+                                    {session.zoom_password && (
+                                      <p className="text-xs text-slate-600">
+                                        <span className="font-medium">Password:</span> {session.zoom_password}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {session.client_notes && (
+                                  <div className="mt-3">
+                                    <p className="font-medium text-gray-700 text-sm">Client Notes</p>
+                                    <p className="text-gray-600 text-sm">{session.client_notes}</p>
+                                  </div>
+                                )}
+                                {session.therapist_notes && (
+                                  <div className="mt-3">
+                                    <p className="font-medium text-gray-700 text-sm">Your Notes</p>
+                                    <p className="text-gray-600 text-sm">{session.therapist_notes}</p>
                                   </div>
                                 )}
                               </div>
-                              {session.client_notes && (
-                                <div className="mt-3">
-                                  <p className="font-medium text-gray-700 text-sm">Client Notes</p>
-                                  <p className="text-gray-600 text-sm">{session.client_notes}</p>
+                              <div className="flex flex-col items-end gap-2 ml-4">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-gray-400" />
+                                  <span className="text-xs text-gray-500">
+                                    {new Date(session.created_at).toLocaleDateString()}
+                                  </span>
                                 </div>
-                              )}
-                              {session.therapist_notes && (
-                                <div className="mt-3">
-                                  <p className="font-medium text-gray-700 text-sm">Your Notes</p>
-                                  <p className="text-gray-600 text-sm">{session.therapist_notes}</p>
-                                </div>
-                              )}
+                                
+                                {/* Join Video Button */}
+                                {hasMeetingLink && (
+                                  <Button
+                                    onClick={() => window.open(session.meeting_link, '_blank')}
+                                    disabled={!canJoin}
+                                    className="w-full md:w-auto"
+                                    variant={canJoin ? "default" : "outline"}
+                                  >
+                                    <Video className="w-4 h-4 mr-2" />
+                                    {canJoin ? 'Join Video Call' : 'Not Yet Available'}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 ml-4">
-                              <Clock className="h-4 w-4 text-gray-400" />
-                              <span className="text-xs text-gray-500">
-                                {new Date(session.created_at).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
