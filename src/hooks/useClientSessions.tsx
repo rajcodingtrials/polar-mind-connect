@@ -130,6 +130,12 @@ export const useClientSessions = (clientId: string | null) => {
             return (sessionDateTime < now && session.status === 'pending')
               ? { ...session, status: 'completed' }
               : session;
+          })
+          .sort((a, b) => {
+            // Sort by date and start time descending (most recent first)
+            const dateA = new Date(`${a.session_date}T${a.start_time}`);
+            const dateB = new Date(`${b.session_date}T${b.start_time}`);
+            return dateB.getTime() - dateA.getTime();
           });
 
         setStats({
