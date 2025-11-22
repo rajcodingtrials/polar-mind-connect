@@ -71,8 +71,8 @@ const ParentHome = () => {
   const isSessionJoinable = (date: string, startTime: string) => {
     const sessionDate = new Date(`${date}T${startTime}`);
     const now = new Date();
-    const oneHourBefore = new Date(sessionDate.getTime() - 60 * 60 * 1000);
-    return now >= oneHourBefore;
+    const twelveHoursBefore = new Date(sessionDate.getTime() - 12 * 60 * 60 * 1000);
+    return now >= twelveHoursBefore;
   };
 
   const hasSessionPassed = (date: string, endTime: string) => {
@@ -193,7 +193,7 @@ const ParentHome = () => {
                               variant={canJoin ? "default" : "outline"}
                             >
                               <Video className="w-4 h-4 mr-2" />
-                              {canJoin ? 'Join Meeting' : 'Available 1hr Before'}
+                              {canJoin ? 'Join Meeting' : 'Available 12hrs Before'}
                             </Button>
                           )}
                           
