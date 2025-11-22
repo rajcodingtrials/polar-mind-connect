@@ -19,6 +19,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
   const [hasStartedCelebration, setHasStartedCelebration] = useState(false);
   const [celebrationMessage, setCelebrationMessage] = useState('🎉 Amazing! 🎉');
+  const celebrationInProgress = useRef(false); // Prevent concurrent celebrations
   
   const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist, callTTS } = useTTSSettings(therapistName);
   
@@ -38,10 +39,16 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
       return;
     }
     
+    if (celebrationInProgress.current) {
+      console.log('🎊 Celebration already in progress, skipping');
+      return;
+    }
+    
     const runCelebration = async () => {
       console.log('🎊 Starting celebration TTS - TTS settings loaded');
       console.log('🎊 TTS Settings:', ttsSettings);
       setHasStartedCelebration(true);
+      celebrationInProgress.current = true;
       
       // Get personalized celebration messages
       const progressLevel = calculateProgressLevel(correctAnswers);
@@ -99,6 +106,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
           setTimeout(() => {
               console.log('🎊 TTS finished, celebration complete');
               setIsPlayingTTS(false);
+              celebrationInProgress.current = false;
               // Add a small delay after TTS finishes before moving to next question
               setTimeout(() => {
               onCompleteRef.current();
@@ -106,6 +114,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
           }, 3000); // Standard delay for celebration TTS
         } else {
           console.warn('🎊 No TTS audio content received, proceeding without audio');
+          celebrationInProgress.current = false;
           // If no TTS, proceed after standard delay
           setTimeout(() => {
             setIsPlayingTTS(false);
@@ -114,6 +123,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
         }
       } catch (error) {
         console.error('🎊 TTS error in celebration:', error);
+        celebrationInProgress.current = false;
         // If TTS fails, proceed after standard delay
         setTimeout(() => {
           setIsPlayingTTS(false);

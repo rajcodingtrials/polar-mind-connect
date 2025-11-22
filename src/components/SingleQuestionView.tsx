@@ -85,6 +85,7 @@ const SingleQuestionView = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasUserAttemptedAnswer, setHasUserAttemptedAnswer] = useState(false);
   const [hasReadQuestion, setHasReadQuestion] = useState(false);
+  const questionReadInProgress = useRef(false); // Prevent concurrent question readings
   const [lastMicInput, setLastMicInput] = useState('');
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
   
@@ -137,6 +138,7 @@ const SingleQuestionView = ({
     setIsUserInteracting(false);
     setHasUserAttemptedAnswer(false);
     setHasReadQuestion(false);
+    questionReadInProgress.current = false; // Reset on question change
     setLastMicInput(''); // Reset mic input for new question
     setIsAnswerCorrect(null); // Reset answer correctness for new question
     
@@ -152,8 +154,14 @@ const SingleQuestionView = ({
     if (!ttsSettingsLoaded || !shouldReadQuestion || isUserInteracting || hasReadQuestion) {
       return;
     }
+    
+    if (questionReadInProgress.current) {
+      console.log('🔊 Question TTS already in progress, skipping');
+      return;
+    }
 
     const readQuestion = async () => {
+      questionReadInProgress.current = true;
       try {
         console.log(`🔊 Reading question with ${therapistName}'s voice: ${ttsSettings.voice}`);
         setIsPlaying(true);
@@ -176,6 +184,7 @@ const SingleQuestionView = ({
         setHasReadQuestion(true);
       } finally {
         setIsPlaying(false);
+        questionReadInProgress.current = false;
       }
     };
 
