@@ -75,6 +75,12 @@ const ParentHome = () => {
     return now >= oneHourBefore;
   };
 
+  const hasSessionPassed = (date: string, endTime: string) => {
+    const sessionEndDate = new Date(`${date}T${endTime}`);
+    const now = new Date();
+    return now > sessionEndDate;
+  };
+
   const renderAiTherapy = (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div
@@ -128,6 +134,7 @@ const ParentHome = () => {
               {upcomingSessions.map((session) => {
                 const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                 const canJoin = isSessionJoinable(session.session_date, session.start_time);
+                const hasPassed = hasSessionPassed(session.session_date, session.end_time);
                 const hasMeetingLink = session.meeting_link;
                 
                 return (
@@ -178,7 +185,7 @@ const ParentHome = () => {
                         <div className="flex flex-col items-end gap-2 md:min-w-[140px]">
                           <Badge className={getSessionStatusColor(session.status)}>{session.status}</Badge>
                           
-                          {hasMeetingLink && (
+                          {hasMeetingLink && !hasPassed && (
                             <Button
                               onClick={() => window.open(session.meeting_link, '_blank')}
                               disabled={!canJoin}
@@ -190,7 +197,7 @@ const ParentHome = () => {
                             </Button>
                           )}
                           
-                          {!hasMeetingLink && (
+                          {!hasMeetingLink && !hasPassed && (
                             <p className="text-xs text-slate-500 text-center">
                               Meeting link will be available soon
                             </p>

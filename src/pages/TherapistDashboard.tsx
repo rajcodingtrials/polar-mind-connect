@@ -59,6 +59,12 @@ const TherapistDashboard = () => {
     return now >= oneHourBefore;
   };
 
+  const hasSessionPassed = (date: string, endTime: string) => {
+    const sessionEndDate = new Date(`${date}T${endTime}`);
+    const now = new Date();
+    return now > sessionEndDate;
+  };
+
   const getSessionStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -385,10 +391,11 @@ const TherapistDashboard = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {sessions.map((session) => {
-                      const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
-                      const canJoin = isSessionJoinable(session.session_date, session.start_time);
-                      const hasMeetingLink = session.meeting_link;
+                      {sessions.map((session) => {
+                        const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
+                        const canJoin = isSessionJoinable(session.session_date, session.start_time);
+                        const hasPassed = hasSessionPassed(session.session_date, session.end_time);
+                        const hasMeetingLink = session.meeting_link;
                       
                       return (
                         <Card key={session.id} className="border border-gray-200">
@@ -466,7 +473,7 @@ const TherapistDashboard = () => {
                                 </div>
                                 
                                 {/* Join Video Button */}
-                                {hasMeetingLink && (
+                                {hasMeetingLink && !hasPassed && (
                                   <Button
                                     onClick={() => window.open(session.meeting_link, '_blank')}
                                     disabled={!canJoin}
