@@ -89,6 +89,12 @@ const UserDashboard = () => {
     return now >= oneHourBefore;
   };
 
+  const hasSessionPassed = (date: string, endTime: string) => {
+    const sessionEndDate = new Date(`${date}T${endTime}`);
+    const now = new Date();
+    return now > sessionEndDate;
+  };
+
   // Calculate stats
   const totalCompletedSessions = completedSessions.length;
   const totalTimeMinutes = completedSessions.reduce((acc, session) => acc + (session.duration_minutes || 0), 0);
@@ -275,6 +281,7 @@ const UserDashboard = () => {
                     {upcomingSessions.map((session) => {
                       const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                       const canJoin = isSessionJoinable(session.session_date, session.start_time);
+                      const hasPassed = hasSessionPassed(session.session_date, session.end_time);
                       const hasMeetingLink = session.meeting_link;
                       
                       return (
@@ -324,7 +331,7 @@ const UserDashboard = () => {
                                   {session.status}
                                 </Badge>
                                 
-                                {hasMeetingLink && (
+                                {hasMeetingLink && !hasPassed && (
                                   <Button
                                     onClick={() => window.open(session.meeting_link, '_blank')}
                                     disabled={!canJoin}
@@ -336,7 +343,7 @@ const UserDashboard = () => {
                                   </Button>
                                 )}
                                 
-                                {!hasMeetingLink && (
+                                {!hasMeetingLink && !hasPassed && (
                                   <p className="text-xs text-slate-500 text-center">
                                     Meeting link will be available soon
                                   </p>
