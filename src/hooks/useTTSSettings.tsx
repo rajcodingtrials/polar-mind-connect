@@ -9,8 +9,8 @@ interface TTSSettings {
   provider?: string;
 }
 
-// Track in-flight requests to prevent duplicates
-const inFlightRequests = new Map<string, Promise<any>>();
+// Global in-flight request tracker (outside component to persist across instances)
+const globalInFlightRequests = new Map<string, Promise<any>>();
 
 export const useTTSSettings = (therapistName: string) => {
   const [ttsSettings, setTtsSettings] = useState<TTSSettings>({ 
@@ -116,12 +116,12 @@ export const useTTSSettings = (therapistName: string) => {
     }
 
     // Create unique key for request deduplication
-    const requestKey = `${therapistName}_${provider}_${text}_${voice}_${speed}`;
+    const requestKey = `${provider}_${text.substring(0, 50)}_${voice}_${speed}`;
     
-    // If request is already in flight, wait for it
-    if (inFlightRequests.has(requestKey)) {
-      console.log(`⏳ [${therapistName}] Waiting for in-flight request`);
-      return inFlightRequests.get(requestKey)!;
+    // If request is already in flight, return the same promise
+    if (globalInFlightRequests.has(requestKey)) {
+      console.log(`⏳ [${therapistName}] Reusing in-flight request`);
+      return globalInFlightRequests.get(requestKey)!;
     }
 
     // Create promise for this request
@@ -156,13 +156,13 @@ export const useTTSSettings = (therapistName: string) => {
           return result;
         }
       } finally {
-        // Remove from in-flight requests
-        inFlightRequests.delete(requestKey);
+        // Remove from in-flight requests after a short delay to allow concurrent callers to get the result
+        setTimeout(() => globalInFlightRequests.delete(requestKey), 100);
       }
     })();
 
     // Store in-flight request
-    inFlightRequests.set(requestKey, requestPromise);
+    globalInFlightRequests.set(requestKey, requestPromise);
     
     return requestPromise;
   };

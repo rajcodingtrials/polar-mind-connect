@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 // Rate limiting to prevent quota exhaustion
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 500; // Minimum 500ms between requests
+const MIN_REQUEST_INTERVAL = 200; // Minimum 200ms between requests
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
