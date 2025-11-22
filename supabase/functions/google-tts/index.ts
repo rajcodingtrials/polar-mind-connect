@@ -1,10 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-// Request queue to prevent rate limit exhaustion
-const requestQueue: Array<() => Promise<void>> = [];
-let isProcessing = false;
-const MAX_CONCURRENT = 5; // Max concurrent requests
-const MIN_REQUEST_INTERVAL = 100; // Minimum 100ms between requests
+// Rate limiting to prevent quota exhaustion
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 500; // Minimum 500ms between requests
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +15,16 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting: ensure minimum interval between requests
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime;
+    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+      const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+      console.log(`⏳ Rate limiting: waiting ${waitTime}ms`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    lastRequestTime = Date.now();
+
     console.log('🚀 Google TTS function called - step 1');
     
     // Step 1: Parse the request
