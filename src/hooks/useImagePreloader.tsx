@@ -20,15 +20,21 @@ export const useImagePreloader = (imageUrls: string[]): PreloadStatus => {
     }
 
     let loadedCount = 0;
+    const totalImages = imageUrls.length;
     const images: HTMLImageElement[] = [];
 
     const handleImageLoad = () => {
       loadedCount++;
-      setStatus({
-        loading: loadedCount < imageUrls.length,
-        loaded: loadedCount,
-        total: imageUrls.length,
-      });
+      
+      // Only update state when ALL images are loaded to prevent excessive re-renders
+      if (loadedCount === totalImages) {
+        setStatus({
+          loading: false,
+          loaded: loadedCount,
+          total: totalImages,
+        });
+        console.log(`✅ All ${totalImages} images preloaded`);
+      }
     };
 
     // Preload all images

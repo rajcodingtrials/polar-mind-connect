@@ -62,6 +62,7 @@ const TapAndPlayView = ({
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasReadQuestion, setHasReadQuestion] = useState(false);
+  const questionReadInProgress = useRef(false); // Prevent concurrent question readings
   
   const { ttsSettings, isLoaded: ttsSettingsLoaded, getVoiceForTherapist, callTTS } = useTTSSettings(therapistName);
   const { preferences } = useUserPreferences();
@@ -89,6 +90,7 @@ const TapAndPlayView = ({
     setShouldReadQuestion(!comingFromCelebration);
     setIsUserInteracting(false);
     setHasReadQuestion(false);
+    questionReadInProgress.current = false; // Reset on question change
     setIsCorrect(null);
     setSelectedImageIndex(null);
     
@@ -104,8 +106,14 @@ const TapAndPlayView = ({
     if (!ttsSettingsLoaded || !shouldReadQuestion || isUserInteracting || hasReadQuestion) {
       return;
     }
+    
+    if (questionReadInProgress.current) {
+      console.log('🔊 Tap and play TTS already in progress, skipping');
+      return;
+    }
 
     const readQuestion = async () => {
+      questionReadInProgress.current = true;
       try {
         console.log(`🔊 Reading tap and play question with ${therapistName}'s voice: ${ttsSettings.voice}`);
         setIsPlaying(true);
@@ -127,6 +135,7 @@ const TapAndPlayView = ({
         setHasReadQuestion(true);
       } finally {
         setIsPlaying(false);
+        questionReadInProgress.current = false;
       }
     };
 
