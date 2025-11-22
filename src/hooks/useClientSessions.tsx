@@ -123,9 +123,10 @@ export const useClientSessions = (clientId: string | null) => {
         const completed = transformedSessions
           .filter(session => {
             const sessionDateTime = new Date(`${session.session_date}T${session.end_time}`);
-            return session.status === 'completed' || (sessionDateTime < now && session.status === 'pending');
+            return session.status === 'completed' || session.status === 'cancelled' || (sessionDateTime < now && session.status === 'pending');
           })
           .map(session => {
+            // Auto-mark past pending sessions as completed for display
             const sessionDateTime = new Date(`${session.session_date}T${session.end_time}`);
             return (sessionDateTime < now && session.status === 'pending')
               ? { ...session, status: 'completed' }
