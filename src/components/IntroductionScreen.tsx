@@ -26,24 +26,33 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
   const [shouldSkip, setShouldSkip] = useState(false);
   const hasPlayedTTS = useRef(false); // Track if TTS has been played for this intro
   const ttsInProgress = useRef(false); // Prevent concurrent TTS calls
+  const hasCheckedSkip = useRef(false); // Prevent duplicate skip checks
   
   // Use the new TTS settings hook
   const { ttsSettings, isLoaded, callTTS } = useTTSSettings(therapistName);
 
-  // Check skip setting immediately on mount
+  // Check skip setting immediately on mount (only once)
   useEffect(() => {
+    if (hasCheckedSkip.current) return;
+    hasCheckedSkip.current = true;
+    
     const checkSkipSetting = async () => {
-      const { data: adminData } = await supabase
-        .from('admin_settings')
-        .select('skip_introduction')
-        .limit(1)
-        .single();
-      
-      if (adminData?.skip_introduction) {
-        console.log('⏭️ Skip introduction enabled - starting questions immediately');
-        setShouldSkip(true);
-        stopAllAudio();
-        onStartQuestions();
+      try {
+        const { data: adminData } = await supabase
+          .from('admin_settings')
+          .select('skip_introduction')
+          .limit(1)
+          .single();
+        
+        if (adminData?.skip_introduction) {
+          console.log('⏭️ Skip introduction enabled - starting questions immediately');
+          setShouldSkip(true);
+          stopAllAudio();
+          onStartQuestions();
+        }
+      } catch (error) {
+        console.log('⚠️ Could not check skip setting, continuing with introduction:', error);
+        // Don't skip on error - continue with introduction
       }
     };
     
