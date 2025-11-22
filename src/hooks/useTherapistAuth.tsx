@@ -26,6 +26,7 @@ interface TherapistProfile {
   timezone: string;
   is_verified: boolean;
   is_active: boolean;
+  is_content_creator?: boolean;
   created_at: string;
   updated_at: string;
 }

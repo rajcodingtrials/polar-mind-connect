@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTherapistAuth } from "../hooks/useTherapistAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import TherapistHeader from "../components/therapist/TherapistHeader";
@@ -12,13 +13,16 @@ import { ProfileHeader } from "@/components/therapist/ProfileHeader";
 import { PersonalInformation } from "@/components/therapist/PersonalInformation";
 import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails";
 import { TherapistDocuments } from "@/components/therapist/TherapistDocuments";
-import { Shield, LogOut } from "lucide-react";
+import { Shield, LogOut, Upload, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const TherapistMyProfile = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const { therapistProfile, updateTherapistProfile, createTherapistProfile, loading } = useTherapistAuth();
   const navigate = useNavigate();
+  const { toast: uiToast } = useToast();
   
   const [isEditing, setIsEditing] = useState(!therapistProfile);
   const [editedProfile, setEditedProfile] = useState(therapistProfile || {
@@ -38,6 +42,9 @@ const TherapistMyProfile = () => {
     specializations: [],
     avatar_url: '',
   });
+  const [directoryPath, setDirectoryPath] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -122,6 +129,108 @@ const TherapistMyProfile = () => {
     }
   };
 
+  const handleDirectoryUpload = async () => {
+    if (!directoryPath.trim() && selectedFiles.length === 0) {
+      uiToast({
+        title: "Error",
+        description: "Please select a directory or enter a directory path",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedFiles.length === 0) {
+      uiToast({
+        title: "Error",
+        description: "Please browse and select a directory with lesson files",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Process files - filter for JSON files (lesson files)
+      const jsonFiles = selectedFiles.filter(file => 
+        file.name.endsWith('.json') || file.type === 'application/json'
+      );
+      
+      if (jsonFiles.length === 0) {
+        uiToast({
+          title: "Warning",
+          description: "No JSON files found in the selected directory. Lesson files should be in JSON format.",
+          variant: "destructive",
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Process each JSON file as a lesson
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const file of jsonFiles) {
+        try {
+          const text = await file.text();
+          const lessonData = JSON.parse(text);
+
+          // Determine lesson type and create lesson record
+          // This is a basic implementation - you may need to adjust based on your lesson structure
+          if (lessonData.name || lessonData.lesson_name) {
+            const lessonRecord = {
+              name: lessonData.name || lessonData.lesson_name || file.name.replace('.json', ''),
+              description: lessonData.description || null,
+              question_type: lessonData.question_type || 'question_time',
+              difficulty_level: lessonData.difficulty_level || 'beginner',
+              is_active: true,
+            };
+
+            const { error: insertError } = await supabase
+              .from('lessons')
+              .insert(lessonRecord);
+
+            if (insertError) {
+              console.error(`Error uploading lesson from ${file.name}:`, insertError);
+              errorCount++;
+            } else {
+              successCount++;
+            }
+          } else {
+            errorCount++;
+            console.warn(`Invalid lesson format in ${file.name}: missing name field`);
+          }
+        } catch (fileError) {
+          console.error(`Error processing file ${file.name}:`, fileError);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        uiToast({
+          title: "Success",
+          description: `Successfully uploaded ${successCount} lesson(s)${errorCount > 0 ? `. ${errorCount} file(s) failed.` : '.'}`,
+        });
+        setDirectoryPath("");
+        setSelectedFiles([]);
+      } else {
+        uiToast({
+          title: "Error",
+          description: `Failed to upload lessons. ${errorCount} file(s) had errors.`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading lessons:", error);
+      uiToast({
+        title: "Error",
+        description: "Failed to upload lessons from directory",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
@@ -178,6 +287,84 @@ const TherapistMyProfile = () => {
           {/* Certificates & Documents */}
           {therapistProfile && (
             <TherapistDocuments therapistId={therapistProfile.id} />
+          )}
+
+          {/* Lesson Upload Section for Content Creators */}
+          {therapistProfile?.is_content_creator && (
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  Upload Lessons
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="directory-path">Directory Path</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="directory-path"
+                      type="text"
+                      placeholder="Enter directory path or search for folder..."
+                      value={directoryPath}
+                      onChange={(e) => setDirectoryPath(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.webkitdirectory = true;
+                        input.onchange = (e: any) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            const files = Array.from(e.target.files) as File[];
+                            const path = files[0].webkitRelativePath.split("/")[0];
+                            setDirectoryPath(path || "");
+                            setSelectedFiles(files);
+                            uiToast({
+                              title: "Directory Selected",
+                              description: `Selected directory with ${files.length} file(s)`,
+                            });
+                          }
+                        };
+                        input.click();
+                      }}
+                      disabled={isUploading}
+                    >
+                      <FolderOpen className="h-4 w-4 mr-2" />
+                      Browse
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Click Browse to select a folder containing lesson JSON files
+                    {selectedFiles.length > 0 && (
+                      <span className="block mt-1 text-green-600">
+                        ✓ {selectedFiles.length} file(s) selected
+                      </span>
+                    )}
+                  </p>
+                </div>
+                
+                <Button
+                  onClick={handleDirectoryUpload}
+                  disabled={selectedFiles.length === 0 || isUploading}
+                  className="w-full"
+                >
+                  {isUploading ? (
+                    <>
+                      <Upload className="h-4 w-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Lessons from Directory
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
           )}
 
           {/* Account Security */}
