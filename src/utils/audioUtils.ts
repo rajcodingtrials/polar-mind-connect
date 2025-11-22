@@ -124,7 +124,14 @@ export const playGlobalTTS = async (base64Audio: string, componentName: string):
       };
 
       globalAudioElement.play().catch((e) => {
-        globalAudioElement.onerror?.(e);
+        console.error(`❌ [${componentName}] Play failed:`, e);
+        isGlobalAudioPlaying = false;
+        isProcessingTTS = false;
+        if (globalAudioElement) {
+          URL.revokeObjectURL(audioUrl);
+          globalAudioElement = null;
+        }
+        reject(e);
       });
 
     } catch (error) {
