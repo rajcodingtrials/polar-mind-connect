@@ -96,7 +96,6 @@ export const useTTSSettings = (therapistName: string) => {
     return ttsSettings.voice;
   };
 
-  // Helper function to call the appropriate TTS function
   const callTTS = async (text: string, voice: string, speed: number, pitch?: number) => {
     const provider = ttsSettings.provider || 'openai';
     
@@ -134,6 +133,11 @@ export const useTTSSettings = (therapistName: string) => {
             body: { text, voice, speed }
           });
           
+          if (result.error) {
+            console.error(`❌ [${therapistName}] Google TTS error:`, result.error);
+            return { data: null, error: result.error };
+          }
+          
           // Cache successful results
           if (!result.error && result.data?.audioContent) {
             setCachedAudio(text, voice, speed, result.data.audioContent);
@@ -149,12 +153,20 @@ export const useTTSSettings = (therapistName: string) => {
           const result = await supabase.functions.invoke('openai-tts', {
             body: { text, voice, speed }
           });
+          
+          if (result.error) {
+            console.error(`❌ [${therapistName}] OpenAI TTS error:`, result.error);
+          }
+          
           console.log(`✅ [${therapistName}] OpenAI TTS response:`, {
             success: !result.error,
             audioLength: result.data?.audioContent?.length || 0
           });
           return result;
         }
+      } catch (error) {
+        console.error(`❌ [${therapistName}] TTS exception:`, error);
+        return { data: null, error };
       } finally {
         // Remove from in-flight requests after a short delay to allow concurrent callers to get the result
         setTimeout(() => globalInFlightRequests.delete(requestKey), 100);

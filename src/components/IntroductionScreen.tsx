@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { SkipForward, ChevronsRight } from 'lucide-react';
@@ -24,6 +24,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shouldSkip, setShouldSkip] = useState(false);
+  const hasPlayedTTS = useRef(false); // Track if TTS has been played for this intro
   
   // Use the new TTS settings hook
   const { ttsSettings, isLoaded, callTTS } = useTTSSettings(therapistName);
@@ -96,6 +97,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
         setIntroMessage(`Hi ${childName}! I'm ${therapistName}, and I'm so excited to work with you today! Are you ready to have some fun learning together?`);
       } finally {
         setIsLoading(false);
+        hasPlayedTTS.current = false; // Reset when new intro message is generated
       }
     };
 
@@ -104,16 +106,24 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
 
   // Separate effect for TTS that runs after intro message is set and TTS settings are loaded
   useEffect(() => {
-    // Don't play TTS if we should skip
-    if (shouldSkip || !introMessage || isLoading || !isLoaded || !ttsSettings.voice) {
+    // Don't play TTS if we should skip or if we've already played it
+    if (shouldSkip || !introMessage || isLoading || !isLoaded || !ttsSettings.voice || hasPlayedTTS.current) {
       return;
     }
+    
+    console.log(`🎬 [IntroductionScreen] TTS effect triggered for: "${introMessage.substring(0, 50)}..."`);
     
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
     
     const playTTS = async () => {
-      if (!isMounted) return;
+      if (!isMounted || hasPlayedTTS.current) {
+        console.log(`⏭️ [IntroductionScreen] Skipping TTS - already played or unmounted`);
+        return;
+      }
+      
+      // Mark as played immediately to prevent duplicate calls
+      hasPlayedTTS.current = true;
       
       try {
         console.log(`🎯 [${therapistName}] Introduction TTS Request:`, {
@@ -124,6 +134,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
         
         // Stop any previous audio
         stopGlobalAudio();
+        setIsPlaying(true);
         
         // Use the new TTS hook to call the appropriate provider
         const ttsResponse = await callTTS(introMessage, ttsSettings.voice, ttsSettings.speed);
@@ -135,6 +146,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
           await playGlobalTTS(ttsResponse.data.audioContent, 'IntroductionScreen');
           // Show continue button after TTS finishes
           if (isMounted) {
+            setIsPlaying(false);
             setTimeout(() => {
               if (isMounted) {
                 setShowContinueButton(true);
@@ -147,6 +159,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
         } else {
           console.error(`❌ No introduction audio content returned for ${therapistName}`);
           if (isMounted) {
+            setIsPlaying(false);
             setShowContinueButton(true);
             if (onTTSEnd) {
               onTTSEnd();
@@ -156,13 +169,14 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
       } catch (error) {
         console.error('TTS error:', error);
         if (isMounted) {
+          setIsPlaying(false);
           setShowContinueButton(true);
         }
       }
     };
 
     // Add a small delay to ensure everything is ready
-    timeoutId = setTimeout(playTTS, 500);
+    timeoutId = setTimeout(playTTS, 300);
 
     return () => {
       isMounted = false;
