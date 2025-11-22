@@ -64,7 +64,8 @@ export const useTherapistSessions = (therapistId: string | null) => {
           .from('therapy_sessions')
           .select('*')
           .eq('therapist_id', therapistId)
-          .order('created_at', { ascending: false });
+          .order('session_date', { ascending: true })
+          .order('start_time', { ascending: true });
 
         if (allSessionsError) {
           throw allSessionsError;
@@ -73,10 +74,33 @@ export const useTherapistSessions = (therapistId: string | null) => {
         // Count completed sessions
         const completedSessions = allSessions?.filter(session => session.status === 'completed') || [];
 
+        // Separate and sort sessions
+        const now = new Date();
+        
+        const upcoming = allSessions?.filter(session => {
+          const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
+          return sessionEndDateTime >= now && ['confirmed', 'pending'].includes(session.status);
+        }).sort((a, b) => {
+          // Sort upcoming by date and start time ascending (earliest first)
+          const dateA = new Date(`${a.session_date}T${a.start_time}`);
+          const dateB = new Date(`${b.session_date}T${b.start_time}`);
+          return dateA.getTime() - dateB.getTime();
+        }) || [];
+
+        const past = allSessions?.filter(session => {
+          const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
+          return sessionEndDateTime < now || session.status === 'completed';
+        }).sort((a, b) => {
+          // Sort past sessions by date and start time descending (most recent first)
+          const dateA = new Date(`${a.session_date}T${a.start_time}`);
+          const dateB = new Date(`${b.session_date}T${b.start_time}`);
+          return dateB.getTime() - dateA.getTime();
+        }) || [];
+
         setStats({
           todaySessions: todayData?.length || 0,
           totalSessions: completedSessions.length,
-          sessions: allSessions || [],
+          sessions: [...upcoming, ...past],
           loading: false,
           error: null,
         });
