@@ -9,6 +9,9 @@ interface TTSSettings {
   provider?: string;
 }
 
+// Track in-flight requests to prevent duplicates
+const inFlightRequests = new Map<string, Promise<any>>();
+
 export const useTTSSettings = (therapistName: string) => {
   const [ttsSettings, setTtsSettings] = useState<TTSSettings>({ 
     voice: 'nova', 
@@ -104,43 +107,64 @@ export const useTTSSettings = (therapistName: string) => {
       textLength: text.length,
       textPreview: text.substring(0, 50) + '...'
     });
-    
-    if (provider === 'google') {
-      console.log(`🔊 [${therapistName}] 🟢 Calling Google TTS with voice: ${voice}`);
-      
-      // Check cache first
-      const cachedAudio = getCachedAudio(text, voice, speed);
-      if (cachedAudio) {
-        console.log(`✅ [${therapistName}] Using cached Google TTS audio`);
-        return { data: { audioContent: cachedAudio }, error: null };
-      }
-      
-      const result = await supabase.functions.invoke('google-tts', {
-        body: { text, voice, speed }
-        // pitch: pitch || ttsSettings.pitch || 0.0 // Temporarily disabled until database column is added
-      });
-      
-      // Cache successful results
-      if (!result.error && result.data?.audioContent) {
-        setCachedAudio(text, voice, speed, result.data.audioContent);
-      }
-      
-      console.log(`✅ [${therapistName}] Google TTS response:`, {
-        success: !result.error,
-        audioLength: result.data?.audioContent?.length || 0
-      });
-      return result;
-    } else {
-      console.log(`🔊 [${therapistName}] 🔵 Calling OpenAI TTS with voice: ${voice}`);
-      const result = await supabase.functions.invoke('openai-tts', {
-        body: { text, voice, speed }
-      });
-      console.log(`✅ [${therapistName}] OpenAI TTS response:`, {
-        success: !result.error,
-        audioLength: result.data?.audioContent?.length || 0
-      });
-      return result;
+
+    // Check cache first
+    const cachedAudio = getCachedAudio(text, voice, speed);
+    if (cachedAudio) {
+      console.log(`✅ [${therapistName}] Using cached audio`);
+      return { data: { audioContent: cachedAudio }, error: null };
     }
+
+    // Create unique key for request deduplication
+    const requestKey = `${therapistName}_${provider}_${text}_${voice}_${speed}`;
+    
+    // If request is already in flight, wait for it
+    if (inFlightRequests.has(requestKey)) {
+      console.log(`⏳ [${therapistName}] Waiting for in-flight request`);
+      return inFlightRequests.get(requestKey)!;
+    }
+
+    // Create promise for this request
+    const requestPromise = (async () => {
+      try {
+        if (provider === 'google') {
+          console.log(`🔊 [${therapistName}] 🟢 Calling Google TTS with voice: ${voice}`);
+          
+          const result = await supabase.functions.invoke('google-tts', {
+            body: { text, voice, speed }
+          });
+          
+          // Cache successful results
+          if (!result.error && result.data?.audioContent) {
+            setCachedAudio(text, voice, speed, result.data.audioContent);
+          }
+          
+          console.log(`✅ [${therapistName}] Google TTS response:`, {
+            success: !result.error,
+            audioLength: result.data?.audioContent?.length || 0
+          });
+          return result;
+        } else {
+          console.log(`🔊 [${therapistName}] 🔵 Calling OpenAI TTS with voice: ${voice}`);
+          const result = await supabase.functions.invoke('openai-tts', {
+            body: { text, voice, speed }
+          });
+          console.log(`✅ [${therapistName}] OpenAI TTS response:`, {
+            success: !result.error,
+            audioLength: result.data?.audioContent?.length || 0
+          });
+          return result;
+        }
+      } finally {
+        // Remove from in-flight requests
+        inFlightRequests.delete(requestKey);
+      }
+    })();
+
+    // Store in-flight request
+    inFlightRequests.set(requestKey, requestPromise);
+    
+    return requestPromise;
   };
 
   return {
