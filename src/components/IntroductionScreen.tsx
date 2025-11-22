@@ -196,9 +196,10 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
     return () => {
       isMounted = false;
       ttsInProgress.current = false;
+      hasPlayedTTS.current = false; // Reset on cleanup for React Strict Mode
       stopGlobalAudio();
     };
-  }, [introMessage, isLoaded, shouldSkip]); // Only re-run when these specific values change
+  }, [introMessage, isLoaded, shouldSkip, ttsSettings.voice]); // Only re-run when these specific values change
 
   // Don't render anything if we should skip
   if (shouldSkip) {
