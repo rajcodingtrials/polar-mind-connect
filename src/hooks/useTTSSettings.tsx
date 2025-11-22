@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAudioCache } from './useAudioCache';
 
@@ -92,11 +92,11 @@ export const useTTSSettings = (therapistName: string) => {
   }, [therapistName]);
 
   // Helper function to get the correct voice
-  const getVoiceForTherapist = () => {
+  const getVoiceForTherapist = useCallback(() => {
     return ttsSettings.voice;
-  };
+  }, [ttsSettings.voice]);
 
-  const callTTS = async (text: string, voice: string, speed: number, pitch?: number) => {
+  const callTTS = useCallback(async (text: string, voice: string, speed: number, pitch?: number) => {
     const provider = ttsSettings.provider || 'openai';
     
     console.log(`🎯 [${therapistName}] TTS Request Details:`, {
@@ -168,8 +168,8 @@ export const useTTSSettings = (therapistName: string) => {
         console.error(`❌ [${therapistName}] TTS exception:`, error);
         return { data: null, error };
       } finally {
-        // Remove from in-flight requests after a short delay to allow concurrent callers to get the result
-        setTimeout(() => globalInFlightRequests.delete(requestKey), 100);
+        // Remove from in-flight requests after a longer delay to prevent rapid duplicates
+        setTimeout(() => globalInFlightRequests.delete(requestKey), 1000);
       }
     })();
 
@@ -177,7 +177,7 @@ export const useTTSSettings = (therapistName: string) => {
     globalInFlightRequests.set(requestKey, requestPromise);
     
     return requestPromise;
-  };
+  }, [ttsSettings.provider, getCachedAudio, setCachedAudio, therapistName]);
 
   return {
     ttsSettings,
@@ -185,4 +185,4 @@ export const useTTSSettings = (therapistName: string) => {
     getVoiceForTherapist,
     callTTS
   };
-}; 
+};

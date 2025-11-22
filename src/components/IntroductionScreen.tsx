@@ -25,6 +25,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
   const [isPlaying, setIsPlaying] = useState(false);
   const [shouldSkip, setShouldSkip] = useState(false);
   const hasPlayedTTS = useRef(false); // Track if TTS has been played for this intro
+  const ttsInProgress = useRef(false); // Prevent concurrent TTS calls
   
   // Use the new TTS settings hook
   const { ttsSettings, isLoaded, callTTS } = useTTSSettings(therapistName);
@@ -98,6 +99,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
       } finally {
         setIsLoading(false);
         hasPlayedTTS.current = false; // Reset when new intro message is generated
+        ttsInProgress.current = false; // Reset when new intro message is generated
       }
     };
 
@@ -106,24 +108,35 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
 
   // Separate effect for TTS that runs after intro message is set and TTS settings are loaded
   useEffect(() => {
-    // Don't play TTS if we should skip or if we've already played it
-    if (shouldSkip || !introMessage || isLoading || !isLoaded || !ttsSettings.voice || hasPlayedTTS.current) {
+    // Guard at the very top - set flags IMMEDIATELY to prevent race conditions
+    if (shouldSkip || !introMessage || isLoading || !isLoaded || !ttsSettings.voice) {
       return;
     }
     
-    console.log(`🎬 [IntroductionScreen] TTS effect triggered for: "${introMessage.substring(0, 50)}..."`);
+    if (hasPlayedTTS.current) {
+      console.log(`⏭️ [IntroductionScreen] TTS already played, skipping`);
+      return;
+    }
+    
+    if (ttsInProgress.current) {
+      console.log(`⏭️ [IntroductionScreen] TTS already in progress, skipping`);
+      return;
+    }
+    
+    // Mark IMMEDIATELY before any async work
+    hasPlayedTTS.current = true;
+    ttsInProgress.current = true;
+    
+    console.log(`🎬 [IntroductionScreen] TTS starting for: "${introMessage.substring(0, 50)}..."`);
     
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
     
     const playTTS = async () => {
-      if (!isMounted || hasPlayedTTS.current) {
-        console.log(`⏭️ [IntroductionScreen] Skipping TTS - already played or unmounted`);
+      if (!isMounted) {
+        console.log(`⏭️ [IntroductionScreen] Component unmounted, aborting TTS`);
+        ttsInProgress.current = false;
         return;
       }
-      
-      // Mark as played immediately to prevent duplicate calls
-      hasPlayedTTS.current = true;
       
       try {
         console.log(`🎯 [${therapistName}] Introduction TTS Request:`, {
@@ -172,15 +185,17 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
           setIsPlaying(false);
           setShowContinueButton(true);
         }
+      } finally {
+        ttsInProgress.current = false;
       }
     };
 
-    // Add a small delay to ensure everything is ready
-    timeoutId = setTimeout(playTTS, 300);
+    // Call immediately, no delay needed
+    playTTS();
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
+      ttsInProgress.current = false;
       stopGlobalAudio();
     };
   }, [introMessage, isLoaded, shouldSkip]); // Only re-run when these specific values change
