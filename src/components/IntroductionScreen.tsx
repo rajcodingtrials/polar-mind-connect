@@ -109,7 +109,12 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
       return;
     }
     
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+    
     const playTTS = async () => {
+      if (!isMounted) return;
+      
       try {
         console.log(`🎯 [${therapistName}] Introduction TTS Request:`, {
           voice: ttsSettings.voice,
@@ -123,32 +128,48 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
         // Use the new TTS hook to call the appropriate provider
         const ttsResponse = await callTTS(introMessage, ttsSettings.voice, ttsSettings.speed);
 
+        if (!isMounted) return;
+
         if (ttsResponse.data?.audioContent) {
           console.log(`✅ Introduction TTS generated successfully for ${therapistName}`);
           await playGlobalTTS(ttsResponse.data.audioContent, 'IntroductionScreen');
           // Show continue button after TTS finishes
-          setTimeout(() => {
+          if (isMounted) {
+            setTimeout(() => {
+              if (isMounted) {
+                setShowContinueButton(true);
+                if (onTTSEnd) {
+                  onTTSEnd();
+                }
+              }
+            }, 500);
+          }
+        } else {
+          console.error(`❌ No introduction audio content returned for ${therapistName}`);
+          if (isMounted) {
             setShowContinueButton(true);
             if (onTTSEnd) {
               onTTSEnd();
             }
-          }, 3000);
-        } else {
-          console.error(`❌ No introduction audio content returned for ${therapistName}`);
-          setShowContinueButton(true);
-          if (onTTSEnd) {
-            onTTSEnd();
           }
         }
       } catch (error) {
         console.error('TTS error:', error);
-        setShowContinueButton(true);
+        if (isMounted) {
+          setShowContinueButton(true);
+        }
       }
     };
 
     // Add a small delay to ensure everything is ready
-    setTimeout(playTTS, 500);
-  }, [shouldSkip, isLoading, introMessage, isLoaded, ttsSettings, therapistName, callTTS, onTTSEnd]);
+    timeoutId = setTimeout(playTTS, 500);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      stopGlobalAudio();
+    };
+  }, [introMessage, isLoaded, shouldSkip]); // Only re-run when these specific values change
 
   // Don't render anything if we should skip
   if (shouldSkip) {
