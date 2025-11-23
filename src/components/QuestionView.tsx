@@ -17,6 +17,7 @@ import { Clock, CheckCircle2, XCircle } from 'lucide-react';
 interface Question_v2 {
   id: string;
   question_text: string;
+  question_speech: string | null;
   answer: string | null;
   answer_index: number | null;
   question_image: string | null;
@@ -165,14 +166,15 @@ const QuestionView: React.FC<QuestionViewProps> = ({
 
   // Read question aloud when component mounts or question changes
   useEffect(() => {
-    if (shouldReadQuestion && !hasReadQuestion && ttsSettingsLoaded && !questionReadInProgress.current && question.question_text) {
+    // Only call TTS if question_speech is available
+    if (shouldReadQuestion && !hasReadQuestion && ttsSettingsLoaded && !questionReadInProgress.current && question.question_speech) {
       questionReadInProgress.current = true;
       setHasReadQuestion(true);
       
       const readQuestion = async () => {
         try {
           stopGlobalAudio();
-          const questionText = question.question_text;
+          const questionText = question.question_speech;
           const { data, error } = await callTTS(questionText, ttsSettings.voice, ttsSettings.speed);
           
           if (data?.audioContent && !error) {
@@ -204,7 +206,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
       
       readQuestion();
     }
-  }, [shouldReadQuestion, hasReadQuestion, ttsSettingsLoaded, question.question_text, question.id, question.answer, question.answer_index, questionNumber, totalQuestions, onNextQuestion, onComplete]);
+  }, [shouldReadQuestion, hasReadQuestion, ttsSettingsLoaded, question.question_speech, question.id, question.answer, question.answer_index, questionNumber, totalQuestions, onNextQuestion, onComplete]);
 
   const handleVoiceRecording = async () => {
     if (isProcessingAnswer || !question.answer) return;

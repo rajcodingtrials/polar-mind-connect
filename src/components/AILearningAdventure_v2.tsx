@@ -18,6 +18,7 @@ type QuestionType = Database['public']['Enums']['question_type_enum'];
 interface Question_v2 {
   id: string;
   question_text: string;
+  question_speech: string | null;
   answer: string | null;
   answer_index: number | null;
   question_image: string | null;
@@ -172,6 +173,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
           const formattedQuestions = (questionsData as any[]).map((q: any) => ({
             id: q.id,
             question_text: q.question_text,
+            question_speech: q.question_speech || null,
             answer: q.answer,
             answer_index: q.answer_index,
             question_image: q.question_image,

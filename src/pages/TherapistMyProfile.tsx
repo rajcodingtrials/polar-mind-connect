@@ -405,6 +405,7 @@ const TherapistMyProfile = () => {
               // Create question record
               const questionRecord = {
                 question_text: question.question_text || question.question || '',
+                question_speech: question.question_speech || null,
                 answer: question.answer || '',
                 answer_index: question.answer_index !== undefined ? question.answer_index : null,
                 question_image: questionImageUrl,
