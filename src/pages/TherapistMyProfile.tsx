@@ -26,6 +26,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 
 const TherapistMyProfile = () => {
   const { isAuthenticated, user, logout, loading: authLoading } = useAuth();
@@ -56,6 +57,12 @@ const TherapistMyProfile = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [uploadProgress, setUploadProgress] = useState({
+    step: 'idle' as 'idle' | 'verifying' | 'uploading',
+    current: 0,
+    total: 0,
+    message: ''
+  });
 
   useEffect(() => {
     // Wait for auth to finish loading before checking authentication
@@ -193,11 +200,17 @@ const TherapistMyProfile = () => {
   ];
 
   // Verification function to check lessons before upload
-  const verifyLessons = async (directoryMap: Map<string, { lessonFile: File; imageFiles: File[] }>): Promise<{ isValid: boolean; errors: string[] }> => {
+  const verifyLessons = async (
+    directoryMap: Map<string, { lessonFile: File; imageFiles: File[] }>,
+    onProgress?: (current: number, total: number) => void
+  ): Promise<{ isValid: boolean; errors: string[] }> => {
     const verificationErrors: string[] = [];
+    const entries = Array.from(directoryMap.entries());
+    const totalEntries = entries.length;
 
     // Verify each directory
-    for (const [dirPath, { lessonFile, imageFiles }] of directoryMap.entries()) {
+    for (let index = 0; index < entries.length; index++) {
+      const [dirPath, { lessonFile, imageFiles }] = entries[index];
       try {
         const text = await lessonFile.text();
         const lessonData = JSON.parse(text);
@@ -212,6 +225,7 @@ const TherapistMyProfile = () => {
 
         if (!validQuestionTypes.includes(questionType)) {
           verificationErrors.push(`${dirPath}: Invalid question_type "${lessonData.question_type}". Valid types are: ${validQuestionTypes.join(', ')}`);
+          if (onProgress) onProgress(index + 1, totalEntries);
           continue;
         }
 
@@ -228,11 +242,13 @@ const TherapistMyProfile = () => {
 
         if (checkError) {
           verificationErrors.push(`${dirPath}: Error checking for existing lesson - ${checkError.message}`);
+          if (onProgress) onProgress(index + 1, totalEntries);
           continue;
         }
 
         if (existingLesson) {
           verificationErrors.push(`${dirPath}: Lesson "${lessonName}" with question_type "${questionType}" already exists in lessons_v2 table.`);
+          if (onProgress) onProgress(index + 1, totalEntries);
           continue;
         }
 
@@ -283,6 +299,11 @@ const TherapistMyProfile = () => {
         }
       } catch (error: any) {
         verificationErrors.push(`${dirPath}: Error during verification - ${error?.message || String(error)}`);
+      }
+      
+      // Update progress
+      if (onProgress) {
+        onProgress(index + 1, totalEntries);
       }
     }
 
@@ -357,21 +378,57 @@ const TherapistMyProfile = () => {
         return;
       }
 
+      // Set up progress tracking for verification
+      setUploadProgress({
+        step: 'verifying',
+        current: 0,
+        total: directoryMap.size,
+        message: 'Verifying lessons...'
+      });
+
       // Run verification before upload
-      const verification = await verifyLessons(directoryMap);
+      const verification = await verifyLessons(directoryMap, (current, total) => {
+        setUploadProgress({
+          step: 'verifying',
+          current,
+          total,
+          message: `Verifying lesson ${current} of ${total}...`
+        });
+      });
       
       if (!verification.isValid) {
         // Show verification errors and stop
         setErrorMessages(verification.errors);
         setShowErrorDialog(true);
         setIsUploading(false);
+        setUploadProgress({ step: 'idle', current: 0, total: 0, message: '' });
         return;
+      }
+
+      // Calculate total questions for progress tracking (only for valid lessons)
+      let totalQuestions = 0;
+      for (const { lessonFile } of directoryMap.values()) {
+        try {
+          const text = await lessonFile.text();
+          const lessonData = JSON.parse(text);
+          totalQuestions += (lessonData.questions || []).length;
+        } catch (e) {
+          // Ignore errors during counting
+        }
       }
 
       // Verification passed - show success toast
       uiToast({
         title: "Verification Successful",
         description: `All ${directoryMap.size} lesson(s) passed verification. Starting upload...`,
+      });
+
+      // Set up progress tracking for upload
+      setUploadProgress({
+        step: 'uploading',
+        current: 0,
+        total: totalQuestions,
+        message: 'Uploading questions...'
       });
 
       let successCount = 0;
@@ -501,6 +558,7 @@ const TherapistMyProfile = () => {
               const questionRecord = {
                 question_text: question.question_text || question.question || '',
                 question_speech: question.question_speech || null,
+                description_text: question.description_text || question.description || question.question_description || null,
                 answer: question.answer || '',
                 answer_index: question.answer_index !== undefined ? question.answer_index : null,
                 question_image: questionImageUrl,
@@ -521,10 +579,26 @@ const TherapistMyProfile = () => {
                 console.error(`Error creating question ${i} in ${dirPath}:`, questionError);
                 allErrors.push(errorMsg);
               }
+              
+              // Update progress after each question
+              setUploadProgress(prev => ({
+                step: 'uploading',
+                current: prev.current + 1,
+                total: prev.total,
+                message: `Uploading question ${prev.current + 1} of ${prev.total}...`
+              }));
             } catch (questionError: any) {
               const errorMsg = `${dirPath}: Error processing question ${i + 1} - ${questionError?.message || String(questionError)}`;
               console.error(`Error processing question ${i} in ${dirPath}:`, questionError);
               allErrors.push(errorMsg);
+              
+              // Update progress even on error
+              setUploadProgress(prev => ({
+                step: 'uploading',
+                current: prev.current + 1,
+                total: prev.total,
+                message: `Uploading question ${prev.current + 1} of ${prev.total}...`
+              }));
             }
           }
 
@@ -561,6 +635,7 @@ const TherapistMyProfile = () => {
       setShowErrorDialog(true);
     } finally {
       setIsUploading(false);
+      setUploadProgress({ step: 'idle', current: 0, total: 0, message: '' });
     }
   };
 
@@ -687,7 +762,7 @@ const TherapistMyProfile = () => {
                   {isUploading ? (
                     <>
                       <Upload className="h-4 w-4 mr-2 animate-spin" />
-                      Uploading...
+                      {uploadProgress.step === 'verifying' ? 'Verifying...' : 'Uploading...'}
                     </>
                   ) : (
                     <>
@@ -696,6 +771,27 @@ const TherapistMyProfile = () => {
                     </>
                   )}
                 </Button>
+
+                {/* Progress Bar */}
+                {isUploading && uploadProgress.total > 0 && (
+                  <div className="space-y-2 mt-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-gray-700">
+                        {uploadProgress.step === 'verifying' ? 'Verifying' : 'Uploading'}
+                      </span>
+                      <span className="text-gray-600">
+                        {uploadProgress.current} of {uploadProgress.total}
+                      </span>
+                    </div>
+                    <Progress 
+                      value={(uploadProgress.current / uploadProgress.total) * 100} 
+                      className="h-3"
+                    />
+                    <p className="text-xs text-gray-500 text-center">
+                      {uploadProgress.message}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
