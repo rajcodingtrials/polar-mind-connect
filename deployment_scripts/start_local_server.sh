@@ -55,8 +55,11 @@ if [ -f "package.json" ]; then
       echo "Error: No 'start' or 'dev' script found in package.json."
       exit 1
     fi
+  else
+    echo "No React project detected. Serving as static files from $PROJECT_ROOT..."
+    python -m http.server $PORT
   fi
+else
+  echo "No React project detected. Serving as static files from $PROJECT_ROOT..."
+  python -m http.server $PORT
 fi
-
-echo "No React project detected. Serving as static files from $PROJECT_ROOT..."
-python -m http.server $PORT
