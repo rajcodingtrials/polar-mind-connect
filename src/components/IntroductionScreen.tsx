@@ -216,7 +216,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-6 animate-fade-in relative">
+    <div className="min-h-screen flex flex-col p-6 animate-fade-in relative">
       {/* Skip Button - Top Right Corner */}
       <div className="absolute top-6 right-6 z-10">
         <button

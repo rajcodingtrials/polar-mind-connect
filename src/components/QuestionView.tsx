@@ -407,12 +407,20 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         onNextQuestion();
       }, 2000);
     } else {
-      // Allow retry
+      // Allow retry - if this is the second attempt (newRetryCount === 1), re-read the question
       setTimeout(() => {
         setShowFeedback(false);
         setIsWaitingForAnswer(true);
         setIsProcessingAnswer(false);
         setIsUserInteracting(false);
+        
+        // If this is the second attempt, reset flags to trigger re-reading via useEffect
+        if (newRetryCount === 1 && question.question_speech) {
+          // Reset the flags so the useEffect will trigger to re-read the question
+          questionReadInProgress.current = false;
+          setHasReadQuestion(false);
+          setShouldReadQuestion(true);
+        }
       }, 2000);
     }
   };
