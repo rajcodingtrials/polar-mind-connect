@@ -19,6 +19,7 @@ interface Question_v2 {
   id: string;
   question_text: string;
   question_speech: string | null;
+  description_text: string | null;
   answer: string | null;
   answer_index: number | null;
   question_image: string | null;
@@ -174,6 +175,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
             id: q.id,
             question_text: q.question_text,
             question_speech: q.question_speech || null,
+            description_text: q.description_text || null,
             answer: q.answer,
             answer_index: q.answer_index,
             question_image: q.question_image,

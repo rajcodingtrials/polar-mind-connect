@@ -18,6 +18,7 @@ interface Question_v2 {
   id: string;
   question_text: string;
   question_speech: string | null;
+  description_text: string | null;
   answer: string | null;
   answer_index: number | null;
   question_image: string | null;
@@ -588,6 +589,15 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                 }}
               />
             </div>
+          </div>
+        )}
+
+        {/* Description Text - Show below question image if present */}
+        {question.description_text && (
+          <div className="mb-8 animate-fade-in">
+            <p className="text-sm text-black text-center max-w-4xl mx-auto">
+              {question.description_text}
+            </p>
           </div>
         )}
 
