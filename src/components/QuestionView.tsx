@@ -589,34 +589,39 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           </div>
         )}
 
-        {/* Choices (if answer_index is present and answer is empty) */}
-        {showChoices && !hasAnswerField && (
-          <div className="grid grid-cols-2 gap-4 mb-8">
+        {/* Choices (if choices_image is present) */}
+        {choiceImageUrls.length > 0 && (
+          <div className="flex flex-row gap-4 mb-8 justify-center items-center flex-wrap">
             {choiceImageUrls.map((imageUrl, index) => {
               const isSelected = selectedChoiceIndex === index;
-              const isCorrectChoice = index === question.answer_index;
+              const isCorrectChoice = question.answer_index !== null && index === question.answer_index;
               const showResult = isSelected && isCorrect !== null;
+              const isClickable = question.answer_index !== null && question.answer_index >= 0;
               
               return (
                 <button
                   key={index}
-                  onClick={() => handleChoiceClick(index)}
-                  disabled={isProcessingAnswer || hasCalledCorrectAnswer}
+                  onClick={() => isClickable && handleChoiceClick(index)}
+                  disabled={isProcessingAnswer || hasCalledCorrectAnswer || !isClickable}
                   className={`
-                    relative p-4 rounded-xl border-4 transition-all duration-200
+                    relative p-4 rounded-xl border-4 transition-all duration-300 overflow-hidden
                     ${isSelected && isCorrectChoice ? 'border-green-500 bg-green-50' : ''}
                     ${isSelected && !isCorrectChoice ? 'border-red-500 bg-red-50' : ''}
                     ${!isSelected ? 'border-blue-200 bg-white hover:border-blue-400 hover:shadow-lg' : ''}
-                    ${isProcessingAnswer || hasCalledCorrectAnswer ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    ${isProcessingAnswer || hasCalledCorrectAnswer || !isClickable ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group' : ''}
                   `}
                 >
                   <img
                     src={imageUrl}
                     alt={`Choice ${index + 1}`}
-                    className="w-full h-auto rounded-lg"
+                    className={`
+                      w-auto h-48 max-w-xs object-contain rounded-lg transition-transform duration-300
+                      ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group-hover:scale-125' : ''}
+                    `}
                   />
                   {showResult && (
-                    <div className="absolute top-2 right-2">
+                    <div className="absolute top-2 right-2 z-10">
                       {isCorrectChoice ? (
                         <CheckCircle2 className="w-8 h-8 text-green-600" />
                       ) : (
