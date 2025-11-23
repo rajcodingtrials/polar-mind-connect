@@ -5,6 +5,8 @@ import { BookOpen, MessageCircle, Building, Heart, User, Search, ArrowLeft } fro
 import type { Database } from '@/integrations/supabase/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -25,10 +27,13 @@ interface LessonStyle {
 
 const LessonsMarketPlace: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [filteredLessons, setFilteredLessons] = useState<Lesson[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [addingLesson, setAddingLesson] = useState<string | null>(null);
 
   // Define style array similar to QuestionTypeCards
   const lessonStyles: LessonStyle[] = [
@@ -124,6 +129,85 @@ const LessonsMarketPlace: React.FC = () => {
     advanced: '⭐⭐⭐' 
   };
 
+  const handleLessonClick = async (lessonId: string) => {
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to add lessons to your profile.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAddingLesson(lessonId);
+    
+    try {
+      // Get current parent record
+      const { data: parentData, error: fetchError } = await supabase
+        .from('parents' as any)
+        .select('lessons')
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching parent record:', fetchError);
+        toast({
+          title: "Error",
+          description: "Failed to load your profile. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Parse existing lessons
+      const existingLessons = parentData?.lessons 
+        ? parentData.lessons.split(',').map(id => id.trim()).filter(id => id)
+        : [];
+
+      // Check if lesson is already added
+      if (existingLessons.includes(lessonId)) {
+        toast({
+          title: "Already Added",
+          description: "This lesson is already in your profile.",
+        });
+        setAddingLesson(null);
+        return;
+      }
+
+      // Add new lesson to the list
+      const updatedLessons = [...existingLessons, lessonId].join(',');
+
+      // Update parent record
+      const { error: updateError } = await supabase
+        .from('parents' as any)
+        .update({ lessons: updatedLessons })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('Error updating parent lessons:', updateError);
+        toast({
+          title: "Error",
+          description: "Failed to add lesson to your profile. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: "Lesson has been added to your profile.",
+        });
+      }
+    } catch (error) {
+      console.error('Error adding lesson:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAddingLesson(null);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
@@ -182,7 +266,8 @@ const LessonsMarketPlace: React.FC = () => {
                     return (
                       <div
                         key={lesson.id}
-                        className={`${style.color} ${style.textColor} rounded-xl p-6 cursor-pointer border-3 transition-all duration-300 ease-out h-[280px] flex flex-col items-center justify-center hover:shadow-xl hover:border-white`}
+                        onClick={() => handleLessonClick(lesson.id)}
+                        className={`${style.color} ${style.textColor} rounded-xl p-6 cursor-pointer border-3 transition-all duration-300 ease-out h-[280px] flex flex-col items-center justify-center hover:shadow-xl hover:border-white ${addingLesson === lesson.id ? 'opacity-50 cursor-wait' : ''}`}
                       >
                         <div className="flex flex-col items-center justify-center text-center h-full w-full">
                           <div className="bg-white rounded-full p-3 mb-3 shadow-lg">

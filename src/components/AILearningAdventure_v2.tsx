@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
@@ -46,6 +47,8 @@ interface AILearningAdventure_v2Props {
 const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapistName }) => {
   const navigate = useNavigate();
   const { profile } = useUserProfile();
+  const { user } = useAuth();
+  const [parentLessons, setParentLessons] = useState<string[]>([]);
   const [showQuestionTypes, setShowQuestionTypes] = useState(true);
   const [questions, setQuestions] = useState<Question_v2[]>([]);
   const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType | null>(null);
@@ -152,6 +155,36 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     }
   ];
 
+  // Load parent's available lessons
+  useEffect(() => {
+    const loadParentLessons = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('parents' as any)
+          .select('lessons')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error) {
+          // User might not be a parent, or record doesn't exist yet
+          console.log('No parent record found or error:', error);
+          return;
+        }
+        
+        if (data?.lessons) {
+          const lessonIds = data.lessons.split(',').map(id => id.trim()).filter(id => id);
+          setParentLessons(lessonIds);
+        }
+      } catch (error) {
+        console.error('Error loading parent lessons:', error);
+      }
+    };
+    
+    loadParentLessons();
+  }, [user?.id]);
+
   useEffect(() => {
     const loadQuestionsAndImages = async () => {
       try {
@@ -194,6 +227,12 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
               lessonObj: lessonObj,
               add_mini_celebration: lessonObj?.add_mini_celebration !== undefined ? lessonObj.add_mini_celebration : true
             };
+          }).filter(q => {
+            // If parent has lessons list, only show questions from those lessons
+            // If no lesson_id, allow it (questions not tied to a specific lesson)
+            if (parentLessons.length === 0) return true;
+            if (!q.lesson_id) return true;
+            return parentLessons.includes(q.lesson_id);
           });
           
           setQuestions(formattedQuestions);
@@ -207,7 +246,13 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
         if (!lessonsError && lessonsData) {
           // Ensure all lessons have question_type field
-          const validLessons = (lessonsData as any[]).filter(lesson => lesson && lesson.question_type);
+          let validLessons = (lessonsData as any[]).filter(lesson => lesson && lesson.question_type);
+          
+          // If user is a parent, filter lessons to only show those in their lessons list
+          if (parentLessons.length > 0) {
+            validLessons = validLessons.filter(lesson => parentLessons.includes(lesson.id));
+          }
+          
           setLessons(validLessons);
           
           const counts: Record<string, number> = {};
@@ -229,7 +274,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     };
 
     loadQuestionsAndImages();
-  }, []);
+  }, [parentLessons]);
 
 
   useEffect(() => {
@@ -293,10 +338,14 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     if (lessonId) {
       filteredQuestions = questions.filter(q => 
         q.question_type === questionType && 
-        q.lesson_id === lessonId
+        q.lesson_id === lessonId &&
+        (parentLessons.length === 0 || parentLessons.includes(lessonId))
       );
     } else {
-      filteredQuestions = questions.filter(q => q.question_type === questionType);
+      filteredQuestions = questions.filter(q => 
+        q.question_type === questionType &&
+        (parentLessons.length === 0 || !q.lesson_id || parentLessons.includes(q.lesson_id))
+      );
     }
     
     // Sort by question_index
@@ -316,10 +365,14 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     if (lessonId) {
       filteredQuestions = questions.filter(q => 
         q.question_type === selectedQuestionType && 
-        q.lesson_id === lessonId
+        q.lesson_id === lessonId &&
+        (parentLessons.length === 0 || parentLessons.includes(lessonId))
       );
     } else {
-      filteredQuestions = questions.filter(q => q.question_type === selectedQuestionType);
+      filteredQuestions = questions.filter(q => 
+        q.question_type === selectedQuestionType &&
+        (parentLessons.length === 0 || !q.lesson_id || parentLessons.includes(q.lesson_id))
+      );
     }
     
     // Sort by question_index
