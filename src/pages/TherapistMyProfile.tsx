@@ -13,10 +13,19 @@ import { ProfileHeader } from "@/components/therapist/ProfileHeader";
 import { PersonalInformation } from "@/components/therapist/PersonalInformation";
 import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails";
 import { TherapistDocuments } from "@/components/therapist/TherapistDocuments";
-import { Shield, LogOut, Upload, FolderOpen } from "lucide-react";
+import { Shield, LogOut, Upload, FolderOpen, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const TherapistMyProfile = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -45,6 +54,8 @@ const TherapistMyProfile = () => {
   const [directoryPath, setDirectoryPath] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -129,6 +140,57 @@ const TherapistMyProfile = () => {
     }
   };
 
+  // Helper function to upload image to Supabase storage
+  const uploadImageToStorage = async (file: File, lessonDir: string, imagePath: string): Promise<string | null> => {
+    try {
+      // Create a unique filename to avoid conflicts
+      const timestamp = Date.now();
+      const sanitizedPath = imagePath.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${timestamp}_${sanitizedPath}`;
+      
+      const { data, error } = await supabase.storage
+        .from('question-images-v2')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error(`Error uploading image ${imagePath}:`, error);
+        return null;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('question-images-v2')
+        .getPublicUrl(fileName);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error(`Error uploading image ${imagePath}:`, error);
+      return null;
+    }
+  };
+
+  // Helper function to find a file in the selected files by relative path
+  const findFileByPath = (files: File[], relativePath: string): File | null => {
+    return files.find(file => {
+      // Handle both webkitRelativePath and name matching
+      const filePath = (file as any).webkitRelativePath || file.name;
+      return filePath.includes(relativePath) || filePath.endsWith(relativePath);
+    }) || null;
+  };
+
+  // Valid question_type_enum values
+  const validQuestionTypes = [
+    'first_words',
+    'question_time',
+    'build_sentence',
+    'lets_chat',
+    'tap_and_play',
+    'story_activity'
+  ];
+
   const handleDirectoryUpload = async () => {
     if (!directoryPath.trim() && selectedFiles.length === 0) {
       uiToast({
@@ -150,82 +212,257 @@ const TherapistMyProfile = () => {
 
     setIsUploading(true);
     try {
-      // Process files - filter for JSON files (lesson files)
-      const jsonFiles = selectedFiles.filter(file => 
-        file.name.endsWith('.json') || file.type === 'application/json'
-      );
+      // Group files by directory structure
+      const directoryMap = new Map<string, { lessonFile: File; imageFiles: File[] }>();
       
-      if (jsonFiles.length === 0) {
+      // Find all lesson.json files and group with their directory files
+      for (const file of selectedFiles) {
+        const filePath = (file as any).webkitRelativePath || file.name;
+        const pathParts = filePath.split('/');
+        
+        // Find lesson.json files
+        if (file.name === 'lesson.json' || filePath.endsWith('/lesson.json')) {
+          // Get directory path (everything before lesson.json)
+          const dirPath = pathParts.slice(0, -1).join('/');
+          
+          if (!directoryMap.has(dirPath)) {
+            directoryMap.set(dirPath, { lessonFile: file, imageFiles: [] });
+          } else {
+            directoryMap.get(dirPath)!.lessonFile = file;
+          }
+        }
+      }
+
+      // Add image files to their respective directories
+      for (const file of selectedFiles) {
+        if (file.type.startsWith('image/')) {
+          const filePath = (file as any).webkitRelativePath || file.name;
+          const pathParts = filePath.split('/');
+          const dirPath = pathParts.slice(0, -1).join('/');
+          
+          if (directoryMap.has(dirPath)) {
+            directoryMap.get(dirPath)!.imageFiles.push(file);
+          }
+        }
+      }
+
+      if (directoryMap.size === 0) {
         uiToast({
           title: "Warning",
-          description: "No JSON files found in the selected directory. Lesson files should be in JSON format.",
+          description: "No lesson.json files found in the selected directory.",
           variant: "destructive",
         });
         setIsUploading(false);
         return;
       }
 
-      // Process each JSON file as a lesson
       let successCount = 0;
       let errorCount = 0;
+      const ignoredDirectories: string[] = [];
+      const allErrors: string[] = [];
 
-      for (const file of jsonFiles) {
+      // Process each directory with a lesson.json file
+      for (const [dirPath, { lessonFile, imageFiles }] of directoryMap.entries()) {
         try {
-          const text = await file.text();
+          const text = await lessonFile.text();
           const lessonData = JSON.parse(text);
 
-          // Determine lesson type and create lesson record
-          // This is a basic implementation - you may need to adjust based on your lesson structure
-          if (lessonData.name || lessonData.lesson_name) {
-            const lessonRecord = {
-              name: lessonData.name || lessonData.lesson_name || file.name.replace('.json', ''),
-              description: lessonData.description || null,
-              question_type: lessonData.question_type || 'question_time',
-              difficulty_level: lessonData.difficulty_level || 'beginner',
-              is_active: true,
-            };
-
-            const { error: insertError } = await supabase
-              .from('lessons')
-              .insert(lessonRecord);
-
-            if (insertError) {
-              console.error(`Error uploading lesson from ${file.name}:`, insertError);
-              errorCount++;
-            } else {
-              successCount++;
-            }
-          } else {
-            errorCount++;
-            console.warn(`Invalid lesson format in ${file.name}: missing name field`);
+          // Validate question_type
+          let questionType = lessonData.question_type;
+          
+          // Handle mapping for common variations
+          if (questionType === 'story_time') {
+            questionType = 'story_activity';
           }
-        } catch (fileError) {
-          console.error(`Error processing file ${file.name}:`, fileError);
+
+          if (!validQuestionTypes.includes(questionType)) {
+            const errorMsg = `${dirPath}: Invalid question_type "${lessonData.question_type}". Valid types are: ${validQuestionTypes.join(', ')}`;
+            ignoredDirectories.push(errorMsg);
+            allErrors.push(errorMsg);
+            errorCount++;
+            continue;
+          }
+
+          // Determine lesson name
+          const lessonName = lessonData.lesson || lessonData.name || lessonData.lesson_name || dirPath.split('/').pop() || 'Untitled Lesson';
+
+          // Check if a lesson with this name already exists in the lessons_v2 table
+          const { data: existingLesson, error: checkError } = await supabase
+            .from('lessons_v2' as any)
+            .select('id, name')
+            .eq('name', lessonName)
+            .maybeSingle();
+
+          if (checkError) {
+            const errorMsg = `${dirPath}: Error checking for existing lesson - ${checkError.message}`;
+            console.error(`Error checking for existing lesson in ${dirPath}:`, checkError);
+            allErrors.push(errorMsg);
+            errorCount++;
+            continue;
+          }
+
+          if (existingLesson) {
+            const skipMsg = `${dirPath}: Lesson "${lessonName}" already exists in lessons_v2 table. Skipping upload.`;
+            ignoredDirectories.push(skipMsg);
+            allErrors.push(skipMsg);
+            errorCount++;
+            continue;
+          }
+
+          // Create lesson record in lessons_v2
+          const lessonRecord = {
+            name: lessonName,
+            description: lessonData.description || null,
+            question_type: questionType,
+            level: lessonData.level || lessonData.difficulty_level || 'beginner',
+            is_verified: false,
+            youtube_video_id: lessonData.youtube_video_id || null,
+          };
+
+          const { data: lessonInsertData, error: lessonError } = await supabase
+            .from('lessons_v2' as any)
+            .insert(lessonRecord as any)
+            .select()
+            .single();
+
+          if (lessonError || !lessonInsertData) {
+            const errorMsg = `${dirPath}: Failed to create lesson - ${lessonError?.message || 'Unknown error'}`;
+            console.error(`Error creating lesson in ${dirPath}:`, lessonError);
+            allErrors.push(errorMsg);
+            errorCount++;
+            continue;
+          }
+
+          const lessonId = (lessonInsertData as any)?.id;
+          const questions = lessonData.questions || [];
+
+          // Process each question
+          for (let i = 0; i < questions.length; i++) {
+            const question = questions[i];
+            
+            try {
+              // Handle question_image upload
+              let questionImageUrl: string | null = null;
+              if (question.question_image) {
+                const imagePath = question.question_image;
+                const imageFile = findFileByPath(imageFiles, imagePath);
+                
+                if (imageFile) {
+                  questionImageUrl = await uploadImageToStorage(imageFile, dirPath, imagePath);
+                  if (!questionImageUrl) {
+                    console.warn(`Failed to upload question_image: ${imagePath}`);
+                  }
+                } else {
+                  // Try to find by filename only
+                  const fileName = imagePath.split('/').pop() || imagePath;
+                  const foundFile = imageFiles.find(f => f.name === fileName);
+                  if (foundFile) {
+                    questionImageUrl = await uploadImageToStorage(foundFile, dirPath, imagePath);
+                  }
+                }
+              }
+
+              // Handle choices_image upload
+              let choicesImageUrls: string | null = null;
+              if (question.choices_image) {
+                let imagePaths: string[] = [];
+                
+                // Handle both array and comma-separated string
+                if (Array.isArray(question.choices_image)) {
+                  imagePaths = question.choices_image;
+                } else if (typeof question.choices_image === 'string') {
+                  imagePaths = question.choices_image.split(',').map(p => p.trim()).filter(p => p);
+                }
+
+                const uploadedUrls: string[] = [];
+                
+                for (const imagePath of imagePaths) {
+                  const imageFile = findFileByPath(imageFiles, imagePath);
+                  
+                  if (imageFile) {
+                    const url = await uploadImageToStorage(imageFile, dirPath, imagePath);
+                    if (url) {
+                      uploadedUrls.push(url);
+                    }
+                  } else {
+                    // Try to find by filename only
+                    const fileName = imagePath.split('/').pop() || imagePath;
+                    const foundFile = imageFiles.find(f => f.name === fileName);
+                    if (foundFile) {
+                      const url = await uploadImageToStorage(foundFile, dirPath, imagePath);
+                      if (url) {
+                        uploadedUrls.push(url);
+                      }
+                    }
+                  }
+                }
+                
+                if (uploadedUrls.length > 0) {
+                  choicesImageUrls = uploadedUrls.join(',');
+                }
+              }
+
+              // Create question record
+              const questionRecord = {
+                question_text: question.question_text || question.question || '',
+                answer: question.answer || '',
+                answer_index: question.answer_index !== undefined ? question.answer_index : null,
+                question_image: questionImageUrl,
+                choices_text: question.choices_text || question.choices || null,
+                choices_image: choicesImageUrls,
+                question_type: questionType,
+                lesson_id: lessonId,
+                question_index: i,
+                created_by: user?.id || null,
+              };
+
+              const { error: questionError } = await supabase
+                .from('questions_v2' as any)
+                .insert(questionRecord as any);
+
+              if (questionError) {
+                const errorMsg = `${dirPath}: Failed to create question ${i + 1} - ${questionError.message}`;
+                console.error(`Error creating question ${i} in ${dirPath}:`, questionError);
+                allErrors.push(errorMsg);
+              }
+            } catch (questionError: any) {
+              const errorMsg = `${dirPath}: Error processing question ${i + 1} - ${questionError?.message || String(questionError)}`;
+              console.error(`Error processing question ${i} in ${dirPath}:`, questionError);
+              allErrors.push(errorMsg);
+            }
+          }
+
+          successCount++;
+        } catch (dirError: any) {
+          const errorMsg = `${dirPath}: Error processing directory - ${dirError?.message || String(dirError)}`;
+          console.error(`Error processing directory ${dirPath}:`, dirError);
+          allErrors.push(errorMsg);
           errorCount++;
         }
       }
 
-      if (successCount > 0) {
+      // Show results
+      if (successCount > 0 && allErrors.length === 0) {
         uiToast({
           title: "Success",
-          description: `Successfully uploaded ${successCount} lesson(s)${errorCount > 0 ? `. ${errorCount} file(s) failed.` : '.'}`,
+          description: `Successfully uploaded ${successCount} lesson(s)`,
         });
         setDirectoryPath("");
         setSelectedFiles([]);
+      } else if (allErrors.length > 0) {
+        // Show error dialog with all errors
+        setErrorMessages(allErrors);
+        setShowErrorDialog(true);
       } else {
-        uiToast({
-          title: "Error",
-          description: `Failed to upload lessons. ${errorCount} file(s) had errors.`,
-          variant: "destructive",
-        });
+        // No successes and no specific errors (shouldn't happen, but handle it)
+        setErrorMessages(["No lessons were uploaded. Please check your directory structure and try again."]);
+        setShowErrorDialog(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading lessons:", error);
-      uiToast({
-        title: "Error",
-        description: "Failed to upload lessons from directory",
-        variant: "destructive",
-      });
+      const errorMsg = `Failed to upload lessons from directory: ${error?.message || String(error)}`;
+      setErrorMessages([errorMsg]);
+      setShowErrorDialog(true);
     } finally {
       setIsUploading(false);
     }
@@ -403,6 +640,43 @@ const TherapistMyProfile = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="w-5 h-5" />
+              Upload Errors
+            </DialogTitle>
+            <DialogDescription>
+              The following errors occurred during the upload process:
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[50vh] w-full rounded-md border p-4">
+            <div className="space-y-2">
+              {errorMessages.map((error, index) => (
+                <div
+                  key={index}
+                  className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2"
+                >
+                  {error}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+          <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
+            <p className="text-sm text-amber-800">
+              Please fix the errors above and try again.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowErrorDialog(false)}>
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

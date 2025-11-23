@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Video, Calendar } from "lucide-react";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import AffirmationCard from "@/components/AffirmationCard";
-import AILearningAdventure from "@/components/AILearningAdventure";
+import AILearningAdventure_v2 from "@/components/AILearningAdventure_v2";
 import { format } from "date-fns";
 
 const ParentHome = () => {
@@ -281,7 +281,7 @@ const ParentHome = () => {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
         <Header />
-        <AILearningAdventure therapistName={selectedTherapist} />
+        <AILearningAdventure_v2 therapistName={selectedTherapist} />
         <Footer />
       </div>
     );

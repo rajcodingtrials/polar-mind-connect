@@ -185,6 +185,42 @@ export type Database = {
         }
         Relationships: []
       }
+      lessons_v2: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_verified: boolean
+          level: string
+          name: string
+          question_type: Database["public"]["Enums"]["question_type_enum"]
+          updated_at: string
+          youtube_video_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_verified?: boolean
+          level: string
+          name: string
+          question_type: Database["public"]["Enums"]["question_type_enum"]
+          updated_at?: string
+          youtube_video_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_verified?: boolean
+          level?: string
+          name?: string
+          question_type?: Database["public"]["Enums"]["question_type_enum"]
+          updated_at?: string
+          youtube_video_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null
@@ -352,6 +388,62 @@ export type Database = {
           },
         ]
       }
+      questions_v2: {
+        Row: {
+          answer: string | null
+          answer_index: number | null
+          choices_image: string | null
+          choices_text: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lesson_id: string | null
+          question_image: string | null
+          question_index: number | null
+          question_text: string
+          question_type: Database["public"]["Enums"]["question_type_enum"]
+          updated_at: string
+        }
+        Insert: {
+          answer?: string | null
+          answer_index?: number | null
+          choices_image?: string | null
+          choices_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lesson_id?: string | null
+          question_image?: string | null
+          question_index?: number | null
+          question_text: string
+          question_type: Database["public"]["Enums"]["question_type_enum"]
+          updated_at?: string
+        }
+        Update: {
+          answer?: string | null
+          answer_index?: number | null
+          choices_image?: string | null
+          choices_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lesson_id?: string | null
+          question_image?: string | null
+          question_index?: number | null
+          question_text?: string
+          question_type?: Database["public"]["Enums"]["question_type_enum"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_v2_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_ratings: {
         Row: {
           categories: string[] | null
@@ -483,6 +575,7 @@ export type Database = {
           hourly_rate_60min: number | null
           id: string
           is_active: boolean
+          is_content_creator: boolean | null
           is_verified: boolean
           languages: string[] | null
           last_name: string | null
@@ -509,6 +602,7 @@ export type Database = {
           hourly_rate_60min?: number | null
           id?: string
           is_active?: boolean
+          is_content_creator?: boolean | null
           is_verified?: boolean
           languages?: string[] | null
           last_name?: string | null
@@ -535,6 +629,7 @@ export type Database = {
           hourly_rate_60min?: number | null
           id?: string
           is_active?: boolean
+          is_content_creator?: boolean | null
           is_verified?: boolean
           languages?: string[] | null
           last_name?: string | null
@@ -868,6 +963,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_content_creator: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "therapist"

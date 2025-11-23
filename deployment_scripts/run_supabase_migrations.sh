@@ -159,40 +159,117 @@ fi
 
 echo ""
 
-# Check if local Supabase is running (only if not linked to remote project)
-if [ "$PROJECT_LINKED" = false ]; then
-  echo "🏃 Checking local Supabase instance..."
+# Check and start Docker Desktop if needed
+echo "🐳 Checking Docker status..."
+if ! docker info &> /dev/null; then
+  echo "⚠️  Docker is not running."
   
-  if ! supabase status &> /dev/null; then
-    echo "⚠️  Local Supabase instance is not running."
-    echo ""
-    read -p "Start local Supabase instance? (y/n): " -n 1 -r
-    echo
+  # Detect OS and start Docker accordingly
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS - start Docker Desktop
+    echo "🚀 Starting Docker Desktop..."
+    open -a Docker
     
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-      echo ""
-      echo "🚀 Starting local Supabase instance..."
-      supabase start
-      
-      if [ $? -eq 0 ]; then
-        echo "✅ Local Supabase instance started successfully"
+    # Wait for Docker to start (max 60 seconds)
+    echo "⏳ Waiting for Docker to start..."
+    MAX_WAIT=60
+    ELAPSED=0
+    while ! docker info &> /dev/null && [ $ELAPSED -lt $MAX_WAIT ]; do
+      sleep 2
+      ELAPSED=$((ELAPSED + 2))
+      echo "   Still waiting... (${ELAPSED}s/${MAX_WAIT}s)"
+    done
+    
+    if docker info &> /dev/null; then
+      echo "✅ Docker Desktop started successfully"
+    else
+      echo "❌ Docker failed to start within ${MAX_WAIT} seconds."
+      echo "💡 Please start Docker Desktop manually and try again."
+      exit 1
+    fi
+  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux - try to start Docker service
+    echo "🚀 Starting Docker service..."
+    if command -v systemctl &> /dev/null; then
+      sudo systemctl start docker
+      sleep 3
+      if docker info &> /dev/null; then
+        echo "✅ Docker service started successfully"
       else
-        echo "❌ Failed to start local Supabase instance."
-        echo ""
-        echo "💡 Make sure Docker is running and try again."
+        echo "❌ Failed to start Docker service."
+        echo "💡 Please start Docker manually: sudo systemctl start docker"
         exit 1
       fi
     else
-      echo "⚠️  Skipping local Supabase start. Migrations may fail if not linked to remote."
-      read -p "Continue anyway? (y/n): " -n 1 -r
-      echo
-      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-      fi
+      echo "❌ Cannot start Docker automatically on this system."
+      echo "💡 Please start Docker manually and try again."
+      exit 1
     fi
   else
-    echo "✅ Local Supabase instance is running"
+    echo "❌ Cannot automatically start Docker on this operating system."
+    echo "💡 Please start Docker manually and try again."
+    exit 1
   fi
+else
+  echo "✅ Docker is running"
+fi
+
+echo ""
+
+# Check port 54322 (Supabase's default port)
+echo "🔍 Checking port 54322..."
+PORT_54322_IN_USE=false
+PORT_PID=""
+
+# Check if port 54322 is in use
+if command -v lsof &> /dev/null; then
+  PORT_PID=$(lsof -ti:54322 2>/dev/null)
+elif command -v netstat &> /dev/null; then
+  PORT_PID=$(netstat -tulpn 2>/dev/null | grep ':54322' | awk '{print $7}' | cut -d'/' -f1 | head -n1)
+elif command -v ss &> /dev/null; then
+  PORT_PID=$(ss -tulpn 2>/dev/null | grep ':54322' | awk '{print $6}' | cut -d',' -f2 | cut -d'=' -f2 | head -n1)
+fi
+
+if [ -n "$PORT_PID" ]; then
+  PORT_54322_IN_USE=true
+  echo "⚠️  Port 54322 is in use by process: $PORT_PID"
+  
+  # Check if it's Supabase by checking if supabase status works
+  if supabase status &> /dev/null; then
+    echo "✅ Supabase is already running on port 54322"
+  else
+    echo "⚠️  Port 54322 is occupied by a non-Supabase process."
+    echo "🛑 Killing process $PORT_PID on port 54322..."
+    
+    if kill -9 "$PORT_PID" 2>/dev/null; then
+      echo "✅ Process $PORT_PID killed successfully"
+      sleep 2
+    else
+      echo "❌ Failed to kill process $PORT_PID"
+      echo "💡 Please manually kill the process using port 54322 and try again."
+      exit 1
+    fi
+  fi
+else
+  echo "✅ Port 54322 is available"
+fi
+
+echo ""
+
+# Always run supabase start (it's idempotent - safe to run if already running)
+echo "🚀 Starting Supabase..."
+supabase start
+
+if [ $? -eq 0 ]; then
+  echo "✅ Supabase is ready"
+else
+  echo "❌ Failed to start Supabase."
+  echo ""
+  echo "💡 Troubleshooting:"
+  echo "   - Make sure Docker is running"
+  echo "   - Check if port 54322 is available"
+  echo "   - Try running 'supabase start' manually to see detailed errors"
+  exit 1
 fi
 
 echo ""
