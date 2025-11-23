@@ -333,9 +333,9 @@ export const TherapistAvailabilityCalendar = ({ therapistId }: { therapistId: st
                             timezone === tz.value ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        {tz.label}
+                  {tz.label}
                       </CommandItem>
-                    ))}
+              ))}
                   </CommandGroup>
                 </CommandList>
               </Command>

@@ -109,16 +109,16 @@ export const ProfileHeader = ({ therapistProfile, onAvatarUpdate }: ProfileHeade
   return (
     <div className="flex items-start space-x-6 pb-6">
       <div className="relative">
-        <Avatar className="h-48 w-48 border-4 border-white shadow-lg rounded-lg">
-          <AvatarImage 
-            src={therapistProfile?.avatar_url} 
-            alt="Profile photo" 
-            className="object-cover"
-          />
-          <AvatarFallback className="text-2xl bg-muted">
-            <User className="h-16 w-16" />
-          </AvatarFallback>
-        </Avatar>
+      <Avatar className="h-48 w-48 border-4 border-white shadow-lg rounded-lg">
+        <AvatarImage 
+          src={therapistProfile?.avatar_url} 
+          alt="Profile photo" 
+          className="object-cover"
+        />
+        <AvatarFallback className="text-2xl bg-muted">
+          <User className="h-16 w-16" />
+        </AvatarFallback>
+      </Avatar>
         <div className="absolute bottom-0 right-0">
           <input
             type="file"

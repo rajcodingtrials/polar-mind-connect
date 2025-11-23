@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Star, ArrowLeft, Play, MessageCircle, Building, Heart } from 'lucide-react';
+import { BookOpen, Star, ArrowLeft, Play, MessageCircle, Building, Heart, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { Constants } from '@/integrations/supabase/types';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -18,64 +19,181 @@ interface Lesson {
   created_at: string;
 }
 
+interface QuestionTypeConfig {
+  value: QuestionType;
+  label: string;
+  description: string;
+  color: string;
+  textColor: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
 interface LessonSelectionProps {
   selectedQuestionType: QuestionType;
   therapistName: string;
   onLessonSelect: (lessonId: string | null) => void;
   onBack: () => void;
+  onQuestionTypeChange?: (questionType: QuestionType) => void;
+  questionTypes?: QuestionTypeConfig[];
 }
 
 const LessonSelection: React.FC<LessonSelectionProps> = ({
   selectedQuestionType,
   therapistName,
   onLessonSelect,
-  onBack
+  onBack,
+  onQuestionTypeChange,
+  questionTypes: propQuestionTypes
 }) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
+  const [internalSelectedQuestionType, setInternalSelectedQuestionType] = useState<QuestionType>(selectedQuestionType);
+  const [availableQuestionTypes, setAvailableQuestionTypes] = useState<QuestionType[]>([]);
+  const [questionTypesConfig, setQuestionTypesConfig] = useState<QuestionTypeConfig[]>([]);
 
-  // Color scheme matching the activity type cards
-  const getActivityColors = (questionType: QuestionType) => {
-    switch (questionType) {
-      case 'first_words':
+  // Styles array - contains color, textColor (fontColor), icon, and activity colors
+  const questionTypeStyles = [
+    {
+      color: 'bg-blue-100 hover:bg-blue-200 border-blue-200',
+      textColor: 'text-blue-800',
+      icon: BookOpen,
+    },
+    {
+      color: 'bg-amber-100 hover:bg-amber-200 border-amber-200',
+      textColor: 'text-amber-800',
+      icon: MessageCircle,
+    },
+    {
+      color: 'bg-emerald-100 hover:bg-emerald-200 border-emerald-200',
+      textColor: 'text-emerald-800',
+      icon: Building,
+    },
+    {
+      color: 'bg-orange-100 hover:bg-orange-200 border-orange-200',
+      textColor: 'text-orange-800',
+      icon: Heart,
+    },
+    {
+      color: 'bg-rose-100 hover:bg-rose-200 border-rose-200',
+      textColor: 'text-rose-800',
+      icon: User,
+    },
+    {
+      color: 'bg-purple-100 hover:bg-purple-200 border-purple-200',
+      textColor: 'text-purple-800',
+      icon: MessageCircle,
+    },
+    {
+      color: 'bg-pink-100 hover:bg-pink-200 border-pink-200',
+      textColor: 'text-pink-800',
+      icon: Building,
+    },
+    {
+      color: 'bg-cyan-100 hover:bg-cyan-200 border-cyan-200',
+      textColor: 'text-cyan-800',
+      icon: Heart,
+    },
+  ];
+
+  // Helper function to format question type enum value to readable label
+  const formatQuestionTypeLabel = (questionType: QuestionType): string => {
+    return questionType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Helper function to generate description from question type
+  const generateDescription = (questionType: QuestionType): string => {
+    const descriptions: Record<string, string> = {
+      'first_words': 'Practice basic first words and sounds',
+      'question_time': 'Answer questions about pictures',
+      'build_sentence': 'Learn to construct sentences',
+      'lets_chat': 'Free conversation practice',
+      'story_activity': 'Follow along with interactive story scenes',
+      'tap_and_play': 'Choose the correct picture by tapping',
+    };
+    return descriptions[questionType] || `Practice ${formatQuestionTypeLabel(questionType).toLowerCase()}`;
+  };
+
+  // Fetch distinct question types from Supabase
+  useEffect(() => {
+    const fetchQuestionTypes = async () => {
+      try {
+        // Get distinct question types from lessons_v2 table
+        const { data: lessonsData, error } = await supabase
+          .from('lessons_v2' as any)
+          .select('question_type')
+          .eq('is_verified', true);
+
+        if (error) {
+          console.error('Error fetching question types:', error);
+          // Fallback to enum values from Constants
+          const enumTypes = [...Constants.public.Enums.question_type_enum] as QuestionType[];
+          setAvailableQuestionTypes(enumTypes);
+        } else if (lessonsData && lessonsData.length > 0) {
+          // Get unique question types
+          const uniqueTypes = Array.from(new Set(lessonsData.map((l: any) => l.question_type))) as QuestionType[];
+          setAvailableQuestionTypes(uniqueTypes);
+        } else {
+          // Fallback to enum values from Constants if no lessons found
+          const enumTypes = [...Constants.public.Enums.question_type_enum] as QuestionType[];
+          setAvailableQuestionTypes(enumTypes);
+        }
+      } catch (error) {
+        console.error('Error in fetchQuestionTypes:', error);
+        // Fallback to enum values from Constants
+        const enumTypes = [...Constants.public.Enums.question_type_enum] as QuestionType[];
+        setAvailableQuestionTypes(enumTypes);
+      }
+    };
+
+    fetchQuestionTypes();
+  }, []);
+
+  // Build question types config from available types and styles
+  useEffect(() => {
+    if (availableQuestionTypes.length > 0) {
+      const configs: QuestionTypeConfig[] = availableQuestionTypes.map((questionType, index) => {
+        // Use modulo to cycle through styles
+        const styleIndex = index % questionTypeStyles.length;
+        const style = questionTypeStyles[styleIndex];
+        
         return {
-          color: 'bg-blue-100 hover:bg-blue-200 border-blue-200',
-          textColor: 'text-blue-800',
-          icon: BookOpen
+          value: questionType,
+          label: formatQuestionTypeLabel(questionType),
+          description: generateDescription(questionType),
+          color: style.color,
+          textColor: style.textColor,
+          icon: style.icon,
         };
-      case 'question_time':
-        return {
-          color: 'bg-amber-100 hover:bg-amber-200 border-amber-200',
-          textColor: 'text-amber-800',
-          icon: MessageCircle
-        };
-      case 'build_sentence':
-        return {
-          color: 'bg-emerald-100 hover:bg-emerald-200 border-emerald-200',
-          textColor: 'text-emerald-800',
-          icon: Building
-        };
-      case 'lets_chat':
-        return {
-          color: 'bg-orange-100 hover:bg-orange-200 border-orange-200',
-          textColor: 'text-orange-800',
-          icon: Heart
-        };
-      case 'story_activity':
-        return {
-          color: 'bg-rose-100 hover:bg-rose-200 border-rose-200',
-          textColor: 'text-rose-800',
-          icon: BookOpen
-        };
-      default:
-        return {
-          color: 'bg-gray-100 hover:bg-gray-200 border-gray-200',
-          textColor: 'text-gray-800',
-          icon: BookOpen
-        };
+      });
+      setQuestionTypesConfig(configs);
     }
+  }, [availableQuestionTypes]);
+
+  const questionTypes = propQuestionTypes || questionTypesConfig;
+
+  // Color scheme matching the activity type cards - now uses styles array with modulo
+  const getActivityColors = (questionType: QuestionType) => {
+    const typeIndex = availableQuestionTypes.indexOf(questionType);
+    if (typeIndex >= 0) {
+      const styleIndex = typeIndex % questionTypeStyles.length;
+      const style = questionTypeStyles[styleIndex];
+      return {
+        color: style.color,
+        textColor: style.textColor,
+        icon: style.icon
+      };
+    }
+    // Default fallback
+    return {
+      color: 'bg-gray-100 hover:bg-gray-200 border-gray-200',
+      textColor: 'text-gray-800',
+      icon: BookOpen
+    };
   };
 
   const difficultyColors = {
@@ -129,9 +247,14 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
     },
   ];
 
+  // Update internal state when prop changes
+  useEffect(() => {
+    setInternalSelectedQuestionType(selectedQuestionType);
+  }, [selectedQuestionType]);
+
   useEffect(() => {
     fetchLessons();
-  }, [selectedQuestionType]);
+  }, [internalSelectedQuestionType]);
 
   const fetchLessons = async () => {
     setIsLoading(true);
@@ -140,7 +263,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
       const { data: lessonsData, error: lessonsError } = await supabase
         .from('lessons')
         .select('*')
-        .eq('question_type', selectedQuestionType)
+        .eq('question_type', internalSelectedQuestionType)
         .eq('is_active', true)
         .order('name');
 
@@ -191,6 +314,14 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
     onLessonSelect(null);
   };
 
+  const handleQuestionTypeClick = (questionType: QuestionType) => {
+    setInternalSelectedQuestionType(questionType);
+    setSelectedLesson(''); // Reset selected lesson when changing question type
+    if (onQuestionTypeChange) {
+      onQuestionTypeChange(questionType);
+    }
+  };
+
   const getActivityName = (type: QuestionType) => {
     switch (type) {
       case 'first_words': return 'First Words';
@@ -203,7 +334,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-6">
+      <div className="min-h-screen flex flex-col p-6">
         <div className="flex-grow flex flex-col items-center justify-center max-w-4xl mx-auto">
           <div className="bg-white rounded-3xl p-8 shadow-xl border-4 border-purple-200 max-w-2xl mx-auto">
             <div className="text-center">
@@ -223,34 +354,68 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 p-6">
-      <div className="flex-grow flex flex-col items-center justify-center max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-purple-800 mb-4">
-            Choose Your Lesson with {therapistName}!
-          </h1>
-          <p className="text-xl text-gray-600 mb-2">
-            {getActivityName(selectedQuestionType)} Activity
-          </p>
-          <p className="text-gray-500">
-            Select a specific lesson or practice with all available questions
-          </p>
+    //<div className="min-h-screen flex flex-col p-6">
+    <div className="min-w-screen min-h-screen flex flex-col p-6">
+      {/* Header */}
+      <div className="text-center mb-6 w-full -mx-6 px-6">
+        <h1 className="text-4xl font-bold text-purple-800 mb-4">
+          Choose Your Lesson with {therapistName}!
+        </h1>
+        <p className="text-gray-500">
+          Select a question type and then choose a lesson
+        </p>
+      </div>
+
+      {/* Back Button */}
+      <div className="mb-6">
+        <button
+          onClick={onBack}
+          className="text-gray-600 hover:text-gray-800 text-lg font-medium bg-white px-6 py-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Activity Types
+        </button>
+      </div>
+
+      {/* Two Panel Layout: 30% left (question types) and 60% right (lessons) */}
+      <div className="flex-grow flex flex-row gap-6 w-full">
+        {/* Left Panel - Question Types (30%) */}
+        <div className="w-[30%] flex flex-col flex-shrink-0">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Activity Types</h2>
+          <div className="flex flex-col gap-4">
+            {questionTypes.map((type) => {
+              const IconComponent = type.icon;
+              const isSelected = internalSelectedQuestionType === type.value;
+              
+              return (
+                <div
+                  key={type.value}
+                  className={`${type.color} ${type.textColor} rounded-xl border-3 p-6 cursor-pointer transition-all duration-300 ${
+                    isSelected ? 'ring-4 ring-purple-300 shadow-xl' : 'hover:shadow-lg'
+                  }`}
+                  onClick={() => handleQuestionTypeClick(type.value)}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="bg-white rounded-full p-3 mb-3 shadow-lg">
+                      <IconComponent className={`w-6 h-6 ${type.textColor}`} />
+                    </div>
+                    <h3 className="font-bold text-lg mb-2">{type.label}{isSelected ? ' ✨' : ''}</h3>
+                    <p className="text-xs opacity-90 leading-relaxed">{type.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Back Button */}
-        <div className="mb-6">
-          <button
-            onClick={onBack}
-            className="text-gray-600 hover:text-gray-800 text-lg font-medium bg-white px-6 py-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Activity Types
-          </button>
-        </div>
+        {/* Right Panel - Lessons (70%) */}
+        <div className="w-[70%] flex flex-col">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            {getActivityName(internalSelectedQuestionType)} Lessons
+          </h2>
 
-        {/* Lesson Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto justify-items-center">
+          {/* Lesson Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 justify-items-center">
           {/* Practice All Questions Option */}
           {(() => {
             // Dedicated neutral color for Practice All Questions
@@ -313,29 +478,30 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
               </div>
             );
           })}
-        </div>
-
-        {/* Start Button */}
-        <div className="mt-8">
-          <Button
-            onClick={selectedLesson === 'all' ? handleStartWithoutLesson : handleStartLesson}
-            disabled={!selectedLesson}
-            size="lg"
-            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
-          >
-            <Play className="w-5 h-5" />
-            {selectedLesson === 'all' ? 'Start Practice Session' : 'Start Lesson'}
-          </Button>
-        </div>
-
-        {/* Info Message */}
-        {lessons.length === 0 && (
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 bg-white p-4 rounded-lg border">
-              No specific lessons available yet. You can practice with all available questions!
-            </p>
           </div>
-        )}
+
+          {/* Start Button */}
+          <div className="mt-8">
+            <Button
+              onClick={selectedLesson === 'all' ? handleStartWithoutLesson : handleStartLesson}
+              disabled={!selectedLesson}
+              size="lg"
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+            >
+              <Play className="w-5 h-5" />
+              {selectedLesson === 'all' ? 'Start Practice Session' : 'Start Lesson'}
+            </Button>
+          </div>
+
+          {/* Info Message */}
+          {lessons.length === 0 && (
+            <div className="mt-6 text-center">
+              <p className="text-gray-600 bg-white p-4 rounded-lg border">
+                No specific lessons available yet. You can practice with all available questions!
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -143,21 +143,21 @@ const ParentHome = () => {
                       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                         <div className="flex items-start space-x-4">
                           <Avatar className="mt-1">
-                            <AvatarImage src={session.therapist.avatar_url} />
-                            <AvatarFallback>
-                              {session.therapist.name?.charAt(0) ||
-                                session.therapist.first_name?.charAt(0) ||
-                                "T"}
-                            </AvatarFallback>
-                          </Avatar>
+                        <AvatarImage src={session.therapist.avatar_url} />
+                        <AvatarFallback>
+                          {session.therapist.name?.charAt(0) ||
+                            session.therapist.first_name?.charAt(0) ||
+                            "T"}
+                        </AvatarFallback>
+                      </Avatar>
                           <div className="flex-1">
                             <h3 className="font-medium text-slate-900">
-                              {session.therapist.name ||
-                                `${session.therapist.first_name} ${session.therapist.last_name}`}
-                            </h3>
+                          {session.therapist.name ||
+                            `${session.therapist.first_name} ${session.therapist.last_name}`}
+                        </h3>
                             <div className="flex items-center text-sm text-slate-600 mt-1">
                               <Calendar className="w-4 h-4 mr-1" />
-                              {date} at {time}
+                          {date} at {time}
                             </div>
                             <p className="text-xs text-slate-500 mt-1">{session.duration_minutes} minutes</p>
                             
@@ -179,11 +179,11 @@ const ParentHome = () => {
                                 )}
                               </div>
                             )}
-                          </div>
-                        </div>
+                      </div>
+                    </div>
                         
                         <div className="flex flex-col items-end gap-2 md:min-w-[140px]">
-                          <Badge className={getSessionStatusColor(session.status)}>{session.status}</Badge>
+                    <Badge className={getSessionStatusColor(session.status)}>{session.status}</Badge>
                           
                           {hasMeetingLink && !hasPassed && (
                             <Button
@@ -203,7 +203,7 @@ const ParentHome = () => {
                             </p>
                           )}
                         </div>
-                      </div>
+                  </div>
                     </CardContent>
                   </Card>
                 );

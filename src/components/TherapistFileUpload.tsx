@@ -100,46 +100,46 @@ export const TherapistFileUpload = ({ therapistId, currentAvatarUrl, onAvatarUpd
 
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Profile Photo
-        </CardTitle>
-        <CardDescription>
-          Upload your professional profile photo (max 5MB)
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={currentAvatarUrl} alt="Profile photo" />
-            <AvatarFallback>
-              <User className="h-8 w-8" />
-            </AvatarFallback>
-          </Avatar>
-          <div className="space-y-2">
-            <Button
-              onClick={() => photoInputRef.current?.click()}
-              disabled={uploading}
-              variant="outline"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {uploading ? 'Uploading...' : 'Upload Photo'}
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              JPG, PNG or GIF up to 5MB
-            </p>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Profile Photo
+          </CardTitle>
+          <CardDescription>
+            Upload your professional profile photo (max 5MB)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={currentAvatarUrl} alt="Profile photo" />
+              <AvatarFallback>
+                <User className="h-8 w-8" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-2">
+              <Button
+                onClick={() => photoInputRef.current?.click()}
+                disabled={uploading}
+                variant="outline"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploading ? 'Uploading...' : 'Upload Photo'}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                JPG, PNG or GIF up to 5MB
+              </p>
+            </div>
           </div>
-        </div>
-        <Input
-          ref={photoInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handlePhotoChange}
-          className="hidden"
-        />
-      </CardContent>
-    </Card>
+          <Input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="hidden"
+          />
+        </CardContent>
+      </Card>
   );
 };
