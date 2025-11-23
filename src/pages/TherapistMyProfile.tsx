@@ -149,16 +149,24 @@ const TherapistMyProfile = () => {
   };
 
   // Helper function to upload image to Supabase storage
-  const uploadImageToStorage = async (file: File, lessonDir: string, imagePath: string): Promise<string | null> => {
+  const uploadImageToStorage = async (file: File, imagePath: string, questionType: string, lessonName: string): Promise<string | null> => {
     try {
+      // Sanitize question type and lesson name for filesystem safety
+      const sanitizedQuestionType = questionType.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const sanitizedLessonName = lessonName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      
       // Create a unique filename to avoid conflicts
       const timestamp = Date.now();
       const sanitizedPath = imagePath.replace(/[^a-zA-Z0-9.-]/g, '_');
       const fileName = `${timestamp}_${sanitizedPath}`;
       
+      // Create prefix path: question_type/lesson_name/
+      const prefixPath = `${sanitizedQuestionType}/${sanitizedLessonName}/`;
+      const fullPath = `${prefixPath}${fileName}`;
+      
       const { data, error } = await supabase.storage
         .from('question-images-v2')
-        .upload(fileName, file, {
+        .upload(fullPath, file, {
           cacheControl: '3600',
           upsert: false
         });
@@ -171,7 +179,7 @@ const TherapistMyProfile = () => {
       // Get public URL
       const { data: urlData } = supabase.storage
         .from('question-images-v2')
-        .getPublicUrl(fileName);
+        .getPublicUrl(fullPath);
 
       return urlData.publicUrl;
     } catch (error) {
@@ -181,12 +189,65 @@ const TherapistMyProfile = () => {
   };
 
   // Helper function to find a file in the selected files by relative path
-  const findFileByPath = (files: File[], relativePath: string): File | null => {
-    return files.find(file => {
-      // Handle both webkitRelativePath and name matching
+  // dirPath is the directory path context to ensure we only match files from the correct directory
+  const findFileByPath = (files: File[], relativePath: string, dirPath: string): File | null => {
+    // Normalize paths: remove leading/trailing slashes and normalize separators
+    const normalizePath = (path: string) => path.replace(/^\/+|\/+$/g, '').replace(/\\/g, '/');
+    const normalizedDirPath = normalizePath(dirPath);
+    const normalizedRelativePath = normalizePath(relativePath);
+    
+    // Try exact match first
+    for (const file of files) {
       const filePath = (file as any).webkitRelativePath || file.name;
-      return filePath.includes(relativePath) || filePath.endsWith(relativePath);
-    }) || null;
+      const normalizedFilePath = normalizePath(filePath);
+      
+      // Check if file path exactly matches the relative path (within the directory context)
+      if (normalizedFilePath === normalizedRelativePath) {
+        return file;
+      }
+      
+      // Check if file path ends with the relative path (more precise than includes)
+      if (normalizedFilePath.endsWith(normalizedRelativePath)) {
+        // Ensure it's within the correct directory context
+        if (normalizedDirPath && normalizedFilePath.startsWith(normalizedDirPath)) {
+          return file;
+        }
+        // If no directory context, still match if it ends correctly
+        if (!normalizedDirPath) {
+          return file;
+        }
+      }
+      
+      // Check if file is in the directory and path matches
+      if (normalizedDirPath && normalizedFilePath.startsWith(normalizedDirPath + '/')) {
+        const relativePart = normalizedFilePath.substring(normalizedDirPath.length + 1);
+        if (relativePart === normalizedRelativePath || relativePart.endsWith('/' + normalizedRelativePath)) {
+          return file;
+        }
+      }
+    }
+    
+    // Fallback: try to match by filename only, but only within the directory context
+    const fileName = normalizedRelativePath.split('/').pop() || normalizedRelativePath;
+    if (fileName !== normalizedRelativePath) { // Only if it was a path, not just a filename
+      for (const file of files) {
+        const filePath = (file as any).webkitRelativePath || file.name;
+        const normalizedFilePath = normalizePath(filePath);
+        
+        // Only match if filename matches AND it's in the correct directory
+        if (file.name === fileName) {
+          if (normalizedDirPath && normalizedFilePath.startsWith(normalizedDirPath)) {
+            return file;
+          }
+          // If no directory context, match by name (but this is less safe)
+          if (!normalizedDirPath) {
+            return file;
+          }
+        }
+      }
+    }
+    
+    return null;
   };
 
   // Valid question_type_enum values
@@ -260,15 +321,10 @@ const TherapistMyProfile = () => {
           // Check question_image
           if (question.question_image) {
             const imagePath = question.question_image;
-            const imageFile = findFileByPath(imageFiles, imagePath);
+            const imageFile = findFileByPath(imageFiles, imagePath, dirPath);
             
             if (!imageFile) {
-              // Try to find by filename only
-              const fileName = imagePath.split('/').pop() || imagePath;
-              const foundFile = imageFiles.find(f => f.name === fileName);
-              if (!foundFile) {
-                verificationErrors.push(`${dirPath}: Question ${i + 1} - Image file not found: "${imagePath}"`);
-              }
+              verificationErrors.push(`${dirPath}: Question ${i + 1} - Image file not found: "${imagePath}"`);
             }
           }
 
@@ -284,15 +340,10 @@ const TherapistMyProfile = () => {
             }
 
             for (const imagePath of imagePaths) {
-              const imageFile = findFileByPath(imageFiles, imagePath);
+              const imageFile = findFileByPath(imageFiles, imagePath, dirPath);
               
               if (!imageFile) {
-                // Try to find by filename only
-                const fileName = imagePath.split('/').pop() || imagePath;
-                const foundFile = imageFiles.find(f => f.name === fileName);
-                if (!foundFile) {
-                  verificationErrors.push(`${dirPath}: Question ${i + 1} - Choices image file not found: "${imagePath}"`);
-                }
+                verificationErrors.push(`${dirPath}: Question ${i + 1} - Choices image file not found: "${imagePath}"`);
               }
             }
           }
@@ -460,6 +511,9 @@ const TherapistMyProfile = () => {
 
           // Determine lesson name
           const lessonName = lessonData.lesson || lessonData.name || lessonData.lesson_name || dirPath.split('/').pop() || 'Untitled Lesson';
+          
+          // Extract lesson text from lesson.json (this will be saved in the lesson column for all questions)
+          const lessonText = lessonData.lesson || null;
 
           // Create lesson record in lessons_v2
           const lessonRecord = {
@@ -497,20 +551,15 @@ const TherapistMyProfile = () => {
               let questionImageUrl: string | null = null;
               if (question.question_image) {
                 const imagePath = question.question_image;
-                const imageFile = findFileByPath(imageFiles, imagePath);
+                const imageFile = findFileByPath(imageFiles, imagePath, dirPath);
                 
                 if (imageFile) {
-                  questionImageUrl = await uploadImageToStorage(imageFile, dirPath, imagePath);
+                  questionImageUrl = await uploadImageToStorage(imageFile, imagePath, questionType, lessonName);
                   if (!questionImageUrl) {
                     console.warn(`Failed to upload question_image: ${imagePath}`);
                   }
                 } else {
-                  // Try to find by filename only
-                  const fileName = imagePath.split('/').pop() || imagePath;
-                  const foundFile = imageFiles.find(f => f.name === fileName);
-                  if (foundFile) {
-                    questionImageUrl = await uploadImageToStorage(foundFile, dirPath, imagePath);
-                  }
+                  console.warn(`Could not find image file for path: ${imagePath} in directory: ${dirPath}`);
                 }
               }
 
@@ -529,23 +578,15 @@ const TherapistMyProfile = () => {
                 const uploadedUrls: string[] = [];
                 
                 for (const imagePath of imagePaths) {
-                  const imageFile = findFileByPath(imageFiles, imagePath);
+                  const imageFile = findFileByPath(imageFiles, imagePath, dirPath);
                   
                   if (imageFile) {
-                    const url = await uploadImageToStorage(imageFile, dirPath, imagePath);
+                    const url = await uploadImageToStorage(imageFile, imagePath, questionType, lessonName);
                     if (url) {
                       uploadedUrls.push(url);
                     }
                   } else {
-                    // Try to find by filename only
-                    const fileName = imagePath.split('/').pop() || imagePath;
-                    const foundFile = imageFiles.find(f => f.name === fileName);
-                    if (foundFile) {
-                      const url = await uploadImageToStorage(foundFile, dirPath, imagePath);
-                      if (url) {
-                        uploadedUrls.push(url);
-                      }
-                    }
+                    console.warn(`Could not find choices image file for path: ${imagePath} in directory: ${dirPath}`);
                   }
                 }
                 
@@ -566,6 +607,7 @@ const TherapistMyProfile = () => {
                 choices_image: choicesImageUrls,
                 question_type: questionType,
                 lesson_id: lessonId,
+                lesson: lessonText,
                 question_index: i,
                 created_by: user?.id || null,
               };

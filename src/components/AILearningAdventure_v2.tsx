@@ -28,7 +28,8 @@ interface Question_v2 {
   question_type: QuestionType;
   question_index: number | null;
   lesson_id: string | null;
-  lesson?: {
+  lesson: string | null;
+  lessonObj?: {
     id: string;
     name: string;
     description: string | null;
@@ -184,7 +185,8 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
             question_type: q.question_type,
             question_index: q.question_index,
             lesson_id: q.lesson_id,
-            lesson: q.lessons_v2 ? (Array.isArray(q.lessons_v2) ? q.lessons_v2[0] : q.lessons_v2) : null
+            lesson: q.lesson || null,
+            lessonObj: q.lessons_v2 ? (Array.isArray(q.lessons_v2) ? q.lessons_v2[0] : q.lessons_v2) : null
           }));
           
           setQuestions(formattedQuestions);

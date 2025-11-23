@@ -26,6 +26,7 @@ interface Question_v2 {
   choices_image: string | null;
   question_type: string;
   question_index: number | null;
+  lesson: string | null;
 }
 
 interface QuestionViewProps {
