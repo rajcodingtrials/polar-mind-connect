@@ -34,9 +34,10 @@ interface TherapistCardProps {
   therapist: Therapist;
   rating: TherapistRating;
   onViewProfile: (therapist: Therapist) => void;
+  onBookSession?: (therapist: Therapist) => void;
 }
 
-const TherapistCard = ({ therapist, rating, onViewProfile }: TherapistCardProps) => {
+const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: TherapistCardProps) => {
   return (
     <div className="flex gap-10 group bg-white rounded-2xl p-8 transition-all duration-300 max-w-7xl mx-auto border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01]">
       {/* Therapist Photo Card */}
@@ -110,13 +111,24 @@ const TherapistCard = ({ therapist, rating, onViewProfile }: TherapistCardProps)
               )}
             </div>
 
-            {/* CTA Button */}
-            <Button
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 shadow-sm hover:shadow-md"
-              onClick={() => onViewProfile(therapist)}
-            >
-              View Profile
-            </Button>
+            {/* CTA Buttons */}
+            <div className="space-y-2">
+              <Button
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+                onClick={() => onViewProfile(therapist)}
+              >
+                View Profile
+              </Button>
+              {onBookSession && (
+                <Button
+                  variant="outline"
+                  className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+                  onClick={() => onBookSession(therapist)}
+                >
+                  Book Session
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

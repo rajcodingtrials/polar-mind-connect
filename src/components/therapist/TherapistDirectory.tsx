@@ -5,6 +5,7 @@ import TherapistProfileModal from "./TherapistProfileModal";
 import TherapistCard from "./TherapistCard";
 import TherapistSkeleton from "./TherapistSkeleton";
 import EmptyState from "./EmptyState";
+import BookingModal from "./BookingModal";
 import { useToast } from "@/hooks/use-toast";
 import { useTherapistRatings } from "@/hooks/useTherapistRatings";
 
@@ -45,6 +46,7 @@ const TherapistDirectory = ({
   const [filteredTherapists, setFilteredTherapists] = useState<Therapist[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
+  const [bookingTherapist, setBookingTherapist] = useState<Therapist | null>(null);
   const { toast } = useToast();
   
   // Get therapist IDs for fetching ratings
@@ -186,6 +188,7 @@ const TherapistDirectory = ({
                 therapist={therapist}
                 rating={getRatingForTherapist(therapist.id)}
                 onViewProfile={(t) => setSelectedTherapist(t)}
+                onBookSession={(t) => setBookingTherapist(t)}
               />
             </div>
           ))}
@@ -204,6 +207,14 @@ const TherapistDirectory = ({
           therapist={selectedTherapist}
           isOpen={!!selectedTherapist}
           onClose={() => setSelectedTherapist(null)}
+        />
+      )}
+
+      {bookingTherapist && (
+        <BookingModal
+          therapist={bookingTherapist}
+          isOpen={!!bookingTherapist}
+          onClose={() => setBookingTherapist(null)}
         />
       )}
     </div>
