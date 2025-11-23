@@ -524,6 +524,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
               onCorrectAnswer={handleCorrectAnswer}
               onNextQuestion={handleNextQuestion}
               onComplete={() => setCurrentScreen('complete')}
+              onPickNewLesson={handleBackToQuestionTypes}
               retryCount={retryCount}
               onRetryCountChange={setRetryCount}
               onAmplifyMicChange={handleAmplifyMicChange}

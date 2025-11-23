@@ -136,7 +136,7 @@ const MiniCelebration = ({ correctAnswers, therapistName, onComplete }: MiniCele
   }, [ttsSettingsLoaded, hasStartedCelebration, correctAnswers, therapistName, ttsSettings, callTTS]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6">
       {/* Mini Confetti Animation */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50">

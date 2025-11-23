@@ -12,7 +12,7 @@ import { getCelebrationMessage, calculateProgressLevel } from '@/utils/celebrati
 import SoundFeedbackDisplay from './SoundFeedbackDisplay';
 import { soundFeedbackManager } from '@/utils/soundFeedback';
 import AnimatedMicButton from './AnimatedMicButton';
-import { Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
 
 interface Question_v2 {
   id: string;
@@ -37,6 +37,7 @@ interface QuestionViewProps {
   onCorrectAnswer: () => void;
   onNextQuestion: (shouldIncrement?: boolean) => void;
   onComplete: () => void;
+  onPickNewLesson?: () => void;
   retryCount: number;
   onRetryCountChange: (count: number) => void;
   onAmplifyMicChange?: (enabled: boolean) => void;
@@ -56,6 +57,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
   onCorrectAnswer,
   onNextQuestion,
   onComplete,
+  onPickNewLesson,
   retryCount,
   onRetryCountChange,
   onAmplifyMicChange,
@@ -475,7 +477,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
   const showChoices = choiceImageUrls.length > 0 && hasAnswerIndex;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+    //<div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50 p-6">
+    <div className="min-h-screen flex flex-col p-6">
       {/* Header with therapist, progress, and speech delay toggle */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
@@ -491,69 +494,87 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         </div>
 
         <div className="flex items-center gap-6">
-          <button
-            onClick={() => updateSpeechDelayMode(!preferences.speechDelayMode)}
-            className={`flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition`}
-            title={preferences.speechDelayMode ? 'Speech Delay: ON' : 'Speech Delay: OFF'}
-            aria-label="Toggle Speech Delay Mode"
-          >
-            <Clock className="w-5 h-5" />
-            <span>Speech Delay</span>
-            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${preferences.speechDelayMode ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-              {preferences.speechDelayMode ? 'ON' : 'OFF'}
-            </span>
-          </button>
+          {/* Speech Delay and Mic Boost - only show for questions with answer field */}
+          {hasAnswerField && (
+            <>
+              <button
+                onClick={() => updateSpeechDelayMode(!preferences.speechDelayMode)}
+                className={`flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition`}
+                title={preferences.speechDelayMode ? 'Speech Delay: ON' : 'Speech Delay: OFF'}
+                aria-label="Toggle Speech Delay Mode"
+              >
+                <Clock className="w-5 h-5" />
+                <span>Speech Delay</span>
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${preferences.speechDelayMode ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                  {preferences.speechDelayMode ? 'ON' : 'OFF'}
+                </span>
+              </button>
 
-          {/* Mic Amplification Control */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                const newAmplifyMic = !amplifyMic;
-                if (onAmplifyMicChange) {
-                  onAmplifyMicChange(newAmplifyMic);
-                }
-              }}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition`}
-              title={amplifyMic ? 'Mic Amplification: ON' : 'Mic Amplification: OFF'}
-              aria-label="Toggle Mic Amplification"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-              <span>Mic Boost</span>
-              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${amplifyMic ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                {amplifyMic ? 'ON' : 'OFF'}
-              </span>
-            </button>
-
-            {/* Mic Gain Slider - only show when amplification is on */}
-            {amplifyMic && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-blue-700">Gain:</span>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  step="0.5"
-                  value={micGain || 1}
-                  onChange={(e) => {
-                    const newGain = parseFloat(e.target.value);
-                    if (onMicGainChange) {
-                      onMicGainChange(newGain);
+              {/* Mic Amplification Control */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    const newAmplifyMic = !amplifyMic;
+                    if (onAmplifyMicChange) {
+                      onAmplifyMicChange(newAmplifyMic);
                     }
                   }}
-                  className="w-20 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer slider"
-                  style={{
-                    background: 'linear-gradient(to right, #93c5fd 0%, #93c5fd 50%, #dbeafe 50%, #dbeafe 100%)'
-                  }}
-                  title={`Mic Gain: ${micGain || 1}x`}
-                />
-                <span className="text-xs font-medium text-blue-700 w-8">
-                  {micGain || 1}x
-                </span>
+                  className={`flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition`}
+                  title={amplifyMic ? 'Mic Amplification: ON' : 'Mic Amplification: OFF'}
+                  aria-label="Toggle Mic Amplification"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                  <span>Mic Boost</span>
+                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${amplifyMic ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {amplifyMic ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+
+                {/* Mic Gain Slider - only show when amplification is on */}
+                {amplifyMic && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-blue-700">Gain:</span>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="0.5"
+                      value={micGain || 1}
+                      onChange={(e) => {
+                        const newGain = parseFloat(e.target.value);
+                        if (onMicGainChange) {
+                          onMicGainChange(newGain);
+                        }
+                      }}
+                      className="w-20 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer slider"
+                      style={{
+                        background: 'linear-gradient(to right, #93c5fd 0%, #93c5fd 50%, #dbeafe 50%, #dbeafe 100%)'
+                      }}
+                      title={`Mic Gain: ${micGain || 1}x`}
+                    />
+                    <span className="text-xs font-medium text-blue-700 w-8">
+                      {micGain || 1}x
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
+
+          {/* Pick a new lesson button - always show if callback is provided */}
+          {onPickNewLesson && (
+            <button
+              onClick={onPickNewLesson}
+              className="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition"
+              title="Pick a new lesson"
+              aria-label="Pick a new lesson"
+            >
+              <BookOpen className="w-5 h-5" />
+              <span>Pick a new lesson</span>
+            </button>
+          )}
           
           <div className="text-center">
             <p className="text-xl font-bold text-purple-800">
@@ -576,62 +597,76 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         )}
 
         {/* Question Image */}
-        {questionImageUrl && (
-          <div className="mb-8 animate-scale-in flex justify-center">
-            <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
-              <img
-                src={questionImageUrl}
-                alt="Question"
-                className="w-auto h-[32rem] max-w-6xl object-contain"
-                onError={(e) => {
-                  console.error('Error loading question image:', questionImageUrl);
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
+        {questionImageUrl && (() => {
+          const hasChoices = choiceImageUrls.length > 0;
+          // If both question_image and choices_image are present: 50vh, otherwise 80vh
+          const imageHeight = hasChoices ? '50vh' : '80vh';
+          
+          return (
+            <div className="mb-8 animate-scale-in flex justify-center">
+              <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden" style={{ width: '100%', maxWidth: '100%' }}>
+                <img
+                  src={questionImageUrl}
+                  alt="Question"
+                  className="w-full object-cover rounded-3xl"
+                  style={{ height: imageHeight, maxHeight: imageHeight }}
+                  onError={(e) => {
+                    console.error('Error loading question image:', questionImageUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Description Text - Show below question image if present */}
         {question.description_text && (
           <div className="mb-8 animate-fade-in">
-            <p className="text-sm text-black text-center max-w-4xl mx-auto">
+            <p className="text-base italic font-semibold text-center max-w-4xl mx-auto" style={{ color: 'rgb(60, 69, 85)' }}>
               {question.description_text}
             </p>
           </div>
         )}
 
         {/* Choices (if choices_image is present) */}
-        {choiceImageUrls.length > 0 && (
-          <div className="flex flex-row gap-4 mb-8 justify-center items-center flex-wrap">
-            {choiceImageUrls.map((imageUrl, index) => {
-              const isSelected = selectedChoiceIndex === index;
-              const isCorrectChoice = question.answer_index !== null && index === question.answer_index;
-              const showResult = isSelected && isCorrect !== null;
-              const isClickable = question.answer_index !== null && question.answer_index >= 0;
-              
-              return (
-                <button
-                  key={index}
-                  onClick={() => isClickable && handleChoiceClick(index)}
-                  disabled={isProcessingAnswer || hasCalledCorrectAnswer || !isClickable}
-                  className={`
-                    relative p-4 rounded-xl border-4 transition-all duration-300 overflow-hidden
-                    ${isSelected && isCorrectChoice ? 'border-green-500 bg-green-50' : ''}
-                    ${isSelected && !isCorrectChoice ? 'border-red-500 bg-red-50' : ''}
-                    ${!isSelected ? 'border-blue-200 bg-white hover:border-blue-400 hover:shadow-lg' : ''}
-                    ${isProcessingAnswer || hasCalledCorrectAnswer || !isClickable ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                    ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group' : ''}
-                  `}
-                >
-                  <img
-                    src={imageUrl}
-                    alt={`Choice ${index + 1}`}
+        {choiceImageUrls.length > 0 && (() => {
+          const hasQuestionImage = !!questionImageUrl;
+          // If both question_image and choices_image are present: 30vh, otherwise 50vh
+          // Distribute the height among choice images
+          const totalChoicesHeight = hasQuestionImage ? '30vh' : '50vh';
+          
+          return (
+            <div className="flex flex-row gap-4 mb-8 justify-center items-center flex-wrap">
+              {choiceImageUrls.map((imageUrl, index) => {
+                const isSelected = selectedChoiceIndex === index;
+                const isCorrectChoice = question.answer_index !== null && index === question.answer_index;
+                const showResult = isSelected && isCorrect !== null;
+                const isClickable = question.answer_index !== null && question.answer_index >= 0;
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => isClickable && handleChoiceClick(index)}
+                    disabled={isProcessingAnswer || hasCalledCorrectAnswer || !isClickable}
                     className={`
-                      w-auto h-48 max-w-xs object-contain rounded-lg transition-transform duration-300
-                      ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group-hover:scale-125' : ''}
+                      relative p-4 rounded-xl border-4 transition-all duration-300 overflow-hidden
+                      ${isSelected && isCorrectChoice ? 'border-green-500 bg-green-50' : ''}
+                      ${isSelected && !isCorrectChoice ? 'border-red-500 bg-red-50' : ''}
+                      ${!isSelected ? 'border-blue-200 bg-white hover:border-blue-400 hover:shadow-lg' : ''}
+                      ${isProcessingAnswer || hasCalledCorrectAnswer || !isClickable ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                      ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group' : ''}
                     `}
-                  />
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={`Choice ${index + 1}`}
+                      className={`
+                        w-auto max-w-xs object-contain rounded-2xl transition-transform duration-300
+                        ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group-hover:scale-125' : ''}
+                      `}
+                      style={{ height: totalChoicesHeight, maxHeight: totalChoicesHeight }}
+                    />
                   {showResult && (
                     <div className="absolute top-2 right-2 z-10">
                       {isCorrectChoice ? (
@@ -645,7 +680,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
               );
             })}
           </div>
-        )}
+          );
+        })()}
 
         {/* Feedback Area */}
         {showFeedback && currentResponse && (
