@@ -34,7 +34,9 @@ interface Question_v2 {
     name: string;
     description: string | null;
     level: string;
+    add_mini_celebration?: boolean;
   } | null;
+  add_mini_celebration?: boolean;
 }
 
 interface AILearningAdventure_v2Props {
@@ -161,7 +163,8 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
               id,
               name,
               description,
-              level
+              level,
+              add_mini_celebration
             )
           `)
           .order('question_index', { ascending: true });
@@ -172,22 +175,26 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
         }
 
         if (questionsData && questionsData.length > 0) {
-          const formattedQuestions = (questionsData as any[]).map((q: any) => ({
-            id: q.id,
-            question_text: q.question_text,
-            question_speech: q.question_speech || null,
-            description_text: q.description_text || null,
-            answer: q.answer,
-            answer_index: q.answer_index,
-            question_image: q.question_image,
-            choices_text: q.choices_text,
-            choices_image: q.choices_image,
-            question_type: q.question_type,
-            question_index: q.question_index,
-            lesson_id: q.lesson_id,
-            lesson: q.lesson || null,
-            lessonObj: q.lessons_v2 ? (Array.isArray(q.lessons_v2) ? q.lessons_v2[0] : q.lessons_v2) : null
-          }));
+          const formattedQuestions = (questionsData as any[]).map((q: any) => {
+            const lessonObj = q.lessons_v2 ? (Array.isArray(q.lessons_v2) ? q.lessons_v2[0] : q.lessons_v2) : null;
+            return {
+              id: q.id,
+              question_text: q.question_text,
+              question_speech: q.question_speech || null,
+              description_text: q.description_text || null,
+              answer: q.answer,
+              answer_index: q.answer_index,
+              question_image: q.question_image,
+              choices_text: q.choices_text,
+              choices_image: q.choices_image,
+              question_type: q.question_type,
+              question_index: q.question_index,
+              lesson_id: q.lesson_id,
+              lesson: q.lesson || null,
+              lessonObj: lessonObj,
+              add_mini_celebration: lessonObj?.add_mini_celebration !== undefined ? lessonObj.add_mini_celebration : true
+            };
+          });
           
           setQuestions(formattedQuestions);
         }
@@ -351,9 +358,19 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   const handleCorrectAnswer = () => {
     setCorrectAnswers(prev => prev + 1);
-    setComingFromCelebration(true);
-    setCurrentScreen('celebration');
     setRetryCount(0);
+    
+    // Check if mini celebration should be shown for the current question's lesson
+    // Default to true if not set (for backward compatibility)
+    const shouldShowCelebration = currentQuestion?.add_mini_celebration !== false;
+    
+    if (shouldShowCelebration) {
+      setComingFromCelebration(true);
+      setCurrentScreen('celebration');
+    } else {
+      // Skip celebration and go directly to next question
+      handleNextQuestion();
+    }
   };
 
   const handleNextQuestion = (shouldIncrement: boolean = true) => {
