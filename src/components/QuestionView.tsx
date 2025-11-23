@@ -34,7 +34,7 @@ interface QuestionViewProps {
   therapistName: string;
   childName: string;
   onCorrectAnswer: () => void;
-  onNextQuestion: () => void;
+  onNextQuestion: (shouldIncrement?: boolean) => void;
   onComplete: () => void;
   retryCount: number;
   onRetryCountChange: (count: number) => void;
@@ -187,12 +187,12 @@ const QuestionView: React.FC<QuestionViewProps> = ({
             const hasAnswerIndex = question.answer_index !== null;
             
             if (!hasAnswer && !hasAnswerIndex) {
-              // Wait a bit then move to next question
+              // Wait a bit then move to next question without incrementing the count
               setTimeout(() => {
                 if (questionNumber >= totalQuestions) {
                   onComplete();
                 } else {
-                  onNextQuestion();
+                  onNextQuestion(false); // Don't increment count for questions without answer/answer_index
                 }
               }, 500);
             }
@@ -643,26 +643,6 @@ const QuestionView: React.FC<QuestionViewProps> = ({
             <p className="text-lg text-center text-green-800 font-medium">
               {currentResponse}
             </p>
-          </div>
-        )}
-
-        {/* Simplified Mic Input Display */}
-        {hasAnswerField && (
-          <div className="mt-6 max-w-2xl mx-auto animate-fade-in mb-8">
-            <div className="flex items-center gap-4">
-              <div className="flex-shrink-0">
-                <span className="text-sm font-semibold text-blue-600">Voice Input:</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="bg-white bg-opacity-60 rounded-lg p-3 border border-blue-300 shadow-sm">
-                  <p className="text-gray-800 text-sm leading-relaxed">
-                    {lastMicInput || (
-                      <span className="text-gray-500 italic">Listening for your response...</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 

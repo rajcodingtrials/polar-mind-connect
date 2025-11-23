@@ -257,12 +257,6 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     }
   }, [showLessonsPanel, hoveredActivityType]);
 
-  const selectRandomQuestion = (questionsPool: Question_v2[]): Question_v2 | null => {
-    if (questionsPool.length === 0) return null;
-    const randomIndex = Math.floor(Math.random() * questionsPool.length);
-    return questionsPool[randomIndex];
-  };
-
   const handleQuestionTypeSelect = (questionType: QuestionType) => {
     setSelectedQuestionType(questionType);
     setShowQuestionTypes(false);
@@ -358,7 +352,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setRetryCount(0);
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = (shouldIncrement: boolean = true) => {
     if (sessionQuestionCount >= maxQuestionsPerSession) {
       setCurrentScreen('complete');
       return;
@@ -371,11 +365,27 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       return;
     }
 
-    const nextQuestion = selectRandomQuestion(remainingQuestions);
+    // Sort remaining questions by question_index (or id as fallback) to maintain order
+    const sortedRemaining = [...remainingQuestions].sort((a, b) => {
+      // First sort by question_index if available
+      if (a.question_index !== null && b.question_index !== null) {
+        return a.question_index - b.question_index;
+      }
+      if (a.question_index !== null) return -1;
+      if (b.question_index !== null) return 1;
+      // Fallback to id if question_index is not available
+      return a.id.localeCompare(b.id);
+    });
+
+    // Select the first question in order (not random)
+    const nextQuestion = sortedRemaining[0];
     if (nextQuestion) {
       setCurrentQuestion(nextQuestion);
       setAskedQuestionIds(prev => new Set([...prev, nextQuestion.id]));
-      setSessionQuestionCount(prev => prev + 1);
+      // Only increment the count if shouldIncrement is true (default behavior)
+      if (shouldIncrement) {
+        setSessionQuestionCount(prev => prev + 1);
+      }
       setRetryCount(0);
       setComingFromCelebration(false);
       setCurrentScreen('question');

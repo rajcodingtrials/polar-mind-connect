@@ -28,7 +28,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const TherapistMyProfile = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, loading: authLoading } = useAuth();
   const { therapistProfile, updateTherapistProfile, createTherapistProfile, loading } = useTherapistAuth();
   const navigate = useNavigate();
   const { toast: uiToast } = useToast();
@@ -58,10 +58,11 @@ const TherapistMyProfile = () => {
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Wait for auth to finish loading before checking authentication
+    if (!authLoading && !isAuthenticated) {
       navigate("/", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   useEffect(() => {
     if (therapistProfile) {
@@ -286,11 +287,12 @@ const TherapistMyProfile = () => {
           // Determine lesson name
           const lessonName = lessonData.lesson || lessonData.name || lessonData.lesson_name || dirPath.split('/').pop() || 'Untitled Lesson';
 
-          // Check if a lesson with this name already exists in the lessons_v2 table
+          // Check if a lesson with this name and question_type already exists in the lessons_v2 table
           const { data: existingLesson, error: checkError } = await supabase
             .from('lessons_v2' as any)
-            .select('id, name')
+            .select('id, name, question_type')
             .eq('name', lessonName)
+            .eq('question_type', questionType)
             .maybeSingle();
 
           if (checkError) {
@@ -302,7 +304,7 @@ const TherapistMyProfile = () => {
           }
 
           if (existingLesson) {
-            const skipMsg = `${dirPath}: Lesson "${lessonName}" already exists in lessons_v2 table. Skipping upload.`;
+            const skipMsg = `${dirPath}: Lesson "${lessonName}" with question_type "${questionType}" already exists in lessons_v2 table. Skipping upload.`;
             ignoredDirectories.push(skipMsg);
             allErrors.push(skipMsg);
             errorCount++;

@@ -1,5 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useMemo } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Home, User as UserIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -11,15 +11,46 @@ import { useUserProfile } from "@/hooks/useUserProfile";
  */
 const TherapistHeader = () => {
   const { profile } = useUserProfile();
+  const location = useLocation();
 
-  // Helper for menu icons
-  const NavItem = ({ to, icon, label, children }: { to: string; icon: React.ReactNode; label: string; children?: React.ReactNode }) => (
-    <Link to={to} className="flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-base px-2">
-      {icon}
-      <span>{label}</span>
-      {children}
-    </Link>
-  );
+  // Memoize the Me icon to prevent unnecessary re-renders
+  const meIcon = useMemo(() => {
+    if (profile && (profile as any).avatar_url) {
+      return (
+        <Avatar className="h-7 w-7 border-2 border-white">
+          <AvatarImage src={(profile as any).avatar_url} alt="Me" />
+          <AvatarFallback><UserIcon className="h-5 w-5" /></AvatarFallback>
+        </Avatar>
+      );
+    }
+    return <UserIcon className="h-5 w-5" />;
+  }, [profile]);
+
+  // Helper for menu icons - memoized to prevent recreation
+  const NavItem = React.memo(({ to, icon, label, isActive }: { to: string; icon: React.ReactNode; label: string; isActive?: boolean }) => {
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      // Prevent navigation if already on the same route to avoid flickering
+      if (location.pathname === to) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    return (
+      <Link 
+        to={to} 
+        className={`flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-base px-2 ${
+          isActive ? 'text-white' : ''
+        }`}
+        onClick={handleClick}
+      >
+        {icon}
+        <span>{label}</span>
+      </Link>
+    );
+  });
+
+  NavItem.displayName = 'NavItem';
 
   return (
     <header>
@@ -31,18 +62,18 @@ const TherapistHeader = () => {
         </div>
 
         <nav className="flex items-center gap-4">
-          <NavItem to="/therapist-dashboard" icon={<Home className="h-5 w-5" />} label="Home" />
+          <NavItem 
+            to="/therapist-dashboard" 
+            icon={<Home className="h-5 w-5" />} 
+            label="Home"
+            isActive={location.pathname === '/therapist-dashboard'}
+          />
           {/* 'Me' icon & avatar case */}
-          <NavItem to="/therapist-my-profile"
-            icon={profile && (profile as any).avatar_url ? (
-              <Avatar className="h-7 w-7 border-2 border-white">
-                <AvatarImage src={(profile as any).avatar_url} alt="Me" />
-                <AvatarFallback><UserIcon className="h-5 w-5" /></AvatarFallback>
-              </Avatar>
-            ) : (
-              <UserIcon className="h-5 w-5" />
-            )}
+          <NavItem 
+            to="/therapist-my-profile"
+            icon={meIcon}
             label="Me"
+            isActive={location.pathname === '/therapist-my-profile'}
           />
         </nav>
       </div>
