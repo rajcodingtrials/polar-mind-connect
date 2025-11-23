@@ -192,6 +192,106 @@ const TherapistMyProfile = () => {
     'story_activity'
   ];
 
+  // Verification function to check lessons before upload
+  const verifyLessons = async (directoryMap: Map<string, { lessonFile: File; imageFiles: File[] }>): Promise<{ isValid: boolean; errors: string[] }> => {
+    const verificationErrors: string[] = [];
+
+    // Verify each directory
+    for (const [dirPath, { lessonFile, imageFiles }] of directoryMap.entries()) {
+      try {
+        const text = await lessonFile.text();
+        const lessonData = JSON.parse(text);
+
+        // Validate question_type
+        let questionType = lessonData.question_type;
+        
+        // Handle mapping for common variations
+        if (questionType === 'story_time') {
+          questionType = 'story_activity';
+        }
+
+        if (!validQuestionTypes.includes(questionType)) {
+          verificationErrors.push(`${dirPath}: Invalid question_type "${lessonData.question_type}". Valid types are: ${validQuestionTypes.join(', ')}`);
+          continue;
+        }
+
+        // Determine lesson name
+        const lessonName = lessonData.lesson || lessonData.name || lessonData.lesson_name || dirPath.split('/').pop() || 'Untitled Lesson';
+
+        // Verification 1: Check if a lesson with this name and question_type already exists
+        const { data: existingLesson, error: checkError } = await supabase
+          .from('lessons_v2' as any)
+          .select('id, name, question_type')
+          .eq('name', lessonName)
+          .eq('question_type', questionType)
+          .maybeSingle();
+
+        if (checkError) {
+          verificationErrors.push(`${dirPath}: Error checking for existing lesson - ${checkError.message}`);
+          continue;
+        }
+
+        if (existingLesson) {
+          verificationErrors.push(`${dirPath}: Lesson "${lessonName}" with question_type "${questionType}" already exists in lessons_v2 table.`);
+          continue;
+        }
+
+        // Verification 2: Check that all referenced image files exist
+        const questions = lessonData.questions || [];
+        for (let i = 0; i < questions.length; i++) {
+          const question = questions[i];
+          
+          // Check question_image
+          if (question.question_image) {
+            const imagePath = question.question_image;
+            const imageFile = findFileByPath(imageFiles, imagePath);
+            
+            if (!imageFile) {
+              // Try to find by filename only
+              const fileName = imagePath.split('/').pop() || imagePath;
+              const foundFile = imageFiles.find(f => f.name === fileName);
+              if (!foundFile) {
+                verificationErrors.push(`${dirPath}: Question ${i + 1} - Image file not found: "${imagePath}"`);
+              }
+            }
+          }
+
+          // Check choices_image
+          if (question.choices_image) {
+            let imagePaths: string[] = [];
+            
+            // Handle both array and comma-separated string
+            if (Array.isArray(question.choices_image)) {
+              imagePaths = question.choices_image;
+            } else if (typeof question.choices_image === 'string') {
+              imagePaths = question.choices_image.split(',').map(p => p.trim()).filter(p => p);
+            }
+
+            for (const imagePath of imagePaths) {
+              const imageFile = findFileByPath(imageFiles, imagePath);
+              
+              if (!imageFile) {
+                // Try to find by filename only
+                const fileName = imagePath.split('/').pop() || imagePath;
+                const foundFile = imageFiles.find(f => f.name === fileName);
+                if (!foundFile) {
+                  verificationErrors.push(`${dirPath}: Question ${i + 1} - Choices image file not found: "${imagePath}"`);
+                }
+              }
+            }
+          }
+        }
+      } catch (error: any) {
+        verificationErrors.push(`${dirPath}: Error during verification - ${error?.message || String(error)}`);
+      }
+    }
+
+    return {
+      isValid: verificationErrors.length === 0,
+      errors: verificationErrors
+    };
+  };
+
   const handleDirectoryUpload = async () => {
     if (!directoryPath.trim() && selectedFiles.length === 0) {
       uiToast({
@@ -257,6 +357,23 @@ const TherapistMyProfile = () => {
         return;
       }
 
+      // Run verification before upload
+      const verification = await verifyLessons(directoryMap);
+      
+      if (!verification.isValid) {
+        // Show verification errors and stop
+        setErrorMessages(verification.errors);
+        setShowErrorDialog(true);
+        setIsUploading(false);
+        return;
+      }
+
+      // Verification passed - show success toast
+      uiToast({
+        title: "Verification Successful",
+        description: `All ${directoryMap.size} lesson(s) passed verification. Starting upload...`,
+      });
+
       let successCount = 0;
       let errorCount = 0;
       const ignoredDirectories: string[] = [];
@@ -286,30 +403,6 @@ const TherapistMyProfile = () => {
 
           // Determine lesson name
           const lessonName = lessonData.lesson || lessonData.name || lessonData.lesson_name || dirPath.split('/').pop() || 'Untitled Lesson';
-
-          // Check if a lesson with this name and question_type already exists in the lessons_v2 table
-          const { data: existingLesson, error: checkError } = await supabase
-            .from('lessons_v2' as any)
-            .select('id, name, question_type')
-            .eq('name', lessonName)
-            .eq('question_type', questionType)
-            .maybeSingle();
-
-          if (checkError) {
-            const errorMsg = `${dirPath}: Error checking for existing lesson - ${checkError.message}`;
-            console.error(`Error checking for existing lesson in ${dirPath}:`, checkError);
-            allErrors.push(errorMsg);
-            errorCount++;
-            continue;
-          }
-
-          if (existingLesson) {
-            const skipMsg = `${dirPath}: Lesson "${lessonName}" with question_type "${questionType}" already exists in lessons_v2 table. Skipping upload.`;
-            ignoredDirectories.push(skipMsg);
-            allErrors.push(skipMsg);
-            errorCount++;
-            continue;
-          }
 
           // Create lesson record in lessons_v2
           const lessonRecord = {
