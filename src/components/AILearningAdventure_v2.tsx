@@ -501,12 +501,18 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
                 </div>
               </div>
               
-              <div className="mt-8 text-center">
+              <div className="mt-8 text-center flex justify-center gap-4">
                 <button
                   onClick={handleBackToTherapists}
                   className="text-gray-600 hover:text-gray-800 text-lg font-medium bg-white px-6 py-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   ← Back to Therapists
+                </button>
+                <button
+                  onClick={() => navigate('/lessons-marketplace')}
+                  className="text-white hover:text-white text-lg font-medium bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 rounded-xl border-2 border-transparent hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  Get More Lessons From MarketPlace
                 </button>
               </div>
             </div>

@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useUserRole } from "../hooks/useUserRole";
-import { Home, Users, UserCircle, Book, Shield, User as UserIcon, LayoutDashboard } from "lucide-react";
+import { Home, Users, UserCircle, Book, Shield, User as UserIcon, LayoutDashboard, Store } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useUserProfile } from "../hooks/useUserProfile";
 
@@ -41,6 +41,7 @@ const Header = () => {
             <>
               <NavItem to="/user-dashboard" icon={<LayoutDashboard className="h-5 w-5" />} label="Dashboard" />
               <NavItem to="/consultation" icon={<Users className="h-5 w-5" />} label="Coaches" />
+              <NavItem to="/lessons-marketplace" icon={<Store className="h-5 w-5" />} label="MarketPlace" />
               {isAdmin() && (
                 <NavItem to="/admin" icon={<Shield className="h-5 w-5" />} label="Admin" />
               )}
