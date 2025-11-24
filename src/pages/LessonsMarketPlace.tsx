@@ -223,28 +223,28 @@ const LessonsMarketPlace: React.FC = () => {
       <main className="flex-grow container mx-auto px-4 py-10">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4 transition-colors"
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-3 sm:mb-4 transition-colors text-sm sm:text-base"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Back</span>
             </button>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Lessons Marketplace</h1>
-            <p className="text-gray-600 text-lg">Discover and explore lessons from our community</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Lessons Marketplace</h1>
+            <p className="text-sm sm:text-base lg:text-lg text-gray-600">Discover and explore lessons from our community</p>
           </div>
 
           {/* Search Bar */}
-          <div className="mb-8">
-            <div className="relative max-w-2xl">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <div className="mb-6 sm:mb-8">
+            <div className="relative max-w-2xl w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
-                placeholder="Search lessons by name, description, type, or level..."
+                placeholder="Search lessons..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
               />
             </div>
           </div>
@@ -267,7 +267,7 @@ const LessonsMarketPlace: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {filteredLessons.map((lesson, index) => {
                     const style = getLessonStyle(index);
                     const IconComponent = style.icon;
@@ -276,19 +276,19 @@ const LessonsMarketPlace: React.FC = () => {
                       <div
                         key={lesson.id}
                         onClick={() => handleLessonClick(lesson.id)}
-                        className={`${style.color} ${style.textColor} rounded-xl p-6 cursor-pointer border-3 transition-all duration-300 ease-out h-[280px] flex flex-col items-center justify-center hover:shadow-xl hover:border-white ${addingLesson === lesson.id ? 'opacity-50 cursor-wait' : ''}`}
+                        className={`${style.color} ${style.textColor} rounded-xl p-4 sm:p-6 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[240px] sm:h-[280px] flex flex-col items-center justify-center hover:shadow-xl hover:border-white ${addingLesson === lesson.id ? 'opacity-50 cursor-wait' : ''}`}
                       >
                         <div className="flex flex-col items-center justify-center text-center h-full w-full">
-                          <div className="bg-white rounded-full p-3 mb-3 shadow-lg">
-                            <IconComponent className={`w-6 h-6 ${style.textColor}`} />
+                          <div className="bg-white rounded-full p-2 sm:p-3 mb-2 sm:mb-3 shadow-lg">
+                            <IconComponent className={`w-5 h-5 sm:w-6 sm:h-6 ${style.textColor}`} />
                           </div>
-                          <h3 className="font-bold text-lg mb-2">{lesson.name}</h3>
+                          <h3 className="font-bold text-base sm:text-lg mb-1 sm:mb-2 px-2">{lesson.name}</h3>
                           {lesson.description && (
-                            <p className="text-xs opacity-90 leading-relaxed mb-3 line-clamp-3">
+                            <p className="text-xs opacity-90 leading-relaxed mb-2 sm:mb-3 line-clamp-2 sm:line-clamp-3 px-2">
                               {lesson.description}
                             </p>
                           )}
-                          <div className="flex flex-col items-center gap-2 mt-auto">
+                          <div className="flex flex-col items-center gap-1 sm:gap-2 mt-auto">
                             <span className="text-xs font-medium opacity-80">
                               {formatQuestionType(lesson.question_type)}
                             </span>

@@ -489,38 +489,49 @@ const QuestionView: React.FC<QuestionViewProps> = ({
     //<div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50 p-6">
     <div className="min-h-screen flex flex-col p-6">
       {/* Header with therapist, progress, and speech delay toggle */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
-            <AvatarImage src={`/lovable-uploads/${therapistName}.png`} alt={therapistName} />
-            <AvatarFallback className="bg-blue-200 text-blue-800 font-semibold">
-              {therapistName.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-bold text-blue-900 text-2xl">{therapistName}</h3>
+      <div className="flex flex-col gap-4 sm:gap-6 mb-6 sm:mb-8">
+        {/* First Row: Therapist Name and Question Count */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Avatar className="h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 border-2 border-white shadow-sm">
+              <AvatarImage src={`/lovable-uploads/${therapistName}.png`} alt={therapistName} />
+              <AvatarFallback className="bg-blue-200 text-blue-800 font-semibold text-sm sm:text-base lg:text-lg">
+                {therapistName.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-bold text-blue-900 text-lg sm:text-xl lg:text-2xl">{therapistName}</h3>
+            </div>
+          </div>
+          
+          <div className="text-center sm:text-right">
+            <p className="text-lg sm:text-xl font-bold text-purple-800">
+              Question {questionNumber} of {totalQuestions}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        {/* Second Row: Control Buttons - Wrap on smaller screens */}
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 lg:gap-6">
           {/* Speech Delay and Mic Boost - only show for questions with answer field */}
           {hasAnswerField && (
             <>
               <button
                 onClick={() => updateSpeechDelayMode(!preferences.speechDelayMode)}
-                className={`flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition`}
+                className={`flex items-center justify-center gap-2 px-3 sm:px-4 lg:px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition text-sm sm:text-base whitespace-nowrap`}
                 title={preferences.speechDelayMode ? 'Speech Delay: ON' : 'Speech Delay: OFF'}
                 aria-label="Toggle Speech Delay Mode"
               >
-                <Clock className="w-5 h-5" />
-                <span>Speech Delay</span>
-                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${preferences.speechDelayMode ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                <span className="hidden sm:inline">Speech Delay</span>
+                <span className="sm:hidden">Delay</span>
+                <span className={`ml-1 sm:ml-2 px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${preferences.speechDelayMode ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                   {preferences.speechDelayMode ? 'ON' : 'OFF'}
                 </span>
               </button>
 
               {/* Mic Amplification Control */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={() => {
                     const newAmplifyMic = !amplifyMic;
@@ -528,15 +539,16 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                       onAmplifyMicChange(newAmplifyMic);
                     }
                   }}
-                  className={`flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition`}
+                  className={`flex items-center justify-center gap-2 px-3 sm:px-4 lg:px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition text-sm sm:text-base whitespace-nowrap`}
                   title={amplifyMic ? 'Mic Amplification: ON' : 'Mic Amplification: OFF'}
                   aria-label="Toggle Mic Amplification"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                   </svg>
-                  <span>Mic Boost</span>
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${amplifyMic ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <span className="hidden sm:inline">Mic Boost</span>
+                  <span className="sm:hidden">Mic</span>
+                  <span className={`ml-1 sm:ml-2 px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${amplifyMic ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                     {amplifyMic ? 'ON' : 'OFF'}
                   </span>
                 </button>
@@ -544,7 +556,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                 {/* Mic Gain Slider - only show when amplification is on */}
                 {amplifyMic && (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-blue-700">Gain:</span>
+                    <span className="text-xs sm:text-sm font-medium text-blue-700 hidden sm:inline">Gain:</span>
                     <input
                       type="range"
                       min="1"
@@ -557,13 +569,13 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                           onMicGainChange(newGain);
                         }
                       }}
-                      className="w-20 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer slider"
+                      className="w-16 sm:w-20 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer slider flex-shrink-0"
                       style={{
                         background: 'linear-gradient(to right, #93c5fd 0%, #93c5fd 50%, #dbeafe 50%, #dbeafe 100%)'
                       }}
                       title={`Mic Gain: ${micGain || 1}x`}
                     />
-                    <span className="text-xs font-medium text-blue-700 w-8">
+                    <span className="text-xs font-medium text-blue-700 w-6 sm:w-8 flex-shrink-0">
                       {micGain || 1}x
                     </span>
                   </div>
@@ -576,20 +588,15 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           {onPickNewLesson && (
             <button
               onClick={onPickNewLesson}
-              className="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 lg:px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition text-sm sm:text-base whitespace-nowrap"
               title="Pick a new lesson"
               aria-label="Pick a new lesson"
             >
-              <BookOpen className="w-5 h-5" />
-              <span>Pick a new lesson</span>
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <span className="hidden sm:inline">Pick a new lesson</span>
+              <span className="sm:hidden">New Lesson</span>
             </button>
           )}
-          
-          <div className="text-center">
-            <p className="text-xl font-bold text-purple-800">
-              Question {questionNumber} of {totalQuestions}
-            </p>
-          </div>
         </div>
       </div>
 
@@ -598,8 +605,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
 
         {/* Question Text - Show above image if not empty */}
         {question.question_text && (
-          <div className="mb-8 animate-fade-in">
-            <h2 className="text-4xl md:text-5xl font-bold text-center leading-relaxed" style={{ color: 'rgb(36, 58, 133)' }}>
+          <div className="mb-4 sm:mb-6 lg:mb-8 animate-fade-in px-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center leading-relaxed" style={{ color: 'rgb(36, 58, 133)' }}>
               {question.question_text}
             </h2>
           </div>
@@ -608,17 +615,19 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         {/* Question Image */}
         {questionImageUrl && (() => {
           const hasChoices = choiceImageUrls.length > 0;
+          // Responsive heights: smaller on mobile, larger on desktop
           // If both question_image and choices_image are present: 50vh, otherwise 80vh
-          const imageHeight = hasChoices ? '50vh' : '80vh';
+          const imageHeight = hasChoices 
+            ? 'h-[250px] sm:h-[300px] md:h-[400px] lg:h-[50vh]' 
+            : 'h-[300px] sm:h-[400px] md:h-[500px] lg:h-[80vh]';
           
           return (
-            <div className="mb-8 animate-scale-in flex justify-center">
-              <div className="inline-block rounded-3xl shadow-2xl border-4 border-white overflow-hidden" style={{ width: '100%', maxWidth: '100%' }}>
+            <div className="mb-4 sm:mb-6 lg:mb-8 animate-scale-in flex justify-center px-4">
+              <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden w-full max-w-full">
                 <img
                   src={questionImageUrl}
                   alt="Question"
-                  className="w-full object-cover rounded-3xl"
-                  style={{ height: imageHeight, maxHeight: imageHeight }}
+                  className={`w-full object-cover rounded-2xl sm:rounded-3xl ${imageHeight}`}
                   onError={(e) => {
                     console.error('Error loading question image:', questionImageUrl);
                     e.currentTarget.style.display = 'none';
@@ -631,8 +640,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
 
         {/* Description Text - Show below question image if present */}
         {question.description_text && (
-          <div className="mb-8 animate-fade-in">
-            <p className="text-base italic font-semibold text-center max-w-4xl mx-auto" style={{ color: 'rgb(60, 69, 85)' }}>
+          <div className="mb-4 sm:mb-6 lg:mb-8 animate-fade-in px-4">
+            <p className="text-sm sm:text-base lg:text-lg italic font-semibold text-center max-w-4xl mx-auto" style={{ color: 'rgb(60, 69, 85)' }}>
               {question.description_text}
             </p>
           </div>
@@ -643,10 +652,13 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           const hasQuestionImage = !!questionImageUrl;
           // If both question_image and choices_image are present: 30vh, otherwise 50vh
           // Distribute the height among choice images
-          const totalChoicesHeight = hasQuestionImage ? '30vh' : '50vh';
+          // On mobile, use smaller heights
+          const totalChoicesHeight = hasQuestionImage 
+            ? 'h-[200px] sm:h-[250px] md:h-[30vh]' 
+            : 'h-[250px] sm:h-[300px] md:h-[50vh]';
           
           return (
-            <div className="flex flex-row gap-4 mb-8 justify-center items-center flex-wrap">
+            <div className="flex flex-row gap-2 sm:gap-4 mb-6 sm:mb-8 justify-center items-center flex-wrap px-4">
               {choiceImageUrls.map((imageUrl, index) => {
                 const isSelected = selectedChoiceIndex === index;
                 const isCorrectChoice = question.answer_index !== null && index === question.answer_index;
@@ -671,10 +683,10 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                       src={imageUrl}
                       alt={`Choice ${index + 1}`}
                       className={`
-                        w-auto max-w-xs object-contain rounded-2xl transition-transform duration-300
+                        w-auto max-w-[120px] sm:max-w-[180px] md:max-w-xs object-contain rounded-xl sm:rounded-2xl transition-transform duration-300
                         ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group-hover:scale-125' : ''}
                       `}
-                      style={{ height: totalChoicesHeight, maxHeight: totalChoicesHeight }}
+                      style={{ height: totalChoicesHeight.includes('h-') ? undefined : totalChoicesHeight, maxHeight: totalChoicesHeight.includes('h-') ? undefined : totalChoicesHeight }}
                     />
                   {showResult && (
                     <div className="absolute top-2 right-2 z-10">

@@ -39,9 +39,9 @@ interface TherapistCardProps {
 
 const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: TherapistCardProps) => {
   return (
-    <div className="flex gap-10 group bg-white rounded-2xl p-8 transition-all duration-300 max-w-7xl mx-auto border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01]">
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 group bg-white rounded-2xl p-4 sm:p-6 lg:p-8 transition-all duration-300 max-w-7xl mx-auto border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01]">
       {/* Therapist Photo Card */}
-      <Card className="w-80 flex-shrink-0 overflow-hidden transition-all duration-300 bg-white border-slate-200">
+      <Card className="w-full lg:w-80 flex-shrink-0 overflow-hidden transition-all duration-300 bg-white border-slate-200">
         <CardContent className="p-0">
           {/* Photo Section with 4:3 Aspect Ratio */}
           <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100">
@@ -139,10 +139,10 @@ const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: Ther
         <div className="space-y-4 pb-4 border-b border-slate-200">
           <div className="space-y-2">
             <div className="space-y-1">
-              <h2 className="text-3xl font-bold text-slate-700 leading-tight">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-700 leading-tight">
                 {therapist.first_name} {therapist.last_name}
                 {therapist.certification && (
-                  <span className="text-base font-normal text-slate-600 ml-2">
+                  <span className="text-sm sm:text-base font-normal text-slate-600 ml-2">
                     {therapist.certification}
                   </span>
                 )}

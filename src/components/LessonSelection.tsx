@@ -357,11 +357,11 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
     //<div className="min-h-screen flex flex-col p-6">
     <div className="min-w-screen min-h-screen flex flex-col p-6">
       {/* Header */}
-      <div className="text-center mb-6 w-full -mx-6 px-6">
-        <h1 className="text-4xl font-bold text-purple-800 mb-4">
+      <div className="text-center mb-4 sm:mb-6 w-full -mx-6 px-4 sm:px-6">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-purple-800 mb-2 sm:mb-4">
           Choose Your Lesson with {therapistName}!
         </h1>
-        <p className="text-gray-500">
+        <p className="text-sm sm:text-base text-gray-500">
           Select a question type and then choose a lesson
         </p>
       </div>
@@ -378,10 +378,10 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
       </div>
 
       {/* Two Panel Layout: 30% left (question types) and 60% right (lessons) */}
-      <div className="flex-grow flex flex-row gap-6 w-full">
+      <div className="flex-grow flex flex-col lg:flex-row gap-4 lg:gap-6 w-full">
         {/* Left Panel - Question Types (30%) */}
-        <div className="w-[30%] flex flex-col flex-shrink-0">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Activity Types</h2>
+        <div className="w-full lg:w-[30%] flex flex-col flex-shrink-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">Activity Types</h2>
           <div className="flex flex-col gap-4">
             {questionTypes.map((type) => {
               const IconComponent = type.icon;

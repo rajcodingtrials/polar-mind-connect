@@ -524,20 +524,20 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
           {/* Enhanced Activity Selection Screen */}
           {showQuestionTypes && currentScreen === 'home' && (
             <div className="mb-8 flex flex-col items-center">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-black mb-4">
+              <div className="text-center mb-6 sm:mb-8 lg:mb-12 px-4">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-2 sm:mb-4">
                   Choose Your Learning Adventure with {therapistName}!
                 </h2>
-                <p className="text-gray-600 text-lg">
+                <p className="text-sm sm:text-base lg:text-lg text-gray-600">
                   {showLessonsPanel ? 'Choose a lesson or practice all questions' : 'Click on an activity to see available lessons'}
                 </p>
               </div>
               
-              <div className="flex max-w-7xl mx-auto gap-8 min-h-[500px]">
+              <div className="flex flex-col lg:flex-row max-w-7xl mx-auto gap-4 lg:gap-8 min-h-[500px]">
                 {/* Activity Cards Section */}
                 <div 
                   ref={cardsContainerRef}
-                  className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-2/5' : 'w-full'} overflow-y-auto max-h-[calc(100vh-300px)]`}
+                  className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-full lg:w-2/5' : 'w-full'} overflow-y-auto max-h-[calc(100vh-300px)]`}
                 >
                   <QuestionTypeCards
                     questionTypes={questionTypes}
@@ -550,7 +550,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
                 {/* Lessons Panel */}
                 <div 
-                  className={`transition-all duration-800 ease-out overflow-hidden ${showLessonsPanel ? 'w-3/5 opacity-100' : 'w-0 opacity-0'}`}
+                  className={`transition-all duration-800 ease-out overflow-hidden ${showLessonsPanel ? 'w-full lg:w-3/5 opacity-100' : 'w-0 opacity-0'}`}
                 >
                   {showLessonsPanel && hoveredActivityType && (
                     <LessonsPanel
@@ -564,18 +564,19 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
                 </div>
               </div>
               
-              <div className="mt-8 text-center flex justify-center gap-4">
+              <div className="mt-6 sm:mt-8 text-center flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
                 <button
                   onClick={handleBackToTherapists}
-                  className="text-gray-600 hover:text-gray-800 text-lg font-medium bg-white px-6 py-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="text-gray-600 hover:text-gray-800 text-base sm:text-lg font-medium bg-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   ← Back to Therapists
                 </button>
                 <button
                   onClick={() => navigate('/lessons-marketplace')}
-                  className="text-white hover:text-white text-lg font-medium bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 rounded-xl border-2 border-transparent hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="text-white hover:text-white text-base sm:text-lg font-medium bg-gradient-to-r from-blue-500 to-purple-500 px-4 sm:px-6 py-2 sm:py-3 rounded-xl border-2 border-transparent hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
-                  Get More Lessons From MarketPlace
+                  <span className="hidden sm:inline">Get More Lessons From MarketPlace</span>
+                  <span className="sm:hidden">Marketplace</span>
                 </button>
               </div>
             </div>
