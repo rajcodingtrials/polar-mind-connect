@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUserRole } from "../hooks/useUserRole";
 import { useTherapistAuth } from "../hooks/useTherapistAuth";
 import ParentHome from "./ParentHome";
 import { Button } from "@/components/ui/button";
@@ -8,21 +7,20 @@ import { ArrowLeft, Info } from "lucide-react";
 
 const TherapistAIDemo = () => {
   const navigate = useNavigate();
-  const { role, loading: roleLoading } = useUserRole();
   const { therapistProfile, loading: profileLoading } = useTherapistAuth();
 
   // Security: Only therapists can access this route
   useEffect(() => {
-    if (!roleLoading && !profileLoading) {
-      if (role !== 'therapist' || !therapistProfile) {
+    if (!profileLoading) {
+      if (!therapistProfile) {
         console.warn('⚠️ Non-therapist tried to access Try AI feature');
         navigate('/home', { replace: true });
       }
     }
-  }, [role, therapistProfile, roleLoading, profileLoading, navigate]);
+  }, [therapistProfile, profileLoading, navigate]);
 
   // Loading state
-  if (roleLoading || profileLoading) {
+  if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
         <div className="text-center">
