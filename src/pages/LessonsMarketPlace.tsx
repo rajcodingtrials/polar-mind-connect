@@ -73,7 +73,7 @@ const LessonsMarketPlace: React.FC = () => {
     const fetchMarketplaceLessons = async () => {
       try {
         const { data, error } = await supabase
-          .from('lessons_v2' as any)
+          .from('lessons_v2')
           .select('id, name, description, question_type, level, publish_to_marketplace')
           .eq('publish_to_marketplace', true)
           .eq('is_verified', true)
@@ -84,8 +84,11 @@ const LessonsMarketPlace: React.FC = () => {
           return;
         }
 
-        setLessons(data || []);
-        setFilteredLessons(data || []);
+        if (data && Array.isArray(data)) {
+          const typedLessons = data as Lesson[];
+          setLessons(typedLessons);
+          setFilteredLessons(typedLessons);
+        }
       } catch (error) {
         console.error('Error loading marketplace lessons:', error);
       } finally {
@@ -159,10 +162,16 @@ const LessonsMarketPlace: React.FC = () => {
         return;
       }
 
-      // Parse existing lessons
-      const existingLessons = parentData?.lessons 
-        ? parentData.lessons.split(',').map(id => id.trim()).filter(id => id)
-        : [];
+      // Parse existing lessons (TypeScript can't infer type due to 'as any' cast)
+      let existingLessons: string[] = [];
+      try {
+        const record = parentData as { lessons?: string | null } | null;
+        if (record && record.lessons && typeof record.lessons === 'string') {
+          existingLessons = record.lessons.split(',').map(id => id.trim()).filter(id => id);
+        }
+      } catch (e) {
+        console.error('Error parsing parent lessons:', e);
+      }
 
       // Check if lesson is already added
       if (existingLessons.includes(lessonId)) {

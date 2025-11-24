@@ -173,9 +173,19 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
           return;
         }
         
-        if (data?.lessons) {
-          const lessonIds = data.lessons.split(',').map(id => id.trim()).filter(id => id);
-          setParentLessons(lessonIds);
+        if (!data) {
+          return;
+        }
+        
+        // TypeScript can't infer type due to 'as any' cast, manually check and cast
+        try {
+          const record = data as { lessons?: string | null };
+          if (record && record.lessons && typeof record.lessons === 'string') {
+            const lessonIds = record.lessons.split(',').map(id => id.trim()).filter(id => id);
+            setParentLessons(lessonIds);
+          }
+        } catch (e) {
+          console.error('Error parsing parent lessons:', e);
         }
       } catch (error) {
         console.error('Error loading parent lessons:', error);

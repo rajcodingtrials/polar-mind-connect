@@ -187,37 +187,67 @@ export type Database = {
       }
       lessons_v2: {
         Row: {
+          add_mini_celebration: boolean
           created_at: string
           description: string | null
           id: string
           is_verified: boolean
           level: string
           name: string
+          publish_to_marketplace: boolean
           question_type: Database["public"]["Enums"]["question_type_enum"]
           updated_at: string
           youtube_video_id: string | null
         }
         Insert: {
+          add_mini_celebration?: boolean
           created_at?: string
           description?: string | null
           id?: string
           is_verified?: boolean
           level: string
           name: string
+          publish_to_marketplace?: boolean
           question_type: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string
           youtube_video_id?: string | null
         }
         Update: {
+          add_mini_celebration?: boolean
           created_at?: string
           description?: string | null
           id?: string
           is_verified?: boolean
           level?: string
           name?: string
+          publish_to_marketplace?: boolean
           question_type?: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string
           youtube_video_id?: string | null
+        }
+        Relationships: []
+      }
+      parents: {
+        Row: {
+          created_at: string
+          id: string
+          lessons: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lessons?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lessons?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -396,10 +426,13 @@ export type Database = {
           choices_text: string | null
           created_at: string
           created_by: string | null
+          description_text: string | null
           id: string
+          lesson: string | null
           lesson_id: string | null
           question_image: string | null
           question_index: number | null
+          question_speech: string | null
           question_text: string
           question_type: Database["public"]["Enums"]["question_type_enum"]
           updated_at: string
@@ -411,10 +444,13 @@ export type Database = {
           choices_text?: string | null
           created_at?: string
           created_by?: string | null
+          description_text?: string | null
           id?: string
+          lesson?: string | null
           lesson_id?: string | null
           question_image?: string | null
           question_index?: number | null
+          question_speech?: string | null
           question_text: string
           question_type: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string
@@ -426,10 +462,13 @@ export type Database = {
           choices_text?: string | null
           created_at?: string
           created_by?: string | null
+          description_text?: string | null
           id?: string
+          lesson?: string | null
           lesson_id?: string | null
           question_image?: string | null
           question_index?: number | null
+          question_speech?: string | null
           question_text?: string
           question_type?: Database["public"]["Enums"]["question_type_enum"]
           updated_at?: string
