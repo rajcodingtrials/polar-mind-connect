@@ -17,10 +17,10 @@ const Header = () => {
     <Link 
       to={to} 
       onClick={onClick}
-      className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-white hover:text-white/80 transition-colors font-medium text-sm sm:text-base px-2 sm:px-3 py-2 sm:py-1 rounded-lg hover:bg-white/10"
+      className="flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-white/10"
     >
       {icon}
-      <span className="text-xs sm:text-base">{label}</span>
+      <span className="text-xs">{label}</span>
       {children}
     </Link>
   );
