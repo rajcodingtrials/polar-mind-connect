@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, User as UserIcon } from "lucide-react";
+import { Home, User as UserIcon, Sparkles } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
@@ -67,6 +67,12 @@ const TherapistHeader = () => {
             icon={<Home className="h-5 w-5" />} 
             label="Home"
             isActive={location.pathname === '/therapist-dashboard'}
+          />
+          <NavItem 
+            to="/therapist/try-ai" 
+            icon={<Sparkles className="h-5 w-5" />} 
+            label="Try AI"
+            isActive={location.pathname === '/therapist/try-ai'}
           />
           {/* 'Me' icon & avatar case */}
           <NavItem 

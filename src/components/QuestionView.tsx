@@ -768,7 +768,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         {hasCalledCorrectAnswer && (
           <div className="flex justify-center space-x-4 mt-8">
             <Button
-              onClick={questionNumber >= totalQuestions ? onComplete : onNextQuestion}
+              onClick={() => questionNumber >= totalQuestions ? onComplete() : onNextQuestion()}
               size="lg"
               className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
             >
