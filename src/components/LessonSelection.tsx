@@ -409,7 +409,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
         </div>
 
         {/* Right Panel - Lessons (70%) */}
-        <div className="w-[70%] flex flex-col">
+        <div className="w-full lg:w-[70%] flex flex-col">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             {getActivityName(internalSelectedQuestionType)} Lessons
           </h2>
@@ -427,7 +427,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
             const IconComponent = BookOpen;
             return (
               <div
-                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[420px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-[1.2s] select-none ${
+                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-full max-w-[320px] sm:w-80 h-[380px] sm:h-[420px] flex flex-col justify-between items-center p-6 sm:p-8 cursor-pointer hover:scale-105 transition-all duration-[1.2s] select-none ${
                   selectedLesson === 'all' ? 'ring-4 ring-purple-300' : ''
                 }`}
                 onClick={() => handleLessonSelect('all')}
@@ -456,7 +456,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
             return (
               <div
                 key={lesson.id}
-                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-80 h-[420px] flex flex-col justify-between items-center p-8 cursor-pointer hover:scale-105 transition-all duration-[1.2s] select-none ${
+                className={`${color.color} ${color.textColor} rounded-3xl border-3 border-white shadow-xl w-full max-w-[320px] sm:w-80 h-[380px] sm:h-[420px] flex flex-col justify-between items-center p-6 sm:p-8 cursor-pointer hover:scale-105 transition-all duration-[1.2s] select-none ${
                   selectedLesson === lesson.id ? 'ring-4 ring-purple-300' : ''
                 }`}
                 onClick={() => handleLessonSelect(lesson.id)}

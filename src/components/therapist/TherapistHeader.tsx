@@ -39,13 +39,13 @@ const TherapistHeader = () => {
     return (
       <Link 
         to={to} 
-        className={`flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-base px-2 ${
+        className={`flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-white/10 ${
           isActive ? 'text-white' : ''
         }`}
         onClick={handleClick}
       >
         {icon}
-        <span>{label}</span>
+        <span className="text-xs">{label}</span>
       </Link>
     );
   });
@@ -54,23 +54,23 @@ const TherapistHeader = () => {
 
   return (
     <header>
-      <div className="w-full py-4 px-6 flex justify-between items-center bg-black text-white">
+      <div className="w-full py-3 sm:py-4 px-4 sm:px-6 flex justify-between items-center bg-black text-white relative">
         <div className="flex items-center gap-2">
           {/* Icon on the left */}
-          <img src="/lovable-uploads/polariz_icon_only_white.png" alt="Polariz Logo" className="h-6 w-auto" />
-          <h1 className="text-xl font-bold">Polariz</h1>
+          <img src="/lovable-uploads/polariz_icon_only_white.png" alt="Polariz Logo" className="h-5 sm:h-6 w-auto" />
+          <h1 className="text-lg sm:text-xl font-bold">Polariz</h1>
         </div>
 
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-2 sm:gap-3 lg:gap-4">
           <NavItem 
             to="/therapist-dashboard" 
-            icon={<Home className="h-5 w-5" />} 
+            icon={<Home className="h-4 w-4 sm:h-5 sm:w-5" />} 
             label="Home"
             isActive={location.pathname === '/therapist-dashboard'}
           />
           <NavItem 
             to="/therapist/try-ai" 
-            icon={<Sparkles className="h-5 w-5" />} 
+            icon={<Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />} 
             label="Try AI"
             isActive={location.pathname === '/therapist/try-ai'}
           />

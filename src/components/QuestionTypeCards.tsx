@@ -43,13 +43,13 @@ const QuestionTypeCards: React.FC<QuestionTypeCardsProps> = ({
             ref={(el) => {
               cardRefs.current[type.value] = el;
             }}
-            className={`${type.color} ${type.textColor} ${borderRadiusClass} p-6 cursor-pointer ${showLessonsPanel ? 'border-2 border-gray-300' : 'border-3'} transition-all duration-300 ease-out h-[240px] flex flex-col items-center justify-center ${
+            className={`${type.color} ${type.textColor} ${borderRadiusClass} p-4 sm:p-6 cursor-pointer ${showLessonsPanel ? 'border-2 border-gray-300' : 'border-3'} transition-all duration-300 ease-out h-[200px] sm:h-[240px] flex flex-col items-center justify-center ${
               isOtherHovered 
                 ? 'opacity-40' 
                 : showLessonsPanel 
                   ? 'hover:opacity-80' 
                   : 'hover:shadow-xl hover:border-white'
-            } ${showLessonsPanel ? 'w-80' : 'w-full max-w-80'}`}
+            } ${showLessonsPanel ? 'w-full max-w-[320px] sm:w-80' : 'w-full max-w-80'}`}
             onClick={() => onActivityClick(type.value)}
           >
             <div className="flex flex-col items-center justify-center text-center h-full">
