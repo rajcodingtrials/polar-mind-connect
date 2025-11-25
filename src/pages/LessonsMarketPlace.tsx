@@ -150,27 +150,19 @@ const LessonsMarketPlace: React.FC = () => {
         .from('parents' as any)
         .select('lessons')
         .eq('user_id', user.id)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching parent record:', fetchError);
-        toast({
-          title: "Error",
-          description: "Failed to load your profile. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
+        .maybeSingle();
 
       // Parse existing lessons (TypeScript can't infer type due to 'as any' cast)
       let existingLessons: string[] = [];
-      try {
-        const record = parentData as { lessons?: string | null } | null;
-        if (record && record.lessons && typeof record.lessons === 'string') {
-          existingLessons = record.lessons.split(',').map(id => id.trim()).filter(id => id);
+      if (parentData) {
+        try {
+          const record = parentData as { lessons?: string | null } | null;
+          if (record && record.lessons && typeof record.lessons === 'string' && record.lessons.trim() !== '') {
+            existingLessons = record.lessons.split(',').map(id => id.trim()).filter(id => id);
+          }
+        } catch (e) {
+          console.error('Error parsing parent lessons:', e);
         }
-      } catch (e) {
-        console.error('Error parsing parent lessons:', e);
       }
 
       // Check if lesson is already added
@@ -186,11 +178,15 @@ const LessonsMarketPlace: React.FC = () => {
       // Add new lesson to the list
       const updatedLessons = [...existingLessons, lessonId].join(',');
 
-      // Update parent record
+      // Upsert parent record (create if doesn't exist, update if exists)
       const { error: updateError } = await supabase
         .from('parents' as any)
-        .update({ lessons: updatedLessons })
-        .eq('user_id', user.id);
+        .upsert({ 
+          user_id: user.id, 
+          lessons: updatedLessons 
+        }, {
+          onConflict: 'user_id'
+        });
 
       if (updateError) {
         console.error('Error updating parent lessons:', updateError);

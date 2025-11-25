@@ -155,38 +155,61 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     }
   ];
 
-  // Load parent's available lessons
+  // Load parent's available lessons (combining default lessons with user's custom lessons)
   useEffect(() => {
     const loadParentLessons = async () => {
       if (!user?.id) return;
       
       try {
-        const { data, error } = await supabase
+        // Get default lessons from database function
+        const { data: defaultLessonsData, error: defaultError } = await supabase
+          .rpc('get_default_lessons');
+        
+        // Fallback default lessons if RPC call fails
+        const fallbackDefaultLessons = '1ad57f79-ea9f-4894-8765-34083fb57f4f,284fef51-e2d0-407d-8930-de6184391899,300a36ac-beaa-46b3-b4e0-e076a0f2ac04,31eb7a4d-8ffc-40b0-8677-b10a0dceee5e,386985d6-3112-49bc-bca6-00939178d13e,40f0b51c-f17b-44ad-b65d-378ae8c71e33,52157e52-cb71-4ef5-8d9f-4873712c8058,6efb2910-6cc7-43fe-9198-410b28f6b2be,80f72e1b-f7b8-4b60-8719-cbf9dfa8da09,a581ab8a-a167-40f0-a778-7d94c28d4407,a9ce2a9c-f34b-4d65-a32b-e8172925e406,b7ff0731-c0a3-43a4-9d15-efc911a9ce60,c251fd3d-bc3f-4954-8c2b-8293d3aad96d,d6d77133-e396-4797-a728-cbff7ccaf0c8,d91592cc-c1ac-4cb2-8a9d-c0cd91b7d6da,d9a7e61e-e606-416b-a743-f9121de461c4';
+        
+        if (defaultError) {
+          console.error('Error fetching default lessons:', defaultError);
+          console.log('Using fallback default lessons');
+        }
+        
+        // Get user's custom lessons from parents table
+        const { data: parentData, error: parentError } = await supabase
           .from('parents' as any)
           .select('lessons')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
         
-        if (error) {
-          // User might not be a parent, or record doesn't exist yet
-          console.log('No parent record found or error:', error);
-          return;
+        if (parentError && parentError.code !== 'PGRST116') {
+          // PGRST116 means no rows found, which is okay for new users
+          console.log('No parent record found or error:', parentError);
         }
         
-        if (!data) {
-          return;
+        // Combine default lessons with user's custom lessons
+        const defaultLessonIds: string[] = [];
+        const defaultLessonsString = (defaultLessonsData && typeof defaultLessonsData === 'string') 
+          ? defaultLessonsData 
+          : fallbackDefaultLessons;
+        
+        if (defaultLessonsString) {
+          defaultLessonIds.push(...defaultLessonsString.split(',').map(id => id.trim()).filter(id => id));
         }
         
-        // TypeScript can't infer type due to 'as any' cast, manually check and cast
-        try {
-          const record = data as { lessons?: string | null };
-          if (record && record.lessons && typeof record.lessons === 'string') {
-            const lessonIds = record.lessons.split(',').map(id => id.trim()).filter(id => id);
-            setParentLessons(lessonIds);
+        const userLessonIds: string[] = [];
+        if (parentData) {
+          try {
+            const record = parentData as { lessons?: string | null };
+            if (record && record.lessons && typeof record.lessons === 'string' && record.lessons.trim() !== '') {
+              userLessonIds.push(...record.lessons.split(',').map(id => id.trim()).filter(id => id));
+            }
+          } catch (e) {
+            console.error('Error parsing parent lessons:', e);
           }
-        } catch (e) {
-          console.error('Error parsing parent lessons:', e);
         }
+        
+        // Combine and deduplicate lesson IDs
+        const allLessonIds = [...new Set([...defaultLessonIds, ...userLessonIds])];
+        setParentLessons(allLessonIds);
       } catch (error) {
         console.error('Error loading parent lessons:', error);
       }
