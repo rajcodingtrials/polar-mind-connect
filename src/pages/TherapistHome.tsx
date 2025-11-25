@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTherapistAuth } from "../hooks/useTherapistAuth";
 import { useUserRole } from "../hooks/useUserRole";
 import Header from "../components/Header";
-import AffirmationCard from "@/components/AffirmationCard";
+import AffirmationCard from "@/components/parents/AffirmationCard";
 import TherapistDashboard from "./TherapistDashboard";
 
 const TherapistHome = () => {

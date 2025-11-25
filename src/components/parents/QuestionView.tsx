@@ -650,12 +650,11 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         {/* Choices (if choices_image is present) */}
         {choiceImageUrls.length > 0 && (() => {
           const hasQuestionImage = !!questionImageUrl;
-          // If both question_image and choices_image are present: 30vh, otherwise 50vh
-          // Distribute the height among choice images
-          // On mobile, use smaller heights
-          const totalChoicesHeight = hasQuestionImage 
-            ? 'h-[200px] sm:h-[250px] md:h-[30vh]' 
-            : 'h-[250px] sm:h-[300px] md:h-[50vh]';
+          // Fixed dimensions for all choice images to ensure consistent sizing
+          // If both question_image and choices_image are present: smaller size, otherwise larger
+          const imageSize = hasQuestionImage 
+            ? 'w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] md:w-[180px] md:h-[180px]' 
+            : 'w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px]';
           
           return (
             <div className="flex flex-row gap-2 sm:gap-4 mb-6 sm:mb-8 justify-center items-center flex-wrap px-4">
@@ -683,10 +682,9 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                       src={imageUrl}
                       alt={`Choice ${index + 1}`}
                       className={`
-                        w-auto max-w-[120px] sm:max-w-[180px] md:max-w-xs object-contain rounded-xl sm:rounded-2xl transition-transform duration-300
+                        ${imageSize} object-cover rounded-xl sm:rounded-2xl transition-transform duration-300
                         ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group-hover:scale-125' : ''}
                       `}
-                      style={{ height: totalChoicesHeight.includes('h-') ? undefined : totalChoicesHeight, maxHeight: totalChoicesHeight.includes('h-') ? undefined : totalChoicesHeight }}
                     />
                   {showResult && (
                     <div className="absolute top-2 right-2 z-10">

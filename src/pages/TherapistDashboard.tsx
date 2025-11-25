@@ -29,7 +29,7 @@ import {
   Video
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { TherapistAvailabilityCalendar } from "@/components/TherapistAvailabilityCalendar";
+import { TherapistAvailabilityCalendar } from "@/components/therapist/TherapistAvailabilityCalendar";
 import TherapistHeader from "@/components/therapist/TherapistHeader";
 import { format } from "date-fns";
 

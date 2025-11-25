@@ -4,8 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import { useUserRole } from "../hooks/useUserRole";
 import Header from "../components/Header";
 import Footer from "@/components/Footer";
-import UserProfileEditor from "@/components/UserProfileEditor";
-import UserPayment from "@/components/UserPayment";
+import UserProfileEditor from "@/components/parents/UserProfileEditor";
+import UserPayment from "@/components/parents/UserPayment";
 import { Button } from "@/components/ui/button";
 import { CreditCard } from "lucide-react";
 

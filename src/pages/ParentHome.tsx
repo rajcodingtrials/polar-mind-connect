@@ -11,8 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Video, Calendar } from "lucide-react";
 import { useClientSessions } from "@/hooks/useClientSessions";
-import AffirmationCard from "@/components/AffirmationCard";
-import AILearningAdventure_v2 from "@/components/AILearningAdventure_v2";
+import AffirmationCard from "@/components/parents/AffirmationCard";
+import AILearningAdventure_v2 from "@/components/parents/AILearningAdventure_v2";
 import { format } from "date-fns";
 
 const ParentHome = () => {

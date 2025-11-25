@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useUserProfile } from '../hooks/useUserProfile';
-import { useAuth } from '../context/AuthContext';
+import { useUserProfile } from '../../hooks/useUserProfile';
+import { useAuth } from '../../context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';

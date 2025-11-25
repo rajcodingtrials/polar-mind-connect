@@ -20,8 +20,8 @@ import {
   Calendar
 } from "lucide-react";
 import { format } from "date-fns";
-import SessionRatingModal from "@/components/SessionRatingModal";
-import UserProfileEditor from "@/components/UserProfileEditor";
+import SessionRatingModal from "@/components/parents/SessionRatingModal";
+import UserProfileEditor from "@/components/parents/UserProfileEditor";
 import Footer from "@/components/Footer";
 import { useLocation } from "react-router-dom";
 
