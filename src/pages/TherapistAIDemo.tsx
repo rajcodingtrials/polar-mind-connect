@@ -34,25 +34,25 @@ const TherapistAIDemo = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       {/* Top Banner: Client Preview Mode */}
-      <div className="sticky top-0 z-50 bg-blue-600 text-white shadow-lg">
+      <div className="sticky top-0 z-50 shadow-lg" style={{ backgroundColor: '#6A727C' }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/therapist-dashboard')}
-              className="text-white hover:bg-blue-700 hover:text-white"
+              className="text-white hover:bg-white/10 hover:text-white"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
             <div className="h-6 w-px bg-white/30" />
             <div className="flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              <span className="font-medium">Client Preview Mode</span>
+              <Info className="h-5 w-5 text-white" />
+              <span className="font-medium text-white">Client Preview Mode</span>
             </div>
           </div>
-          <div className="text-sm opacity-90">
+          <div className="text-sm text-white opacity-90">
             You're experiencing the AI as your clients would
           </div>
         </div>
