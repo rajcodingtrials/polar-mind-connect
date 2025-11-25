@@ -169,24 +169,16 @@ const HowToAddLessons = () => {
                     <span><code className="bg-slate-100 px-1 rounded">question_text</code> - The text to show at the top of the question above the image.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-slate-100 px-1 rounded">answer</code> - The correct answer. If this field is non-empty, a microphone is shown to collect the child's answer and the AI agent will verify if it is correct.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
                     <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <span><code className="bg-slate-100 px-1 rounded">question_speech</code> - The speech that is read by the AI agent to the child.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-slate-100 px-1 rounded">description_text</code> or <code className="bg-slate-100 px-1 rounded">description</code> - Question description.</span>
+                    <span><code className="bg-slate-100 px-1 rounded">description_text</code> - Question description text to show below the question image in smaller font.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-slate-100 px-1 rounded">answer_index</code> - Index of correct answer (0-based). If the answer field is empty and answer_index has a value greater than or equal to zero, a tap and play question is created by making the different choice images clickable. When the child clicks one of those choice images, the AI agent will verify if the choice clicked is correct and gives feedback to the child. If answer is empty and answer_index is negative, after the question speech is read by the AI agent, the next question is shown. This option is useful to show scenes without questions in story time questions.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-slate-100 px-1 rounded">question_image</code> - Path to question image file (relative to lesson folder).</span>
+                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span><code className="bg-slate-100 px-1 rounded">answer</code> - The correct answer. If this field is non-empty, a microphone is shown to collect the child's answer and the AI agent will verify if it is correct.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -195,6 +187,14 @@ const HowToAddLessons = () => {
                   <li className="flex items-start gap-2">
                     <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <span><code className="bg-slate-100 px-1 rounded">choices_image</code> - Array or comma-separated string of image file paths.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span><code className="bg-slate-100 px-1 rounded">answer_index</code> - Index of correct answer (0-based). If the answer field is empty and answer_index has a value greater than or equal to zero, a tap and play question is created by making the different choice images clickable. When the child clicks one of those choice images, the AI agent will verify if the choice clicked is correct and gives feedback to the child. If answer is empty and answer_index is negative, after the question speech is read by the AI agent, the next question is shown. This option is useful to show scenes without questions in story time questions.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span><code className="bg-slate-100 px-1 rounded">question_image</code> - Path to question image file (relative to lesson folder).</span>
                   </li>
                 </ul>
               </div>
