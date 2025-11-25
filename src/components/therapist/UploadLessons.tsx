@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, FolderOpen, AlertCircle } from 'lucide-react';
+import { Upload, FolderOpen, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -28,6 +28,8 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successCount, setSuccessCount] = useState(0);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState({
     step: 'idle' as 'idle' | 'verifying' | 'uploading',
@@ -563,13 +565,10 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
 
       // Show results
       if (successCount > 0 && allErrors.length === 0) {
-        uiToast({
-          title: "Success",
-          description: `Successfully uploaded ${successCount} lesson(s)`,
-        });
+        setSuccessCount(successCount);
+        setShowSuccessDialog(true);
         setDirectoryPath("");
         setSelectedFiles([]);
-        onOpenChange(false);
       } else if (allErrors.length > 0) {
         // Show error dialog with all errors
         setErrorMessages(allErrors);
@@ -693,6 +692,43 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isUploading}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle2 className="w-5 h-5" />
+              Upload Successful
+            </DialogTitle>
+            <DialogDescription>
+              Your lessons have been uploaded successfully
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-800 font-medium">
+                Successfully uploaded {successCount} lesson(s)
+              </p>
+            </div>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800">
+                <strong>Important:</strong> Your lessons will appear in the lesson plan only after an admin reviews and approves them. Please wait for the review process to complete.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              onClick={() => {
+                setShowSuccessDialog(false);
+                onOpenChange(false);
+              }}
+            >
+              OK
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -28,6 +28,7 @@ import FooterDemo from "./pages/FooterDemo";
 import EmailTemplatePreview from "./pages/EmailTemplatePreview";
 import EmailTemplatesPreview from "./pages/EmailTemplatesPreview";
 import LessonsMarketPlace from "./pages/LessonsMarketPlace";
+import HowToAddLessons from "./pages/HowToAddLessons";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -95,6 +96,7 @@ function App() {
           <Route path="/email-preview" element={<EmailTemplatePreview />} />
           <Route path="/email-templates-preview" element={<EmailTemplatesPreview />} />
               <Route path="/lessons-marketplace" element={<LessonsMarketPlace />} />
+              <Route path="/how-to-add-lessons" element={<HowToAddLessons />} />
             </Routes>
           </TooltipProvider>
         </AuthProvider>

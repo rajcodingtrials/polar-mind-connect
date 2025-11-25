@@ -13,7 +13,8 @@ import { ProfileHeader } from "@/components/therapist/ProfileHeader";
 import { PersonalInformation } from "@/components/therapist/PersonalInformation";
 import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails";
 import { TherapistDocuments } from "@/components/therapist/TherapistDocuments";
-import { Shield, LogOut, Upload } from "lucide-react";
+import { Shield, LogOut, Upload, HelpCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import UploadLessons from "@/components/therapist/UploadLessons";
 
@@ -193,7 +194,7 @@ const TherapistMyProfile = () => {
                   Upload Lessons
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Button
                   onClick={() => setShowUploadDialog(true)}
                   className="w-full"
@@ -201,6 +202,15 @@ const TherapistMyProfile = () => {
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Lessons from Directory
                 </Button>
+                <div className="text-center">
+                  <Link
+                    to="/how-to-add-lessons"
+                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                    Learn how to add new lessons
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           )}
