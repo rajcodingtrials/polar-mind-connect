@@ -55,22 +55,11 @@ const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentI
       if (data?.checkout_url) {
         console.log("Attempting redirect to:", data.checkout_url);
         
-        // Try opening in new window first (less likely to be blocked)
-        const stripeWindow = window.open(data.checkout_url, '_self');
+        // Store URL for fallback
+        setFallbackUrl(data.checkout_url);
         
-        // Fallback to location.href if window.open fails
-        if (!stripeWindow) {
-          console.log("window.open blocked, trying location.href");
-          window.location.href = data.checkout_url;
-        }
-        
-        // Show fallback URL after 3 seconds if still processing
-        setTimeout(() => {
-          if (isProcessing) {
-            console.log("Showing fallback URL");
-            setFallbackUrl(data.checkout_url);
-          }
-        }, 3000);
+        // Redirect to Stripe Checkout
+        window.location.href = data.checkout_url;
       } else {
         throw new Error("No checkout URL received");
       }
