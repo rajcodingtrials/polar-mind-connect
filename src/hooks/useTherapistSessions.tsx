@@ -81,7 +81,10 @@ export const useTherapistSessions = (therapistId: string | null) => {
         
         const upcoming = allSessions?.filter(session => {
           const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
-          return sessionEndDateTime >= now && ['confirmed', 'pending'].includes(session.status);
+          // Only show confirmed sessions or pending sessions with completed payment
+          return sessionEndDateTime >= now && 
+                 (session.status === 'confirmed' || 
+                  (session.status === 'pending' && session.payment_status === 'completed'));
         }).sort((a, b) => {
           // Sort upcoming by date and start time ascending (earliest first)
           const dateA = new Date(`${a.session_date}T${a.start_time}`);
