@@ -653,8 +653,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           // Fixed dimensions for all choice images to ensure consistent sizing
           // If both question_image and choices_image are present: smaller size, otherwise larger
           const imageSize = hasQuestionImage 
-            ? 'w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] md:w-[180px] md:h-[180px]' 
-            : 'w-[150px] h-[150px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px]';
+            ? 'w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] md:w-[260px] md:h-[260px] lg:w-[300px] lg:h-[300px]' 
+            : 'w-[220px] h-[220px] sm:w-[260px] sm:h-[260px] md:w-[320px] md:h-[320px] lg:w-[380px] lg:h-[380px]';
           
           return (
             <div className="flex flex-row gap-2 sm:gap-4 mb-6 sm:mb-8 justify-center items-center flex-wrap px-4">
