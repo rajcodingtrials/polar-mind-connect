@@ -82,22 +82,110 @@ const handler = async (req: Request): Promise<Response> => {
           console.error("Error updating payment:", paymentError);
         }
 
-        // Update therapy session status
+        // Update therapy session status and send confirmation emails
         const sessionId = session.metadata?.session_id;
         if (sessionId) {
-          const { error: sessionError } = await supabase
+          // Fetch session details
+          const { data: sessionData, error: fetchError } = await supabase
             .from("therapy_sessions")
-            .update({
-              payment_status: "completed",
-              status: "confirmed",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", sessionId);
+            .select(`
+              *,
+              therapists (
+                id,
+                first_name,
+                last_name,
+                timezone,
+                email
+              ),
+              profiles:client_id (
+                email,
+                name
+              )
+            `)
+            .eq("id", sessionId)
+            .single();
 
-          if (sessionError) {
-            console.error("Error updating therapy session:", sessionError);
+          if (fetchError) {
+            console.error("Error fetching session:", fetchError);
           } else {
-            console.log("Therapy session confirmed:", sessionId);
+            // Update session status
+            const { error: sessionError } = await supabase
+              .from("therapy_sessions")
+              .update({
+                payment_status: "completed",
+                status: "confirmed",
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", sessionId);
+
+            if (sessionError) {
+              console.error("Error updating therapy session:", sessionError);
+            } else {
+              console.log("Therapy session confirmed:", sessionId);
+
+              // Create Zoom meeting
+              try {
+                const { data: zoomData, error: zoomError } = await supabase.functions.invoke('create-zoom-meeting', {
+                  body: {
+                    sessionId: sessionId,
+                    sessionDate: sessionData.session_date,
+                    startTime: sessionData.start_time,
+                    durationMinutes: sessionData.duration_minutes,
+                    therapistName: `${sessionData.therapists.first_name} ${sessionData.therapists.last_name}`,
+                    clientName: sessionData.profiles?.name || sessionData.profiles?.email || 'Client',
+                    timezone: sessionData.therapists.timezone || 'UTC',
+                  }
+                });
+
+                if (zoomError) {
+                  console.error("Error creating Zoom meeting:", zoomError);
+                } else {
+                  console.log("Zoom meeting created:", zoomData);
+                }
+              } catch (zoomErr) {
+                console.error("Zoom meeting creation failed:", zoomErr);
+              }
+
+              // Send booking confirmation email to client
+              try {
+                await supabase.functions.invoke('send-booking-confirmation', {
+                  body: {
+                    sessionId: sessionId,
+                    clientEmail: sessionData.profiles?.email || '',
+                    clientName: sessionData.profiles?.name || sessionData.profiles?.email || '',
+                    therapistName: `${sessionData.therapists.first_name} ${sessionData.therapists.last_name}`,
+                    sessionDate: sessionData.session_date,
+                    sessionTime: sessionData.start_time,
+                    duration: sessionData.duration_minutes,
+                    sessionType: sessionData.session_type,
+                    price: sessionData.price_paid,
+                  }
+                });
+                console.log("Booking confirmation email sent to client");
+              } catch (emailErr) {
+                console.error("Error sending client email:", emailErr);
+              }
+
+              // Send notification email to therapist
+              try {
+                await supabase.functions.invoke('send-therapist-notification', {
+                  body: {
+                    sessionId: sessionId,
+                    therapistId: sessionData.therapists.id,
+                    clientName: sessionData.profiles?.name || sessionData.profiles?.email || 'New Client',
+                    sessionDate: sessionData.session_date,
+                    sessionTime: sessionData.start_time,
+                    duration: sessionData.duration_minutes,
+                    sessionType: sessionData.session_type,
+                    amount: sessionData.price_paid,
+                    clientNotes: sessionData.client_notes,
+                  }
+                });
+                console.log("Therapist notification email sent");
+              } catch (emailErr) {
+                console.error("Error sending therapist email:", emailErr);
+              }
+            }
           }
         }
         break;
