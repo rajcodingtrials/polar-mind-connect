@@ -1048,13 +1048,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_booked_slots: {
-        Args: { _session_date: string; _therapist_id: string }
-        Returns: {
-          end_time: string
-          start_time: string
-        }[]
-      }
+      get_booked_slots:
+        | {
+            Args: { _session_date: string; _therapist_id: string }
+            Returns: {
+              end_time: string
+              start_time: string
+            }[]
+          }
+        | {
+            Args: { _session_date: string; _therapist_id: string }
+            Returns: {
+              end_time: string
+              start_time: string
+            }[]
+          }
       get_default_lessons: { Args: never; Returns: string }
       has_role: {
         Args: {
