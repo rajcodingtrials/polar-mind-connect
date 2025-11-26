@@ -15,6 +15,7 @@ interface PaymentIntegrationProps {
 
 const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentIntegrationProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handlePayment = async () => {
@@ -48,9 +49,28 @@ const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentI
 
       if (error) throw error;
 
+      console.log("Full Stripe response:", data);
+      console.log("Checkout URL:", data?.checkout_url);
+
       if (data?.checkout_url) {
-        // Redirect to Stripe Checkout
-        window.location.href = data.checkout_url;
+        console.log("Attempting redirect to:", data.checkout_url);
+        
+        // Try opening in new window first (less likely to be blocked)
+        const stripeWindow = window.open(data.checkout_url, '_self');
+        
+        // Fallback to location.href if window.open fails
+        if (!stripeWindow) {
+          console.log("window.open blocked, trying location.href");
+          window.location.href = data.checkout_url;
+        }
+        
+        // Show fallback URL after 3 seconds if still processing
+        setTimeout(() => {
+          if (isProcessing) {
+            console.log("Showing fallback URL");
+            setFallbackUrl(data.checkout_url);
+          }
+        }, 3000);
       } else {
         throw new Error("No checkout URL received");
       }
@@ -104,8 +124,22 @@ const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentI
               size="lg"
             >
               <CreditCard className="h-4 w-4 mr-2" />
-              {isProcessing ? "Processing..." : `Pay $${(amount + 2.99).toFixed(2)}`}
+              {isProcessing ? "Redirecting to Stripe..." : `Pay $${(amount + 2.99).toFixed(2)}`}
             </Button>
+            
+            {fallbackUrl && (
+              <div className="text-center text-sm">
+                <p className="text-muted-foreground mb-2">Not redirected automatically?</p>
+                <Button 
+                  onClick={() => window.open(fallbackUrl, '_blank')}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  Click here to complete payment
+                </Button>
+              </div>
+            )}
             
             <Button 
               variant="outline" 
