@@ -113,12 +113,12 @@ const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: Ther
 
             {/* CTA Buttons */}
             <div className="space-y-2">
-              <Button
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 shadow-sm hover:shadow-md"
-                onClick={() => onViewProfile(therapist)}
-              >
-                View Profile
-              </Button>
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+              onClick={() => onViewProfile(therapist)}
+            >
+              View Profile
+            </Button>
               {onBookSession && (
                 <Button
                   variant="outline"

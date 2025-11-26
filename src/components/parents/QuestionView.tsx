@@ -616,9 +616,9 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         {questionImageUrl && (() => {
           const hasChoices = choiceImageUrls.length > 0;
           // Responsive heights: smaller on mobile, larger on desktop
-          // If both question_image and choices_image are present: 50vh, otherwise 80vh
+          // If both question_image and choices_image are present: 50vh on iPad+, otherwise 80vh
           const imageHeight = hasChoices 
-            ? 'h-[250px] sm:h-[300px] md:h-[400px] lg:h-[50vh]' 
+            ? 'h-[250px] sm:h-[300px] md:h-[50vh]' 
             : 'h-[300px] sm:h-[400px] md:h-[500px] lg:h-[80vh]';
           
           return (
@@ -627,7 +627,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                 <img
                   src={questionImageUrl}
                   alt="Question"
-                  className={`w-full object-cover rounded-2xl sm:rounded-3xl ${imageHeight}`}
+                  className={`w-full object-contain rounded-2xl sm:rounded-3xl ${imageHeight}`}
                   onError={(e) => {
                     console.error('Error loading question image:', questionImageUrl);
                     e.currentTarget.style.display = 'none';
@@ -650,14 +650,14 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         {/* Choices (if choices_image is present) */}
         {choiceImageUrls.length > 0 && (() => {
           const hasQuestionImage = !!questionImageUrl;
-          // Fixed dimensions for all choice images to ensure consistent sizing
-          // If both question_image and choices_image are present: smaller size, otherwise larger
+          // Use viewport height percentages: 30vh when question_image exists, 80vh when only choices
+          // On mobile/tablet use fixed sizes, on iPad+ (md) use viewport heights
           const imageSize = hasQuestionImage 
-            ? 'w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] md:w-[340px] md:h-[340px] lg:w-[400px] lg:h-[400px]' 
-            : 'w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] md:w-[420px] md:h-[420px] lg:w-[500px] lg:h-[500px]';
+            ? 'w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] md:w-auto md:h-[30vh]' 
+            : 'w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] md:w-auto md:h-[80vh]';
           
           return (
-            <div className="flex flex-row gap-2 sm:gap-4 mb-6 sm:mb-8 justify-center items-center flex-wrap px-4">
+            <div className="flex flex-row gap-2 sm:gap-4 mb-6 sm:mb-8 justify-center items-center flex-wrap md:flex-nowrap px-4">
               {choiceImageUrls.map((imageUrl, index) => {
                 const isSelected = selectedChoiceIndex === index;
                 const isCorrectChoice = question.answer_index !== null && index === question.answer_index;
@@ -670,7 +670,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                     onClick={() => isClickable && handleChoiceClick(index)}
                     disabled={isProcessingAnswer || hasCalledCorrectAnswer || !isClickable}
                     className={`
-                      relative p-4 rounded-xl border-4 transition-all duration-300 overflow-hidden
+                      relative p-4 rounded-xl border-4 transition-all duration-300 overflow-hidden flex-shrink
                       ${isSelected && isCorrectChoice ? 'border-green-500 bg-green-50' : ''}
                       ${isSelected && !isCorrectChoice ? 'border-red-500 bg-red-50' : ''}
                       ${!isSelected ? 'border-blue-200 bg-white hover:border-blue-400 hover:shadow-lg' : ''}
@@ -682,7 +682,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                       src={imageUrl}
                       alt={`Choice ${index + 1}`}
                       className={`
-                        ${imageSize} object-cover rounded-xl sm:rounded-2xl transition-transform duration-300
+                        ${imageSize} object-contain rounded-xl sm:rounded-2xl transition-transform duration-300
                         ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group-hover:scale-125' : ''}
                       `}
                     />
