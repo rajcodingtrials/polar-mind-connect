@@ -19,55 +19,79 @@ const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentI
   const { toast } = useToast();
 
   const handlePayment = async () => {
+    console.log("🔵 handlePayment called");
+    console.log("Session ID:", sessionId);
+    console.log("Amount:", amount);
+    
     setIsProcessing(true);
+    console.log("🔵 isProcessing set to true");
     
     try {
+      console.log("🔵 Getting user...");
       const { data: { user } } = await supabase.auth.getUser();
+      console.log("🔵 User:", user?.email);
+      
       if (!user) {
         throw new Error("User not authenticated");
       }
 
       // Calculate amount in cents
       const totalAmount = Math.round((amount + 2.99) * 100);
+      console.log("🔵 Total amount in cents:", totalAmount);
       
       const baseUrl = window.location.origin;
+      console.log("🔵 Base URL:", baseUrl);
       
-      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
-        body: {
-          amount: totalAmount,
-          currency: "usd",
-          description: `Therapy Session - Session ID: ${sessionId.slice(0, 8)}`,
-          customer_email: user.email,
-          success_url: `${baseUrl}/payment-success?session_id=${sessionId}`,
-          cancel_url: `${baseUrl}/payment-cancelled?session_id=${sessionId}`,
-          metadata: {
-            user_id: user.id,
-            session_id: sessionId,
-          }
+      const requestBody = {
+        amount: totalAmount,
+        currency: "usd",
+        description: `Therapy Session - Session ID: ${sessionId.slice(0, 8)}`,
+        customer_email: user.email,
+        success_url: `${baseUrl}/payment-success?session_id=${sessionId}`,
+        cancel_url: `${baseUrl}/payment-cancelled?session_id=${sessionId}`,
+        metadata: {
+          user_id: user.id,
+          session_id: sessionId,
         }
+      };
+      console.log("🔵 Request body:", requestBody);
+      
+      console.log("🔵 Calling create-stripe-checkout edge function...");
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: requestBody
       });
+      console.log("🔵 Edge function response received");
+      console.log("🔵 Data:", data);
+      console.log("🔵 Error:", error);
 
-      if (error) throw error;
+      if (error) {
+        console.error("🔴 Edge function error:", error);
+        throw error;
+      }
 
-      console.log("Full Stripe response:", data);
-      console.log("Checkout URL:", data?.checkout_url);
+      console.log("🔵 Full Stripe response:", data);
+      console.log("🔵 Checkout URL:", data?.checkout_url);
 
       if (data?.checkout_url) {
-        console.log("Attempting redirect to:", data.checkout_url);
+        console.log("🔵 Attempting redirect to:", data.checkout_url);
         
         // Store URL for fallback
         setFallbackUrl(data.checkout_url);
+        console.log("🔵 Fallback URL set");
         
         // Redirect to Stripe Checkout
+        console.log("🔵 Redirecting via window.location.href...");
         window.location.href = data.checkout_url;
+        console.log("🔵 Redirect initiated");
       } else {
+        console.error("🔴 No checkout URL in response");
         throw new Error("No checkout URL received");
       }
     } catch (error) {
-      console.error("Payment error:", error);
+      console.error("🔴 Payment error:", error);
       toast({
         title: "Payment Failed",
-        description: "There was an issue processing your payment. Please try again.",
+        description: error instanceof Error ? error.message : "There was an issue processing your payment. Please try again.",
         variant: "destructive",
       });
       setIsProcessing(false);
