@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CreditCard, Shield, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentIntegrationProps {
   sessionId: string;
@@ -20,20 +21,39 @@ const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentI
     setIsProcessing(true);
     
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Calculate amount in cents
+      const totalAmount = Math.round((amount + 2.99) * 100);
       
-      // In a real implementation, this would integrate with Stripe
-      // const response = await supabase.functions.invoke('create-payment', {
-      //   body: { sessionId, amount }
-      // });
+      const baseUrl = window.location.origin;
       
-      toast({
-        title: "Payment Successful!",
-        description: "Your therapy session has been booked and confirmed.",
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: {
+          amount: totalAmount,
+          currency: "usd",
+          description: `Therapy Session - Session ID: ${sessionId.slice(0, 8)}`,
+          customer_email: user.email,
+          success_url: `${baseUrl}/payment-success?session_id=${sessionId}`,
+          cancel_url: `${baseUrl}/payment-cancelled?session_id=${sessionId}`,
+          metadata: {
+            user_id: user.id,
+            session_id: sessionId,
+          }
+        }
       });
-      
-      onSuccess();
+
+      if (error) throw error;
+
+      if (data?.checkout_url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.checkout_url;
+      } else {
+        throw new Error("No checkout URL received");
+      }
     } catch (error) {
       console.error("Payment error:", error);
       toast({
@@ -41,7 +61,6 @@ const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentI
         description: "There was an issue processing your payment. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsProcessing(false);
     }
   };
