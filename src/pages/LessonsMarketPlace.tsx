@@ -17,6 +17,9 @@ interface Lesson {
   question_type: QuestionType;
   level: string;
   publish_to_marketplace: boolean;
+  price: number;
+  num_reviews: number;
+  average_review: number;
 }
 
 interface LessonStyle {
@@ -32,6 +35,9 @@ const LessonsMarketPlace: React.FC = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [filteredLessons, setFilteredLessons] = useState<Lesson[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedQuestionType, setSelectedQuestionType] = useState<string>('all');
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [addingLesson, setAddingLesson] = useState<string | null>(null);
 
@@ -74,7 +80,7 @@ const LessonsMarketPlace: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('lessons_v2')
-          .select('id, name, description, question_type, level, publish_to_marketplace')
+          .select('id, name, description, question_type, level, publish_to_marketplace, price, num_reviews, average_review')
           .eq('publish_to_marketplace', true)
           .eq('is_verified', true)
           .order('name');
@@ -100,20 +106,42 @@ const LessonsMarketPlace: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredLessons(lessons);
-      return;
+    let filtered = lessons;
+
+    // Apply text search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(lesson => 
+        lesson.name.toLowerCase().includes(query) ||
+        (lesson.description && lesson.description.toLowerCase().includes(query)) ||
+        lesson.question_type.toLowerCase().includes(query) ||
+        lesson.level.toLowerCase().includes(query) ||
+        lesson.price.toString().includes(query)
+      );
     }
 
-    const query = searchQuery.toLowerCase();
-    const filtered = lessons.filter(lesson => 
-      lesson.name.toLowerCase().includes(query) ||
-      (lesson.description && lesson.description.toLowerCase().includes(query)) ||
-      lesson.question_type.toLowerCase().includes(query) ||
-      lesson.level.toLowerCase().includes(query)
-    );
+    // Apply question type filter
+    if (selectedQuestionType !== 'all') {
+      filtered = filtered.filter(lesson => lesson.question_type === selectedQuestionType);
+    }
+
+    // Apply price filters
+    if (minPrice.trim()) {
+      const min = parseFloat(minPrice);
+      if (!isNaN(min)) {
+        filtered = filtered.filter(lesson => lesson.price >= min);
+      }
+    }
+
+    if (maxPrice.trim()) {
+      const max = parseFloat(maxPrice);
+      if (!isNaN(max)) {
+        filtered = filtered.filter(lesson => lesson.price <= max);
+      }
+    }
+
     setFilteredLessons(filtered);
-  }, [searchQuery, lessons]);
+  }, [searchQuery, selectedQuestionType, minPrice, maxPrice, lessons]);
 
   const getLessonStyle = (index: number): LessonStyle => {
     return lessonStyles[index % lessonStyles.length];
@@ -130,6 +158,26 @@ const LessonsMarketPlace: React.FC = () => {
     beginner: '⭐', 
     intermediate: '⭐⭐', 
     advanced: '⭐⭐⭐' 
+  };
+
+  const renderStars = (rating: number) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return (
+      <span className="flex items-center gap-0.5">
+        {Array.from({ length: fullStars }).map((_, i) => (
+          <span key={`full-${i}`} className="text-yellow-400">★</span>
+        ))}
+        {hasHalfStar && (
+          <span className="text-yellow-400">★</span>
+        )}
+        {Array.from({ length: emptyStars }).map((_, i) => (
+          <span key={`empty-${i}`} className="text-gray-300">★</span>
+        ))}
+      </span>
+    );
   };
 
   const handleLessonClick = async (lessonId: string) => {
@@ -231,17 +279,76 @@ const LessonsMarketPlace: React.FC = () => {
             <p className="text-sm sm:text-base lg:text-lg text-gray-600">Discover and explore lessons from our community</p>
           </div>
 
-          {/* Search Bar */}
-          <div className="mb-6 sm:mb-8">
+          {/* Search and Filter Section */}
+          <div className="mb-6 sm:mb-8 space-y-4">
+            {/* Search Bar */}
             <div className="relative max-w-2xl w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
-                placeholder="Search lessons..."
+                placeholder="Search lessons by name, description, or price..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
               />
+            </div>
+
+            {/* Filters Row */}
+            <div className="flex flex-col sm:flex-row gap-4 max-w-2xl">
+              {/* Question Type Filter */}
+              <div className="flex-1">
+                <label htmlFor="question-type-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                  Question Type
+                </label>
+                <select
+                  id="question-type-filter"
+                  value={selectedQuestionType}
+                  onChange={(e) => setSelectedQuestionType(e.target.value)}
+                  className="w-full px-3 py-2 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-white"
+                >
+                  <option value="all">All Types</option>
+                  <option value="first_words">First Words</option>
+                  <option value="question_time">Question Time</option>
+                  <option value="build_sentence">Build Sentence</option>
+                  <option value="lets_chat">Lets Chat</option>
+                  <option value="tap_and_play">Tap And Play</option>
+                  <option value="story_activity">Story Activity</option>
+                </select>
+              </div>
+
+              {/* Price Filters */}
+              <div className="flex gap-2 sm:gap-3">
+                <div className="flex-1 min-w-[100px]">
+                  <label htmlFor="min-price" className="block text-sm font-medium text-gray-700 mb-1">
+                    Min Price
+                  </label>
+                  <input
+                    id="min-price"
+                    type="number"
+                    placeholder="Min"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  />
+                </div>
+                <div className="flex-1 min-w-[100px]">
+                  <label htmlFor="max-price" className="block text-sm font-medium text-gray-700 mb-1">
+                    Max Price
+                  </label>
+                  <input
+                    id="max-price"
+                    type="number"
+                    placeholder="Max"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -290,6 +397,18 @@ const LessonsMarketPlace: React.FC = () => {
                             </span>
                             <span className="text-xs opacity-70">
                               {difficultyIcons[lesson.level] || '⭐'} {lesson.level}
+                            </span>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className="text-sm font-semibold">
+                                {lesson.average_review.toFixed(1)}
+                              </span>
+                              {renderStars(lesson.average_review)}
+                              <span className="text-xs opacity-70">
+                                ({lesson.num_reviews})
+                              </span>
+                            </div>
+                            <span className="text-sm font-bold">
+                              ${lesson.price.toFixed(2)}
                             </span>
                           </div>
                         </div>
