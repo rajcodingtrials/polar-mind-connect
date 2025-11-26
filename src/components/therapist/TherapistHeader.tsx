@@ -27,28 +27,17 @@ const TherapistHeader = () => {
   }, [profile]);
 
   // Helper for menu icons - memoized to prevent recreation
-  const NavItem = React.memo(({ to, icon, label, isActive }: { to: string; icon: React.ReactNode; label: string; isActive?: boolean }) => {
-    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-      // Prevent navigation if already on the same route to avoid flickering
-      if (location.pathname === to) {
-        e.preventDefault();
-        return false;
-      }
-    };
-
-    return (
-      <Link 
-        to={to} 
-        className={`flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-white/10 ${
-          isActive ? 'text-white' : ''
-        }`}
-        onClick={handleClick}
-      >
-        {icon}
-        <span className="text-xs">{label}</span>
-      </Link>
-    );
-  });
+  const NavItem = React.memo(({ to, icon, label, isActive }: { to: string; icon: React.ReactNode; label: string; isActive?: boolean }) => (
+    <Link 
+      to={to} 
+      className={`flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-white/10 ${
+        isActive ? 'text-white' : ''
+      }`}
+    >
+      {icon}
+      <span className="text-xs">{label}</span>
+    </Link>
+  ));
 
   NavItem.displayName = 'NavItem';
 

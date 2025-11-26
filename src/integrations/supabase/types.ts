@@ -995,6 +995,7 @@ export type Database = {
           start_time: string
         }[]
       }
+      get_default_lessons: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
