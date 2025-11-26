@@ -56,27 +56,34 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create Stripe Checkout Session
+    // Create Stripe Checkout Session with line_items
+    const params = new URLSearchParams({
+      "payment_method_types[]": "card",
+      "mode": "payment",
+      "success_url": success_url,
+      "cancel_url": cancel_url,
+      "line_items[0][price_data][currency]": currency,
+      "line_items[0][price_data][unit_amount]": amount.toString(),
+      "line_items[0][price_data][product_data][name]": description,
+      "line_items[0][quantity]": "1",
+    });
+
+    if (customer_email) {
+      params.append("customer_email", customer_email);
+    }
+
+    // Add metadata
+    Object.entries(metadata).forEach(([key, value]) => {
+      params.append(`metadata[${key}]`, value);
+    });
+
     const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${stripeSecretKey}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({
-        "payment_method_types[]": "card",
-        "mode": "payment",
-        "amount": amount.toString(),
-        "currency": currency,
-        "description": description,
-        "success_url": success_url,
-        "cancel_url": cancel_url,
-        ...(customer_email && { "customer_email": customer_email }),
-        ...Object.entries(metadata).reduce((acc, [key, value]) => {
-          acc[`metadata[${key}]`] = value;
-          return acc;
-        }, {} as Record<string, string>),
-      }),
+      body: params,
     });
 
     if (!stripeResponse.ok) {
