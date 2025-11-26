@@ -9,11 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Video, Calendar } from "lucide-react";
+import { Video, Calendar, CheckCircle2 } from "lucide-react";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import AffirmationCard from "@/components/parents/AffirmationCard";
 import AILearningAdventure_v2 from "@/components/parents/AILearningAdventure_v2";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 const ParentHome = () => {
   const { isAuthenticated, user } = useAuth();
@@ -23,12 +24,36 @@ const ParentHome = () => {
   const { upcomingSessions, completedSessions, loading: sessionsLoading } = useClientSessions(user?.id || null);
   const [activeTab, setActiveTab] = useState<"ai" | "human">("ai");
   const [selectedTherapist, setSelectedTherapist] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/", { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  // Check if user is a verified therapist
+  useEffect(() => {
+    const checkTherapistVerification = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("therapists")
+          .select("is_verified")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (!error && data) {
+          setIsVerified(data.is_verified || false);
+        }
+      } catch (error) {
+        console.error("Error checking therapist verification:", error);
+      }
+    };
+
+    checkTherapistVerification();
+  }, [user?.id]);
 
   // Reset selected therapist when navigating back from AILearningAdventure
   useEffect(() => {
@@ -292,8 +317,12 @@ const ParentHome = () => {
       <Header />
       <main className="flex-grow container mx-auto px-4 py-10">
         <div className="w-full space-y-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-slate-800">
-            Welcome, {profile?.name || profile?.username || "User"}!
+          <h1 className="text-4xl sm:text-5xl font-bold text-slate-800 flex items-center justify-center gap-2 flex-wrap">
+            <span>Welcome, {profile?.name || profile?.username || "User"}</span>
+            {isVerified && (
+              <CheckCircle2 className="h-8 w-8 sm:h-10 sm:w-10 text-blue-500 fill-blue-500" />
+            )}
+            <span>!</span>
           </h1>
           <AffirmationCard />
           <Card className="bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200 shadow-sm">

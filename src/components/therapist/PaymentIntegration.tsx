@@ -11,9 +11,11 @@ interface PaymentIntegrationProps {
   amount: number;
   onSuccess: () => void;
   onCancel: () => void;
+  type?: 'session' | 'lesson';
+  description?: string;
 }
 
-const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentIntegrationProps) => {
+const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel, type = 'session', description }: PaymentIntegrationProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
   const { toast } = useToast();
@@ -42,16 +44,21 @@ const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentI
       const baseUrl = window.location.origin;
       console.log("🔵 Base URL:", baseUrl);
       
+      const defaultDescription = type === 'lesson' 
+        ? `Lesson Purchase - Lesson ID: ${sessionId.slice(0, 8)}`
+        : `Therapy Session - Session ID: ${sessionId.slice(0, 8)}`;
+      
       const requestBody = {
         amount: totalAmount,
         currency: "usd",
-        description: `Therapy Session - Session ID: ${sessionId.slice(0, 8)}`,
+        description: description || defaultDescription,
         customer_email: user.email,
-        success_url: `${baseUrl}/payment-success?session_id=${sessionId}`,
-        cancel_url: `${baseUrl}/payment-cancelled?session_id=${sessionId}`,
+        success_url: `${baseUrl}/payment-success?${type === 'lesson' ? 'lesson_id' : 'session_id'}=${sessionId}`,
+        cancel_url: `${baseUrl}/payment-cancelled?${type === 'lesson' ? 'lesson_id' : 'session_id'}=${sessionId}`,
         metadata: {
           user_id: user.id,
-          session_id: sessionId,
+          [type === 'lesson' ? 'lesson_id' : 'session_id']: sessionId,
+          purchase_type: type,
         }
       };
       console.log("🔵 Request body:", requestBody);
@@ -104,12 +111,16 @@ const PaymentIntegration = ({ sessionId, amount, onSuccess, onCancel }: PaymentI
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-semibold">Payment Summary</h4>
-            <Badge variant="secondary">Session ID: {sessionId.slice(0, 8)}</Badge>
+            <Badge variant="secondary">
+              {type === 'lesson' ? 'Lesson' : 'Session'} ID: {sessionId.slice(0, 8)}
+            </Badge>
           </div>
           
           <div className="space-y-2 mb-4">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Session fee:</span>
+              <span className="text-muted-foreground">
+                {type === 'lesson' ? 'Lesson price:' : 'Session fee:'}
+              </span>
               <span>${amount}</span>
             </div>
             <div className="flex justify-between">

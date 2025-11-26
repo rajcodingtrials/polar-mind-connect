@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Clock, 
   DollarSign, 
@@ -36,6 +37,8 @@ interface Therapist {
   timezone: string;
   education: string;
   certification: string;
+  num_reviews?: number;
+  average_review?: number;
 }
 
 interface TherapistProfileModalProps {
@@ -55,16 +58,42 @@ const TherapistProfileModal = ({ therapist, isOpen, onClose }: TherapistProfileM
     setShowBooking(false);
   };
 
+  const displayRating = therapist.average_review !== undefined ? therapist.average_review : 0;
+  const displayReviewCount = therapist.num_reviews !== undefined ? therapist.num_reviews : 0;
+  const hasReviews = displayReviewCount > 0;
+
+  const renderStars = (ratingValue: number) => {
+    const fullStars = Math.floor(ratingValue);
+    const hasHalfStar = ratingValue % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return (
+      <span className="flex items-center gap-0.5">
+        {Array.from({ length: fullStars }).map((_, i) => (
+          <span key={`full-${i}`} className="text-yellow-400">★</span>
+        ))}
+        {hasHalfStar && (
+          <span className="text-yellow-400">★</span>
+        )}
+        {Array.from({ length: emptyStars }).map((_, i) => (
+          <span key={`empty-${i}`} className="text-gray-300">★</span>
+        ))}
+      </span>
+    );
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Therapist Profile</DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Therapist Profile</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-6">
+          <div className="space-y-6 p-6">
             {/* Header */}
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardContent className="pt-6">
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
                 <AvatarImage src={therapist.avatar_url} />
@@ -83,7 +112,7 @@ const TherapistProfileModal = ({ therapist, isOpen, onClose }: TherapistProfileM
                   )}
                 </div>
                 
-                <div className="flex items-center text-muted-foreground text-sm space-x-4">
+                    <div className="flex items-center text-muted-foreground text-sm space-x-4 flex-wrap gap-2">
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 mr-1" />
                     {therapist.years_experience || 0} years experience
@@ -94,26 +123,44 @@ const TherapistProfileModal = ({ therapist, isOpen, onClose }: TherapistProfileM
                       {therapist.timezone}
                     </div>
                   )}
+                      {hasReviews && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-slate-700">
+                            {displayRating.toFixed(1)}
+                          </span>
+                          {renderStars(displayRating)}
+                          <span className="text-xs text-slate-600">
+                            ({displayReviewCount})
+                          </span>
+                        </div>
+                      )}
                 </div>
               </div>
             </div>
+              </CardContent>
+            </Card>
 
             {/* Bio */}
             {therapist.bio && (
-              <div>
-                <h3 className="font-semibold mb-2">About</h3>
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-foreground">About</CardTitle>
+                </CardHeader>
+                <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
                   {therapist.bio}
                 </p>
-              </div>
+                </CardContent>
+              </Card>
             )}
-
-            <Separator />
 
             {/* Specializations */}
             {therapist.specializations && therapist.specializations.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3">Specializations</h3>
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-foreground">Specializations</CardTitle>
+                </CardHeader>
+                <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {therapist.specializations.map((spec) => (
                     <Badge key={spec} variant="outline">
@@ -121,16 +168,20 @@ const TherapistProfileModal = ({ therapist, isOpen, onClose }: TherapistProfileM
                     </Badge>
                   ))}
                 </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Languages */}
             {therapist.languages && therapist.languages.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center">
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-foreground flex items-center">
                   <Languages className="h-4 w-4 mr-2" />
                   Languages
-                </h3>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {therapist.languages.map((lang) => (
                     <Badge key={lang} variant="secondary">
@@ -138,10 +189,14 @@ const TherapistProfileModal = ({ therapist, isOpen, onClose }: TherapistProfileM
                     </Badge>
                   ))}
                 </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Education & Certification */}
+            {(therapist.education || therapist.certification) && (
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {therapist.education && (
                 <div>
@@ -167,15 +222,20 @@ const TherapistProfileModal = ({ therapist, isOpen, onClose }: TherapistProfileM
                 </div>
               )}
             </div>
-
-            <Separator />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Pricing */}
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center">
+            {(therapist.hourly_rate_30min || therapist.hourly_rate_60min) && (
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-foreground flex items-center">
                 <DollarSign className="h-4 w-4 mr-2" />
                 Session Rates
-              </h3>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {therapist.hourly_rate_30min && (
                   <div className="p-3 border rounded-lg">
@@ -194,10 +254,14 @@ const TherapistProfileModal = ({ therapist, isOpen, onClose }: TherapistProfileM
                   </div>
                 )}
               </div>
-            </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex gap-3">
               <Button onClick={handleBookingClick} className="flex-1">
                 <Calendar className="h-4 w-4 mr-2" />
                 Book Consultation
@@ -206,6 +270,8 @@ const TherapistProfileModal = ({ therapist, isOpen, onClose }: TherapistProfileM
                 Close
               </Button>
             </div>
+              </CardContent>
+            </Card>
           </div>
         </DialogContent>
       </Dialog>

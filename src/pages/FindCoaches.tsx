@@ -15,6 +15,8 @@ const FindCoaches = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [therapists, setTherapists] = useState<any[]>([]);
+  const [totalTherapists, setTotalTherapists] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialization, setSelectedSpecialization] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
@@ -22,6 +24,7 @@ const FindCoaches = () => {
 
   useEffect(() => {
     fetchTherapists();
+    fetchAllTherapistsStats();
   }, []);
 
   const fetchTherapists = async () => {
@@ -34,6 +37,36 @@ const FindCoaches = () => {
       setTherapists(data || []);
     } catch (error) {
       console.error("Error fetching therapists:", error);
+    }
+  };
+
+  const fetchAllTherapistsStats = async () => {
+    try {
+      // Fetch all therapists (not just active) to get total count and average rating
+      const { data, error } = await supabase
+        .from("therapists")
+        .select("average_review");
+      
+      if (error) throw error;
+      
+      const allTherapists = data || [];
+      setTotalTherapists(allTherapists.length);
+      
+      // Calculate average of all therapists' average_review values
+      if (allTherapists.length > 0) {
+        const validRatings = allTherapists
+          .map(t => t.average_review)
+          .filter(rating => rating !== null && rating !== undefined && !isNaN(Number(rating)))
+          .map(rating => Number(rating));
+        
+        if (validRatings.length > 0) {
+          const sum = validRatings.reduce((acc, rating) => acc + rating, 0);
+          const avg = sum / validRatings.length;
+          setAverageRating(avg);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching therapist stats:", error);
     }
   };
 
@@ -93,11 +126,11 @@ const FindCoaches = () => {
                 </div>
                 <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
                   <Users className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-slate-700">{therapists.length}+ Professionals</span>
+                  <span className="text-sm font-medium text-slate-700">{totalTherapists}+ Professionals</span>
                 </div>
                 <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
                   <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
-                  <span className="text-sm font-medium text-slate-700">4.9 Average Rating</span>
+                  <span className="text-sm font-medium text-slate-700">{averageRating.toFixed(1)} Average Rating</span>
                 </div>
                 <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
                   <Clock className="h-5 w-5 text-blue-600" />

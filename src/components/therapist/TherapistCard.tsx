@@ -87,15 +87,6 @@ const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: Ther
               {therapist.first_name?.[0]}{therapist.last_name?.[0]}
             </div>
             
-            {/* Verification Badge */}
-            {therapist.is_verified && (
-              <div className="absolute top-4 left-4">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-info text-info-foreground rounded-full text-xs font-medium shadow-sm border border-info/20">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Verified
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Card Footer */}
@@ -115,19 +106,26 @@ const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: Ther
             </div>
 
             {/* Rating */}
-            <div className="flex items-center gap-1.5 bg-slate-50 p-3 rounded-lg">
-              {hasReviews ? (
-                <>
-                  <span className="text-sm font-semibold text-slate-700">
-                    {displayRating.toFixed(1)}
-                  </span>
-                  {renderStars(displayRating)}
-                  <span className="text-xs text-slate-600">
-                    ({displayReviewCount})
-                  </span>
-                </>
-              ) : (
-                <span className="text-sm text-slate-600 italic">No reviews yet</span>
+            <div className="flex items-center justify-between gap-2 bg-slate-50 p-3 rounded-lg">
+              <div className="flex items-center gap-1.5">
+                {hasReviews ? (
+                  <>
+                    <span className="text-sm font-semibold text-slate-700">
+                      {displayRating.toFixed(1)}
+                    </span>
+                    {renderStars(displayRating)}
+                    <span className="text-xs text-slate-600">
+                      ({displayReviewCount})
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-sm text-slate-600 italic">No reviews yet</span>
+                )}
+              </div>
+              {therapist.is_verified && (
+                <div className="px-2 py-1 bg-blue-500 rounded text-white text-xs font-medium flex-shrink-0">
+                  verified
+                </div>
               )}
             </div>
 
@@ -159,14 +157,19 @@ const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: Ther
         <div className="space-y-4 pb-4 border-b border-slate-200">
           <div className="space-y-2">
             <div className="space-y-1">
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-700 leading-tight">
-                {therapist.first_name} {therapist.last_name}
-                {therapist.certification && (
-                  <span className="text-sm sm:text-base font-normal text-slate-600 ml-2">
-                    {therapist.certification}
-                  </span>
-                )}
-              </h2>
+              {/* Name */}
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-700 leading-tight">
+                  {therapist.first_name} {therapist.last_name}
+                </h2>
+              </div>
+              
+              {/* Certification/Degree */}
+              {therapist.certification && (
+                <p className="text-sm sm:text-base font-normal text-slate-600">
+                  {therapist.certification}
+                </p>
+              )}
               
               {/* Professional Headline */}
               {therapist.headline && (
@@ -188,24 +191,30 @@ const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: Ther
           </div>
 
           {/* Pricing */}
-          <div className="flex items-center gap-6">
-            <div className="bg-white p-4 rounded-lg border border-slate-200">
-              <div className="text-2xl font-bold text-slate-700">
-                ${therapist.hourly_rate_30min || 25}
-              </div>
-              <div className="text-xs text-slate-600 uppercase tracking-wide">
-                30 minutes
-              </div>
+          {(therapist.hourly_rate_30min || therapist.hourly_rate_60min) && (
+            <div className="flex items-center gap-6">
+              {therapist.hourly_rate_30min && (
+                <div className="bg-white p-4 rounded-lg border border-slate-200">
+                  <div className="text-2xl font-bold text-slate-700">
+                    ${therapist.hourly_rate_30min}
+                  </div>
+                  <div className="text-xs text-slate-600 uppercase tracking-wide">
+                    30 minutes
+                  </div>
+                </div>
+              )}
+              {therapist.hourly_rate_60min && (
+                <div className="bg-white p-4 rounded-lg border border-slate-200">
+                  <div className="text-2xl font-bold text-slate-700">
+                    ${therapist.hourly_rate_60min}
+                  </div>
+                  <div className="text-xs text-slate-600 uppercase tracking-wide">
+                    60 minutes
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="text-slate-600">
-              <div className="text-lg font-medium">
-                ${Math.round((therapist.hourly_rate_30min || 25) * 2)}
-              </div>
-              <div className="text-xs uppercase tracking-wide">
-                60 minutes
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
 

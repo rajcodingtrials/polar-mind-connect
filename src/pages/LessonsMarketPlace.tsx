@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import LessonPurchaseModal from '@/components/parents/LessonPurchaseModal';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -40,6 +41,7 @@ const LessonsMarketPlace: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [addingLesson, setAddingLesson] = useState<string | null>(null);
+  const [selectedLessonForPurchase, setSelectedLessonForPurchase] = useState<Lesson | null>(null);
 
   // Define style array similar to QuestionTypeCards
   const lessonStyles: LessonStyle[] = [
@@ -180,7 +182,7 @@ const LessonsMarketPlace: React.FC = () => {
     );
   };
 
-  const handleLessonClick = async (lessonId: string) => {
+  const handleLessonClick = async (lesson: Lesson) => {
     if (!user?.id) {
       toast({
         title: "Authentication Required",
@@ -189,6 +191,19 @@ const LessonsMarketPlace: React.FC = () => {
       });
       return;
     }
+
+    // If lesson has a price > 0, show purchase modal
+    if (lesson.price > 0) {
+      setSelectedLessonForPurchase(lesson);
+      return;
+    }
+
+    // Free lesson - add directly to profile
+    await addLessonToProfile(lesson.id);
+  };
+
+  const addLessonToProfile = async (lessonId: string) => {
+    if (!user?.id) return;
 
     setAddingLesson(lessonId);
     
@@ -258,6 +273,13 @@ const LessonsMarketPlace: React.FC = () => {
       });
     } finally {
       setAddingLesson(null);
+    }
+  };
+
+  const handlePurchaseSuccess = async () => {
+    if (selectedLessonForPurchase) {
+      await addLessonToProfile(selectedLessonForPurchase.id);
+      setSelectedLessonForPurchase(null);
     }
   };
 
@@ -378,7 +400,7 @@ const LessonsMarketPlace: React.FC = () => {
                     return (
                       <div
                         key={lesson.id}
-                        onClick={() => handleLessonClick(lesson.id)}
+                        onClick={() => handleLessonClick(lesson)}
                         className={`${style.color} ${style.textColor} rounded-xl p-4 sm:p-6 cursor-pointer border-3 transition-all duration-300 ease-out min-h-[240px] sm:h-[280px] flex flex-col items-center justify-center hover:shadow-xl hover:border-white ${addingLesson === lesson.id ? 'opacity-50 cursor-wait' : ''}`}
                       >
                         <div className="flex flex-col items-center justify-center text-center h-full w-full">
@@ -422,6 +444,15 @@ const LessonsMarketPlace: React.FC = () => {
         </div>
       </main>
       <Footer />
+      
+      {selectedLessonForPurchase && (
+        <LessonPurchaseModal
+          lesson={selectedLessonForPurchase}
+          isOpen={!!selectedLessonForPurchase}
+          onClose={() => setSelectedLessonForPurchase(null)}
+          onSuccess={handlePurchaseSuccess}
+        />
+      )}
     </div>
   );
 };
