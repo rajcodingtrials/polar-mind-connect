@@ -26,7 +26,8 @@ import {
   LogOut,
   Upload,
   FileText,
-  Video
+  Video,
+  CheckCircle2
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TherapistAvailabilityCalendar } from "@/components/therapist/TherapistAvailabilityCalendar";
@@ -257,8 +258,18 @@ const TherapistDashboard = () => {
         {/* Header Section */}
         <div className="text-center mb-8">
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-4xl sm:text-5xl font-bold text-slate-800">
-              {therapistProfile ? `Welcome back, ${therapistProfile.name}!` : "Welcome! Complete your profile to get started"}
+            <h1 className="text-4xl sm:text-5xl font-bold text-slate-800 flex items-center justify-center gap-2">
+              {therapistProfile ? (
+                <>
+                  Welcome back, {therapistProfile.name}
+                  {therapistProfile.is_verified && (
+                    <CheckCircle2 className="h-8 w-8 sm:h-10 sm:w-10 text-blue-500 fill-blue-500" />
+                  )}
+                  !
+                </>
+              ) : (
+                "Welcome! Complete your profile to get started"
+              )}
             </h1>
             <p className="text-muted-foreground text-base sm:text-lg">
               {therapistProfile 

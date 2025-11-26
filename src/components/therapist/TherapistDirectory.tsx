@@ -27,6 +27,8 @@ interface Therapist {
   certification: string;
   country: string;
   headline: string;
+  num_reviews?: number;
+  average_review?: number;
 }
 
 interface TherapistDirectoryProps {

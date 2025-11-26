@@ -273,7 +273,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('lessons_v2' as any)
-          .select('id, name, description, question_type, level, is_verified, youtube_video_id, created_at, updated_at')
+          .select('id, name, description, question_type, level, is_verified, youtube_video_id, created_at, updated_at, num_reviews, average_review')
           .eq('is_verified', true)
           .order('name');
 

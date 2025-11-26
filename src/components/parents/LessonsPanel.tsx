@@ -17,6 +17,8 @@ interface Lesson {
   description: string | null;
   question_type: QuestionType;
   level: string;
+  num_reviews?: number;
+  average_review?: number;
 }
 
 interface LessonsPanelProps {
@@ -46,6 +48,26 @@ const LessonsPanel: React.FC<LessonsPanelProps> = ({
   });
   
   const difficultyIcons = { beginner: '⭐', intermediate: '⭐⭐', advanced: '⭐⭐⭐' };
+
+  const renderStars = (rating: number) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return (
+      <span className="flex items-center gap-0.5">
+        {Array.from({ length: fullStars }).map((_, i) => (
+          <span key={`full-${i}`} className="text-yellow-400">★</span>
+        ))}
+        {hasHalfStar && (
+          <span className="text-yellow-400">★</span>
+        )}
+        {Array.from({ length: emptyStars }).map((_, i) => (
+          <span key={`empty-${i}`} className="text-gray-300">★</span>
+        ))}
+      </span>
+    );
+  };
 
   return (
     <div className={`${selectedType.color.replace('hover:bg-', 'bg-').replace('border-', '')} rounded-2xl shadow-xl border-3 border-white p-6 h-full relative overflow-y-auto`}>
@@ -88,10 +110,23 @@ const LessonsPanel: React.FC<LessonsPanelProps> = ({
                   {lesson.description && (
                     <p className="text-sm text-gray-600">{lesson.description}</p>
                   )}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-500">
-                      {difficultyIcons[lesson.level as keyof typeof difficultyIcons] || '⭐'} {lesson.level}
-                    </span>
+                  <div className="flex flex-col gap-1 mt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">
+                        {difficultyIcons[lesson.level as keyof typeof difficultyIcons] || '⭐'} {lesson.level}
+                      </span>
+                    </div>
+                    {lesson.average_review !== undefined && lesson.num_reviews !== undefined && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-gray-700">
+                          {lesson.average_review.toFixed(1)}
+                        </span>
+                        {renderStars(lesson.average_review)}
+                        <span className="text-xs text-gray-500">
+                          ({lesson.num_reviews})
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <span className="bg-white text-gray-700 px-3 py-1 rounded-full text-sm font-medium">

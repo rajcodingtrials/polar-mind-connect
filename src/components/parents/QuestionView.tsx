@@ -512,7 +512,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         </div>
 
         {/* Second Row: Control Buttons - Wrap on smaller screens */}
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4 lg:gap-6">
+        <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-4 lg:gap-6">
           {/* Speech Delay and Mic Boost - only show for questions with answer field */}
           {hasAnswerField && (
             <>

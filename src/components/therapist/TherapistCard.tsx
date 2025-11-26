@@ -22,6 +22,8 @@ interface Therapist {
   certification: string;
   country: string;
   headline: string;
+  num_reviews?: number;
+  average_review?: number;
 }
 
 interface TherapistRating {
@@ -38,13 +40,38 @@ interface TherapistCardProps {
 }
 
 const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: TherapistCardProps) => {
+  // Use therapist's own review fields if available, otherwise fall back to rating prop
+  const displayRating = therapist.average_review !== undefined ? therapist.average_review : rating.averageRating;
+  const displayReviewCount = therapist.num_reviews !== undefined ? therapist.num_reviews : rating.reviewCount;
+  const hasReviews = displayReviewCount > 0;
+
+  const renderStars = (ratingValue: number) => {
+    const fullStars = Math.floor(ratingValue);
+    const hasHalfStar = ratingValue % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return (
+      <span className="flex items-center gap-0.5">
+        {Array.from({ length: fullStars }).map((_, i) => (
+          <span key={`full-${i}`} className="text-yellow-400">★</span>
+        ))}
+        {hasHalfStar && (
+          <span className="text-yellow-400">★</span>
+        )}
+        {Array.from({ length: emptyStars }).map((_, i) => (
+          <span key={`empty-${i}`} className="text-gray-300">★</span>
+        ))}
+      </span>
+    );
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 group bg-white rounded-2xl p-4 sm:p-6 lg:p-8 transition-all duration-300 max-w-7xl mx-auto border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01]">
       {/* Therapist Photo Card */}
       <Card className="w-full lg:w-80 flex-shrink-0 overflow-hidden transition-all duration-300 bg-white border-slate-200">
         <CardContent className="p-0">
           {/* Photo Section with 4:3 Aspect Ratio */}
-          <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100">
+          <div className="relative w-full aspect-[4/3] overflow-hidden bg-white">
             <img
               src={therapist.avatar_url}
               alt={`${therapist.first_name} ${therapist.last_name}`}
@@ -56,7 +83,7 @@ const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: Ther
               }}
             />
             {/* Fallback Avatar */}
-            <div className="hidden w-full h-full bg-slate-100 flex items-center justify-center text-3xl font-bold text-slate-600">
+            <div className="hidden w-full h-full bg-white flex items-center justify-center text-3xl font-bold text-slate-600">
               {therapist.first_name?.[0]}{therapist.last_name?.[0]}
             </div>
             
@@ -88,23 +115,16 @@ const TherapistCard = ({ therapist, rating, onViewProfile, onBookSession }: Ther
             </div>
 
             {/* Rating */}
-            <div className="flex items-center gap-2 bg-slate-50 p-3 rounded-lg">
-              {rating.reviewCount > 0 ? (
+            <div className="flex items-center gap-1.5 bg-slate-50 p-3 rounded-lg">
+              {hasReviews ? (
                 <>
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        className={`w-4 h-4 ${
-                          i < Math.floor(rating.averageRating) 
-                            ? 'fill-amber-500 text-amber-500' 
-                            : 'text-slate-300'
-                        }`} 
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm font-bold text-slate-700">{rating.averageRating.toFixed(1)}</span>
-                  <span className="text-sm text-slate-600">({rating.reviewCount} review{rating.reviewCount !== 1 ? 's' : ''})</span>
+                  <span className="text-sm font-semibold text-slate-700">
+                    {displayRating.toFixed(1)}
+                  </span>
+                  {renderStars(displayRating)}
+                  <span className="text-xs text-slate-600">
+                    ({displayReviewCount})
+                  </span>
                 </>
               ) : (
                 <span className="text-sm text-slate-600 italic">No reviews yet</span>
