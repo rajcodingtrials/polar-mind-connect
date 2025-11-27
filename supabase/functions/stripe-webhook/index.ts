@@ -38,27 +38,43 @@ const handler = async (req: Request): Promise<Response> => {
 
     const body = await req.text();
     
-    // Verify webhook signature
-    const stripeResponse = await fetch("https://api.stripe.com/v1/webhook_endpoints/verify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        "payload": body,
-        "signature": signature,
-        "secret": webhookSecret,
-      }),
-    });
+    console.log("🔵 Webhook received, signature:", signature?.substring(0, 20) + "...");
+    
+    // Verify webhook signature using Stripe's standard method
+    const encoder = new TextEncoder();
+    const timestamp = signature.split(',')[0].split('=')[1];
+    const receivedSignature = signature.split(',')[1].split('=')[1];
+    const signedPayload = `${timestamp}.${body}`;
+    
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(webhookSecret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    
+    const expectedSignature = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      encoder.encode(signedPayload)
+    );
+    
+    const expectedHex = Array.from(new Uint8Array(expectedSignature))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
 
-    if (!stripeResponse.ok) {
-      console.error("Webhook signature verification failed");
+    if (expectedHex !== receivedSignature) {
+      console.error("❌ Webhook signature verification failed");
+      console.error("Expected:", expectedHex.substring(0, 20) + "...");
+      console.error("Received:", receivedSignature.substring(0, 20) + "...");
       return new Response(
         JSON.stringify({ error: "Invalid signature" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log("✅ Webhook signature verified");
     const event = JSON.parse(body);
     console.log("Stripe webhook event:", event.type);
 
