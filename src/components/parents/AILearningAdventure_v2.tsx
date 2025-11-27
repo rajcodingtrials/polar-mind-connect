@@ -189,8 +189,13 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
         
         // Extract default lesson IDs
         const defaultLessonIds: string[] = [];
-        if (defaultLessonsData && Array.isArray(defaultLessonsData)) {
-          defaultLessonIds.push(...defaultLessonsData.map(lesson => lesson.id).filter(id => id));
+        if (!defaultError && defaultLessonsData && Array.isArray(defaultLessonsData)) {
+          const lessons = defaultLessonsData as Array<{ id?: string } | null>;
+          for (const lesson of lessons) {
+            if (lesson?.id) {
+              defaultLessonIds.push(lesson.id);
+            }
+          }
         }
         
         // Extract user's custom lesson IDs
