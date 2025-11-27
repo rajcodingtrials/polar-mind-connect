@@ -188,40 +188,55 @@ export type Database = {
       lessons_v2: {
         Row: {
           add_mini_celebration: boolean
+          average_review: number
           created_at: string
           description: string | null
           id: string
+          is_default: boolean
           is_verified: boolean
           level: string
           name: string
+          num_reviews: number
+          price: number
           publish_to_marketplace: boolean
           question_type: Database["public"]["Enums"]["question_type_enum"]
+          reviews: string | null
           updated_at: string
           youtube_video_id: string | null
         }
         Insert: {
           add_mini_celebration?: boolean
+          average_review?: number
           created_at?: string
           description?: string | null
           id?: string
+          is_default?: boolean
           is_verified?: boolean
           level: string
           name: string
+          num_reviews?: number
+          price?: number
           publish_to_marketplace?: boolean
           question_type: Database["public"]["Enums"]["question_type_enum"]
+          reviews?: string | null
           updated_at?: string
           youtube_video_id?: string | null
         }
         Update: {
           add_mini_celebration?: boolean
+          average_review?: number
           created_at?: string
           description?: string | null
           id?: string
+          is_default?: boolean
           is_verified?: boolean
           level?: string
           name?: string
+          num_reviews?: number
+          price?: number
           publish_to_marketplace?: boolean
           question_type?: Database["public"]["Enums"]["question_type_enum"]
+          reviews?: string | null
           updated_at?: string
           youtube_video_id?: string | null
         }
@@ -495,7 +510,10 @@ export type Database = {
           question_speech: string | null
           question_text: string
           question_type: Database["public"]["Enums"]["question_type_enum"]
+          question_video: string
+          speech_after_answer: string
           updated_at: string
+          video_after_answer: string
         }
         Insert: {
           answer?: string | null
@@ -513,7 +531,10 @@ export type Database = {
           question_speech?: string | null
           question_text: string
           question_type: Database["public"]["Enums"]["question_type_enum"]
+          question_video?: string
+          speech_after_answer?: string
           updated_at?: string
+          video_after_answer?: string
         }
         Update: {
           answer?: string | null
@@ -531,7 +552,10 @@ export type Database = {
           question_speech?: string | null
           question_text?: string
           question_type?: Database["public"]["Enums"]["question_type_enum"]
+          question_video?: string
+          speech_after_answer?: string
           updated_at?: string
+          video_after_answer?: string
         }
         Relationships: [
           {
@@ -661,6 +685,7 @@ export type Database = {
       therapists: {
         Row: {
           avatar_url: string | null
+          average_review: number
           bio: string | null
           certification: string | null
           country: string | null
@@ -679,7 +704,9 @@ export type Database = {
           languages: string[] | null
           last_name: string | null
           name: string | null
+          num_reviews: number
           phone: string | null
+          reviews: string | null
           specializations: string[] | null
           timezone: string | null
           updated_at: string
@@ -688,6 +715,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          average_review?: number
           bio?: string | null
           certification?: string | null
           country?: string | null
@@ -706,7 +734,9 @@ export type Database = {
           languages?: string[] | null
           last_name?: string | null
           name?: string | null
+          num_reviews?: number
           phone?: string | null
+          reviews?: string | null
           specializations?: string[] | null
           timezone?: string | null
           updated_at?: string
@@ -715,6 +745,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          average_review?: number
           bio?: string | null
           certification?: string | null
           country?: string | null
@@ -733,7 +764,9 @@ export type Database = {
           languages?: string[] | null
           last_name?: string | null
           name?: string | null
+          num_reviews?: number
           phone?: string | null
+          reviews?: string | null
           specializations?: string[] | null
           timezone?: string | null
           updated_at?: string
