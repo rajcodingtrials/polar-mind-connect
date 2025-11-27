@@ -78,6 +78,46 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
     }
   };
 
+  // Helper function to upload video to Supabase storage
+  const uploadVideoToStorage = async (file: File, videoPath: string, questionType: string, lessonName: string): Promise<string | null> => {
+    try {
+      // Sanitize question type and lesson name for filesystem safety
+      const sanitizedQuestionType = questionType.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const sanitizedLessonName = lessonName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      
+      // Create a unique filename to avoid conflicts
+      const timestamp = Date.now();
+      const sanitizedPath = videoPath.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${timestamp}_${sanitizedPath}`;
+      
+      // Create prefix path: question_type/lesson_name/videos/
+      const prefixPath = `${sanitizedQuestionType}/${sanitizedLessonName}/videos/`;
+      const fullPath = `${prefixPath}${fileName}`;
+      
+      const { data, error } = await supabase.storage
+        .from('question-images-v2')
+        .upload(fullPath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error(`Error uploading video ${videoPath}:`, error);
+        return null;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('question-images-v2')
+        .getPublicUrl(fullPath);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error(`Error uploading video ${videoPath}:`, error);
+      return null;
+    }
+  };
+
   // Helper function to find a file in the selected files by relative path
   // dirPath is the directory path context to ensure we only match files from the correct directory
   const findFileByPath = (files: File[], relativePath: string, dirPath: string): File | null => {
@@ -171,7 +211,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
 
   // Verification function to check lessons before upload
   const verifyLessons = async (
-    directoryMap: Map<string, { lessonFile: File; imageFiles: File[] }>,
+    directoryMap: Map<string, { lessonFile: File; imageFiles: File[]; videoFiles: File[] }>,
     onProgress?: (current: number, total: number) => void
   ): Promise<{ isValid: boolean; errors: string[] }> => {
     const verificationErrors: string[] = [];
@@ -180,7 +220,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
 
     // Verify each directory
     for (let index = 0; index < entries.length; index++) {
-      const [dirPath, { lessonFile, imageFiles }] = entries[index];
+      const [dirPath, { lessonFile, imageFiles, videoFiles }] = entries[index];
       try {
         const text = await lessonFile.text();
         const lessonData = JSON.parse(text);
@@ -256,6 +296,26 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
               }
             }
           }
+
+          // Check question_video
+          if (question.question_video) {
+            const videoPath = question.question_video;
+            const videoFile = findFileByPath(videoFiles, videoPath, dirPath);
+            
+            if (!videoFile) {
+              verificationErrors.push(`${dirPath}: Question ${i + 1} - Video file not found for question_video: "${videoPath}"`);
+            }
+          }
+
+          // Check video_after_answer
+          if (question.video_after_answer) {
+            const videoPath = question.video_after_answer;
+            const videoFile = findFileByPath(videoFiles, videoPath, dirPath);
+            
+            if (!videoFile) {
+              verificationErrors.push(`${dirPath}: Question ${i + 1} - Video file not found for video_after_answer: "${videoPath}"`);
+            }
+          }
         }
       } catch (error: any) {
         verificationErrors.push(`${dirPath}: Error during verification - ${error?.message || String(error)}`);
@@ -295,7 +355,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
     setIsUploading(true);
     try {
       // Group files by directory structure
-      const directoryMap = new Map<string, { lessonFile: File; imageFiles: File[] }>();
+      const directoryMap = new Map<string, { lessonFile: File; imageFiles: File[]; videoFiles: File[] }>();
       
       // Find all lesson.json files and group with their directory files
       for (const file of selectedFiles) {
@@ -308,7 +368,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
           const dirPath = pathParts.slice(0, -1).join('/');
           
           if (!directoryMap.has(dirPath)) {
-            directoryMap.set(dirPath, { lessonFile: file, imageFiles: [] });
+            directoryMap.set(dirPath, { lessonFile: file, imageFiles: [], videoFiles: [] });
           } else {
             directoryMap.get(dirPath)!.lessonFile = file;
           }
@@ -324,6 +384,19 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
           
           if (directoryMap.has(dirPath)) {
             directoryMap.get(dirPath)!.imageFiles.push(file);
+          }
+        }
+      }
+
+      // Add video files to their respective directories
+      for (const file of selectedFiles) {
+        if (file.type.startsWith('video/')) {
+          const filePath = (file as any).webkitRelativePath || file.name;
+          const pathParts = filePath.split('/');
+          const dirPath = pathParts.slice(0, -1).join('/');
+          
+          if (directoryMap.has(dirPath)) {
+            directoryMap.get(dirPath)!.videoFiles.push(file);
           }
         }
       }
@@ -397,7 +470,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
       const allErrors: string[] = [];
 
       // Process each directory with a lesson.json file
-      for (const [dirPath, { lessonFile, imageFiles }] of directoryMap.entries()) {
+      for (const [dirPath, { lessonFile, imageFiles, videoFiles }] of directoryMap.entries()) {
         try {
           const text = await lessonFile.text();
           const lessonData = JSON.parse(text);
@@ -505,6 +578,42 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
                 }
               }
 
+              // Handle question_video upload
+              let questionVideoBeforeUrl: string = '';
+              if (question.question_video) {
+                const videoPath = question.question_video;
+                const videoFile = findFileByPath(videoFiles, videoPath, dirPath);
+                
+                if (videoFile) {
+                  const uploadedUrl = await uploadVideoToStorage(videoFile, videoPath, questionType, lessonName);
+                  if (uploadedUrl) {
+                    questionVideoBeforeUrl = uploadedUrl;
+                  } else {
+                    console.warn(`Failed to upload question_video: ${videoPath}`);
+                  }
+                } else {
+                  console.warn(`Could not find video file for path: ${videoPath} in directory: ${dirPath}`);
+                }
+              }
+
+              // Handle video_after_answer upload
+              let questionVideoAfterUrl: string = '';
+              if (question.video_after_answer) {
+                const videoPath = question.video_after_answer;
+                const videoFile = findFileByPath(videoFiles, videoPath, dirPath);
+                
+                if (videoFile) {
+                  const uploadedUrl = await uploadVideoToStorage(videoFile, videoPath, questionType, lessonName);
+                  if (uploadedUrl) {
+                    questionVideoAfterUrl = uploadedUrl;
+                  } else {
+                    console.warn(`Failed to upload video_after_answer: ${videoPath}`);
+                  }
+                } else {
+                  console.warn(`Could not find video file for path: ${videoPath} in directory: ${dirPath}`);
+                }
+              }
+
               // Create question record
               const questionRecord = {
                 question_text: question.question_text || question.question || '',
@@ -515,6 +624,9 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
                 question_image: questionImageUrl,
                 choices_text: question.choices_text || question.choices || null,
                 choices_image: choicesImageUrls,
+                question_video: questionVideoBeforeUrl,
+                video_after_answer: questionVideoAfterUrl,
+                speech_after_answer: question.speech_after_answer || '',
                 question_type: questionType,
                 lesson_id: lessonId,
                 lesson: lessonText,
