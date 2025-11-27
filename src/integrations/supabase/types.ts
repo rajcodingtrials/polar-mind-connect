@@ -571,37 +571,52 @@ export type Database = {
         Row: {
           categories: string[] | null
           client_id: string
+          communication_rating: number | null
           created_at: string
           feedback_text: string | null
           id: string
+          overall_rating: number | null
           rating: number
           session_id: string
           therapist_id: string | null
           updated_at: string
+          usefulness_rating: number | null
+          what_can_be_improved: string | null
+          what_went_well: string | null
           would_recommend: boolean | null
         }
         Insert: {
           categories?: string[] | null
           client_id: string
+          communication_rating?: number | null
           created_at?: string
           feedback_text?: string | null
           id?: string
+          overall_rating?: number | null
           rating: number
           session_id: string
           therapist_id?: string | null
           updated_at?: string
+          usefulness_rating?: number | null
+          what_can_be_improved?: string | null
+          what_went_well?: string | null
           would_recommend?: boolean | null
         }
         Update: {
           categories?: string[] | null
           client_id?: string
+          communication_rating?: number | null
           created_at?: string
           feedback_text?: string | null
           id?: string
+          overall_rating?: number | null
           rating?: number
           session_id?: string
           therapist_id?: string | null
           updated_at?: string
+          usefulness_rating?: number | null
+          what_can_be_improved?: string | null
+          what_went_well?: string | null
           would_recommend?: boolean | null
         }
         Relationships: [
