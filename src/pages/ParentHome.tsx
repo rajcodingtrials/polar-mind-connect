@@ -9,22 +9,28 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Video, Calendar, CheckCircle2 } from "lucide-react";
+import { Video, Calendar, CheckCircle2, Star } from "lucide-react";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import AffirmationCard from "@/components/parents/AffirmationCard";
 import AILearningAdventure_v2 from "@/components/parents/AILearningAdventure_v2";
+import SessionReviewModal, { SessionReview } from "@/components/parents/SessionReviewModal";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const ParentHome = () => {
   const { isAuthenticated, user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
   const navigate = useNavigate();
   const location = useLocation();
-  const { upcomingSessions, completedSessions, loading: sessionsLoading } = useClientSessions(user?.id || null);
+  const { upcomingSessions, completedSessions, loading: sessionsLoading, submitReview } = useClientSessions(user?.id || null);
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"ai" | "human">("ai");
   const [selectedTherapist, setSelectedTherapist] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedSessionForReview, setSelectedSessionForReview] = useState<{ id: string; therapistName: string } | null>(null);
+  const [existingReview, setExistingReview] = useState<SessionReview | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -70,6 +76,70 @@ const ParentHome = () => {
 
   const handleBookSession = () => {
     navigate("/consultation");
+  };
+
+  const handleOpenReview = async (session: any) => {
+    const therapistName = session.therapist.name ||
+      `${session.therapist.first_name} ${session.therapist.last_name}` ||
+      "Therapist";
+    setSelectedSessionForReview({
+      id: session.id,
+      therapistName,
+    });
+
+    // Fetch existing review if it exists
+    if (user?.id) {
+      try {
+        const { data: reviewData, error } = await supabase
+          .from('session_ratings')
+          .select('overall_rating, usefulness_rating, communication_rating, would_recommend, what_went_well, what_can_be_improved')
+          .eq('session_id', session.id)
+          .eq('client_id', user.id)
+          .maybeSingle();
+
+        if (!error && reviewData) {
+          setExistingReview({
+            overall_rating: reviewData.overall_rating || 0,
+            usefulness_rating: reviewData.usefulness_rating || 0,
+            communication_rating: reviewData.communication_rating || 0,
+            would_recommend: reviewData.would_recommend ?? true,
+            what_went_well: reviewData.what_went_well || '',
+            what_can_be_improved: reviewData.what_can_be_improved || '',
+          });
+        } else {
+          setExistingReview(null);
+        }
+      } catch (error) {
+        console.error('Error fetching existing review:', error);
+        setExistingReview(null);
+      }
+    } else {
+      setExistingReview(null);
+    }
+
+    setReviewModalOpen(true);
+  };
+
+  const handleSubmitReview = async (review: SessionReview) => {
+    if (!selectedSessionForReview || !user?.id) return;
+
+    try {
+      await submitReview(selectedSessionForReview.id, review);
+      toast({
+        title: "Review Submitted",
+        description: existingReview ? "Your review has been updated!" : "Thank you for your feedback!",
+      });
+      setReviewModalOpen(false);
+      setSelectedSessionForReview(null);
+      setExistingReview(null);
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit review. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getSessionStatusColor = (status: string) => {
@@ -255,7 +325,7 @@ const ParentHome = () => {
                 return (
                   <div
                     key={session.id}
-                    className="flex items-center justify-between p-4 bg-blue-100 rounded-lg border border-blue-200"
+                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-blue-100 rounded-lg border border-blue-200"
                   >
                     <div className="flex items-center space-x-4">
                       <Avatar>
@@ -277,7 +347,18 @@ const ParentHome = () => {
                         <p className="text-xs text-slate-500">{session.duration_minutes} minutes</p>
                       </div>
                     </div>
-                    <Badge className={getSessionStatusColor(session.status)}>{session.status}</Badge>
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                      <Badge className={getSessionStatusColor(session.status)}>{session.status}</Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenReview(session)}
+                        className="w-full md:w-auto"
+                      >
+                        <Star className="w-4 h-4 mr-2" />
+                        Review Session
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
@@ -360,6 +441,20 @@ const ParentHome = () => {
         </div>
       </main>
       <Footer />
+      {selectedSessionForReview && (
+        <SessionReviewModal
+          isOpen={reviewModalOpen}
+          onClose={() => {
+            setReviewModalOpen(false);
+            setSelectedSessionForReview(null);
+            setExistingReview(null);
+          }}
+          onSubmit={handleSubmitReview}
+          sessionId={selectedSessionForReview.id}
+          therapistName={selectedSessionForReview.therapistName}
+          existingReview={existingReview}
+        />
+      )}
     </div>
   );
 };

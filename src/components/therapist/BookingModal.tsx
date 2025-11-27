@@ -16,7 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarIcon, Clock, DollarSign } from "lucide-react";
-import { format, addDays, isBefore, startOfDay, getDay } from "date-fns";
+import { format, addDays, isBefore, startOfDay, getDay, isToday, isAfter, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import PaymentIntegration from "./PaymentIntegration";
 import { useToast } from "@/hooks/use-toast";
@@ -111,6 +111,11 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
       return (hh * 60) + (mm || 0);
     };
 
+    // Get current time if the selected date is today
+    const now = new Date();
+    const isSelectedDateToday = isToday(date);
+    const currentTimeMinutes = isSelectedDateToday ? (now.getHours() * 60 + now.getMinutes()) : -1;
+
     const slots: TimeSlot[] = [];
     
     dayAvailability.forEach(availability => {
@@ -130,6 +135,12 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
         const min = minutes % 60;
         const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
         const m = toMinutes(time);
+        
+        // Skip past time slots if the selected date is today
+        if (isSelectedDateToday && m <= currentTimeMinutes) {
+          continue;
+        }
+        
         const isBooked = bookings.some(b => {
           const s = toMinutes(b.start);
           const e = toMinutes(b.end);

@@ -30,9 +30,12 @@ interface SessionRating {
   id: string;
   session_id: string;
   rating: number;
-  feedback_text?: string;
-  categories?: string[];
+  overall_rating?: number;
+  usefulness_rating?: number;
+  communication_rating?: number;
   would_recommend?: boolean;
+  what_went_well?: string;
+  what_can_be_improved?: string;
   created_at: string;
 }
 
@@ -174,8 +177,6 @@ const { data, error } = await supabase
       .single()
     ).data?.therapist_id,
     rating,
-    feedback_text: feedbackText,
-    categories: categories || [],
     would_recommend: wouldRecommend,
   })
   .select()
@@ -195,5 +196,184 @@ const { data, error } = await supabase
     return data;
   };
 
-  return { ...stats, submitRating };
+  const submitReview = async (sessionId: string, review: {
+    overall_rating: number;
+    usefulness_rating: number;
+    communication_rating: number;
+    would_recommend: boolean;
+    what_went_well: string;
+    what_can_be_improved: string;
+  }) => {
+    if (!clientId) throw new Error('Client ID required');
+
+    // Get therapist_id from session
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('therapy_sessions')
+      .select('therapist_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError || !sessionData?.therapist_id) {
+      throw new Error('Failed to fetch session data');
+    }
+
+    const therapistId = sessionData.therapist_id;
+
+    // Check if a review already exists for this session (to determine if this is an update or new review)
+    const { data: existingReviewData, error: existingReviewError } = await supabase
+      .from('session_ratings')
+      .select('id, overall_rating, rating')
+      .eq('session_id', sessionId)
+      .eq('client_id', clientId)
+      .maybeSingle();
+
+    if (existingReviewError && existingReviewError.code !== 'PGRST116') {
+      // PGRST116 means no rows found, which is fine
+      throw existingReviewError;
+    }
+
+    const isUpdate = !!existingReviewData;
+    const oldRating = existingReviewData?.overall_rating || existingReviewData?.rating;
+    const reviewId = existingReviewData?.id;
+
+    // Save or update the review
+    let data;
+    let error;
+
+    if (isUpdate && reviewId) {
+      // Update existing review
+      const updateResult = await supabase
+        .from('session_ratings')
+        .update({
+          rating: review.overall_rating, // Keep for backward compatibility
+          overall_rating: review.overall_rating,
+          usefulness_rating: review.usefulness_rating,
+          communication_rating: review.communication_rating,
+          would_recommend: review.would_recommend,
+          what_went_well: review.what_went_well || null,
+          what_can_be_improved: review.what_can_be_improved || null,
+        })
+        .eq('id', reviewId)
+        .select()
+        .single();
+      
+      data = updateResult.data;
+      error = updateResult.error;
+    } else {
+      // Insert new review
+      const insertResult = await supabase
+        .from('session_ratings')
+        .insert({
+          session_id: sessionId,
+          client_id: clientId,
+          therapist_id: therapistId,
+          rating: review.overall_rating, // Keep for backward compatibility
+          overall_rating: review.overall_rating,
+          usefulness_rating: review.usefulness_rating,
+          communication_rating: review.communication_rating,
+          would_recommend: review.would_recommend,
+          what_went_well: review.what_went_well || null,
+          what_can_be_improved: review.what_can_be_improved || null,
+        })
+        .select()
+        .single();
+      
+      data = insertResult.data;
+      error = insertResult.error;
+    }
+
+    if (error) throw error;
+
+    // Update therapist's review statistics
+    try {
+      // Fetch current therapist review stats
+      const { data: therapistData, error: therapistFetchError } = await supabase
+        .from('therapists')
+        .select('reviews, num_reviews, average_review')
+        .eq('id', therapistId)
+        .single();
+
+      if (therapistFetchError) {
+        console.error('Error fetching therapist data:', therapistFetchError);
+        // Continue even if fetch fails - the review is already saved
+      } else if (therapistData) {
+        const oldNumReviews = therapistData.num_reviews || 0;
+        const oldAverageReview = therapistData.average_review || 0;
+        const currentReview = review.overall_rating;
+
+        // Parse reviews array (stored as JSON string like '[5,5,5,5,5]')
+        let reviewsArray: number[] = [];
+        try {
+          if (therapistData.reviews) {
+            reviewsArray = JSON.parse(therapistData.reviews);
+          }
+        } catch (e) {
+          // If parsing fails, start with empty array
+          reviewsArray = [];
+        }
+
+        let newNumReviews: number;
+        let newAverageReview: number;
+        let updatedReviewsArray: number[];
+
+        if (isUpdate && oldRating !== undefined) {
+          // This is an update - replace the old rating with the new one
+          // Find and replace the first occurrence of the old rating
+          const oldRatingIndex = reviewsArray.findIndex(r => r === oldRating);
+          if (oldRatingIndex !== -1) {
+            updatedReviewsArray = [...reviewsArray];
+            updatedReviewsArray[oldRatingIndex] = currentReview;
+          } else {
+            // Old rating not found in array, just add the new one
+            updatedReviewsArray = [...reviewsArray, currentReview];
+          }
+          
+          // For updates: recalculate average using formula
+          // (old avg * old num - old rating + new rating) / old num
+          newNumReviews = oldNumReviews; // Don't increment for updates
+          newAverageReview = (oldAverageReview * oldNumReviews - oldRating + currentReview) / oldNumReviews;
+        } else {
+          // This is a new review
+          // Add the new rating to the array
+          updatedReviewsArray = [...reviewsArray, currentReview];
+          
+          // For new reviews: increment num_reviews and calculate new average
+          // (old avg * old num + current review) / new num
+          newNumReviews = oldNumReviews + 1;
+          newAverageReview = (oldAverageReview * oldNumReviews + currentReview) / newNumReviews;
+        }
+
+        // Update therapist record
+        const { error: updateError } = await supabase
+          .from('therapists')
+          .update({
+            reviews: JSON.stringify(updatedReviewsArray),
+            num_reviews: newNumReviews,
+            average_review: parseFloat(newAverageReview.toFixed(1)),
+          })
+          .eq('id', therapistId);
+
+        if (updateError) {
+          console.error('Error updating therapist reviews:', updateError);
+          // Continue even if update fails - the review is already saved
+        }
+      }
+    } catch (updateError) {
+      console.error('Error updating therapist review statistics:', updateError);
+      // Continue even if update fails - the review is already saved
+    }
+
+    // Update local state
+    setStats(prev => ({
+      ...prev,
+      sessionRatings: [
+        ...prev.sessionRatings.filter(r => r.session_id !== sessionId),
+        data
+      ]
+    }));
+
+    return data;
+  };
+
+  return { ...stats, submitRating, submitReview };
 };

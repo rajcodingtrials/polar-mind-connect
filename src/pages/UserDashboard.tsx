@@ -453,9 +453,6 @@ const UserDashboard = () => {
                             ))}
                           </div>
                         </div>
-                        {rating.feedback_text && (
-                          <p className="text-sm text-slate-600 mb-2">{rating.feedback_text}</p>
-                        )}
                         <p className="text-xs text-slate-500">
                           Submitted on {format(new Date(rating.created_at), 'MMM dd, yyyy')}
                         </p>
