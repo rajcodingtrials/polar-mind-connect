@@ -47,7 +47,7 @@ const PaymentSuccess = () => {
               .maybeSingle();
 
             let existingLessons: string[] = [];
-            if (parentData?.lessons && typeof parentData.lessons === 'string' && parentData.lessons.trim() !== '') {
+            if (parentData && 'lessons' in parentData && parentData.lessons && typeof parentData.lessons === 'string' && parentData.lessons.trim() !== '') {
               existingLessons = parentData.lessons.split(',').map(id => id.trim()).filter(id => id);
             }
 
