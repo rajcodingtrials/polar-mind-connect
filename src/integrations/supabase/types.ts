@@ -569,11 +569,9 @@ export type Database = {
       }
       session_ratings: {
         Row: {
-          categories: string[] | null
           client_id: string
           communication_rating: number | null
           created_at: string
-          feedback_text: string | null
           id: string
           overall_rating: number | null
           rating: number
@@ -586,11 +584,9 @@ export type Database = {
           would_recommend: boolean | null
         }
         Insert: {
-          categories?: string[] | null
           client_id: string
           communication_rating?: number | null
           created_at?: string
-          feedback_text?: string | null
           id?: string
           overall_rating?: number | null
           rating: number
@@ -603,11 +599,9 @@ export type Database = {
           would_recommend?: boolean | null
         }
         Update: {
-          categories?: string[] | null
           client_id?: string
           communication_rating?: number | null
           created_at?: string
-          feedback_text?: string | null
           id?: string
           overall_rating?: number | null
           rating?: number
