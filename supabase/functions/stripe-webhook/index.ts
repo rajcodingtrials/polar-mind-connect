@@ -153,7 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
             const { error: sessionError } = await supabase
               .from("therapy_sessions")
               .update({
-                payment_status: "completed",
+                payment_status: "confirmed",
                 status: "confirmed",
                 updated_at: new Date().toISOString(),
               })
