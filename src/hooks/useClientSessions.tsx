@@ -110,11 +110,12 @@ export const useClientSessions = (clientId: string | null) => {
         const upcoming = transformedSessions
           .filter(session => {
             // Show session as upcoming if:
-            // 1. End time hasn't passed yet, OR
-            // 2. Session ended within last 2 hours (grace period for late access)
+            // 1. Payment is confirmed or completed (not pending)
+            // 2. End time hasn't passed yet, OR session ended within last 2 hours (grace period)
             const sessionEndDateTime = new Date(`${session.session_date}T${session.end_time}`);
             const twoHoursAfterEnd = new Date(sessionEndDateTime.getTime() + 2 * 60 * 60 * 1000);
-            return (sessionEndDateTime >= now || twoHoursAfterEnd >= now) && ['confirmed', 'pending'].includes(session.status);
+            const hasValidPayment = session.payment_status === 'confirmed' || session.payment_status === 'completed';
+            return hasValidPayment && (sessionEndDateTime >= now || twoHoursAfterEnd >= now);
           })
           .sort((a, b) => {
             // Sort by date and start time ascending (earliest first)
