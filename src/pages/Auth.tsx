@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import Header from "../components/Header";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -118,134 +119,163 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">
-            {showForgotPassword ? "Reset Password" : isLogin ? "Sign In" : "Create Account"}
-          </CardTitle>
-          <CardDescription className="text-center">
-            {showForgotPassword 
-              ? "Enter your email to receive reset instructions"
-              : isLogin 
-                ? "Enter your credentials to access your account" 
-                : "Fill in your details to create a new account"
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+    <div className="h-screen flex flex-col gradient-bg stars-bg">
+      <Header />
+      <main className="flex-grow h-full flex items-stretch justify-stretch min-h-0 w-full">
+        <div className="flex flex-col md:flex-row w-full h-full bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 flex-grow">
+          
+          {/* Left: Auth Form (30%) */}
+          <section className="w-full md:w-[30%] md:min-w-[420px] lg:w-[35%] flex items-center justify-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 min-h-[400px] md:min-h-0 overflow-y-auto">
+            <Card className="w-full max-w-md">
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl text-center">
+                  {showForgotPassword ? "Reset Password" : isLogin ? "Sign In" : "Create Account"}
+                </CardTitle>
+                <CardDescription className="text-center">
+                  {showForgotPassword 
+                    ? "Enter your email to receive reset instructions"
+                    : isLogin 
+                      ? "Enter your credentials to access your account" 
+                      : "Fill in your details to create a new account"
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {!showForgotPassword && (
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {!isLogin && !showForgotPassword && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          type="text"
+                          placeholder="Enter your first name"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          type="text"
+                          placeholder="Enter your last name"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="age">Age</Label>
+                        <Input
+                          id="age"
+                          type="number"
+                          placeholder="Enter your age"
+                          value={age}
+                          onChange={(e) => setAge(e.target.value)}
+                          min="1"
+                          max="120"
+                          required
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Please wait..." : showForgotPassword ? "Send Reset Email" : isLogin ? "Sign In" : "Create Account"}
+                  </Button>
+                </form>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-2">
+                {!showForgotPassword && (
+                  <>
+                    {isLogin && (
+                      <Button
+                        variant="link"
+                        onClick={() => setShowForgotPassword(true)}
+                        className="text-sm"
+                      >
+                        Forgot your password?
+                      </Button>
+                    )}
+                    <div className="text-sm text-center">
+                      {isLogin ? "Don't have an account? " : "Already have an account? "}
+                      <Button
+                        variant="link"
+                        onClick={() => handleModeSwitch(isLogin ? 'signup' : 'login')}
+                        className="p-0 h-auto text-sm"
+                      >
+                        {isLogin ? "Sign up here" : "Sign in here"}
+                      </Button>
+                    </div>
+                  </>
+                )}
+                
+                {showForgotPassword && (
+                  <Button
+                    variant="link"
+                    onClick={() => setShowForgotPassword(false)}
+                    className="text-sm"
+                  >
+                    Back to sign in
+                  </Button>
+                )}
+                
+                <Link to="/" className="text-sm text-center text-gray-600 hover:text-gray-900">
+                  ← Back to Home
+                </Link>
+              </CardFooter>
+            </Card>
+          </section>
+
+          {/* Right: Image with overlayed text (70%) */}
+          <section className="relative w-full md:w-[70%] lg:w-[65%] flex-grow flex items-center justify-center p-0 bg-black min-h-[300px] sm:min-h-[400px] md:min-h-0">
+            <img
+              src="/lovable-uploads/FrontPage1.jpg"
+              alt="Young girl with colorful alphabet letters emerging from her speech, representing AI-powered speech therapy for children"
+              className="w-full h-full object-cover object-center absolute inset-0 z-0"
+              loading="eager"
+            />
+            <div className="absolute inset-0 bg-black/20 z-10" aria-hidden="true"></div>
+            <div className="relative z-20 w-full flex flex-col items-center md:items-end justify-center px-4 sm:px-6 md:px-8 py-8 sm:py-12 text-center md:text-right md:pr-12 lg:pr-24 xl:pr-32">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-wide mb-8 sm:mb-12 md:mb-20 whitespace-pre-line">
+                Shaping future one<br />word at a time
+              </h1>
+              <p className="text-xs sm:text-sm md:text-base text-white leading-loose tracking-wide max-w-lg whitespace-pre-line">
+                AI speech therapists that turn home into<br />learning hubs and parents into expert teachers
+              </p>
             </div>
+          </section>
 
-            {!showForgotPassword && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-
-            {!isLogin && !showForgotPassword && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    placeholder="Enter your first name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    placeholder="Enter your last name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="age">Age</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    placeholder="Enter your age"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    min="1"
-                    max="120"
-                    required
-                  />
-                </div>
-              </>
-            )}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait..." : showForgotPassword ? "Send Reset Email" : isLogin ? "Sign In" : "Create Account"}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
-          {!showForgotPassword && (
-            <>
-              {isLogin && (
-                <Button
-                  variant="link"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="text-sm"
-                >
-                  Forgot your password?
-                </Button>
-              )}
-              <div className="text-sm text-center">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <Button
-                  variant="link"
-                  onClick={() => handleModeSwitch(isLogin ? 'signup' : 'login')}
-                  className="p-0 h-auto text-sm"
-                >
-                  {isLogin ? "Sign up here" : "Sign in here"}
-                </Button>
-              </div>
-            </>
-          )}
-          
-          {showForgotPassword && (
-            <Button
-              variant="link"
-              onClick={() => setShowForgotPassword(false)}
-              className="text-sm"
-            >
-              Back to sign in
-            </Button>
-          )}
-          
-          <Link to="/" className="text-sm text-center text-gray-600 hover:text-gray-900">
-            ← Back to Home
-          </Link>
-        </CardFooter>
-      </Card>
+        </div>
+      </main>
     </div>
   );
 };
