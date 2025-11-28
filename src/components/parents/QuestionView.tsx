@@ -890,8 +890,9 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                 <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden w-full max-w-full">
                   <img
                     src={questionImageUrl}
-                    alt="Question"
+                    alt={question.description_text || `Question ${questionNumber} visual content for ${therapistName} therapy session`}
                     className={`w-full object-contain rounded-2xl sm:rounded-3xl ${mediaHeight}`}
+                    loading="lazy"
                     onError={(e) => {
                       console.error('Error loading question image:', questionImageUrl);
                       e.currentTarget.style.display = 'none';

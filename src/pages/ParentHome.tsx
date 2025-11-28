@@ -183,7 +183,7 @@ const ParentHome = () => {
         onClick={() => handleAITherapySelect('Laura')}
       >
         <Avatar className="h-20 w-20 border-2 border-blue-200">
-          <AvatarImage src="/lovable-uploads/Laura.png" alt="Laura" />
+          <AvatarImage src="/lovable-uploads/Laura.png" alt="Laura - Lead Speech Language Pathologist AI Therapist" />
           <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">L</AvatarFallback>
         </Avatar>
         <div className="flex-1">
@@ -196,7 +196,7 @@ const ParentHome = () => {
         onClick={() => handleAITherapySelect('Lawrence')}
       >
         <Avatar className="h-20 w-20 border-2 border-green-200">
-          <AvatarImage src="/lovable-uploads/Lawrence.png" alt="Lawrence" />
+          <AvatarImage src="/lovable-uploads/Lawrence.png" alt="Lawrence - Associate Speech Language Pathologist AI Therapist" />
           <AvatarFallback className="bg-green-100 text-green-600 text-lg">L</AvatarFallback>
         </Avatar>
         <div className="flex-1">

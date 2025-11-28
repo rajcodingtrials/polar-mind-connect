@@ -31,7 +31,7 @@ const Header = () => {
         <div className="flex items-center gap-2">
           {/* Icon on the left */}
           <img src="/lovable-uploads/polariz_icon_only_white.png" alt="Polariz Logo" className="h-5 sm:h-6 w-auto" />
-          <h1 className="text-lg sm:text-xl font-bold">Polariz</h1>
+          <span className="text-lg sm:text-xl font-bold">Polariz</span>
         </div>
 
         {/* Desktop Navigation */}

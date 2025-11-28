@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import TherapistDirectory from "@/components/therapist/TherapistDirectory";
@@ -8,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate } from "react-router-dom";
 import Footer from "@/components/Footer";
 import { Star, CheckCircle, Users, Clock, Search } from "lucide-react";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 
 const FindCoaches = () => {
   const { user } = useAuth();
@@ -97,11 +98,19 @@ const FindCoaches = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
-      <Header />
-      
-      {/* Merged Section */}
-      <div className="container mx-auto px-4 py-10 lg:py-16">
+    <>
+      <SEO
+        title="Find Speech Therapists - Polariz | Connect with Verified Professionals"
+        description={`Browse and connect with verified, licensed speech therapists. Find the perfect match for personalized therapy sessions. ${totalTherapists}+ professionals available with ${averageRating.toFixed(1)} average rating.`}
+        image="/lovable-uploads/FrontPage1.jpg"
+        url="https://polariz.ai/consultation"
+        noindex={!user}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
+        <Header />
+        
+        {/* Merged Section */}
+        <main className="container mx-auto px-4 py-10 lg:py-16">
         <Card className="bg-white border-slate-200 shadow-sm max-w-7xl mx-auto">
           <CardContent className="p-6 lg:p-8">
             <div className="space-y-6">
@@ -190,20 +199,21 @@ const FindCoaches = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
       
-      {/* Directory Section */}
-      <div id="therapist-directory" className="container mx-auto px-4 py-8">
-        <TherapistDirectory 
-          searchQuery={searchQuery}
-          selectedSpecialization={selectedSpecialization}
-          priceRange={priceRange}
-          sortBy={sortBy}
-        />
+        {/* Directory Section */}
+        <div id="therapist-directory" className="container mx-auto px-4 py-8">
+          <TherapistDirectory 
+            searchQuery={searchQuery}
+            selectedSpecialization={selectedSpecialization}
+            priceRange={priceRange}
+            sortBy={sortBy}
+          />
+        </div>
+        </main>
+        
+        <Footer />
       </div>
-      
-      <Footer />
-    </div>
+    </>
   );
 };
 

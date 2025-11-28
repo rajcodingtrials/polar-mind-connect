@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import LessonPurchaseModal from '@/components/parents/LessonPurchaseModal';
+import { SEO } from '@/components/SEO';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -284,12 +285,20 @@ const LessonsMarketPlace: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
-      <Header />
-      <main className="flex-grow container mx-auto px-4 py-10">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-6 sm:mb-8">
+    <>
+      <SEO
+        title="Lessons Marketplace - Polariz | Browse and Purchase Speech Therapy Lessons"
+        description="Browse our marketplace of speech therapy lessons. Find personalized learning activities for children with special needs. Free and paid lessons available."
+        image="/lovable-uploads/FrontPage1.jpg"
+        url="https://polariz.ai/lessons-marketplace"
+        noindex={!user}
+      />
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-10">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="mb-6 sm:mb-8">
             <button
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-3 sm:mb-4 transition-colors text-sm sm:text-base"
@@ -453,7 +462,8 @@ const LessonsMarketPlace: React.FC = () => {
           onSuccess={handlePurchaseSuccess}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
