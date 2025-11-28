@@ -8,7 +8,7 @@ import { getPersonSchema } from "../utils/structuredData";
 
 const MeetTheTeam = () => {
   const structuredData = [
-    getPersonSchema("Pree Nair", "Founder", "/lovable-uploads/PreePic.jpg", "https://www.linkedin.com/in/preenair/"),
+    getPersonSchema("Pree Nair", "Co-Founder & Builder", "/lovable-uploads/PreePic.jpg", "https://www.linkedin.com/in/preenair/"),
     getPersonSchema("Jay Pillai", "CTO & AI Specialist", "/lovable-uploads/JayPic.jpg", "https://www.linkedin.com/in/kjaypillai/")
   ];
 
@@ -34,7 +34,7 @@ const MeetTheTeam = () => {
                 <h2 className="text-2xl font-bold mb-4">
                   <a href="https://www.linkedin.com/in/preenair/" className="text-blue-600 hover:underline" rel="noopener noreferrer">Pree Nair</a>
                 </h2>
-                <h3 className="text-lg font-medium text-primary mb-2">Founder</h3>
+                <h3 className="text-lg font-medium text-primary mb-2">Co-Founder & Builder</h3>
                 <p className="mb-4">
                   Pree Nair brings over 10 years of experience in software development, technology, speech therapy and childhood development. 
                   With a passion for making speech therapy accessible to everyone, Pree founded Polariz 
@@ -73,7 +73,7 @@ const MeetTheTeam = () => {
                 <h2 className="text-2xl font-bold mb-4">
                   <a href="https://www.linkedin.com/in/kjaypillai/" className="text-blue-600 hover:underline" rel="noopener noreferrer">Jay Pillai</a>
                 </h2>
-                <h3 className="text-lg font-medium text-primary mb-2">CTO & AI Specialist</h3>
+                <h3 className="text-lg font-medium text-primary mb-2">CTO & AI Expert</h3>
                 <p className="mb-4">
                   Jay Pillai is a hands on and technical engineering leader, passionate about solving
                   mission critical problems using artificial intelligence. As the Director for AI and Engineering at Figma, Jay built cutting edge 
