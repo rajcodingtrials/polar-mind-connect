@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import QuestionUpload from '../components/QuestionUpload';
 import TTSConfiguration from '../components/TTSConfiguration';
 import GoogleTTSConfiguration from '../components/GoogleTTSConfiguration';
 import PromptConfiguration from '../components/PromptConfiguration';
@@ -90,76 +89,9 @@ const Admin = () => {
     }
   }, []);
 
-  const [clearUploadForm, setClearUploadForm] = useState(false);
   const [showCelebrationBlock, setShowCelebrationBlock] = useState(false);
   const [resendEmail, setResendEmail] = useState('pree.nair86@gmail.com');
   const [resendingEmail, setResendingEmail] = useState(false);
-
-  const handleQuestionsUploaded = async (questions: Question[], images: File[], questionType: string) => {
-    try {
-      // First, upload images to Supabase storage
-      const imageUploadPromises = images.map(async (file) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('question-images')
-          .upload(fileName, file);
-
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError);
-          throw uploadError;
-        }
-
-        return { originalName: file.name, storageName: fileName };
-      });
-
-      const uploadedImages = await Promise.all(imageUploadPromises);
-      
-      // Create a mapping from original names to storage names
-      const imageNameMap = uploadedImages.reduce((acc, img) => {
-        acc[img.originalName] = img.storageName;
-        return acc;
-      }, {} as Record<string, string>);
-
-      // Then, save questions to database with updated image names and question type
-      const questionsToInsert = questions.map(q => ({
-        question: q.question,
-        answer: q.answer,
-        image_name: q.imageName ? imageNameMap[q.imageName] : null,
-        question_type: questionType as QuestionType // Always use the selected question type
-      }));
-
-      console.log('Inserting questions with type:', questionType);
-      console.log('Questions to insert:', questionsToInsert.map(q => ({ question: q.question, type: q.question_type })));
-
-      const { error: dbError } = await supabase
-        .from('questions')
-        .insert(questionsToInsert);
-
-      if (dbError) {
-        console.error('Error saving questions:', dbError);
-        throw dbError;
-      }
-
-      toast({
-        title: "Success",
-        description: `Uploaded ${questions.length} questions and ${images.length} images to Supabase`,
-      });
-
-      console.log('Successfully uploaded to Supabase:', questions.length, 'questions,', images.length, 'images');
-      // Trigger clearing the upload form
-      setClearUploadForm(true);
-      setTimeout(() => setClearUploadForm(false), 100); // Reset trigger
-    } catch (error) {
-      console.error('Error uploading to Supabase:', error);
-      toast({
-        title: "Error",
-        description: "Failed to upload questions and images to Supabase",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleDefaultModeChange = (isStructured: boolean) => {
     const mode = isStructured ? 'structured' : 'free';
@@ -470,8 +402,6 @@ const Admin = () => {
             )}
           </Card>
 
-          {/* Upload Section */}
-          <QuestionUpload onQuestionsUploaded={handleQuestionsUploaded} clearTrigger={clearUploadForm} />
         </div>
       </main>
     </div>
