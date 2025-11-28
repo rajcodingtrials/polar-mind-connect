@@ -517,7 +517,7 @@ const ParentHome = () => {
                 onValueChange={(value) => setActiveTab(value as "ai" | "human")}
                 className="space-y-6"
               >
-                <TabsList className="grid grid-cols-2 gap-2 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-1.5">
+                <TabsList className="grid grid-cols-2 gap-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-1.5">
                   <TabsTrigger
                     value="ai"
                     className="rounded-xl text-sm sm:text-base font-medium border-2 border-transparent transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-100 data-[state=active]:to-indigo-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border-blue-200 data-[state=inactive]:bg-white/80 data-[state=inactive]:text-slate-600 data-[state=inactive]:hover:bg-gradient-to-r data-[state=inactive]:hover:from-blue-50 data-[state=inactive]:hover:to-indigo-50 data-[state=inactive]:hover:text-blue-600 hover:scale-[1.02]"
