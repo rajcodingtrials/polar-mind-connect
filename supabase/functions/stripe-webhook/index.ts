@@ -12,16 +12,24 @@ const corsHeaders = {
 };
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("🚀 Webhook handler started, method:", req.method);
+  
   if (req.method === "OPTIONS") {
+    console.log("⚪ OPTIONS request - returning CORS headers");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log("📥 Processing webhook request...");
+    
     const signature = req.headers.get("stripe-signature");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
+    console.log("🔐 Webhook secret exists:", !!webhookSecret);
+    console.log("✍️ Signature exists:", !!signature);
+
     if (!webhookSecret) {
-      console.error("STRIPE_WEBHOOK_SECRET not configured");
+      console.error("❌ STRIPE_WEBHOOK_SECRET not configured");
       return new Response(
         JSON.stringify({ error: "Webhook secret not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -29,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!signature) {
-      console.error("No signature provided");
+      console.error("❌ No signature provided");
       return new Response(
         JSON.stringify({ error: "No signature" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -37,14 +45,17 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.text();
-    
+    console.log("📦 Received body length:", body.length);
     console.log("🔵 Webhook received, signature:", signature?.substring(0, 20) + "...");
     
     // Verify webhook signature using Stripe's standard method
+    console.log("🔍 Starting signature verification...");
     const encoder = new TextEncoder();
     const timestamp = signature.split(',')[0].split('=')[1];
     const receivedSignature = signature.split(',')[1].split('=')[1];
     const signedPayload = `${timestamp}.${body}`;
+    
+    console.log("⏰ Timestamp:", timestamp);
     
     const key = await crypto.subtle.importKey(
       "raw",
@@ -74,17 +85,21 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("✅ Webhook signature verified");
+    console.log("✅ Webhook signature verified successfully");
     const event = JSON.parse(body);
-    console.log("Stripe webhook event:", event.type);
+    console.log("📨 Stripe webhook event type:", event.type);
+    console.log("🆔 Event ID:", event.id);
 
     // Handle the event
+    console.log("🎯 Handling event type:", event.type);
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
-        console.log("Payment successful for session:", session.id);
+        console.log("💳 Payment successful for session:", session.id);
+        console.log("📋 Session metadata:", JSON.stringify(session.metadata));
 
         // Update payment record
+        console.log("💾 Updating payment record...");
         const { error: paymentError } = await supabase
           .from("payments")
           .update({
@@ -95,12 +110,17 @@ const handler = async (req: Request): Promise<Response> => {
           .eq("stripe_session_id", session.id);
 
         if (paymentError) {
-          console.error("Error updating payment:", paymentError);
+          console.error("❌ Error updating payment:", paymentError);
+        } else {
+          console.log("✅ Payment record updated successfully");
         }
 
         // Update therapy session status and send confirmation emails
         const sessionId = session.metadata?.session_id;
+        console.log("🔍 Looking for therapy session ID:", sessionId);
+        
         if (sessionId) {
+          console.log("📥 Fetching therapy session details...");
           // Fetch session details
           const { data: sessionData, error: fetchError } = await supabase
             .from("therapy_sessions")
@@ -122,9 +142,14 @@ const handler = async (req: Request): Promise<Response> => {
             .single();
 
           if (fetchError) {
-            console.error("Error fetching session:", fetchError);
+            console.error("❌ Error fetching session:", fetchError);
           } else {
+            console.log("✅ Session data fetched:", JSON.stringify(sessionData));
+            console.log("📧 Client email:", sessionData.profiles?.email);
+            console.log("👨‍⚕️ Therapist email:", sessionData.therapists?.email);
+            
             // Update session status
+            console.log("💾 Updating therapy session status...");
             const { error: sessionError } = await supabase
               .from("therapy_sessions")
               .update({
@@ -135,11 +160,12 @@ const handler = async (req: Request): Promise<Response> => {
               .eq("id", sessionId);
 
             if (sessionError) {
-              console.error("Error updating therapy session:", sessionError);
+              console.error("❌ Error updating therapy session:", sessionError);
             } else {
-              console.log("Therapy session confirmed:", sessionId);
+              console.log("✅ Therapy session confirmed:", sessionId);
 
               // Create Zoom meeting
+              console.log("🎥 Creating Zoom meeting...");
               try {
                 const { data: zoomData, error: zoomError } = await supabase.functions.invoke('create-zoom-meeting', {
                   body: {
@@ -154,15 +180,16 @@ const handler = async (req: Request): Promise<Response> => {
                 });
 
                 if (zoomError) {
-                  console.error("Error creating Zoom meeting:", zoomError);
+                  console.error("❌ Error creating Zoom meeting:", zoomError);
                 } else {
-                  console.log("Zoom meeting created:", zoomData);
+                  console.log("✅ Zoom meeting created:", zoomData);
                 }
               } catch (zoomErr) {
-                console.error("Zoom meeting creation failed:", zoomErr);
+                console.error("❌ Zoom meeting creation failed:", zoomErr);
               }
 
               // Send booking confirmation email to client
+              console.log("📧 Sending booking confirmation email to client...");
               try {
                 await supabase.functions.invoke('send-booking-confirmation', {
                   body: {
@@ -177,12 +204,13 @@ const handler = async (req: Request): Promise<Response> => {
                     price: sessionData.price_paid,
                   }
                 });
-                console.log("Booking confirmation email sent to client");
+                console.log("✅ Booking confirmation email sent to client");
               } catch (emailErr) {
-                console.error("Error sending client email:", emailErr);
+                console.error("❌ Error sending client email:", emailErr);
               }
 
               // Send notification email to therapist
+              console.log("📧 Sending notification email to therapist...");
               try {
                 await supabase.functions.invoke('send-therapist-notification', {
                   body: {
@@ -197,25 +225,27 @@ const handler = async (req: Request): Promise<Response> => {
                     clientNotes: sessionData.client_notes,
                   }
                 });
-                console.log("Therapist notification email sent");
+                console.log("✅ Therapist notification email sent");
               } catch (emailErr) {
-                console.error("Error sending therapist email:", emailErr);
+                console.error("❌ Error sending therapist email:", emailErr);
               }
             }
           }
+        } else {
+          console.log("⚠️ No session_id found in metadata");
         }
         break;
       }
 
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object;
-        console.log("PaymentIntent succeeded:", paymentIntent.id);
+        console.log("✅ PaymentIntent succeeded:", paymentIntent.id);
         break;
       }
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object;
-        console.log("PaymentIntent failed:", paymentIntent.id);
+        console.log("❌ PaymentIntent failed:", paymentIntent.id);
 
         // Update payment record to failed
         const { error } = await supabase
@@ -233,15 +263,17 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        console.log(`⚠️ Unhandled event type: ${event.type}`);
     }
 
+    console.log("✅ Webhook processed successfully, returning 200");
     return new Response(
       JSON.stringify({ received: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
-    console.error("Webhook error:", error);
+    console.error("❌ Webhook error:", error);
+    console.error("Stack trace:", error.stack);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
