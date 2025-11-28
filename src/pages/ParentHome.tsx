@@ -9,28 +9,38 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Video, Calendar, Star } from "lucide-react";
+import { Video, Calendar, Star, ChevronDown, ChevronUp } from "lucide-react";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import AffirmationCard from "@/components/parents/AffirmationCard";
 import AILearningAdventure_v2 from "@/components/parents/AILearningAdventure_v2";
 import SessionReviewModal, { SessionReview } from "@/components/parents/SessionReviewModal";
+import LessonReviewModal, { LessonReview } from "@/components/parents/LessonReviewModal";
+import LessonActivityHistory from "@/components/parents/LessonActivityHistory";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLessonActivity, LessonActivity } from "@/hooks/useLessonActivity";
 
 const ParentHome = () => {
   const { isAuthenticated, user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
   const navigate = useNavigate();
   const location = useLocation();
-  const { upcomingSessions, completedSessions, loading: sessionsLoading, submitReview } = useClientSessions(user?.id || null);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"ai" | "human">("ai");
+  const { upcomingSessions, completedSessions, loading: sessionsLoading, submitReview } = useClientSessions(user?.id || null);
+  // Fetch lesson activities when AI therapy tab is active
+  const { lessonActivities, loading: lessonActivityLoading, submitReview: submitLessonReview } = useLessonActivity(activeTab === 'ai' ? user?.id || null : null);
   const [selectedTherapist, setSelectedTherapist] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedSessionForReview, setSelectedSessionForReview] = useState<{ id: string; therapistName: string } | null>(null);
   const [existingReview, setExistingReview] = useState<SessionReview | null>(null);
+  const [upcomingSessionsExpanded, setUpcomingSessionsExpanded] = useState(false);
+  const [sessionHistoryExpanded, setSessionHistoryExpanded] = useState(false);
+  const [lessonReviewModalOpen, setLessonReviewModalOpen] = useState(false);
+  const [selectedLessonForReview, setSelectedLessonForReview] = useState<{ id: string; name: string } | null>(null);
+  const [existingLessonReview, setExistingLessonReview] = useState<LessonReview | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -61,6 +71,16 @@ const ParentHome = () => {
     checkTherapistVerification();
   }, [user?.id]);
 
+  // Check sessionStorage for selected therapist (set from UserDashboard retry)
+  useEffect(() => {
+    const storedTherapist = sessionStorage.getItem('selectedTherapist');
+    if (storedTherapist) {
+      setSelectedTherapist(storedTherapist);
+      // Clear sessionStorage after reading
+      sessionStorage.removeItem('selectedTherapist');
+    }
+  }, []);
+
   // Reset selected therapist when navigating back from AILearningAdventure
   useEffect(() => {
     if (location.state?.resetTherapist) {
@@ -72,6 +92,78 @@ const ParentHome = () => {
 
   const handleAITherapySelect = (therapistName: string) => {
     setSelectedTherapist(therapistName);
+  };
+
+  const handleOpenLessonReview = async (activity: any) => {
+    const lessonName = activity.lesson?.name || "Lesson";
+    setSelectedLessonForReview({
+      id: activity.lesson_id,
+      name: lessonName,
+    });
+
+    // Fetch existing review if it exists
+    if (user?.id) {
+      try {
+        const { data: reviewData, error } = await supabase
+          .from('lesson_activity' as any)
+          .select('overall_rating, usefulness_rating, communication_rating, would_recommend, what_went_well, what_can_be_improved')
+          .eq('lesson_id', activity.lesson_id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!error && reviewData) {
+          setExistingLessonReview({
+            overall_rating: reviewData.overall_rating || 0,
+            usefulness_rating: reviewData.usefulness_rating || 0,
+            communication_rating: reviewData.communication_rating || 0,
+            would_recommend: reviewData.would_recommend ?? true,
+            what_went_well: reviewData.what_went_well || '',
+            what_can_be_improved: reviewData.what_can_be_improved || '',
+          });
+        } else {
+          setExistingLessonReview(null);
+        }
+      } catch (error) {
+        console.error('Error fetching existing lesson review:', error);
+        setExistingLessonReview(null);
+      }
+    } else {
+      setExistingLessonReview(null);
+    }
+
+    setLessonReviewModalOpen(true);
+  };
+
+  const handleSubmitLessonReview = async (review: LessonReview) => {
+    if (!selectedLessonForReview || !user?.id) return;
+
+    try {
+      await submitLessonReview(selectedLessonForReview.id, review);
+      toast({
+        title: "Review Submitted",
+        description: existingLessonReview ? "Your review has been updated!" : "Thank you for your feedback!",
+      });
+      setLessonReviewModalOpen(false);
+      setSelectedLessonForReview(null);
+      setExistingLessonReview(null);
+    } catch (error) {
+      console.error("Error submitting lesson review:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit review. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRetryLesson = (lessonId: string, questionType: string) => {
+    // Set therapist and store lesson info in sessionStorage for AILearningAdventure to pick up
+    setSelectedTherapist('Laura'); // Default therapist
+    sessionStorage.setItem('retryLesson', JSON.stringify({
+      lessonId,
+      questionType,
+      timestamp: Date.now()
+    }));
   };
 
   const handleBookSession = () => {
@@ -176,198 +268,214 @@ const ParentHome = () => {
     return now > sessionEndDate;
   };
 
+  // Define alternating row styles with two shades of blue/gray
+  const getRowStyle = (index: number) => {
+    const isEven = index % 2 === 0;
+    return {
+      bgColor: isEven ? 'bg-blue-50' : 'bg-slate-50',
+      hoverColor: isEven ? 'hover:bg-blue-100' : 'hover:bg-slate-100',
+      textColor: isEven ? 'text-blue-900' : 'text-slate-900',
+    };
+  };
+
+
   const renderAiTherapy = (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div
-        className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 p-6 rounded-2xl transition-all duration-300 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01]"
-        onClick={() => handleAITherapySelect('Laura')}
-      >
-        <Avatar className="h-20 w-20 border-2 border-blue-200">
-          <AvatarImage src="/lovable-uploads/Laura.png" alt="Laura - Lead Speech Language Pathologist AI Therapist" />
-          <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">L</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <h3 className="font-semibold text-slate-700 text-xl mb-2">Laura 💫</h3>
-          <p className="text-slate-600 text-base">Lead Speech Language Pathologist</p>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div
+          className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 p-6 rounded-2xl transition-all duration-300 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01]"
+          onClick={() => handleAITherapySelect('Laura')}
+        >
+          <Avatar className="h-20 w-20 border-2 border-blue-200">
+            <AvatarImage src="/lovable-uploads/Laura.png" alt="Laura - Lead Speech Language Pathologist AI Therapist" />
+            <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">L</AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <h3 className="font-semibold text-slate-700 text-xl mb-2">Laura 💫</h3>
+            <p className="text-slate-600 text-base">Lead Speech Language Pathologist</p>
+          </div>
         </div>
-      </div>
-      <div
-        className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 p-6 rounded-2xl transition-all duration-300 border border-green-200 hover:border-green-300 shadow-sm hover:shadow-xl hover:scale-[1.01]"
-        onClick={() => handleAITherapySelect('Lawrence')}
-      >
-        <Avatar className="h-20 w-20 border-2 border-green-200">
-          <AvatarImage src="/lovable-uploads/Lawrence.png" alt="Lawrence - Associate Speech Language Pathologist AI Therapist" />
-          <AvatarFallback className="bg-green-100 text-green-600 text-lg">L</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <h3 className="font-semibold text-slate-700 text-xl mb-2">Lawrence 🌟</h3>
-          <p className="text-slate-600 text-base">Associate Speech Language Pathologist</p>
+        <div
+          className="flex items-center space-x-6 cursor-pointer bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 p-6 rounded-2xl transition-all duration-300 border border-green-200 hover:border-green-300 shadow-sm hover:shadow-xl hover:scale-[1.01]"
+          onClick={() => handleAITherapySelect('Lawrence')}
+        >
+          <Avatar className="h-20 w-20 border-2 border-green-200">
+            <AvatarImage src="/lovable-uploads/Lawrence.png" alt="Lawrence - Associate Speech Language Pathologist AI Therapist" />
+            <AvatarFallback className="bg-green-100 text-green-600 text-lg">L</AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <h3 className="font-semibold text-slate-700 text-xl mb-2">Lawrence 🌟</h3>
+            <p className="text-slate-600 text-base">Associate Speech Language Pathologist</p>
+          </div>
         </div>
       </div>
     </div>
   );
+
+  // Sort upcoming sessions: earliest first
+  const sortedUpcomingSessions = [...upcomingSessions].sort((a, b) => {
+    const dateA = new Date(`${a.session_date}T${a.start_time}`);
+    const dateB = new Date(`${b.session_date}T${b.start_time}`);
+    return dateA.getTime() - dateB.getTime();
+  });
+
+  // Sort completed sessions: most recent first
+  const sortedCompletedSessions = [...completedSessions].sort((a, b) => {
+    const dateA = new Date(`${a.session_date}T${a.start_time}`);
+    const dateB = new Date(`${b.session_date}T${b.start_time}`);
+    return dateB.getTime() - dateA.getTime();
+  });
+
+  // Get visible sessions based on expanded state
+  const visibleUpcomingSessions = upcomingSessionsExpanded 
+    ? sortedUpcomingSessions 
+    : sortedUpcomingSessions.slice(0, 3);
+  
+  const visibleCompletedSessions = sessionHistoryExpanded 
+    ? sortedCompletedSessions 
+    : sortedCompletedSessions.slice(0, 3);
 
   const renderHumanTherapy = (
     <div className="space-y-6">
-      <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01] transition-all duration-300">
-        <CardHeader>
-          <CardTitle className="text-slate-700 flex items-center justify-between">
-            <span>Upcoming Sessions ({upcomingSessions.length})</span>
-            <Button size="sm" variant="outline" onClick={handleBookSession}>
-              Book a Session
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {upcomingSessions.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-slate-600 mb-4">No upcoming sessions scheduled.</p>
-              <Button onClick={handleBookSession}>Find a Therapist</Button>
-            </div>
-          ) : (
-            <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2">
-              {upcomingSessions.map((session) => {
-                const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
-                const canJoin = isSessionJoinable(session.session_date, session.start_time);
-                const hasPassed = hasSessionPassed(session.session_date, session.end_time);
-                const hasMeetingLink = session.meeting_link;
-                
-                return (
-                  <Card key={session.id} className="border-blue-200 bg-blue-50">
-                    <CardContent className="p-4">
-                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                        <div className="flex items-start space-x-4">
-                          <Avatar className="mt-1">
-                        <AvatarImage src={session.therapist.avatar_url} />
-                        <AvatarFallback>
-                          {session.therapist.name?.charAt(0) ||
-                            session.therapist.first_name?.charAt(0) ||
-                            "T"}
-                        </AvatarFallback>
-                      </Avatar>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-slate-900">
-                          {session.therapist.name ||
-                            `${session.therapist.first_name} ${session.therapist.last_name}`}
-                        </h3>
-                            <div className="flex items-center text-sm text-slate-600 mt-1">
-                              <Calendar className="w-4 h-4 mr-1" />
-                          {date} at {time}
+      <div>
+        <div className="flex items-center justify-between mb-4 px-4">
+          <h2 className="text-xl font-bold text-slate-700 text-left">Upcoming Sessions ({upcomingSessions.length})</h2>
+          <Button size="sm" variant="outline" onClick={handleBookSession}>
+            Book a Session
+          </Button>
+        </div>
+        {upcomingSessions.length === 0 ? (
+          <div className="text-center py-8 bg-white rounded-xl border-2 border-dashed border-gray-300">
+            <p className="text-slate-600 mb-4">No upcoming sessions scheduled.</p>
+            <Button onClick={handleBookSession}>Find a Therapist</Button>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Therapist</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date & Time</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Duration</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Meeting</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {visibleUpcomingSessions.map((session, index) => {
+                  const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
+                  const canJoin = isSessionJoinable(session.session_date, session.start_time);
+                  const hasPassed = hasSessionPassed(session.session_date, session.end_time);
+                  const hasMeetingLink = session.meeting_link;
+                  const rowStyle = getRowStyle(index);
+                  
+                  return (
+                    <tr
+                      key={session.id}
+                      className={`${rowStyle.bgColor} ${rowStyle.hoverColor} ${rowStyle.textColor} transition-all duration-300 cursor-pointer`}
+                    >
+                      <td className="px-4 py-3 whitespace-nowrap text-left">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-10 w-10 border-2 border-white flex-shrink-0">
+                            <AvatarImage src={session.therapist.avatar_url} />
+                            <AvatarFallback className="bg-white text-slate-600 text-sm">
+                              {session.therapist.name?.charAt(0) ||
+                                session.therapist.first_name?.charAt(0) ||
+                                "T"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div className="font-bold text-sm truncate">
+                              {session.therapist.name ||
+                                `${session.therapist.first_name} ${session.therapist.last_name}`}
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">{session.duration_minutes} minutes</p>
-                            
-                            {hasMeetingLink && (
-                              <div className="mt-3 p-3 bg-white border border-blue-300 rounded-lg">
-                                <div className="flex items-center text-sm font-medium text-blue-900 mb-2">
-                                  <Video className="w-4 h-4 mr-2" />
-                                  Meeting Details
-                                </div>
-                                {session.zoom_meeting_id && (
-                                  <p className="text-xs text-slate-600 mb-1">
-                                    <span className="font-medium">Meeting ID:</span> {session.zoom_meeting_id}
-                                  </p>
-                                )}
-                                {session.zoom_password && (
-                                  <p className="text-xs text-slate-600">
-                                    <span className="font-medium">Password:</span> {session.zoom_password}
-                                  </p>
-                                )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-left">
+                        <div className="flex items-center text-sm">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          <span>{date} • {time}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-left">
+                        {session.duration_minutes} min
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-left">
+                        <Badge className={`${getSessionStatusColor(session.status)} text-xs`}>
+                          {session.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-left">
+                        {hasMeetingLink ? (
+                          <div className="text-xs">
+                            {session.zoom_meeting_id && (
+                              <div className="mb-1">
+                                <span className="font-medium">ID:</span> {session.zoom_meeting_id}
                               </div>
                             )}
-                      </div>
-                    </div>
-                        
-                        <div className="flex flex-col items-end gap-2 md:min-w-[140px]">
-                    <Badge className={getSessionStatusColor(session.status)}>{session.status}</Badge>
-                          
-                          {hasMeetingLink && !hasPassed && (
-                            <Button
-                              onClick={() => window.open(session.meeting_link, '_blank')}
-                              disabled={!canJoin}
-                              className="w-full md:w-auto"
-                              variant={canJoin ? "default" : "outline"}
-                            >
-                              <Video className="w-4 h-4 mr-2" />
-                              {canJoin ? 'Join Meeting' : 'Available 12hrs Before'}
-                            </Button>
-                          )}
-                          
-                          {!hasMeetingLink && !hasPassed && (
-                            <p className="text-xs text-slate-500 text-center">
-                              Meeting link will be available soon
-                            </p>
-                          )}
-                        </div>
-                  </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                            {session.zoom_password && (
+                              <div>
+                                <span className="font-medium">Pass:</span> {session.zoom_password}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs opacity-70">Not available</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-left">
+                        {hasMeetingLink && !hasPassed && (
+                          <Button
+                            onClick={() => window.open(session.meeting_link, '_blank')}
+                            disabled={!canJoin}
+                            variant={canJoin ? "default" : "outline"}
+                            size="sm"
+                          >
+                            <Video className="w-3 h-3 mr-2" />
+                            {canJoin ? 'Join' : '12hrs'}
+                          </Button>
+                        )}
+                        {!hasMeetingLink && !hasPassed && (
+                          <span className="text-xs opacity-70">Coming soon</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                  })}
+                </tbody>
+              </table>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-xl hover:scale-[1.01] transition-all duration-300">
-        <CardHeader>
-          <CardTitle className="text-slate-700 flex items-center">
-            Session History ({completedSessions.length})
-          </CardTitle>
-          <CardDescription>Recent sessions with your human therapists</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {completedSessions.length === 0 ? (
-            <p className="text-center text-slate-600 py-8">No completed sessions yet.</p>
-          ) : (
-            <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2">
-              {completedSessions.map((session) => {
-                const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
-                return (
-                  <div
-                    key={session.id}
-                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-blue-100 rounded-lg border border-blue-200"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <Avatar>
-                        <AvatarImage src={session.therapist.avatar_url} />
-                        <AvatarFallback>
-                          {session.therapist.name?.charAt(0) ||
-                            session.therapist.first_name?.charAt(0) ||
-                            "T"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-medium">
-                          {session.therapist.name ||
-                            `${session.therapist.first_name} ${session.therapist.last_name}`}
-                        </h3>
-                        <p className="text-sm text-slate-500">
-                          {date} at {time}
-                        </p>
-                        <p className="text-xs text-slate-500">{session.duration_minutes} minutes</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
-                      <Badge className={getSessionStatusColor(session.status)}>{session.status}</Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenReview(session)}
-                        className="w-full md:w-auto"
-                      >
-                        <Star className="w-4 h-4 mr-2" />
-                        Review Session
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {sortedUpcomingSessions.length > 3 && (
+              <div className="mt-4 text-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setUpcomingSessionsExpanded(!upcomingSessionsExpanded)}
+                  className="flex items-center gap-2"
+                >
+                  {upcomingSessionsExpanded ? (
+                    <>
+                      <ChevronUp className="w-4 h-4" />
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4" />
+                      Show All ({sortedUpcomingSessions.length - 3} more)
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
+
 
   if (profileLoading) {
     return (
@@ -409,16 +517,16 @@ const ParentHome = () => {
                 onValueChange={(value) => setActiveTab(value as "ai" | "human")}
                 className="space-y-6"
               >
-                <TabsList className="grid grid-cols-2 bg-white/40 backdrop-blur rounded-2xl shadow-sm">
+                <TabsList className="grid grid-cols-2 gap-2 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-1.5">
                   <TabsTrigger
                     value="ai"
-                    className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:bg-blue-50 data-[state=inactive]:hover:bg-blue-100 hover:scale-[1.01] hover:shadow-xl transition-all duration-300"
+                    className="rounded-xl text-sm sm:text-base font-medium border-2 border-transparent transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-100 data-[state=active]:to-indigo-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border-blue-200 data-[state=inactive]:bg-white/80 data-[state=inactive]:text-slate-600 data-[state=inactive]:hover:bg-gradient-to-r data-[state=inactive]:hover:from-blue-50 data-[state=inactive]:hover:to-indigo-50 data-[state=inactive]:hover:text-blue-600 hover:scale-[1.02]"
                   >
                     AI Therapy
                   </TabsTrigger>
                   <TabsTrigger
                     value="human"
-                    className="rounded-xl text-sm sm:text-base bg-white text-slate-700 border-2 border-transparent data-[state=active]:bg-blue-50 data-[state=inactive]:hover:bg-blue-100 hover:scale-[1.01] hover:shadow-xl transition-all duration-300"
+                    className="rounded-xl text-sm sm:text-base font-medium border-2 border-transparent transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-100 data-[state=active]:to-indigo-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border-blue-200 data-[state=inactive]:bg-white/80 data-[state=inactive]:text-slate-600 data-[state=inactive]:hover:bg-gradient-to-r data-[state=inactive]:hover:from-blue-50 data-[state=inactive]:hover:to-indigo-50 data-[state=inactive]:hover:text-blue-600 hover:scale-[1.02]"
                   >
                     Human Therapy
                   </TabsTrigger>
@@ -449,6 +557,20 @@ const ParentHome = () => {
           sessionId={selectedSessionForReview.id}
           therapistName={selectedSessionForReview.therapistName}
           existingReview={existingReview}
+        />
+      )}
+      {selectedLessonForReview && (
+        <LessonReviewModal
+          isOpen={lessonReviewModalOpen}
+          onClose={() => {
+            setLessonReviewModalOpen(false);
+            setSelectedLessonForReview(null);
+            setExistingLessonReview(null);
+          }}
+          onSubmit={handleSubmitLessonReview}
+          lessonId={selectedLessonForReview.id}
+          lessonName={selectedLessonForReview.name}
+          existingReview={existingLessonReview}
         />
       )}
     </div>

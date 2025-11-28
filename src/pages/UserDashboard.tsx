@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useLessonActivity, LessonActivity } from "@/hooks/useLessonActivity";
 import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,21 +18,42 @@ import {
   Flame,
   Award,
   Video,
-  Calendar
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw
 } from "lucide-react";
 import { format } from "date-fns";
 import SessionRatingModal from "@/components/parents/SessionRatingModal";
+import SessionReviewModal, { SessionReview } from "@/components/parents/SessionReviewModal";
+import LessonReviewModal, { LessonReview } from "@/components/parents/LessonReviewModal";
+import LessonActivityHistory from "@/components/parents/LessonActivityHistory";
 import UserProfileEditor from "@/components/parents/UserProfileEditor";
+import BookingModal from "@/components/therapist/BookingModal";
 import Footer from "@/components/Footer";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const UserDashboard = () => {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
-  const { upcomingSessions, completedSessions, sessionRatings, loading, submitRating } = useClientSessions(user?.id || null);
+  const { upcomingSessions, completedSessions, sessionRatings, loading, submitRating, submitReview } = useClientSessions(user?.id || null);
+  const { lessonActivities, loading: lessonActivityLoading, submitReview: submitLessonReview } = useLessonActivity(user?.id || null);
   const [selectedSessionForRating, setSelectedSessionForRating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sessions' | 'ratings' | 'profile'>('dashboard');
+  const [sessionHistoryExpanded, setSessionHistoryExpanded] = useState(false);
+  const [lessonReviewModalOpen, setLessonReviewModalOpen] = useState(false);
+  const [selectedLessonForReview, setSelectedLessonForReview] = useState<{ id: string; name: string } | null>(null);
+  const [existingLessonReview, setExistingLessonReview] = useState<LessonReview | null>(null);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedSessionForReview, setSelectedSessionForReview] = useState<{ id: string; therapistName: string } | null>(null);
+  const [existingReview, setExistingReview] = useState<SessionReview | null>(null);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [selectedTherapistForBooking, setSelectedTherapistForBooking] = useState<any | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -93,6 +115,196 @@ const UserDashboard = () => {
     const sessionEndDate = new Date(`${date}T${endTime}`);
     const now = new Date();
     return now > sessionEndDate;
+  };
+
+  // Define alternating row styles with two shades of blue/gray
+  const getRowStyle = (index: number) => {
+    const isEven = index % 2 === 0;
+    return {
+      bgColor: isEven ? 'bg-blue-50' : 'bg-slate-50',
+      hoverColor: isEven ? 'hover:bg-blue-100' : 'hover:bg-slate-100',
+      textColor: isEven ? 'text-blue-900' : 'text-slate-900',
+    };
+  };
+
+  // Sort completed sessions: most recent first
+  const sortedCompletedSessions = [...completedSessions].sort((a, b) => {
+    const dateA = new Date(`${a.session_date}T${a.start_time}`);
+    const dateB = new Date(`${b.session_date}T${b.start_time}`);
+    return dateB.getTime() - dateA.getTime();
+  });
+
+  // Get visible sessions based on expanded state
+  const visibleCompletedSessions = sessionHistoryExpanded 
+    ? sortedCompletedSessions 
+    : sortedCompletedSessions.slice(0, 3);
+
+  const handleOpenLessonReview = async (activity: any) => {
+    const lessonName = activity.lesson?.name || "Lesson";
+    setSelectedLessonForReview({
+      id: activity.lesson_id,
+      name: lessonName,
+    });
+
+    // Fetch existing review if it exists
+    if (user?.id) {
+      try {
+        const { data: reviewData, error } = await supabase
+          .from('lesson_activity' as any)
+          .select('overall_rating, usefulness_rating, communication_rating, would_recommend, what_went_well, what_can_be_improved')
+          .eq('lesson_id', activity.lesson_id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!error && reviewData) {
+          setExistingLessonReview({
+            overall_rating: reviewData.overall_rating || 0,
+            usefulness_rating: reviewData.usefulness_rating || 0,
+            communication_rating: reviewData.communication_rating || 0,
+            would_recommend: reviewData.would_recommend ?? true,
+            what_went_well: reviewData.what_went_well || '',
+            what_can_be_improved: reviewData.what_can_be_improved || '',
+          });
+        } else {
+          setExistingLessonReview(null);
+        }
+      } catch (error) {
+        console.error('Error fetching existing lesson review:', error);
+        setExistingLessonReview(null);
+      }
+    } else {
+      setExistingLessonReview(null);
+    }
+
+    setLessonReviewModalOpen(true);
+  };
+
+  const handleSubmitLessonReview = async (review: LessonReview) => {
+    if (!selectedLessonForReview || !user?.id) return;
+
+    try {
+      await submitLessonReview(selectedLessonForReview.id, review);
+      toast({
+        title: "Review Submitted",
+        description: existingLessonReview ? "Your review has been updated!" : "Thank you for your feedback!",
+      });
+      setLessonReviewModalOpen(false);
+      setSelectedLessonForReview(null);
+      setExistingLessonReview(null);
+    } catch (error) {
+      console.error("Error submitting lesson review:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit review. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRetryLesson = (lessonId: string, questionType: string) => {
+    // Set therapist and store lesson info in sessionStorage for AILearningAdventure to pick up
+    sessionStorage.setItem('retryLesson', JSON.stringify({
+      lessonId,
+      questionType,
+      timestamp: Date.now()
+    }));
+    // Set default therapist so ParentHome will render AILearningAdventure_v2
+    sessionStorage.setItem('selectedTherapist', 'Laura');
+    navigate('/home');
+  };
+
+  const handleOpenReview = async (session: any) => {
+    const therapistName = session.therapist.name ||
+      `${session.therapist.first_name} ${session.therapist.last_name}` ||
+      "Therapist";
+    setSelectedSessionForReview({
+      id: session.id,
+      therapistName,
+    });
+
+    // Fetch existing review if it exists
+    if (user?.id) {
+      try {
+        const { data: reviewData, error } = await supabase
+          .from('session_ratings')
+          .select('overall_rating, usefulness_rating, communication_rating, would_recommend, what_went_well, what_can_be_improved')
+          .eq('session_id', session.id)
+          .eq('client_id', user.id)
+          .maybeSingle();
+
+        if (!error && reviewData) {
+          setExistingReview({
+            overall_rating: reviewData.overall_rating || 0,
+            usefulness_rating: reviewData.usefulness_rating || 0,
+            communication_rating: reviewData.communication_rating || 0,
+            would_recommend: reviewData.would_recommend ?? true,
+            what_went_well: reviewData.what_went_well || '',
+            what_can_be_improved: reviewData.what_can_be_improved || '',
+          });
+        } else {
+          setExistingReview(null);
+        }
+      } catch (error) {
+        console.error('Error fetching existing review:', error);
+        setExistingReview(null);
+      }
+    } else {
+      setExistingReview(null);
+    }
+
+    setReviewModalOpen(true);
+  };
+
+  const handleSubmitReview = async (review: SessionReview) => {
+    if (!selectedSessionForReview || !user?.id) return;
+
+    try {
+      await submitReview(selectedSessionForReview.id, review);
+      toast({
+        title: "Review Submitted",
+        description: existingReview ? "Your review has been updated!" : "Thank you for your feedback!",
+      });
+      setReviewModalOpen(false);
+      setSelectedSessionForReview(null);
+      setExistingReview(null);
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit review. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBookAgain = async (session: any) => {
+    // Fetch full therapist data for booking
+    try {
+      const { data: therapistData, error } = await supabase
+        .from('therapists')
+        .select('id, first_name, last_name, hourly_rate_30min, hourly_rate_60min, timezone')
+        .eq('id', session.therapist_id)
+        .single();
+
+      if (error || !therapistData) {
+        toast({
+          title: "Error",
+          description: "Could not load therapist information. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedTherapistForBooking(therapistData);
+      setBookingModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching therapist data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load therapist information.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Calculate stats
@@ -251,6 +463,141 @@ const UserDashboard = () => {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Past Sessions Section */}
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-slate-700 flex items-center">
+                  <FileText className="w-5 h-5 mr-2" />
+                  Past Sessions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  {/* AI Therapy Section */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-slate-700 mb-4 px-4 text-left">AI Therapy</h3>
+                    <LessonActivityHistory
+                      lessonActivities={lessonActivities}
+                      loading={lessonActivityLoading}
+                      onReviewClick={handleOpenLessonReview}
+                      onRetryLesson={handleRetryLesson}
+                      hideTitle={true}
+                    />
+                  </div>
+
+                  {/* Human Therapy Section */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-slate-700 mb-4 px-4 text-left">Human Therapy</h3>
+                    {completedSessions.length === 0 ? (
+                      <div className="text-center py-8 bg-white rounded-xl border-2 border-dashed border-gray-300">
+                        <p className="text-slate-600">No completed sessions yet.</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="overflow-x-auto rounded-lg border border-gray-200">
+                          <table className="w-full table-fixed">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-64">Therapist</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-56">Date & Time</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-32">Status</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-52">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {visibleCompletedSessions.map((session, index) => {
+                              const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
+                              const rowStyle = getRowStyle(index);
+                              
+                              return (
+                                <tr
+                                  key={session.id}
+                                  className={`${rowStyle.bgColor} ${rowStyle.hoverColor} ${rowStyle.textColor} transition-all duration-300 cursor-pointer`}
+                                >
+                                  <td className="px-4 py-3 whitespace-nowrap text-left w-64">
+                                    <div className="flex items-center space-x-3">
+                                      <Avatar className="h-10 w-10 border-2 border-white flex-shrink-0">
+                                        <AvatarImage src={session.therapist.avatar_url} />
+                                        <AvatarFallback className="bg-white text-slate-600 text-sm">
+                                          {session.therapist.name?.charAt(0) ||
+                                            session.therapist.first_name?.charAt(0) ||
+                                            "T"}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="min-w-0">
+                                        <div className="font-bold text-sm truncate">
+                                          {session.therapist.name ||
+                                            `${session.therapist.first_name} ${session.therapist.last_name}`}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 whitespace-nowrap text-left w-56">
+                                    <div className="flex items-center text-sm">
+                                      <Calendar className="w-4 h-4 mr-2" />
+                                      <span>{date} • {time}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 whitespace-nowrap text-left w-32">
+                                    <Badge className={`${getSessionStatusColor(session.status)} text-xs`}>
+                                      {session.status}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-4 py-3 whitespace-nowrap text-left w-52">
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleOpenReview(session)}
+                                      >
+                                        <Star className="w-3 h-3 mr-2" />
+                                        Review
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleBookAgain(session)}
+                                      >
+                                        <RotateCcw className="w-3 h-3 mr-2" />
+                                        Book Again
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                        {sortedCompletedSessions.length > 3 && (
+                          <div className="mt-4 text-center">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSessionHistoryExpanded(!sessionHistoryExpanded)}
+                              className="flex items-center gap-2"
+                            >
+                              {sessionHistoryExpanded ? (
+                                <>
+                                  <ChevronUp className="w-4 h-4" />
+                                  Show Less
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="w-4 h-4" />
+                                  Show All ({sortedCompletedSessions.length - 3} more)
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -493,6 +840,44 @@ const UserDashboard = () => {
             setSelectedSessionForRating(null);
           }}
           onClose={() => setSelectedSessionForRating(null)}
+        />
+      )}
+      {selectedSessionForReview && (
+        <SessionReviewModal
+          isOpen={reviewModalOpen}
+          onClose={() => {
+            setReviewModalOpen(false);
+            setSelectedSessionForReview(null);
+            setExistingReview(null);
+          }}
+          onSubmit={handleSubmitReview}
+          sessionId={selectedSessionForReview.id}
+          therapistName={selectedSessionForReview.therapistName}
+          existingReview={existingReview}
+        />
+      )}
+      {selectedLessonForReview && (
+        <LessonReviewModal
+          isOpen={lessonReviewModalOpen}
+          onClose={() => {
+            setLessonReviewModalOpen(false);
+            setSelectedLessonForReview(null);
+            setExistingLessonReview(null);
+          }}
+          onSubmit={handleSubmitLessonReview}
+          lessonId={selectedLessonForReview.id}
+          lessonName={selectedLessonForReview.name}
+          existingReview={existingLessonReview}
+        />
+      )}
+      {selectedTherapistForBooking && (
+        <BookingModal
+          therapist={selectedTherapistForBooking}
+          isOpen={bookingModalOpen}
+          onClose={() => {
+            setBookingModalOpen(false);
+            setSelectedTherapistForBooking(null);
+          }}
         />
       )}
       

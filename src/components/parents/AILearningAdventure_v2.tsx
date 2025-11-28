@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useAuth } from '../../context/AuthContext';
@@ -49,6 +49,7 @@ interface AILearningAdventure_v2Props {
 
 const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapistName }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useUserProfile();
   const { user } = useAuth();
   const [parentLessons, setParentLessons] = useState<string[]>([]);
@@ -157,6 +158,52 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       icon: BookOpen
     }
   ];
+
+  // Handle lesson retry from sessionStorage
+  useEffect(() => {
+    // Check sessionStorage for retry lesson (set from ParentHome)
+    const retryLessonStr = sessionStorage.getItem('retryLesson');
+    if (retryLessonStr) {
+      try {
+        const retryLesson = JSON.parse(retryLessonStr);
+        // Only use if it's recent (within 5 seconds)
+        if (Date.now() - retryLesson.timestamp < 5000) {
+          const lessonId = retryLesson.lessonId;
+          const questionType = retryLesson.questionType;
+          
+          // Clear sessionStorage
+          sessionStorage.removeItem('retryLesson');
+          
+          // Set the selected lesson and question type
+          setSelectedLessonId(lessonId);
+          setSelectedQuestionType(questionType as QuestionType);
+          setShowQuestionTypes(false);
+          setCorrectAnswers(0);
+          setRetryCount(0);
+          setSessionQuestionCount(0);
+          setAskedQuestionIds(new Set());
+        }
+      } catch (e) {
+        console.error('Error parsing retry lesson:', e);
+        sessionStorage.removeItem('retryLesson');
+      }
+    }
+  }, []);
+
+  // Auto-start lesson if selected (after questions are loaded)
+  useEffect(() => {
+    if (selectedLessonId && selectedQuestionType && questions.length > 0 && !showQuestionTypes) {
+      // Start the lesson
+      handleDirectLessonSelect(selectedLessonId, selectedQuestionType);
+    }
+  }, [selectedLessonId, selectedQuestionType, questions.length, showQuestionTypes]);
+
+  // Record lesson activity when introduction screen is shown (fallback)
+  useEffect(() => {
+    if (currentScreen === 'introduction' && selectedLessonId && user?.id) {
+      recordLessonActivity('started', selectedLessonId);
+    }
+  }, [currentScreen, selectedLessonId, user?.id]);
 
   // Load parent's available lessons (combining default lessons with user's custom lessons)
   useEffect(() => {
@@ -319,13 +366,19 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   useEffect(() => {
     if (currentScreen === 'complete' && !showRewardVideo) {
+      // When progress buddy is shown, check if all questions were answered and update status to 'complete'
+      const allQuestionsAnswered = askedQuestionIds.size >= availableQuestions.length;
+      if (allQuestionsAnswered && selectedLessonId && user?.id) {
+        recordLessonActivity('complete', selectedLessonId);
+      }
+      
       const timer = setTimeout(() => {
         setShowRewardVideo(true);
         setShowConfetti(true);
       }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [currentScreen, showRewardVideo]);
+  }, [currentScreen, showRewardVideo, askedQuestionIds.size, availableQuestions.length, selectedLessonId, user?.id]);
 
   useEffect(() => {
     if (showRewardVideo && !hasPlayedChime) {
@@ -364,7 +417,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setCurrentScreen('lesson-selection');
   };
 
-  const handleDirectLessonSelect = (lessonId: string | null, questionType: QuestionType) => {
+  const handleDirectLessonSelect = async (lessonId: string | null, questionType: QuestionType) => {
     setSelectedQuestionType(questionType);
     setSelectedLessonId(lessonId);
     setShowQuestionTypes(false);
@@ -372,6 +425,14 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setRetryCount(0);
     setSessionQuestionCount(0);
     setAskedQuestionIds(new Set());
+    
+    // Record lesson activity as 'started' when lesson is selected
+    if (lessonId && user?.id) {
+      console.log('handleDirectLessonSelect: Recording lesson activity for lesson:', lessonId);
+      await recordLessonActivity('started', lessonId);
+    } else {
+      console.log('handleDirectLessonSelect: Skipping - lessonId:', lessonId, 'user?.id:', user?.id);
+    }
     
     let filteredQuestions: Question_v2[];
     
@@ -397,8 +458,16 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setCurrentScreen('introduction');
   };
 
-  const handleLessonSelect = (lessonId: string | null) => {
+  const handleLessonSelect = async (lessonId: string | null) => {
     setSelectedLessonId(lessonId);
+    
+    // Record lesson activity as 'started' when lesson is selected
+    if (lessonId && user?.id) {
+      console.log('handleDirectLessonSelect: Recording lesson activity for lesson:', lessonId);
+      await recordLessonActivity('started', lessonId);
+    } else {
+      console.log('handleDirectLessonSelect: Skipping - lessonId:', lessonId, 'user?.id:', user?.id);
+    }
     
     let filteredQuestions: Question_v2[];
     
@@ -428,16 +497,112 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     }
   };
 
-  const handleBackToQuestionTypes = () => {
+  // Helper function to record lesson activity with status
+  const recordLessonActivity = async (status: 'started' | 'complete', lessonIdOverride?: string | null) => {
+    const lessonIdToUse = lessonIdOverride !== undefined ? lessonIdOverride : selectedLessonId;
+    if (!lessonIdToUse || !user?.id) {
+      console.log('Skipping lesson activity record - lessonId:', lessonIdToUse, 'userId:', user?.id);
+      return;
+    }
+    
+    try {
+      // Verify the current authenticated user matches the user.id from context
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        console.error('Error getting authenticated user:', authError);
+        return;
+      }
+      
+      if (authUser.id !== user.id) {
+        console.error('User ID mismatch - authUser.id:', authUser.id, 'user.id:', user.id);
+        return;
+      }
+      
+      const upsertData: any = {
+        user_id: authUser.id, // Use authUser.id to ensure it matches auth.uid()
+        lesson_id: lessonIdToUse,
+        status: status,
+      };
+      
+      // Only set completed_at if status is 'complete'
+      if (status === 'complete') {
+        upsertData.completed_at = new Date().toISOString();
+      }
+      
+      console.log('Attempting to record lesson activity:', upsertData);
+      console.log('Auth user ID:', authUser.id);
+      
+      // First, try to find existing record
+      const { data: existingData, error: checkError } = await supabase
+        .from('lesson_activity' as any)
+        .select('id')
+        .eq('user_id', authUser.id)
+        .eq('lesson_id', lessonIdToUse)
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('Error checking for existing lesson activity:', checkError);
+      }
+      
+      let data, activityError;
+      
+      if (existingData) {
+        // Update existing record
+        console.log('Updating existing lesson activity record:', existingData.id);
+        const updateResult = await supabase
+          .from('lesson_activity' as any)
+          .update(upsertData)
+          .eq('id', existingData.id)
+          .select();
+        data = updateResult.data;
+        activityError = updateResult.error;
+      } else {
+        // Insert new record
+        console.log('Inserting new lesson activity record');
+        const insertResult = await supabase
+          .from('lesson_activity' as any)
+          .insert(upsertData)
+          .select();
+        data = insertResult.data;
+        activityError = insertResult.error;
+      }
+
+      if (activityError) {
+        console.error('Error recording lesson activity:', activityError);
+        console.error('Error details:', JSON.stringify(activityError, null, 2));
+        console.error('Upsert data:', upsertData);
+        console.error('Auth user ID:', authUser.id);
+      } else {
+        console.log('Successfully recorded lesson activity:', { lessonId: lessonIdToUse, status, data });
+      }
+    } catch (error) {
+      console.error('Exception recording lesson activity:', error);
+      console.error('Exception details:', error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const handleBackToQuestionTypes = async () => {
+    // Record lesson activity as 'started' when user navigates away
+    await recordLessonActivity('started');
     setCurrentScreen('home');
     setShowQuestionTypes(true);
   };
 
-  const handleBackToTherapists = () => {
+  const handleBackToTherapists = async () => {
+    // Record lesson activity as 'started' when user navigates away
+    await recordLessonActivity('started');
     navigate('/home', { state: { resetTherapist: true } });
   };
 
-  const handleStartQuestions = () => {
+  const handleStartQuestions = async () => {
+    // Record lesson activity as 'started' when lesson begins (if not already recorded)
+    if (selectedLessonId && user?.id) {
+      console.log('handleStartQuestions: Recording lesson activity for lesson:', selectedLessonId);
+      await recordLessonActivity('started', selectedLessonId);
+    } else {
+      console.log('handleStartQuestions: Skipping - selectedLessonId:', selectedLessonId, 'user?.id:', user?.id);
+    }
+    
     // Start at first question (sorted by question_index)
     const firstQuestion = availableQuestions[0];
     if (firstQuestion) {
@@ -466,8 +631,13 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     }
   };
 
-  const handleNextQuestion = (shouldIncrement: boolean = true) => {
+  const handleNextQuestion = async (shouldIncrement: boolean = true) => {
     if (sessionQuestionCount >= maxQuestionsPerSession) {
+      // Check if all questions in the lesson were answered
+      const allQuestionsAnswered = askedQuestionIds.size >= availableQuestions.length;
+      if (allQuestionsAnswered && selectedLessonId) {
+        await recordLessonActivity('complete', selectedLessonId);
+      }
       setCurrentScreen('complete');
       return;
     }
@@ -475,6 +645,10 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     const remainingQuestions = availableQuestions.filter(q => !askedQuestionIds.has(q.id));
     
     if (remainingQuestions.length === 0) {
+      // All questions in the lesson have been answered - mark as complete
+      if (selectedLessonId) {
+        await recordLessonActivity('complete', selectedLessonId);
+      }
       setCurrentScreen('complete');
       return;
     }
@@ -512,7 +686,16 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     handleNextQuestion();
   };
 
-  const handleCompleteSession = () => {
+  const handleCompleteSession = async () => {
+    // Check if all questions were answered - if so, status should already be 'complete'
+    // Otherwise, ensure status is set (it should be 'started' if not all questions were answered)
+    const allQuestionsAnswered = askedQuestionIds.size >= availableQuestions.length;
+    if (selectedLessonId && !allQuestionsAnswered) {
+      // If not all questions were answered, ensure status is 'started'
+      await recordLessonActivity('started');
+    }
+    // If all questions were answered, status should already be 'complete' from handleNextQuestion
+
     setCurrentScreen('home');
     setShowQuestionTypes(true);
     setSelectedQuestionType(null);
@@ -643,7 +826,11 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
               onCorrectAnswer={handleCorrectAnswer}
               onNextQuestion={handleNextQuestion}
               onComplete={() => setCurrentScreen('complete')}
-              onPickNewLesson={handleBackToQuestionTypes}
+              onPickNewLesson={async () => {
+                await recordLessonActivity('started');
+                setCurrentScreen('home');
+                setShowQuestionTypes(true);
+              }}
               retryCount={retryCount}
               onRetryCountChange={setRetryCount}
               onAmplifyMicChange={handleAmplifyMicChange}
