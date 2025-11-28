@@ -5,7 +5,7 @@ export const getOrganizationSchema = () => ({
   "@type": "Organization",
   "name": "Polariz",
   "url": "https://polariz.ai",
-  "logo": "https://polariz.ai/lovable-uploads/polariz_icon.png",
+  "logo": "https://polariz.ai/lovable-uploads/polariz_icon_only_white.png",
   "description": "AI-powered speech therapy platform for children with special needs",
   "sameAs": [
     // Add social media links when available
