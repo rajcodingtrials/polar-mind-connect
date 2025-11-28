@@ -79,8 +79,18 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Email template not found');
     }
 
-    // Replace placeholder with actual verification URL
-    const htmlContent = template.html_content.replace(/{{verification_url}}/g, verificationUrl);
+    // Extract user name from metadata
+    const userMetadata = user.user_metadata || user.raw_user_meta_data || {};
+    const firstName = userMetadata.first_name || '';
+    const lastName = userMetadata.last_name || '';
+    const userName = firstName && lastName 
+      ? `${firstName} ${lastName}`.trim()
+      : firstName || lastName || user.email?.split('@')[0] || 'User';
+
+    // Replace placeholders in template
+    let htmlContent = template.html_content
+      .replace(/{{verification_url}}/g, verificationUrl)
+      .replace(/{{user_name}}/g, userName);
 
     const emailResponse = await resend.emails.send({
       from: "Polariz <noreply@polariz.ai>",

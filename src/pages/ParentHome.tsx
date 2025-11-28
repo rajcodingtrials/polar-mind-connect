@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Video, Calendar, CheckCircle2, Star } from "lucide-react";
+import { Video, Calendar, Star } from "lucide-react";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import AffirmationCard from "@/components/parents/AffirmationCard";
 import AILearningAdventure_v2 from "@/components/parents/AILearningAdventure_v2";
@@ -399,11 +399,7 @@ const ParentHome = () => {
       <main className="flex-grow container mx-auto px-4 py-10">
         <div className="w-full space-y-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-slate-800 flex items-center justify-center gap-2 flex-wrap">
-            <span>Welcome, {profile?.name || profile?.username || "User"}</span>
-            {isVerified && (
-              <CheckCircle2 className="h-8 w-8 sm:h-10 sm:w-10 text-blue-500 fill-blue-500" />
-            )}
-            <span>!</span>
+            <span>Welcome, {profile?.name || profile?.username || "User"}!</span>
           </h1>
           <AffirmationCard />
           <Card className="bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200 shadow-sm">
