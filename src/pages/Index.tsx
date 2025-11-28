@@ -32,7 +32,7 @@ const Index = () => {
           {/* Right: Image with overlayed text (70%) */}
           <div className="relative w-full md:w-[70%] lg:w-[65%] flex-grow flex items-center justify-center p-0 bg-black min-h-[300px] sm:min-h-[400px] md:min-h-0">
             <img
-              src="/lovable-uploads/frontpage1.png"
+              src="/lovable-uploads/FrontPage1.jpg"
               alt="Banner image"
               className="w-full h-full object-cover object-center absolute inset-0 z-0"
             />

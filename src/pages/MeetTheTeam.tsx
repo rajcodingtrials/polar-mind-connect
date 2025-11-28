@@ -34,7 +34,7 @@ const MeetTheTeam = () => {
           
           <div className="flex items-center justify-center h-full">
             <img 
-              src="/lovable-uploads/PreeProfile.png" 
+              src="/lovable-uploads/PreePic.jpg" 
               alt="Pree Nair" 
               className="rounded-lg shadow-lg w-full max-w-md h-auto object-cover"
             />
@@ -45,7 +45,7 @@ const MeetTheTeam = () => {
         <div className="grid md:grid-cols-2 gap-8">
           <div className="flex items-center justify-center h-full order-2 md:order-1">
             <img 
-              src="/lovable-uploads/JayProfile.png" 
+              src="/lovable-uploads/JayPic.jpg" 
               alt="Jay" 
               className="rounded-lg shadow-lg w-full max-w-md h-auto object-cover"
             />
