@@ -16,15 +16,15 @@ const OurStory = () => {
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
         <Header />
         
-        <main className="flex-grow flex items-stretch justify-stretch min-h-0 w-full">
-          <div className="flex flex-col md:flex-row w-full h-full bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 flex-grow">
+        <main className="flex-1 flex w-full min-h-0">
+          <div className="flex flex-col md:flex-row w-full h-full bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 md:items-stretch">
             
             {/* Left: Content Section (35-40%) */}
-            <section className="w-full md:w-[35%] lg:w-[40%] flex items-start justify-center p-4 sm:p-6 md:p-8 lg:p-12 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 min-h-[400px] md:min-h-0 overflow-y-auto">
-              <article className="max-w-2xl w-full">
-                <h1 className="text-3xl md:text-4xl font-bold mb-6">Our Story</h1>
+            <section className="w-full md:w-[35%] lg:w-[40%] flex flex-col p-4 sm:p-6 md:p-8 lg:p-12 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 min-h-[400px] md:min-h-0 md:self-stretch">
+              <article className="max-w-2xl w-full flex flex-col h-full">
+                <h1 className="text-3xl md:text-4xl font-bold mb-6 flex-shrink-0">Our Story</h1>
                 
-                <div className="bg-white bg-opacity-90 rounded-lg p-6 shadow-md">
+                <div className="bg-white bg-opacity-90 rounded-lg p-6 shadow-md flex-1 flex flex-col overflow-y-auto min-h-0">
         
                   <section className="mb-4">
                     <h2 className="text-xl font-semibold mb-2">Rising Rates of Autism and Speech Delays</h2>
@@ -59,7 +59,7 @@ const OurStory = () => {
             </section>
 
             {/* Right: Image Section (65-60%) */}
-            <section className="relative w-full md:w-[65%] lg:w-[60%] flex-grow flex items-center justify-center p-0 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 min-h-[300px] sm:min-h-[400px] md:min-h-0">
+            <section className="relative w-full md:w-[65%] lg:w-[60%] min-h-[300px] sm:min-h-[400px] md:min-h-0 md:self-stretch bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
               <img
                 src="/lovable-uploads/FrontPage2.jpg"
                 alt="Child reading a book with speech bubbles showing 'SPEECH' and 'COACHING', representing speech therapy and learning support"

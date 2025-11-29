@@ -26,6 +26,7 @@ interface Question_v2 {
   choices_image: string | null;
   question_video: string | null;
   video_after_answer: string | null;
+  image_after_answer: string | null;
   speech_after_answer: string | null;
   question_type: string;
   question_index: number | null;
@@ -89,7 +90,9 @@ const QuestionView: React.FC<QuestionViewProps> = ({
   const [questionImageUrl, setQuestionImageUrl] = useState<string | null>(null);
   const [questionVideoBeforeUrl, setQuestionVideoBeforeUrl] = useState<string | null>(null);
   const [questionVideoAfterUrl, setQuestionVideoAfterUrl] = useState<string | null>(null);
+  const [questionImageAfterUrl, setQuestionImageAfterUrl] = useState<string | null>(null);
   const [showVideoAfter, setShowVideoAfter] = useState(false);
+  const [showImageAfter, setShowImageAfter] = useState(false);
   const [lastMicInput, setLastMicInput] = useState('');
   const [isPlayingBack, setIsPlayingBack] = useState(false);
   const [waitingForVideoToComplete, setWaitingForVideoToComplete] = useState(false);
@@ -175,6 +178,29 @@ const QuestionView: React.FC<QuestionViewProps> = ({
     }
   }, [question.video_after_answer, question.id]);
 
+  // Load image_after_answer URL
+  useEffect(() => {
+    if (question.image_after_answer && question.image_after_answer.trim() !== '') {
+      console.log('Loading image_after_answer:', question.image_after_answer);
+      // If it's already a full URL, use it directly
+      if (question.image_after_answer.startsWith('http')) {
+        console.log('Using full URL for image_after_answer:', question.image_after_answer);
+        setQuestionImageAfterUrl(question.image_after_answer);
+      } else {
+        // Otherwise, try to get from storage
+        const { data } = supabase.storage
+          .from('question-images-v2')
+          .getPublicUrl(question.image_after_answer);
+        const publicUrl = data?.publicUrl || null;
+        console.log('Generated public URL for image_after_answer:', publicUrl);
+        setQuestionImageAfterUrl(publicUrl);
+      }
+    } else {
+      console.log('No image_after_answer found for question:', question.id);
+      setQuestionImageAfterUrl(null);
+    }
+  }, [question.image_after_answer, question.id]);
+
   // Reset state when question changes
   useEffect(() => {
     setHasCalledCorrectAnswer(false);
@@ -190,6 +216,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
     setSelectedChoiceIndex(null);
     setLastMicInput('');
     setShowVideoAfter(false);
+    setShowImageAfter(false);
     setWaitingForVideoToComplete(false);
     setVideoAspectRatio(null);
     
@@ -425,7 +452,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         }
       }
       
-      // After speech_after_answer TTS completes, check for video_after_answer
+      // After speech_after_answer TTS completes, check for video_after_answer or image_after_answer
       if (questionVideoAfterUrl) {
         console.log('Setting up video_after to play:', questionVideoAfterUrl);
         setWaitingForVideoToComplete(true);
@@ -434,9 +461,20 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           setShowVideoAfter(true);
         }, 300);
         // Don't call onCorrectAnswer yet - wait for video to finish (will be called in video onEnded handler)
+      } else if (questionImageAfterUrl) {
+        console.log('Setting up image_after to show:', questionImageAfterUrl);
+        setTimeout(() => {
+          console.log('Showing image_after now');
+          setShowImageAfter(true);
+          // Show image for 3 seconds, then proceed
+          setTimeout(() => {
+            setShowImageAfter(false);
+            onCorrectAnswer();
+          }, 3000);
+        }, 300);
       } else {
-        console.log('No video_after_answer URL available, proceeding immediately');
-        // No video to play, proceed immediately
+        console.log('No video_after_answer or image_after_answer URL available, proceeding immediately');
+        // No video or image to show, proceed immediately
         onCorrectAnswer();
       }
     }
@@ -502,7 +540,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           const { data } = await callTTS(question.speech_after_answer, ttsSettings.voice, ttsSettings.speed);
           if (data?.audioContent) {
             await playGlobalTTS(data.audioContent, 'SpeechAfterAnswer-MaxAttempts');
-            // After TTS completes, check for video_after_answer
+            // After TTS completes, check for video_after_answer or image_after_answer
             if (questionVideoAfterUrl) {
               console.log('Setting up video_after to play after max attempts:', questionVideoAfterUrl);
               setWaitingForVideoToComplete(true);
@@ -511,6 +549,22 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                 setShowVideoAfter(true);
               }, 300);
               // Wait for video to finish before moving to next question
+              return;
+            } else if (questionImageAfterUrl) {
+              console.log('Setting up image_after to show after max attempts:', questionImageAfterUrl);
+              setTimeout(() => {
+                console.log('Showing image_after now after max attempts');
+                setShowImageAfter(true);
+                // Show image for 3 seconds, then proceed to next question
+                setTimeout(() => {
+                  setShowImageAfter(false);
+                  setShowFeedback(false);
+                  setIsWaitingForAnswer(false);
+                  setIsProcessingAnswer(false);
+                  setIsUserInteracting(false);
+                  onNextQuestion();
+                }, 3000);
+              }, 300);
               return;
             }
           }
@@ -527,9 +581,26 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         }, 300);
         // Wait for video to finish before moving to next question
         return;
+      } else if (questionImageAfterUrl) {
+        // If no speech_after_answer but image exists, show image
+        console.log('Setting up image_after to show after max attempts (no speech):', questionImageAfterUrl);
+        setTimeout(() => {
+          console.log('Showing image_after now after max attempts');
+          setShowImageAfter(true);
+          // Show image for 3 seconds, then proceed to next question
+          setTimeout(() => {
+            setShowImageAfter(false);
+            setShowFeedback(false);
+            setIsWaitingForAnswer(false);
+            setIsProcessingAnswer(false);
+            setIsUserInteracting(false);
+            onNextQuestion();
+          }, 3000);
+        }, 300);
+        return;
       }
       
-      // No speech_after_answer or video_after_answer, proceed to next question
+      // No speech_after_answer, video_after_answer, or image_after_answer, proceed to next question
       setTimeout(() => {
         setShowFeedback(false);
         setIsWaitingForAnswer(false);
@@ -594,15 +665,24 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           }
         }
         
-        // After speech_after_answer TTS completes, check for video_after_answer
+        // After speech_after_answer TTS completes, check for video_after_answer or image_after_answer
         if (questionVideoAfterUrl) {
           setWaitingForVideoToComplete(true);
           setTimeout(() => {
             setShowVideoAfter(true);
           }, 300);
           // Don't call onCorrectAnswer yet - wait for video to finish (will be called in video onEnded handler)
+        } else if (questionImageAfterUrl) {
+          setTimeout(() => {
+            setShowImageAfter(true);
+            // Show image for 3 seconds, then proceed
+            setTimeout(() => {
+              setShowImageAfter(false);
+              onCorrectAnswer();
+            }, 3000);
+          }, 300);
         } else {
-          // No video, proceed immediately
+          // No video or image, proceed immediately
           setTimeout(() => {
             onCorrectAnswer();
           }, 500);
@@ -627,8 +707,17 @@ const QuestionView: React.FC<QuestionViewProps> = ({
             setShowVideoAfter(true);
           }, 300);
           // Don't call onCorrectAnswer yet - wait for video to finish (will be called in video onEnded handler)
+        } else if (questionImageAfterUrl) {
+          setTimeout(() => {
+            setShowImageAfter(true);
+            // Show image for 3 seconds, then proceed
+            setTimeout(() => {
+              setShowImageAfter(false);
+              onCorrectAnswer();
+            }, 3000);
+          }, 300);
         } else {
-          // No video, proceed immediately
+          // No video or image, proceed immediately
           setTimeout(() => {
             onCorrectAnswer();
           }, 500);
@@ -797,10 +886,46 @@ const QuestionView: React.FC<QuestionViewProps> = ({
             ? 'h-[250px] sm:h-[300px] md:h-[50vh]' 
             : 'h-[300px] sm:h-[400px] md:h-[500px] lg:h-[80vh]';
           
-          // Show video_after if answer is correct and video exists, otherwise show video_before if exists, otherwise show image
+          // Show video_after if answer is correct and video exists, otherwise show image_after if exists, otherwise show video_before if exists, otherwise show image
           const videoToShow = showVideoAfter && questionVideoAfterUrl 
             ? questionVideoAfterUrl 
             : questionVideoBeforeUrl;
+          
+          // Show image_after if answer is correct/max attempts and image exists (and no video_after)
+          if (showImageAfter && questionImageAfterUrl && !showVideoAfter) {
+            return (
+              <div className="mb-4 sm:mb-6 lg:mb-8 animate-scale-in flex justify-center px-4">
+                <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden w-full max-w-full">
+                  <img
+                    src={questionImageAfterUrl}
+                    alt="Answer feedback image"
+                    className="w-full h-full object-contain rounded-2xl sm:rounded-3xl"
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error('Error loading image_after_answer:', questionImageAfterUrl);
+                      e.currentTarget.style.display = 'none';
+                      toast({
+                        title: "Image Loading Error",
+                        description: "The image could not be loaded. Continuing without it.",
+                        variant: "destructive",
+                      });
+                      // If image fails to load, proceed anyway
+                      setShowImageAfter(false);
+                      if (hasCalledCorrectAnswer && isCorrect) {
+                        onCorrectAnswer();
+                      } else {
+                        setShowFeedback(false);
+                        setIsWaitingForAnswer(false);
+                        setIsProcessingAnswer(false);
+                        setIsUserInteracting(false);
+                        onNextQuestion();
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          }
           
           if (videoToShow) {
             // Calculate container style based on video aspect ratio

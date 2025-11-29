@@ -316,6 +316,16 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
               verificationErrors.push(`${dirPath}: Question ${i + 1} - Video file not found for video_after_answer: "${videoPath}"`);
             }
           }
+
+          // Check image_after_answer
+          if (question.image_after_answer) {
+            const imagePath = question.image_after_answer;
+            const imageFile = findFileByPath(imageFiles, imagePath, dirPath);
+            
+            if (!imageFile) {
+              verificationErrors.push(`${dirPath}: Question ${i + 1} - Image file not found for image_after_answer: "${imagePath}"`);
+            }
+          }
         }
       } catch (error: any) {
         verificationErrors.push(`${dirPath}: Error during verification - ${error?.message || String(error)}`);
@@ -614,6 +624,24 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
                 }
               }
 
+              // Handle image_after_answer upload
+              let questionImageAfterUrl: string = '';
+              if (question.image_after_answer) {
+                const imagePath = question.image_after_answer;
+                const imageFile = findFileByPath(imageFiles, imagePath, dirPath);
+                
+                if (imageFile) {
+                  const uploadedUrl = await uploadImageToStorage(imageFile, imagePath, questionType, lessonName);
+                  if (uploadedUrl) {
+                    questionImageAfterUrl = uploadedUrl;
+                  } else {
+                    console.warn(`Failed to upload image_after_answer: ${imagePath}`);
+                  }
+                } else {
+                  console.warn(`Could not find image file for path: ${imagePath} in directory: ${dirPath}`);
+                }
+              }
+
               // Create question record
               const questionRecord = {
                 question_text: question.question_text || question.question || '',
@@ -626,6 +654,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
                 choices_image: choicesImageUrls,
                 question_video: questionVideoBeforeUrl,
                 video_after_answer: questionVideoAfterUrl,
+                image_after_answer: questionImageAfterUrl,
                 speech_after_answer: question.speech_after_answer || '',
                 question_type: questionType,
                 lesson_id: lessonId,

@@ -97,13 +97,13 @@ const LessonActivityHistory: React.FC<LessonActivityHistoryProps> = ({
     <div>
       {!hideTitle && <h2 className="text-xl font-bold text-slate-700 mb-4 px-4 text-left">Learning History ({lessonActivities.length})</h2>}
       <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="w-full table-fixed">
+        <table className="w-full table-fixed min-w-[640px]">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-64">Lesson</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-56">Date & Time</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-32">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-52">Actions</th>
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-64">Lesson</th>
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-56">Date & Time</th>
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-32">Status</th>
+              <th className="px-2 sm:px-4 pr-4 sm:pr-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-52 min-w-[200px]">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -118,45 +118,47 @@ const LessonActivityHistory: React.FC<LessonActivityHistoryProps> = ({
                   key={activity.id}
                   className={`${rowStyle.bgColor} ${rowStyle.hoverColor} ${rowStyle.textColor} transition-all duration-300`}
                 >
-                  <td className="px-4 py-3 whitespace-nowrap text-left w-64">
-                    <div className="flex items-center space-x-3">
-                      <BookOpen className="w-5 h-5 text-blue-600" />
+                  <td className="px-2 sm:px-4 py-3 text-left w-64">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
                       <div className="min-w-0">
-                        <div className="font-bold text-sm truncate">
+                        <div className="font-bold text-xs sm:text-sm truncate">
                           {activity.lesson?.name || 'Unknown Lesson'}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-left w-56">
-                    <div className="flex items-center text-sm">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>{formattedDate} • {formattedTime}</span>
+                  <td className="px-2 sm:px-4 py-3 text-left w-56">
+                    <div className="flex items-center text-xs sm:text-sm">
+                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+                      <span className="whitespace-nowrap">{formattedDate} • {formattedTime}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-left w-32">
+                  <td className="px-2 sm:px-4 py-3 text-left w-32">
                     <Badge className={`${getStatusColor(activity.status)} text-xs`}>
                       {formatStatus(activity.status)}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-left w-52">
-                    <div className="flex items-center gap-2">
+                  <td className="px-2 sm:px-4 pr-4 sm:pr-6 py-3 text-left w-52 min-w-[200px]">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => onReviewClick(activity)}
+                        className="text-xs px-2 sm:px-3 flex-shrink-0"
                       >
-                        <Star className="w-3 h-3 mr-2" />
-                        Review
+                        <Star className="w-3 h-3 sm:mr-1.5" />
+                        <span className="hidden sm:inline">Review</span>
                       </Button>
                       {activity.lesson && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => onRetryLesson(activity.lesson_id, activity.lesson.question_type)}
+                          className="text-xs px-2 sm:px-3 flex-shrink-0"
                         >
-                          <RotateCcw className="w-3 h-3 mr-2" />
-                          Try Again
+                          <RotateCcw className="w-3 h-3 sm:mr-1.5" />
+                          <span className="hidden sm:inline">Try Again</span>
                         </Button>
                       )}
                     </div>

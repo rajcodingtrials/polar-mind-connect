@@ -40,7 +40,7 @@ const HowToAddLessons = () => {
               <p className="text-slate-700">
                 To upload lessons to the platform, you need to organize your lesson files in a specific directory structure. 
                 Each lesson should be in its own folder with a <code className="bg-slate-100 px-2 py-1 rounded">lesson.json</code> file 
-                and any associated image files. Image files should be in jpg or png formats.
+                and any associated image or video files. Image files should be in jpg or png formats. Video files should be in mp4, webm, or other common video formats.
               </p>
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <p className="text-sm text-blue-800">
@@ -72,6 +72,9 @@ const HowToAddLessons = () => {
                     <div className="text-green-600">question-image-1.jpg</div>
                     <div className="text-green-600">choice-image-1.jpg</div>
                     <div className="text-green-600">choice-image-2.jpg</div>
+                    <div className="text-purple-600">question-video.mp4</div>
+                    <div className="text-purple-600">video-after-answer.mp4</div>
+                    <div className="text-green-600">image-after-answer.jpg</div>
                   </div>
                 </div>
                 <div className="ml-4 mt-2">
@@ -117,8 +120,12 @@ const HowToAddLessons = () => {
       "answer": "Apple",
       "answer_index": 0,
       "question_image": "question-image-1.jpg",
+      "question_video": "question-video.mp4",
       "choices_text": "Apple, Banana, Orange",
-      "choices_image": "choice-image-1.jpg, choice-image-2.jpg, choice-image-3.jpg"
+      "choices_image": "choice-image-1.jpg, choice-image-2.jpg, choice-image-3.jpg",
+      "video_after_answer": "video-after-answer.mp4",
+      "image_after_answer": "image-after-answer.jpg",
+      "speech_after_answer": "Great job! You got it right!"
     }
   ]
 }`}
@@ -194,32 +201,66 @@ const HowToAddLessons = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-slate-100 px-1 rounded">question_image</code> - Path to question image file (relative to lesson folder).</span>
+                    <span><code className="bg-slate-100 px-1 rounded">question_image</code> - Path to question image file (relative to lesson folder). If <code className="bg-slate-100 px-1 rounded">question_video</code> is also provided, the video will be shown instead of the image.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span><code className="bg-slate-100 px-1 rounded">question_video</code> - Path to question video file (relative to lesson folder). If provided, this video will be displayed instead of <code className="bg-slate-100 px-1 rounded">question_image</code>. The video will automatically adjust to its aspect ratio to avoid black bars.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span><code className="bg-slate-100 px-1 rounded">video_after_answer</code> - Path to video file to play after the child answers correctly or reaches maximum attempts. This video will be shown after the AI agent finishes speaking (including <code className="bg-slate-100 px-1 rounded">speech_after_answer</code> if provided). If both <code className="bg-slate-100 px-1 rounded">video_after_answer</code> and <code className="bg-slate-100 px-1 rounded">image_after_answer</code> are provided, the video takes precedence.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span><code className="bg-slate-100 px-1 rounded">image_after_answer</code> - Path to image file to show after the child answers correctly or reaches maximum attempts. This image will be displayed in the same location as <code className="bg-slate-100 px-1 rounded">video_after_answer</code> if no video is provided. The image will be shown for 3 seconds before proceeding.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span><code className="bg-slate-100 px-1 rounded">speech_after_answer</code> - Text that will be spoken by the AI agent after the child answers correctly or reaches maximum attempts. This speech will be played before <code className="bg-slate-100 px-1 rounded">video_after_answer</code> or <code className="bg-slate-100 px-1 rounded">image_after_answer</code> if either is provided.</span>
                   </li>
                 </ul>
               </div>
             </CardContent>
           </Card>
 
-          {/* Image Files */}
+          {/* Media Files */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Image className="w-5 h-5" />
-                Image Files
+                Image and Video Files
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-slate-700">
-                Image files should be placed in the same folder as the <code className="bg-slate-100 px-2 py-1 rounded">lesson.json</code> file.
+                Image and video files should be placed in the same folder as the <code className="bg-slate-100 px-2 py-1 rounded">lesson.json</code> file.
                 Reference them using their filename (relative to the lesson folder).
               </p>
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-2">Image Files</h4>
+                  <p className="text-sm text-slate-700">
+                    Supported formats: JPG, PNG. Use for <code className="bg-slate-100 px-1 rounded">question_image</code>, 
+                    <code className="bg-slate-100 px-1 rounded">choices_image</code>, and <code className="bg-slate-100 px-1 rounded">image_after_answer</code>.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-2">Video Files</h4>
+                  <p className="text-sm text-slate-700">
+                    Supported formats: MP4, WebM, and other common video formats. Use for <code className="bg-slate-100 px-1 rounded">question_video</code> 
+                    and <code className="bg-slate-100 px-1 rounded">video_after_answer</code>.
+                  </p>
+                </div>
+              </div>
               <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
                 <p className="text-sm text-amber-800">
                   <AlertCircle className="w-4 h-4 inline mr-2" />
-                  <strong>Important:</strong> Image file paths in <code className="bg-amber-100 px-1 rounded">question_image</code> and 
-                  <code className="bg-amber-100 px-1 rounded">choices_image</code> should match the actual filenames in your folder. 
-                  The system will verify that all referenced images exist before uploading.
+                  <strong>Important:</strong> All file paths in your <code className="bg-amber-100 px-1 rounded">lesson.json</code> (including 
+                  <code className="bg-amber-100 px-1 rounded">question_image</code>, <code className="bg-amber-100 px-1 rounded">choices_image</code>, 
+                  <code className="bg-amber-100 px-1 rounded">question_video</code>, <code className="bg-amber-100 px-1 rounded">video_after_answer</code>, 
+                  and <code className="bg-amber-100 px-1 rounded">image_after_answer</code>) should match the actual filenames in your folder. 
+                  The system will verify that all referenced files exist before uploading.
                 </p>
               </div>
             </CardContent>
@@ -268,10 +309,10 @@ const HowToAddLessons = () => {
                   </p>
                 </div>
                 <div className="border-l-4 border-red-500 pl-4">
-                  <h4 className="font-semibold text-slate-800">Image file not found</h4>
+                  <h4 className="font-semibold text-slate-800">Image or video file not found</h4>
                   <p className="text-sm text-slate-600 mt-1">
-                    Ensure all image paths in your <code className="bg-slate-100 px-1 rounded">lesson.json</code> match the actual filenames 
-                    in your folder. Check for typos, case sensitivity, and file extensions.
+                    Ensure all file paths in your <code className="bg-slate-100 px-1 rounded">lesson.json</code> (images and videos) match the actual filenames 
+                    in your folder. Check for typos, case sensitivity, and file extensions. The system verifies all referenced files before uploading.
                   </p>
                 </div>
                 <div className="border-l-4 border-red-500 pl-4">

@@ -499,13 +499,13 @@ const UserDashboard = () => {
                     ) : (
                       <>
                         <div className="overflow-x-auto rounded-lg border border-gray-200">
-                          <table className="w-full table-fixed">
+                          <table className="w-full table-fixed min-w-[640px]">
                             <thead className="bg-gray-50">
                               <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-64">Therapist</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-56">Date & Time</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-32">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-52">Actions</th>
+                                <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-64">Therapist</th>
+                                <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-56">Date & Time</th>
+                                <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-32">Status</th>
+                                <th className="px-2 sm:px-4 pr-4 sm:pr-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-52 min-w-[200px]">Actions</th>
                               </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -518,52 +518,54 @@ const UserDashboard = () => {
                                   key={session.id}
                                   className={`${rowStyle.bgColor} ${rowStyle.hoverColor} ${rowStyle.textColor} transition-all duration-300 cursor-pointer`}
                                 >
-                                  <td className="px-4 py-3 whitespace-nowrap text-left w-64">
-                                    <div className="flex items-center space-x-3">
-                                      <Avatar className="h-10 w-10 border-2 border-white flex-shrink-0">
+                                  <td className="px-2 sm:px-4 py-3 text-left w-64">
+                                    <div className="flex items-center space-x-2 sm:space-x-3">
+                                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-white flex-shrink-0">
                                         <AvatarImage src={session.therapist.avatar_url} />
-                                        <AvatarFallback className="bg-white text-slate-600 text-sm">
+                                        <AvatarFallback className="bg-white text-slate-600 text-xs sm:text-sm">
                                           {session.therapist.name?.charAt(0) ||
                                             session.therapist.first_name?.charAt(0) ||
                                             "T"}
                                         </AvatarFallback>
                                       </Avatar>
                                       <div className="min-w-0">
-                                        <div className="font-bold text-sm truncate">
+                                        <div className="font-bold text-xs sm:text-sm truncate">
                                           {session.therapist.name ||
                                             `${session.therapist.first_name} ${session.therapist.last_name}`}
                                         </div>
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="px-4 py-3 whitespace-nowrap text-left w-56">
-                                    <div className="flex items-center text-sm">
-                                      <Calendar className="w-4 h-4 mr-2" />
-                                      <span>{date} • {time}</span>
+                                  <td className="px-2 sm:px-4 py-3 text-left w-56">
+                                    <div className="flex items-center text-xs sm:text-sm">
+                                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+                                      <span className="whitespace-nowrap">{date} • {time}</span>
                                     </div>
                                   </td>
-                                  <td className="px-4 py-3 whitespace-nowrap text-left w-32">
+                                  <td className="px-2 sm:px-4 py-3 text-left w-32">
                                     <Badge className={`${getSessionStatusColor(session.status)} text-xs`}>
                                       {session.status}
                                     </Badge>
                                   </td>
-                                  <td className="px-4 py-3 whitespace-nowrap text-left w-52">
-                                    <div className="flex items-center gap-2">
+                                  <td className="px-2 sm:px-4 pr-4 sm:pr-6 py-3 text-left w-52 min-w-[200px]">
+                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
                                       <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleOpenReview(session)}
+                                        className="text-xs px-2 sm:px-3 flex-shrink-0"
                                       >
-                                        <Star className="w-3 h-3 mr-2" />
-                                        Review
+                                        <Star className="w-3 h-3 sm:mr-1.5" />
+                                        <span className="hidden sm:inline">Review</span>
                                       </Button>
                                       <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleBookAgain(session)}
+                                        className="text-xs px-2 sm:px-3 flex-shrink-0"
                                       >
-                                        <RotateCcw className="w-3 h-3 mr-2" />
-                                        Book Again
+                                        <RotateCcw className="w-3 h-3 sm:mr-1.5" />
+                                        <span className="hidden sm:inline">Book Again</span>
                                       </Button>
                                     </div>
                                   </td>

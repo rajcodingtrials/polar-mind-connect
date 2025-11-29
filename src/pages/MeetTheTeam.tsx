@@ -28,9 +28,9 @@ const MeetTheTeam = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-center mb-10">Meet the Team</h1>
           
           {/* First row - Pree */}
-          <section className="grid md:grid-cols-2 gap-8 mb-16">
-            <Card className="bg-white bg-opacity-90 shadow-md overflow-hidden">
-              <CardContent className="p-6">
+          <section className="grid md:grid-cols-2 gap-8 mb-16 items-stretch">
+            <Card className="bg-white bg-opacity-90 shadow-md overflow-hidden h-full flex flex-col">
+              <CardContent className="p-6 flex-1 flex flex-col">
                 <h2 className="text-2xl font-bold mb-4">
                   <a href="https://www.linkedin.com/in/preenair/" className="text-blue-600 hover:underline" rel="noopener noreferrer">Pree Nair</a>
                 </h2>
@@ -47,29 +47,29 @@ const MeetTheTeam = () => {
               </CardContent>
             </Card>
             
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-stretch h-full">
               <img 
                 src="/lovable-uploads/PreePic.jpg" 
                 alt="Pree Nair, Founder of Polariz, a professional woman with expertise in software development and speech therapy" 
-                className="rounded-lg shadow-lg w-full max-w-md h-auto object-cover"
+                className="rounded-lg shadow-lg w-full h-full object-cover"
                 loading="lazy"
               />
             </div>
           </section>
           
           {/* Second row - Jay */}
-          <section className="grid md:grid-cols-2 gap-8">
-            <div className="flex items-center justify-center h-full order-2 md:order-1">
+          <section className="grid md:grid-cols-2 gap-8 items-stretch">
+            <div className="flex items-stretch h-full order-2 md:order-1">
               <img 
                 src="/lovable-uploads/JayPic.jpg" 
                 alt="Jay Pillai, CTO and AI Specialist at Polariz, an expert in artificial intelligence and machine learning" 
-                className="rounded-lg shadow-lg w-full max-w-md h-auto object-cover"
+                className="rounded-lg shadow-lg w-full h-full object-cover"
                 loading="lazy"
               />
             </div>
             
-            <Card className="bg-white bg-opacity-90 shadow-md overflow-hidden order-1 md:order-2">
-              <CardContent className="p-6">
+            <Card className="bg-white bg-opacity-90 shadow-md overflow-hidden order-1 md:order-2 h-full flex flex-col">
+              <CardContent className="p-6 flex-1 flex flex-col">
                 <h2 className="text-2xl font-bold mb-4">
                   <a href="https://www.linkedin.com/in/kjaypillai/" className="text-blue-600 hover:underline" rel="noopener noreferrer">Jay Pillai</a>
                 </h2>
