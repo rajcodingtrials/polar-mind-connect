@@ -260,13 +260,7 @@ const TherapistDashboard = () => {
           <div className="max-w-2xl mx-auto">
             <h1 className="text-4xl sm:text-5xl font-bold text-slate-800 flex items-center justify-center gap-2">
               {therapistProfile ? (
-                <>
-                  Welcome back, {therapistProfile.name}
-                  {therapistProfile.is_verified && (
-                    <CheckCircle2 className="h-8 w-8 sm:h-10 sm:w-10 text-blue-500 fill-blue-500" />
-                  )}
-                  !
-                </>
+                <>Welcome back, {therapistProfile.name}!</>
               ) : (
                 "Welcome! Complete your profile to get started"
               )}
