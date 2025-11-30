@@ -149,6 +149,62 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_activity: {
+        Row: {
+          communication_rating: number | null
+          completed_at: string
+          created_at: string
+          id: string
+          lesson_id: string
+          overall_rating: number | null
+          status: string
+          updated_at: string
+          usefulness_rating: number | null
+          user_id: string
+          what_can_be_improved: string | null
+          what_went_well: string | null
+          would_recommend: boolean | null
+        }
+        Insert: {
+          communication_rating?: number | null
+          completed_at?: string
+          created_at?: string
+          id?: string
+          lesson_id: string
+          overall_rating?: number | null
+          status?: string
+          updated_at?: string
+          usefulness_rating?: number | null
+          user_id: string
+          what_can_be_improved?: string | null
+          what_went_well?: string | null
+          would_recommend?: boolean | null
+        }
+        Update: {
+          communication_rating?: number | null
+          completed_at?: string
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          overall_rating?: number | null
+          status?: string
+          updated_at?: string
+          usefulness_rating?: number | null
+          user_id?: string
+          what_can_be_improved?: string | null
+          what_went_well?: string | null
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_activity_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           created_at: string | null
@@ -503,6 +559,7 @@ export type Database = {
           created_by: string | null
           description_text: string | null
           id: string
+          image_after_answer: string
           lesson: string | null
           lesson_id: string | null
           question_image: string | null
@@ -524,6 +581,7 @@ export type Database = {
           created_by?: string | null
           description_text?: string | null
           id?: string
+          image_after_answer?: string
           lesson?: string | null
           lesson_id?: string | null
           question_image?: string | null
@@ -545,6 +603,7 @@ export type Database = {
           created_by?: string | null
           description_text?: string | null
           id?: string
+          image_after_answer?: string
           lesson?: string | null
           lesson_id?: string | null
           question_image?: string | null
@@ -1118,6 +1177,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user" | "therapist"
       question_type_enum:
+        | "starter_words"
         | "first_words"
         | "question_time"
         | "build_sentence"
@@ -1253,6 +1313,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user", "therapist"],
       question_type_enum: [
+        "starter_words",
         "first_words",
         "question_time",
         "build_sentence",

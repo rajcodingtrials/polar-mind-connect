@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import TherapistHeader from "@/components/therapist/TherapistHeader";
 import Footer from "@/components/Footer";
 import { ArrowLeft, FileText, Folder, Image, CheckCircle, AlertCircle } from "lucide-react";
+import { getQuestionTypes } from "@/utils/questionTypes";
 
 const HowToAddLessons = () => {
   const navigate = useNavigate();
@@ -137,7 +138,12 @@ const HowToAddLessons = () => {
                 <ul className="space-y-2 text-sm text-slate-700">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-slate-100 px-1 rounded">question_type</code> - One of: <code className="bg-slate-100 px-1 rounded">first_words</code>, <code className="bg-slate-100 px-1 rounded">question_time</code>, <code className="bg-slate-100 px-1 rounded">build_sentence</code>, <code className="bg-slate-100 px-1 rounded">lets_chat</code>, <code className="bg-slate-100 px-1 rounded">tap_and_play</code>, <code className="bg-slate-100 px-1 rounded">story_activity</code>.</span>
+                    <span><code className="bg-slate-100 px-1 rounded">question_type</code> - One of: {getQuestionTypes().map((type, index) => (
+                      <React.Fragment key={type}>
+                        <code className="bg-slate-100 px-1 rounded">{type}</code>
+                        {index < getQuestionTypes().length - 1 ? ', ' : '.'}
+                      </React.Fragment>
+                    ))}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
@@ -213,7 +219,7 @@ const HowToAddLessons = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-slate-100 px-1 rounded">image_after_answer</code> - Path to image file to show after the child answers correctly or reaches maximum attempts. This image will be displayed in the same location as <code className="bg-slate-100 px-1 rounded">video_after_answer</code> if no video is provided. The image will be shown for 3 seconds before proceeding.</span>
+                    <span><code className="bg-slate-100 px-1 rounded">image_after_answer</code> - Path to image file to show after the child answers correctly or reaches maximum attempts. This image will be displayed in the same location as <code className="bg-slate-100 px-1 rounded">video_after_answer</code> if no video is provided. The image will be shown for 30 seconds before proceeding.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="w-4 h-4 mt-0.5 flex-shrink-0" />

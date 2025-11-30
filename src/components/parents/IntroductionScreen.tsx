@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 import type { Database } from '@/integrations/supabase/types';
 import { useTTSSettings } from '@/hooks/useTTSSettings';
+import { getQuestionTypeLabel } from '@/utils/questionTypes';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -61,13 +62,7 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
 
 
   const getActivityName = (type: QuestionType) => {
-    switch (type) {
-      case 'first_words': return 'First Words';
-      case 'question_time': return 'Question Time';
-      case 'build_sentence': return 'Build a Sentence';
-      case 'lets_chat': return 'Let\'s Chat';
-      default: return 'Learning';
-    }
+    return getQuestionTypeLabel(type);
   };
 
   // TTS settings are now handled by the useTTSSettings hook

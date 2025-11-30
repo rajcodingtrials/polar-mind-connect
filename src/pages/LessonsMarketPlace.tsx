@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import LessonPurchaseModal from '@/components/parents/LessonPurchaseModal';
 import { SEO } from '@/components/SEO';
+import { getQuestionTypes, getQuestionTypeLabel } from '@/utils/questionTypes';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -338,12 +339,11 @@ const LessonsMarketPlace: React.FC = () => {
                   className="w-full px-3 py-2 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-white"
                 >
                   <option value="all">All Types</option>
-                  <option value="first_words">First Words</option>
-                  <option value="question_time">Question Time</option>
-                  <option value="build_sentence">Build Sentence</option>
-                  <option value="lets_chat">Lets Chat</option>
-                  <option value="tap_and_play">Tap And Play</option>
-                  <option value="story_activity">Story Activity</option>
+                  {getQuestionTypes().map((type) => (
+                    <option key={type} value={type}>
+                      {getQuestionTypeLabel(type)}
+                    </option>
+                  ))}
                 </select>
               </div>
 

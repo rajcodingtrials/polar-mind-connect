@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Upload, FolderOpen, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Constants } from '@/integrations/supabase/types';
+import { getQuestionTypes, isValidQuestionType } from '@/utils/questionTypes';
 import {
   Dialog,
   DialogContent,
@@ -199,15 +201,8 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
     return null;
   };
 
-  // Valid question_type_enum values
-  const validQuestionTypes = [
-    'first_words',
-    'question_time',
-    'build_sentence',
-    'lets_chat',
-    'tap_and_play',
-    'story_activity'
-  ];
+  // Valid question_type_enum values - fetched from database enum via types
+  const validQuestionTypes = getQuestionTypes();
 
   // Verification function to check lessons before upload
   const verifyLessons = async (
@@ -233,7 +228,8 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
           questionType = 'story_activity';
         }
 
-        if (!validQuestionTypes.includes(questionType)) {
+        // Use type guard for validation
+        if (!isValidQuestionType(questionType)) {
           verificationErrors.push(`${dirPath}: Invalid question_type "${lessonData.question_type}". Valid types are: ${validQuestionTypes.join(', ')}`);
           if (onProgress) onProgress(index + 1, totalEntries);
           continue;
@@ -493,7 +489,8 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
             questionType = 'story_activity';
           }
 
-          if (!validQuestionTypes.includes(questionType)) {
+          // Use type guard for validation
+          if (!isValidQuestionType(questionType)) {
             const errorMsg = `${dirPath}: Invalid question_type "${lessonData.question_type}". Valid types are: ${validQuestionTypes.join(', ')}`;
             ignoredDirectories.push(errorMsg);
             allErrors.push(errorMsg);

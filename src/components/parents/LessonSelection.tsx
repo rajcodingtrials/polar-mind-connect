@@ -6,6 +6,7 @@ import { BookOpen, Star, ArrowLeft, Play, MessageCircle, Building, Heart, User }
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { Constants } from '@/integrations/supabase/types';
+import { getQuestionTypeLabel, getQuestionTypeDescription } from '@/utils/questionTypes';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -107,15 +108,8 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
 
   // Helper function to generate description from question type
   const generateDescription = (questionType: QuestionType): string => {
-    const descriptions: Record<string, string> = {
-      'first_words': 'Practice basic first words and sounds',
-      'question_time': 'Answer questions about pictures',
-      'build_sentence': 'Learn to construct sentences',
-      'lets_chat': 'Free conversation practice',
-      'story_activity': 'Follow along with interactive story scenes',
-      'tap_and_play': 'Choose the correct picture by tapping',
-    };
-    return descriptions[questionType] || `Practice ${formatQuestionTypeLabel(questionType).toLowerCase()}`;
+    const { getQuestionTypeDescription } = require('@/utils/questionTypes');
+    return getQuestionTypeDescription(questionType);
   };
 
   // Fetch distinct question types from Supabase
@@ -323,13 +317,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
   };
 
   const getActivityName = (type: QuestionType) => {
-    switch (type) {
-      case 'first_words': return 'First Words';
-      case 'question_time': return 'Question Time';
-      case 'build_sentence': return 'Build a Sentence';
-      case 'lets_chat': return 'Let\'s Chat';
-      default: return 'Learning';
-    }
+    return getQuestionTypeLabel(type);
   };
 
   if (isLoading) {

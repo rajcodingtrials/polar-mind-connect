@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { MessageSquare, RotateCcw, Save, Eye, Loader2, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { getQuestionTypes, getQuestionTypeLabel } from '@/utils/questionTypes';
 
 interface PromptSettings {
   basePrompt: string;
@@ -44,13 +45,13 @@ const PromptConfiguration = () => {
     }
   });
 
-  const activityLabels = {
-    first_words: 'First Words',
-    question_time: 'Question Time',
-    build_sentence: 'Build a Sentence',
-    lets_chat: 'Lets Chat',
+  // Generate activity labels dynamically from question types
+  const activityLabels: Record<string, string> = {
     default: 'General Practice'
   };
+  getQuestionTypes().forEach((type) => {
+    activityLabels[type] = getQuestionTypeLabel(type);
+  });
 
   useEffect(() => {
     loadSettings();

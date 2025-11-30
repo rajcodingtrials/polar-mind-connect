@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Upload, FileText, Image, Trash2, Tag, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { getQuestionTypes, getQuestionTypeLabel } from '@/utils/questionTypes';
 
 type QuestionType = Database['public']['Enums']['question_type_enum'];
 
@@ -80,14 +81,12 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clearTrigger]);
 
-  const questionTypes = [
-    { value: 'first_words' as QuestionType, label: 'First Words' },
-    { value: 'question_time' as QuestionType, label: 'Question Time' },
-    { value: 'tap_and_play' as QuestionType, label: 'Tap and Play' },
-    { value: 'build_sentence' as QuestionType, label: 'Build a Sentence' },
-    { value: 'lets_chat' as QuestionType, label: 'Lets Chat' },
-    { value: 'story_activity' as QuestionType, label: 'Story Activity (5 Scenes + 4 Questions)' }
-  ];
+  const questionTypes = getQuestionTypes().map((type) => ({
+    value: type as QuestionType,
+    label: type === 'story_activity' 
+      ? 'Story Activity (5 Scenes + 4 Questions)' 
+      : getQuestionTypeLabel(type)
+  }));
 
   const difficultyLevels = [
     { value: 'beginner', label: 'Beginner' },

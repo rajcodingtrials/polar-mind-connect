@@ -5,6 +5,7 @@ import { Calendar, Star, BookOpen, RotateCcw, ChevronDown, ChevronUp } from "luc
 import { format } from "date-fns";
 import { LessonActivity } from "@/hooks/useLessonActivity";
 import { LessonReview } from "./LessonReviewModal";
+import { getQuestionTypeLabel } from "@/utils/questionTypes";
 
 interface LessonActivityHistoryProps {
   lessonActivities: LessonActivity[];
@@ -36,15 +37,7 @@ const LessonActivityHistory: React.FC<LessonActivityHistoryProps> = ({
     : sortedLessonActivities.slice(0, 3);
 
   const formatQuestionType = (type: string) => {
-    const typeMap: Record<string, string> = {
-      'first_words': 'First Words',
-      'question_time': 'Question Time',
-      'tap_and_play': 'Tap and Play',
-      'build_sentence': 'Build a Sentence',
-      'lets_chat': 'Lets Chat',
-      'story_activity': 'Story Activity',
-    };
-    return typeMap[type] || type;
+    return getQuestionTypeLabel(type);
   };
 
   const getStatusColor = (status: string | null | undefined) => {

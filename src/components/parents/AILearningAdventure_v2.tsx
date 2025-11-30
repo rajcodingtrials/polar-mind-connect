@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
+import { getQuestionTypes, getQuestionTypeLabel, getQuestionTypeDescription } from '@/utils/questionTypes';
 import ProgressCharacter from './ProgressCharacter';
 import IntroductionScreen from './IntroductionScreen';
 import QuestionView from './QuestionView';
@@ -28,6 +29,7 @@ interface Question_v2 {
   choices_image: string | null;
   question_video: string | null;
   video_after_answer: string | null;
+  image_after_answer: string | null;
   speech_after_answer: string | null;
   question_type: QuestionType;
   question_index: number | null;
@@ -108,56 +110,29 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   const childName = profile?.name || profile?.username || 'friend';
 
-  const questionTypes = [
-    { 
-      value: 'first_words' as QuestionType, 
-      label: 'First Words', 
-      description: 'Practice basic first words and sounds', 
-      color: 'bg-blue-100 hover:bg-blue-200 border-blue-200',
-      textColor: 'text-blue-800',
-      icon: BookOpen
-    },
-    { 
-      value: 'question_time' as QuestionType, 
-      label: 'Question Time', 
-      description: 'Answer questions about pictures', 
-      color: 'bg-amber-100 hover:bg-amber-200 border-amber-200',
-      textColor: 'text-amber-800',
-      icon: MessageCircle
-    },
-    { 
-      value: 'tap_and_play' as QuestionType, 
-      label: 'Tap and Play', 
-      description: 'Choose the correct picture by tapping', 
-      color: 'bg-purple-100 hover:bg-purple-200 border-purple-200',
-      textColor: 'text-purple-800',
-      icon: User
-    },
-    { 
-      value: 'build_sentence' as QuestionType, 
-      label: 'Build a Sentence', 
-      description: 'Learn to construct sentences', 
-      color: 'bg-emerald-100 hover:bg-emerald-200 border-emerald-200',
-      textColor: 'text-emerald-800',
-      icon: Building
-    },
-    { 
-      value: 'lets_chat' as QuestionType, 
-      label: 'Lets Chat', 
-      description: 'Free conversation practice', 
-      color: 'bg-orange-100 hover:bg-orange-200 border-orange-200',
-      textColor: 'text-orange-800',
-      icon: Heart
-    },
-    { 
-      value: 'story_activity' as QuestionType, 
-      label: 'Story Activity', 
-      description: 'Follow along with interactive story scenes', 
-      color: 'bg-rose-100 hover:bg-rose-200 border-rose-200',
-      textColor: 'text-rose-800',
-      icon: BookOpen
-    }
+  // Define 6 reusable color styles that cycle for all question types
+  const colorStyles = [
+    { color: 'bg-blue-100 hover:bg-blue-200 border-blue-200', textColor: 'text-blue-800', icon: BookOpen },
+    { color: 'bg-amber-100 hover:bg-amber-200 border-amber-200', textColor: 'text-amber-800', icon: MessageCircle },
+    { color: 'bg-purple-100 hover:bg-purple-200 border-purple-200', textColor: 'text-purple-800', icon: User },
+    { color: 'bg-emerald-100 hover:bg-emerald-200 border-emerald-200', textColor: 'text-emerald-800', icon: Building },
+    { color: 'bg-orange-100 hover:bg-orange-200 border-orange-200', textColor: 'text-orange-800', icon: Heart },
+    { color: 'bg-rose-100 hover:bg-rose-200 border-rose-200', textColor: 'text-rose-800', icon: BookOpen },
   ];
+
+  const questionTypes = getQuestionTypes().map((type, index) => {
+    // Cycle through the 6 color styles using modulo
+    const styleIndex = index % colorStyles.length;
+    const config = colorStyles[styleIndex];
+    return {
+      value: type as QuestionType,
+      label: getQuestionTypeLabel(type),
+      description: getQuestionTypeDescription(type),
+      color: config.color,
+      textColor: config.textColor,
+      icon: config.icon
+    };
+  });
 
   // Handle lesson retry from sessionStorage
   useEffect(() => {
@@ -306,6 +281,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
               choices_image: q.choices_image,
               question_video: q.question_video || null,
               video_after_answer: q.video_after_answer || null,
+              image_after_answer: q.image_after_answer || null,
               speech_after_answer: q.speech_after_answer || null,
               question_type: q.question_type,
               question_index: q.question_index,
