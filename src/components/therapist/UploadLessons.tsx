@@ -143,55 +143,46 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
     
     const normalizedDirPath = normalizePath(dirPath);
     const normalizedRelativePath = normalizePath(relativePath);
+    const relativePathIsSimpleFilename = !normalizedRelativePath.includes('/');
+    const expectedFileName = normalizedRelativePath.split('/').pop() || normalizedRelativePath;
     
     // Try exact match first
     for (const file of files) {
       const filePath = (file as any).webkitRelativePath || file.name;
       const normalizedFilePath = normalizePath(filePath);
       
-      // Check if file path exactly matches the relative path (within the directory context)
+      // Check if file path exactly matches the relative path
       if (normalizedFilePath === normalizedRelativePath) {
         return file;
       }
       
-      // Check if file path ends with the relative path (more precise than includes)
-      // This handles cases where the relativePath might be a subpath
-      if (normalizedFilePath.endsWith(normalizedRelativePath)) {
-        // Ensure it's within the correct directory context
-        if (normalizedDirPath && normalizedFilePath.startsWith(normalizedDirPath)) {
-          return file;
-        }
-        // If no directory context, still match if it ends correctly
-        if (!normalizedDirPath) {
-          return file;
-        }
-      }
-      
-      // Check if file is in the directory and path matches
-      if (normalizedDirPath && normalizedFilePath.startsWith(normalizedDirPath + '/')) {
-        const relativePart = normalizedFilePath.substring(normalizedDirPath.length + 1);
-        if (relativePart === normalizedRelativePath || relativePart.endsWith('/' + normalizedRelativePath)) {
-          return file;
-        }
-      }
-    }
-    
-    // Fallback: try to match by filename only, but only within the directory context
-    // This handles cases where the path structure might differ but the filename matches
-    const fileName = normalizedRelativePath.split('/').pop() || normalizedRelativePath;
-    if (fileName !== normalizedRelativePath) { // Only if it was a path, not just a filename
-      for (const file of files) {
-        const filePath = (file as any).webkitRelativePath || file.name;
-        const normalizedFilePath = normalizePath(filePath);
-        
-        // Only match if filename matches AND it's in the correct directory
-        // Compare the actual file.name (which preserves spaces) with the extracted fileName
-        if (file.name === fileName) {
-          if (normalizedDirPath && normalizedFilePath.startsWith(normalizedDirPath)) {
+      // If relativePath is a simple filename (no path separators), match more strictly
+      if (relativePathIsSimpleFilename) {
+        // For simple filenames, only match if:
+        // 1. The file is in the correct directory AND the filename exactly matches
+        if (normalizedDirPath && normalizedFilePath.startsWith(normalizedDirPath + '/')) {
+          const relativePart = normalizedFilePath.substring(normalizedDirPath.length + 1);
+          // Extract just the filename from the relative part (in case there are subdirectories)
+          const fileRelativeFileName = relativePart.split('/').pop() || relativePart;
+          if (fileRelativeFileName === expectedFileName) {
             return file;
           }
-          // If no directory context, match by name (but this is less safe)
-          if (!normalizedDirPath) {
+        }
+        // 2. If no directory context, match only if the file's name exactly matches
+        if (!normalizedDirPath && file.name === expectedFileName) {
+          return file;
+        }
+      } else {
+        // For paths with separators, check if file is in the directory and path matches exactly
+        if (normalizedDirPath && normalizedFilePath.startsWith(normalizedDirPath + '/')) {
+          const relativePart = normalizedFilePath.substring(normalizedDirPath.length + 1);
+          // Exact match of the relative path
+          if (relativePart === normalizedRelativePath) {
+            return file;
+          }
+          // Or match if the relative part ends with the relative path (for nested structures)
+          // But only if it's a proper path match (ends with '/' + relativePath)
+          if (relativePart.endsWith('/' + normalizedRelativePath)) {
             return file;
           }
         }
