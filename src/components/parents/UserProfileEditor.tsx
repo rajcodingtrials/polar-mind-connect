@@ -16,7 +16,7 @@ import { User, Settings, Shield, LogOut } from "lucide-react";
 const UserProfileEditor = () => {
   const { user, logout } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
-  const { preferences, updateSpeechDelayMode } = useUserPreferences();
+  const { preferences, updateSpeechDelayMode, updateAddMiniCelebration, updateCelebrationVideoId } = useUserPreferences();
   const navigate = useNavigate();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -179,12 +179,12 @@ const UserProfileEditor = () => {
         </CardContent>
       </Card>
 
-      {/* Therapy Preferences */}
+      {/* AI Therapy Preferences */}
       <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center">
             <Settings className="w-5 h-5 mr-2" />
-            Therapy Preferences
+            AI Therapy Preferences
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -203,10 +203,31 @@ const UserProfileEditor = () => {
           
           <Separator />
           
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label>Add Mini Celebrations</Label>
+              <p className="text-sm text-muted-foreground">
+                Add celebration after each correct answer to keep the child more motivated.
+              </p>
+            </div>
+            <Switch
+              checked={preferences?.addMiniCelebration || false}
+              onCheckedChange={updateAddMiniCelebration}
+            />
+          </div>
+          
+          <Separator />
+          
           <div className="space-y-2">
-            <Label>Account Created</Label>
+            <Label htmlFor="celebration-video-id">Celebration video id</Label>
+            <Input
+              id="celebration-video-id"
+              value={preferences?.celebrationVideoId || ""}
+              onChange={(e) => updateCelebrationVideoId(e.target.value.trim() || null)}
+              placeholder="Enter YouTube video ID"
+            />
             <p className="text-sm text-muted-foreground">
-              {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Unknown'}
+              Id of the youtube video to show after successfully completing a lesson. If not set, the video set by the lesson creator will be shown.
             </p>
           </div>
         </CardContent>

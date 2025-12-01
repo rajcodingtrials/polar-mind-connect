@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useAuth } from '../../context/AuthContext';
+import { useUserPreferences } from '../../hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
@@ -54,6 +55,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   const location = useLocation();
   const { profile } = useUserProfile();
   const { user } = useAuth();
+  const { preferences } = useUserPreferences();
   const [parentLessons, setParentLessons] = useState<string[]>([]);
   const [showQuestionTypes, setShowQuestionTypes] = useState(true);
   const [questions, setQuestions] = useState<Question_v2[]>([]);
@@ -596,7 +598,10 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     
     // Check if mini celebration should be shown for the current question's lesson
     // Default to true if not set (for backward compatibility)
-    const shouldShowCelebration = currentQuestion?.add_mini_celebration !== false;
+    // If user preference is enabled, override the lesson setting
+    const lessonSetting = currentQuestion?.add_mini_celebration !== false;
+    const userPreference = preferences?.addMiniCelebration || false;
+    const shouldShowCelebration = userPreference ? true : lessonSetting;
     
     if (shouldShowCelebration) {
       setComingFromCelebration(true);
@@ -873,14 +878,16 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
               )}
               {showRewardVideo && (() => {
                 const selectedLesson = lessons.find((lesson: any) => lesson.id === selectedLessonId);
-                if (selectedLesson?.youtube_video_id) {
+                // Check user preference first, then fall back to lesson's video
+                const videoId = preferences?.celebrationVideoId || selectedLesson?.youtube_video_id;
+                if (videoId) {
                   return (
                     <div className="fade-in flex flex-col items-center">
                       <h3 className="text-2xl font-bold mb-4">🎵 Surprise! Here's a special song as your reward!</h3>
                       <iframe
                         width="800"
                         height="450"
-                        src={`https://www.youtube.com/embed/${selectedLesson.youtube_video_id}?autoplay=1&rel=0`}
+                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`}
                         title="Lesson Song"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
