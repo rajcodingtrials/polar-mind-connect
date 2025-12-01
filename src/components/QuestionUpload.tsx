@@ -10,9 +10,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { Upload, FileText, Image, Trash2, Tag, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { getQuestionTypes, getQuestionTypeLabel } from '@/utils/questionTypes';
-
-type QuestionType = Database['public']['Enums']['question_type_enum'];
+import { getQuestionTypeLabel, initializeQuestionTypesCache, type QuestionType } from '@/utils/questionTypes';
+import { useQuestionTypes } from '@/hooks/useQuestionTypes';
 
 interface Lesson {
   id: string;
@@ -59,6 +58,14 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
   
   const { toast } = useToast();
 
+  // Load question types from database
+  const { questionTypes: questionTypesData } = useQuestionTypes();
+
+  // Initialize cache on mount
+  useEffect(() => {
+    initializeQuestionTypesCache();
+  }, []);
+
   // Clear all form state
   const clearForm = () => {
     setQuestions([]);
@@ -81,11 +88,11 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clearTrigger]);
 
-  const questionTypes = getQuestionTypes().map((type) => ({
-    value: type as QuestionType,
-    label: type === 'story_activity' 
+  const questionTypes = questionTypesData.map((qt) => ({
+    value: qt.name as QuestionType,
+    label: qt.name === 'story_activity' 
       ? 'Story Activity (5 Scenes + 4 Questions)' 
-      : getQuestionTypeLabel(type)
+      : qt.display_string
   }));
 
   const difficultyLevels = [

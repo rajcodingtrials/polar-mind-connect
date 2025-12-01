@@ -5,7 +5,7 @@ import { Calendar, Star, BookOpen, RotateCcw, ChevronDown, ChevronUp } from "luc
 import { format } from "date-fns";
 import { LessonActivity } from "@/hooks/useLessonActivity";
 import { LessonReview } from "./LessonReviewModal";
-import { getQuestionTypeLabel } from "@/utils/questionTypes";
+import { getQuestionTypeLabel, initializeQuestionTypesCache } from "@/utils/questionTypes";
 
 interface LessonActivityHistoryProps {
   lessonActivities: LessonActivity[];
@@ -23,6 +23,11 @@ const LessonActivityHistory: React.FC<LessonActivityHistoryProps> = ({
   hideTitle = false,
 }) => {
   const [expanded, setExpanded] = useState(false);
+
+  // Initialize question types cache on mount
+  useEffect(() => {
+    initializeQuestionTypesCache();
+  }, []);
 
   // Sort lesson activities: most recent first
   const sortedLessonActivities = [...lessonActivities].sort((a, b) => {

@@ -7,7 +7,8 @@ import { useUserPreferences } from '../../hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
-import { getQuestionTypes, getQuestionTypeLabel, getQuestionTypeDescription } from '@/utils/questionTypes';
+import { getQuestionTypeLabel, getQuestionTypeDescription, initializeQuestionTypesCache } from '@/utils/questionTypes';
+import { useQuestionTypes } from '@/hooks/useQuestionTypes';
 import ProgressCharacter from './ProgressCharacter';
 import IntroductionScreen from './IntroductionScreen';
 import QuestionView from './QuestionView';
@@ -16,7 +17,7 @@ import LessonSelection from './LessonSelection';
 import QuestionTypeCards from './QuestionTypeCards';
 import LessonsPanel from './LessonsPanel';
 
-type QuestionType = Database['public']['Enums']['question_type_enum'];
+import type { QuestionType } from '@/utils/questionTypes';
 
 interface Question_v2 {
   id: string;
@@ -103,6 +104,9 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+  // Load question types from database
+  const { questionTypes: questionTypesData, loading: questionTypesLoading } = useQuestionTypes();
+
   useEffect(() => {
     const fetchSettings = async () => {
       setAdminSettingsLoading(true);
@@ -123,6 +127,11 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     fetchSettings();
   }, []);
 
+  // Initialize question types cache when component mounts
+  useEffect(() => {
+    initializeQuestionTypesCache();
+  }, []);
+
   const childName = profile?.name || profile?.username || 'friend';
 
   // Define 6 reusable color styles that cycle for all question types
@@ -135,14 +144,14 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     { color: 'bg-rose-100 hover:bg-rose-200 border-rose-200', textColor: 'text-rose-800', icon: BookOpen },
   ];
 
-  const questionTypes = getQuestionTypes().map((type, index) => {
+  const questionTypes = questionTypesData.map((qt, index) => {
     // Cycle through the 6 color styles using modulo
     const styleIndex = index % colorStyles.length;
     const config = colorStyles[styleIndex];
     return {
-      value: type as QuestionType,
-      label: getQuestionTypeLabel(type),
-      description: getQuestionTypeDescription(type),
+      value: qt.name as QuestionType,
+      label: qt.display_string,
+      description: qt.description,
       color: config.color,
       textColor: config.textColor,
       icon: config.icon

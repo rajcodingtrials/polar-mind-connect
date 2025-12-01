@@ -1,53 +1,125 @@
-import { Constants } from '@/integrations/supabase/types';
-import type { Database } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
 
-type QuestionType = Database['public']['Enums']['question_type_enum'];
+// Question type is now a string (name from question_types table)
+export type QuestionType = string;
+
+// Cache for question types to avoid repeated database calls
+let questionTypesCache: Array<{ name: string; display_string: string; description: string }> | null = null;
+let cachePromise: Promise<Array<{ name: string; display_string: string; description: string }>> | null = null;
 
 /**
- * Get all valid question types from the database enum
- * Uses Constants from the types file (regenerate types after adding new enum values)
+ * Get all valid question types from the database
+ * Uses caching to avoid repeated database calls
  */
-export const getQuestionTypes = (): QuestionType[] => {
-  return [...Constants.public.Enums.question_type_enum];
+export const getQuestionTypes = async (): Promise<QuestionType[]> => {
+  if (questionTypesCache) {
+    return questionTypesCache.map(qt => qt.name);
+  }
+
+  if (cachePromise) {
+    const cached = await cachePromise;
+    return cached.map(qt => qt.name);
+  }
+
+  cachePromise = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('question_types')
+        .select('name, display_string, description')
+        .order('name');
+
+      if (error) {
+        console.error('Error loading question types:', error);
+        return [];
+      }
+
+      questionTypesCache = data || [];
+      return questionTypesCache;
+    } catch (err) {
+      console.error('Failed to load question types:', err);
+      return [];
+    }
+  })();
+
+  const cached = await cachePromise;
+  return cached.map(qt => qt.name);
+};
+
+/**
+ * Get all question types synchronously (returns cached data or empty array)
+ * For use in components that need immediate access without async
+ */
+export const getQuestionTypesSync = (): QuestionType[] => {
+  if (questionTypesCache) {
+    return questionTypesCache.map(qt => qt.name);
+  }
+  return [];
 };
 
 /**
  * Get display label for a question type
+ * Uses cached data if available, otherwise returns the type name
  */
 export const getQuestionTypeLabel = (type: QuestionType | string): string => {
-  const labels: Record<string, string> = {
-    'first_words': 'First Words',
-    'starter_words': 'Starter Words',
-    'question_time': 'Question Time',
-    'build_sentence': 'Build a Sentence',
-    'lets_chat': 'Let\'s Chat',
-    'tap_and_play': 'Tap and Play',
-    'story_activity': 'Story Activity',
-  };
-  return labels[type] || type;
+  if (questionTypesCache) {
+    const questionType = questionTypesCache.find(qt => qt.name === type);
+    if (questionType) {
+      return questionType.display_string;
+    }
+  }
+  // Fallback: return formatted version of the type name
+  return type.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
 };
 
 /**
  * Get description for a question type
+ * Uses cached data if available, otherwise returns a default description
  */
 export const getQuestionTypeDescription = (type: QuestionType | string): string => {
-  const descriptions: Record<string, string> = {
-    'first_words': 'Practice basic first words and sounds',
-    'starter_words': 'Learn your first words like open, more and go',
-    'question_time': 'Answer questions about pictures',
-    'build_sentence': 'Learn to construct sentences',
-    'lets_chat': 'Free conversation practice',
-    'story_activity': 'Follow along with interactive story scenes',
-    'tap_and_play': 'Choose the correct picture by tapping',
-  };
-  return descriptions[type] || `Practice ${getQuestionTypeLabel(type).toLowerCase()}`;
+  if (questionTypesCache) {
+    const questionType = questionTypesCache.find(qt => qt.name === type);
+    if (questionType) {
+      return questionType.description;
+    }
+  }
+  // Fallback: return a default description
+  return `Practice ${getQuestionTypeLabel(type).toLowerCase()}`;
 };
 
 /**
  * Check if a string is a valid question type
- * Uses Constants from the types file (regenerate types after adding new enum values)
+ * Uses cached data if available
  */
-export const isValidQuestionType = (type: string): type is QuestionType => {
-  return Constants.public.Enums.question_type_enum.includes(type as QuestionType);
+export const isValidQuestionType = async (type: string): Promise<boolean> => {
+  const validTypes = await getQuestionTypes();
+  return validTypes.includes(type);
+};
+
+/**
+ * Check if a string is a valid question type (synchronous version)
+ * Uses cached data if available
+ */
+export const isValidQuestionTypeSync = (type: string): boolean => {
+  const validTypes = getQuestionTypesSync();
+  return validTypes.includes(type);
+};
+
+/**
+ * Initialize question types cache
+ * Call this early in the app lifecycle to preload question types
+ */
+export const initializeQuestionTypesCache = async (): Promise<void> => {
+  await getQuestionTypes();
+};
+
+/**
+ * Clear the question types cache
+ * Useful when question types are updated
+ */
+export const clearQuestionTypesCache = (): void => {
+  questionTypesCache = null;
+  cachePromise = null;
 };
 

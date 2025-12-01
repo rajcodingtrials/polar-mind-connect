@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,7 +6,8 @@ import { Upload, FolderOpen, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Constants } from '@/integrations/supabase/types';
-import { getQuestionTypes, isValidQuestionType } from '@/utils/questionTypes';
+import { isValidQuestionTypeSync, initializeQuestionTypesCache, getQuestionTypesSync } from '@/utils/questionTypes';
+import { useQuestionTypes } from '@/hooks/useQuestionTypes';
 import {
   Dialog,
   DialogContent,
@@ -192,8 +193,14 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
     return null;
   };
 
-  // Valid question_type_enum values - fetched from database enum via types
-  const validQuestionTypes = getQuestionTypes();
+  // Load question types from database
+  const { questionTypes: questionTypesData } = useQuestionTypes();
+  const validQuestionTypes = questionTypesData.map(qt => qt.name);
+  
+  // Initialize cache on mount
+  useEffect(() => {
+    initializeQuestionTypesCache();
+  }, []);
 
   // Verification function to check lessons before upload
   const verifyLessons = async (
@@ -220,7 +227,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
         }
 
         // Use type guard for validation
-        if (!isValidQuestionType(questionType)) {
+        if (!isValidQuestionTypeSync(questionType)) {
           verificationErrors.push(`${dirPath}: Invalid question_type "${lessonData.question_type}". Valid types are: ${validQuestionTypes.join(', ')}`);
           if (onProgress) onProgress(index + 1, totalEntries);
           continue;
@@ -481,7 +488,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
           }
 
           // Use type guard for validation
-          if (!isValidQuestionType(questionType)) {
+          if (!isValidQuestionTypeSync(questionType)) {
             const errorMsg = `${dirPath}: Invalid question_type "${lessonData.question_type}". Valid types are: ${validQuestionTypes.join(', ')}`;
             ignoredDirectories.push(errorMsg);
             allErrors.push(errorMsg);

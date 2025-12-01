@@ -7,9 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { stopAllAudio, playGlobalTTS, stopGlobalAudio } from '@/utils/audioUtils';
 import type { Database } from '@/integrations/supabase/types';
 import { useTTSSettings } from '@/hooks/useTTSSettings';
-import { getQuestionTypeLabel } from '@/utils/questionTypes';
-
-type QuestionType = Database['public']['Enums']['question_type_enum'];
+import { getQuestionTypeLabel, initializeQuestionTypesCache, type QuestionType } from '@/utils/questionTypes';
 
 interface IntroductionScreenProps {
   selectedQuestionType: QuestionType;
@@ -31,6 +29,11 @@ const IntroductionScreen = ({ selectedQuestionType, therapistName, childName, on
   
   // Use the new TTS settings hook
   const { ttsSettings, isLoaded, callTTS } = useTTSSettings(therapistName);
+
+  // Initialize question types cache on mount
+  useEffect(() => {
+    initializeQuestionTypesCache();
+  }, []);
 
   // Check skip setting immediately on mount (only once)
   useEffect(() => {

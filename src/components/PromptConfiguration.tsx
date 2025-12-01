@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { MessageSquare, RotateCcw, Save, Eye, Loader2, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { getQuestionTypes, getQuestionTypeLabel } from '@/utils/questionTypes';
+import { getQuestionTypeLabel, initializeQuestionTypesCache } from '@/utils/questionTypes';
+import { useQuestionTypes } from '@/hooks/useQuestionTypes';
 
 interface PromptSettings {
   basePrompt: string;
@@ -45,12 +46,20 @@ const PromptConfiguration = () => {
     }
   });
 
+  // Load question types from database
+  const { questionTypes: questionTypesData } = useQuestionTypes();
+
+  // Initialize cache on mount
+  useEffect(() => {
+    initializeQuestionTypesCache();
+  }, []);
+
   // Generate activity labels dynamically from question types
   const activityLabels: Record<string, string> = {
     default: 'General Practice'
   };
-  getQuestionTypes().forEach((type) => {
-    activityLabels[type] = getQuestionTypeLabel(type);
+  questionTypesData.forEach((qt) => {
+    activityLabels[qt.name] = qt.display_string;
   });
 
   useEffect(() => {

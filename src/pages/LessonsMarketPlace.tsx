@@ -9,9 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import LessonPurchaseModal from '@/components/parents/LessonPurchaseModal';
 import { SEO } from '@/components/SEO';
-import { getQuestionTypes, getQuestionTypeLabel } from '@/utils/questionTypes';
-
-type QuestionType = Database['public']['Enums']['question_type_enum'];
+import { getQuestionTypeLabel, initializeQuestionTypesCache, type QuestionType } from '@/utils/questionTypes';
+import { useQuestionTypes } from '@/hooks/useQuestionTypes';
 
 interface Lesson {
   id: string;
@@ -44,6 +43,14 @@ const LessonsMarketPlace: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [addingLesson, setAddingLesson] = useState<string | null>(null);
   const [selectedLessonForPurchase, setSelectedLessonForPurchase] = useState<Lesson | null>(null);
+
+  // Load question types from database
+  const { questionTypes: questionTypesData } = useQuestionTypes();
+
+  // Initialize cache on mount
+  useEffect(() => {
+    initializeQuestionTypesCache();
+  }, []);
 
   // Define style array similar to QuestionTypeCards
   const lessonStyles: LessonStyle[] = [
@@ -339,9 +346,9 @@ const LessonsMarketPlace: React.FC = () => {
                   className="w-full px-3 py-2 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-white"
                 >
                   <option value="all">All Types</option>
-                  {getQuestionTypes().map((type) => (
-                    <option key={type} value={type}>
-                      {getQuestionTypeLabel(type)}
+                  {questionTypesData.map((qt) => (
+                    <option key={qt.name} value={qt.name}>
+                      {qt.display_string}
                     </option>
                   ))}
                 </select>

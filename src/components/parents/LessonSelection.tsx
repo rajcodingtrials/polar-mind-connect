@@ -5,10 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { BookOpen, Star, ArrowLeft, Play, MessageCircle, Building, Heart, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { Constants } from '@/integrations/supabase/types';
-import { getQuestionTypeLabel, getQuestionTypeDescription } from '@/utils/questionTypes';
-
-type QuestionType = Database['public']['Enums']['question_type_enum'];
+import { getQuestionTypeLabel, getQuestionTypeDescription, initializeQuestionTypesCache, type QuestionType } from '@/utils/questionTypes';
+import { useQuestionTypes } from '@/hooks/useQuestionTypes';
 
 interface Lesson {
   id: string;
@@ -108,9 +106,13 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
 
   // Helper function to generate description from question type
   const generateDescription = (questionType: QuestionType): string => {
-    const { getQuestionTypeDescription } = require('@/utils/questionTypes');
     return getQuestionTypeDescription(questionType);
   };
+
+  // Initialize question types cache on mount
+  useEffect(() => {
+    initializeQuestionTypesCache();
+  }, []);
 
   // Fetch distinct question types from Supabase
   useEffect(() => {
@@ -124,28 +126,30 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
 
         if (error) {
           console.error('Error fetching question types:', error);
-          // Fallback to enum values from Constants
-          const enumTypes = [...Constants.public.Enums.question_type_enum] as QuestionType[];
-          setAvailableQuestionTypes(enumTypes);
+          // Fallback to question types from database
+          const types = questionTypesData.map(qt => qt.name) as QuestionType[];
+          setAvailableQuestionTypes(types);
         } else if (lessonsData && lessonsData.length > 0) {
           // Get unique question types
           const uniqueTypes = Array.from(new Set(lessonsData.map((l: any) => l.question_type))) as QuestionType[];
           setAvailableQuestionTypes(uniqueTypes);
         } else {
-          // Fallback to enum values from Constants if no lessons found
-          const enumTypes = [...Constants.public.Enums.question_type_enum] as QuestionType[];
-          setAvailableQuestionTypes(enumTypes);
+          // Fallback to question types from database if no lessons found
+          const types = questionTypesData.map(qt => qt.name) as QuestionType[];
+          setAvailableQuestionTypes(types);
         }
       } catch (error) {
         console.error('Error in fetchQuestionTypes:', error);
-        // Fallback to enum values from Constants
-        const enumTypes = [...Constants.public.Enums.question_type_enum] as QuestionType[];
-        setAvailableQuestionTypes(enumTypes);
+        // Fallback to question types from database
+        const types = questionTypesData.map(qt => qt.name) as QuestionType[];
+        setAvailableQuestionTypes(types);
       }
     };
 
-    fetchQuestionTypes();
-  }, []);
+    if (questionTypesData.length > 0) {
+      fetchQuestionTypes();
+    }
+  }, [questionTypesData]);
 
   // Build question types config from available types and styles
   useEffect(() => {

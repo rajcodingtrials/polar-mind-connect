@@ -5,10 +5,19 @@ import { Button } from "@/components/ui/button";
 import TherapistHeader from "@/components/therapist/TherapistHeader";
 import Footer from "@/components/Footer";
 import { ArrowLeft, FileText, Folder, Image, CheckCircle, AlertCircle } from "lucide-react";
-import { getQuestionTypes } from "@/utils/questionTypes";
+import { initializeQuestionTypesCache } from "@/utils/questionTypes";
+import { useQuestionTypes } from "@/hooks/useQuestionTypes";
 
 const HowToAddLessons = () => {
   const navigate = useNavigate();
+  
+  // Load question types from database
+  const { questionTypes: questionTypesData } = useQuestionTypes();
+
+  // Initialize cache on mount
+  useEffect(() => {
+    initializeQuestionTypesCache();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
@@ -138,10 +147,10 @@ const HowToAddLessons = () => {
                 <ul className="space-y-2 text-sm text-slate-700">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span><code className="bg-slate-100 px-1 rounded">question_type</code> - One of: {getQuestionTypes().map((type, index) => (
-                      <React.Fragment key={type}>
-                        <code className="bg-slate-100 px-1 rounded">{type}</code>
-                        {index < getQuestionTypes().length - 1 ? ', ' : '.'}
+                    <span><code className="bg-slate-100 px-1 rounded">question_type</code> - One of: {questionTypesData.map((qt, index) => (
+                      <React.Fragment key={qt.name}>
+                        <code className="bg-slate-100 px-1 rounded">{qt.name}</code>
+                        {index < questionTypesData.length - 1 ? ', ' : '.'}
                       </React.Fragment>
                     ))}</span>
                   </li>
