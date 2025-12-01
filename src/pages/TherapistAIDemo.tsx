@@ -21,6 +21,19 @@ const TherapistAIDemo = () => {
     }
   }, [therapistProfile, profileLoading, navigate]);
 
+  // Get the therapist's use_ai_therapist preference (default to true if not set)
+  const therapistUseAiTherapist = preferences?.useAiTherapist !== undefined 
+    ? preferences.useAiTherapist 
+    : true;
+
+  // Debug logging - must be before conditional return to follow Rules of Hooks
+  useEffect(() => {
+    if (!profileLoading && !preferencesLoading) {
+      console.log('[TherapistAIDemo] Preferences loaded:', preferences);
+      console.log('[TherapistAIDemo] therapistUseAiTherapist value:', therapistUseAiTherapist);
+    }
+  }, [preferences, therapistUseAiTherapist, profileLoading, preferencesLoading]);
+
   // Loading state - wait for both profile and preferences to load
   if (profileLoading || preferencesLoading) {
     return (
@@ -32,17 +45,6 @@ const TherapistAIDemo = () => {
       </div>
     );
   }
-
-  // Get the therapist's use_ai_therapist preference (default to true if not set)
-  const therapistUseAiTherapist = preferences?.useAiTherapist !== undefined 
-    ? preferences.useAiTherapist 
-    : true;
-
-  // Debug logging
-  useEffect(() => {
-    console.log('[TherapistAIDemo] Preferences loaded:', preferences);
-    console.log('[TherapistAIDemo] therapistUseAiTherapist value:', therapistUseAiTherapist);
-  }, [preferences, therapistUseAiTherapist]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">

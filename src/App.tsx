@@ -21,6 +21,7 @@ import TherapistAuth from "./pages/TherapistAuth";
 import TherapistDashboard from "./pages/TherapistDashboard";
 import TherapistMyProfile from "./pages/TherapistMyProfile";
 import TherapistAIDemo from "./pages/TherapistAIDemo";
+import TherapistAILessons from "./pages/TherapistAILessons";
 import FindCoaches from "./pages/FindCoaches";
 import UserDashboard from "./pages/UserDashboard";
 import MyProfile from "./pages/MyProfile";
@@ -92,6 +93,7 @@ function App() {
               <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
               <Route path="/therapist-my-profile" element={<TherapistMyProfile />} />
               <Route path="/therapist/try-ai" element={<TherapistAIDemo />} />
+              <Route path="/therapist/ai-lessons" element={<TherapistAILessons />} />
               <Route path="/consultation" element={<FindCoaches />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />
               <Route path="/my-profile" element={<MyProfile />} />

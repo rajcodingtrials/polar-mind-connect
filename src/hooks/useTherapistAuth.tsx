@@ -27,6 +27,7 @@ interface TherapistProfile {
   is_verified: boolean;
   is_active: boolean;
   is_content_creator?: boolean;
+  use_ai_therapist?: boolean;
   created_at: string;
   updated_at: string;
 }

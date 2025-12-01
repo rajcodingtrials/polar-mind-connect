@@ -37,6 +37,24 @@ export const useUserPreferences = () => {
       }
 
       try {
+        // For therapists, load use_ai_therapist from therapists table
+        // For parents, load from profiles table
+        let useAiTherapistValue = true;
+        
+        if (isTherapist) {
+          // Load from therapists table
+          const { data: therapistData, error: therapistError } = await supabase
+            .from('therapists')
+            .select('use_ai_therapist')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (!therapistError && therapistData) {
+            useAiTherapistValue = therapistData.use_ai_therapist !== undefined ? therapistData.use_ai_therapist : true;
+          }
+        }
+        
+        // Load other preferences from profiles table
         const { data, error } = await supabase
           .from('profiles')
           .select('speech_delay_mode, add_mini_celebration, celebration_video_id, use_ai_therapist')
@@ -67,10 +85,10 @@ export const useUserPreferences = () => {
           }
           
           // For parents (non-therapists), always set useAiTherapist to true
-          // For therapists, use the value from database
-          const useAiTherapistValue = isTherapist 
-            ? (data.use_ai_therapist !== undefined ? data.use_ai_therapist : true)
-            : true;
+          // For therapists, use the value from therapists table (already loaded above)
+          if (!isTherapist) {
+            useAiTherapistValue = true;
+          }
           
           setPreferences({
             speechDelayMode,
@@ -304,12 +322,30 @@ export const useUserPreferences = () => {
       return;
     }
 
-    // For therapists, allow changing the setting
+    // For therapists, allow changing the setting - save to therapists table
     try {
+      // First, get the therapist profile ID
+      const { data: therapistData, error: therapistFetchError } = await supabase
+        .from('therapists')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (therapistFetchError || !therapistData) {
+        console.error('Error fetching therapist profile:', therapistFetchError);
+        toast({
+          title: "Error",
+          description: "Failed to find therapist profile",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update the therapists table
       const { error } = await supabase
-        .from('profiles')
+        .from('therapists')
         .update({ use_ai_therapist: enabled })
-        .eq('id', user.id);
+        .eq('id', therapistData.id);
 
       if (error) {
         console.error('Error updating use AI therapist preference:', error);

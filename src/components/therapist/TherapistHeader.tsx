@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, User as UserIcon, Sparkles } from "lucide-react";
+import { Home, User as UserIcon, Sparkles, BookOpen } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
@@ -62,6 +62,12 @@ const TherapistHeader = () => {
             icon={<Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />} 
             label="Try AI"
             isActive={location.pathname === '/therapist/try-ai'}
+          />
+          <NavItem 
+            to="/therapist/ai-lessons" 
+            icon={<BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />} 
+            label="AI Lessons"
+            isActive={location.pathname === '/therapist/ai-lessons'}
           />
           {/* 'Me' icon & avatar case */}
           <NavItem 
