@@ -504,6 +504,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
             is_verified: false,
             youtube_video_id: lessonData.youtube_video_id || null,
             add_mini_celebration: lessonData.add_mini_celebration !== undefined ? lessonData.add_mini_celebration : true,
+            priority: 0,
           };
 
           const { data: lessonInsertData, error: lessonError } = await supabase

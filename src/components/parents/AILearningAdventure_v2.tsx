@@ -318,9 +318,8 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('lessons_v2' as any)
-          .select('id, name, description, question_type, level, is_verified, youtube_video_id, created_at, updated_at, num_reviews, average_review')
-          .eq('is_verified', true)
-          .order('name');
+          .select('id, name, description, question_type, level, is_verified, youtube_video_id, created_at, updated_at, num_reviews, average_review, priority')
+          .eq('is_verified', true);
 
         if (!lessonsError && lessonsData) {
           // Ensure all lessons have question_type field
@@ -330,6 +329,17 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
           if (parentLessons.length > 0) {
             validLessons = validLessons.filter(lesson => parentLessons.includes(lesson.id));
           }
+          
+          // Sort by priority (descending), then by name (ascending)
+          validLessons.sort((a, b) => {
+            const priorityA = a.priority ?? 0;
+            const priorityB = b.priority ?? 0;
+            if (priorityA !== priorityB) {
+              return priorityB - priorityA; // Descending order
+            }
+            // If priorities are equal, sort by name
+            return (a.name || '').localeCompare(b.name || '');
+          });
           
           setLessons(validLessons);
           
