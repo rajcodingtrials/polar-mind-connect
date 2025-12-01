@@ -48,14 +48,27 @@ interface Question_v2 {
 
 interface AILearningAdventure_v2Props {
   therapistName: string;
+  overrideUseAiTherapist?: boolean;
 }
 
-const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapistName }) => {
+const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapistName, overrideUseAiTherapist }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile } = useUserProfile();
   const { user } = useAuth();
   const { preferences } = useUserPreferences();
+  
+  // Use override value if provided (for therapist preview mode), otherwise use preferences
+  const effectiveUseAiTherapist = overrideUseAiTherapist !== undefined 
+    ? overrideUseAiTherapist 
+    : (preferences?.useAiTherapist !== false);
+  
+  // Debug logging for therapist preview mode
+  useEffect(() => {
+    console.log('[AILearningAdventure_v2] overrideUseAiTherapist:', overrideUseAiTherapist);
+    console.log('[AILearningAdventure_v2] preferences?.useAiTherapist:', preferences?.useAiTherapist);
+    console.log('[AILearningAdventure_v2] effectiveUseAiTherapist:', effectiveUseAiTherapist);
+  }, [overrideUseAiTherapist, preferences?.useAiTherapist, effectiveUseAiTherapist]);
   const [parentLessons, setParentLessons] = useState<string[]>([]);
   const [showQuestionTypes, setShowQuestionTypes] = useState(true);
   const [questions, setQuestions] = useState<Question_v2[]>([]);
@@ -434,10 +447,13 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     
     setAvailableQuestions(filteredQuestions);
     // Skip introduction if admin setting is enabled OR if user has disabled AI therapist
-    if ((adminSettings && adminSettings.skip_introduction) || (preferences && preferences.useAiTherapist === false)) {
+    console.log('[handleDirectLessonSelect] effectiveUseAiTherapist:', effectiveUseAiTherapist, 'adminSettings.skip_introduction:', adminSettings?.skip_introduction);
+    if ((adminSettings && adminSettings.skip_introduction) || effectiveUseAiTherapist === false) {
+      console.log('[handleDirectLessonSelect] Skipping introduction, going directly to questions');
       // Pass filteredQuestions directly to avoid race condition with state update
       handleStartQuestions(filteredQuestions);
     } else {
+      console.log('[handleDirectLessonSelect] Showing introduction screen');
       setCurrentScreen('introduction');
     }
   };
@@ -475,12 +491,15 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     
     setAvailableQuestions(filteredQuestions);
     // Skip introduction if admin setting is enabled OR if user has disabled AI therapist
-    if ((adminSettings && adminSettings.skip_introduction) || (preferences && preferences.useAiTherapist === false)) {
+    console.log('[handleLessonSelect] effectiveUseAiTherapist:', effectiveUseAiTherapist, 'adminSettings.skip_introduction:', adminSettings?.skip_introduction);
+    if ((adminSettings && adminSettings.skip_introduction) || effectiveUseAiTherapist === false) {
+      console.log('[handleLessonSelect] Skipping introduction, going directly to questions');
       // Pass filteredQuestions directly to avoid race condition with state update
       handleStartQuestions(filteredQuestions);
     } else {
       // Ensure questions are available before showing introduction screen
       if (filteredQuestions.length > 0) {
+        console.log('[handleLessonSelect] Showing introduction screen');
         setCurrentScreen('introduction');
       } else {
         console.error('No questions available for lesson:', lessonId);
@@ -896,8 +915,8 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
             />
           )}
 
-          {/* Introduction Screen */}
-          {currentScreen === 'introduction' && selectedQuestionType && (
+          {/* Introduction Screen - Only show if useAiTherapist is true */}
+          {currentScreen === 'introduction' && selectedQuestionType && effectiveUseAiTherapist && (
             <IntroductionScreen
               selectedQuestionType={selectedQuestionType}
               therapistName={therapistName}
@@ -930,7 +949,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
               showMicInput={!!(adminSettings && adminSettings.show_mic_input)}
               amplifyMic={localAmplifyMic}
               micGain={localMicGain}
-              useAiTherapist={preferences?.useAiTherapist !== false}
+              useAiTherapist={effectiveUseAiTherapist}
             />
           )}
 

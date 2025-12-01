@@ -21,7 +21,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLessonActivity, LessonActivity } from "@/hooks/useLessonActivity";
 
-const ParentHome = () => {
+interface ParentHomeProps {
+  overrideUseAiTherapist?: boolean;
+}
+
+const ParentHome: React.FC<ParentHomeProps> = ({ overrideUseAiTherapist }) => {
   const { isAuthenticated, user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
   const navigate = useNavigate();
@@ -495,7 +499,10 @@ const ParentHome = () => {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
         <Header />
-        <AILearningAdventure_v2 therapistName={selectedTherapist} />
+        <AILearningAdventure_v2 
+          therapistName={selectedTherapist} 
+          overrideUseAiTherapist={overrideUseAiTherapist}
+        />
         <Footer />
       </div>
     );

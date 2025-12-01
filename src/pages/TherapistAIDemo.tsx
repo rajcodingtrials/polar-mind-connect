@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTherapistAuth } from "../hooks/useTherapistAuth";
+import { useUserPreferences } from "../hooks/useUserPreferences";
 import ParentHome from "./ParentHome";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Info } from "lucide-react";
@@ -8,6 +9,7 @@ import { ArrowLeft, Info } from "lucide-react";
 const TherapistAIDemo = () => {
   const navigate = useNavigate();
   const { therapistProfile, loading: profileLoading } = useTherapistAuth();
+  const { preferences, loading: preferencesLoading } = useUserPreferences();
 
   // Security: Only therapists can access this route
   useEffect(() => {
@@ -19,8 +21,8 @@ const TherapistAIDemo = () => {
     }
   }, [therapistProfile, profileLoading, navigate]);
 
-  // Loading state
-  if (profileLoading) {
+  // Loading state - wait for both profile and preferences to load
+  if (profileLoading || preferencesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
         <div className="text-center">
@@ -30,6 +32,17 @@ const TherapistAIDemo = () => {
       </div>
     );
   }
+
+  // Get the therapist's use_ai_therapist preference (default to true if not set)
+  const therapistUseAiTherapist = preferences?.useAiTherapist !== undefined 
+    ? preferences.useAiTherapist 
+    : true;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[TherapistAIDemo] Preferences loaded:', preferences);
+    console.log('[TherapistAIDemo] therapistUseAiTherapist value:', therapistUseAiTherapist);
+  }, [preferences, therapistUseAiTherapist]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
@@ -59,7 +72,8 @@ const TherapistAIDemo = () => {
       </div>
 
       {/* Render the AI Therapy Interface */}
-      <ParentHome />
+      {/* Pass the therapist's use_ai_therapist preference to control the preview behavior */}
+      <ParentHome overrideUseAiTherapist={therapistUseAiTherapist} />
     </div>
   );
 };
