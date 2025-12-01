@@ -433,7 +433,13 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     );
     
     setAvailableQuestions(filteredQuestions);
-    setCurrentScreen('introduction');
+    // Skip introduction if admin setting is enabled OR if user has disabled AI therapist
+    if ((adminSettings && adminSettings.skip_introduction) || (preferences && preferences.useAiTherapist === false)) {
+      // Pass filteredQuestions directly to avoid race condition with state update
+      handleStartQuestions(filteredQuestions);
+    } else {
+      setCurrentScreen('introduction');
+    }
   };
 
   const handleLessonSelect = async (lessonId: string | null) => {
@@ -468,10 +474,17 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     );
     
     setAvailableQuestions(filteredQuestions);
-    if (adminSettings && adminSettings.skip_introduction) {
-      handleStartQuestions();
+    // Skip introduction if admin setting is enabled OR if user has disabled AI therapist
+    if ((adminSettings && adminSettings.skip_introduction) || (preferences && preferences.useAiTherapist === false)) {
+      // Pass filteredQuestions directly to avoid race condition with state update
+      handleStartQuestions(filteredQuestions);
     } else {
-      setCurrentScreen('introduction');
+      // Ensure questions are available before showing introduction screen
+      if (filteredQuestions.length > 0) {
+        setCurrentScreen('introduction');
+      } else {
+        console.error('No questions available for lesson:', lessonId);
+      }
     }
   };
 
@@ -572,7 +585,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     navigate('/home', { state: { resetTherapist: true } });
   };
 
-  const handleStartQuestions = async () => {
+  const handleStartQuestions = async (questionsToUse?: Question_v2[]) => {
     // Record lesson activity as 'started' when lesson begins (if not already recorded)
     if (selectedLessonId && user?.id) {
       console.log('handleStartQuestions: Recording lesson activity for lesson:', selectedLessonId);
@@ -581,14 +594,111 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       console.log('handleStartQuestions: Skipping - selectedLessonId:', selectedLessonId, 'user?.id:', user?.id);
     }
     
+    // Use provided questions or fall back to availableQuestions from state
+    // Ensure questionsToStart is always an array (never undefined)
+    let questionsToStart: Question_v2[] = [];
+    
+    if (questionsToUse && Array.isArray(questionsToUse) && questionsToUse.length > 0) {
+      questionsToStart = questionsToUse;
+    } else if (availableQuestions && Array.isArray(availableQuestions) && availableQuestions.length > 0) {
+      questionsToStart = availableQuestions;
+    }
+    
+    // If no questions provided and availableQuestions is empty, try to filter questions again
+    if (questionsToStart.length === 0) {
+      console.warn('handleStartQuestions: No questions provided, attempting to filter questions again', {
+        questionsToUse: questionsToUse?.length || 0,
+        availableQuestions: availableQuestions.length || 0,
+        selectedLessonId,
+        selectedQuestionType,
+        totalQuestions: questions?.length || 0,
+        parentLessons: parentLessons?.length || 0
+      });
+      
+      // Try to filter questions again based on current state
+      if (selectedQuestionType && questions && Array.isArray(questions) && questions.length > 0) {
+        let filteredQuestions: Question_v2[] = [];
+        
+        if (selectedLessonId) {
+          filteredQuestions = questions.filter(q => 
+            q && 
+            q.question_type === selectedQuestionType && 
+            q.lesson_id === selectedLessonId &&
+            (parentLessons.length === 0 || parentLessons.includes(selectedLessonId))
+          );
+        } else {
+          filteredQuestions = questions.filter(q => 
+            q &&
+            q.question_type === selectedQuestionType &&
+            (parentLessons.length === 0 || !q.lesson_id || parentLessons.includes(q.lesson_id))
+          );
+        }
+        
+        // Sort by question_index
+        filteredQuestions = [...filteredQuestions].sort((a, b) => 
+          (a.question_index || 0) - (b.question_index || 0)
+        );
+        
+        console.log('handleStartQuestions: Filtered questions result', {
+          filteredCount: filteredQuestions.length,
+          selectedLessonId,
+          selectedQuestionType,
+          totalQuestionsBeforeFilter: questions.length
+        });
+        
+        if (filteredQuestions.length > 0) {
+          questionsToStart = filteredQuestions;
+          setAvailableQuestions(filteredQuestions);
+        }
+      } else {
+        console.warn('handleStartQuestions: Cannot filter questions - missing required data', {
+          selectedQuestionType,
+          questionsLength: questions?.length || 0,
+          hasQuestions: !!questions,
+          isArray: Array.isArray(questions)
+        });
+      }
+    }
+    
+    // Final safety check - ensure questionsToStart is still an array
+    if (!Array.isArray(questionsToStart)) {
+      console.error('handleStartQuestions: questionsToStart is not an array!', {
+        type: typeof questionsToStart,
+        questionsToStart
+      });
+      questionsToStart = [];
+    }
+    
+    // If still no questions available, log error and return
+    if (questionsToStart.length === 0) {
+      console.error('handleStartQuestions: No questions available to start after retry', {
+        questionsToUse: questionsToUse?.length || 0,
+        availableQuestions: availableQuestions?.length || 0,
+        selectedLessonId,
+        selectedQuestionType,
+        totalQuestions: questions?.length || 0,
+        parentLessons: parentLessons?.length || 0,
+        questionsToStartLength: questionsToStart.length,
+        isArray: Array.isArray(questionsToStart)
+      });
+      return;
+    }
+    
     // Start at first question (sorted by question_index)
-    const firstQuestion = availableQuestions[0];
+    const firstQuestion = questionsToStart[0];
     if (firstQuestion) {
       setCurrentQuestion(firstQuestion);
       setAskedQuestionIds(new Set([firstQuestion.id]));
       setSessionQuestionCount(1);
       setComingFromCelebration(false);
       setCurrentScreen('question');
+    } else {
+      console.error('handleStartQuestions: First question is null or undefined', {
+        questionsToStartLength: questionsToStart.length,
+        questionsToStart: questionsToStart,
+        firstQuestion,
+        isArray: Array.isArray(questionsToStart)
+      });
     }
   };
 
@@ -598,10 +708,10 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     
     // Check if mini celebration should be shown for the current question's lesson
     // Default to true if not set (for backward compatibility)
-    // If user preference is enabled, override the lesson setting
+    // If user preference is 'yes', always show. If 'no', never show. If 'default', use lesson setting
     const lessonSetting = currentQuestion?.add_mini_celebration !== false;
-    const userPreference = preferences?.addMiniCelebration || false;
-    const shouldShowCelebration = userPreference ? true : lessonSetting;
+    const userPreference = preferences?.addMiniCelebration || 'default';
+    const shouldShowCelebration = userPreference === 'yes' ? true : userPreference === 'no' ? false : lessonSetting;
     
     if (shouldShowCelebration) {
       setComingFromCelebration(true);
@@ -820,6 +930,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
               showMicInput={!!(adminSettings && adminSettings.show_mic_input)}
               amplifyMic={localAmplifyMic}
               micGain={localMicGain}
+              useAiTherapist={preferences?.useAiTherapist !== false}
             />
           )}
 

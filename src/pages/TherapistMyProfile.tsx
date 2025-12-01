@@ -13,14 +13,18 @@ import { ProfileHeader } from "@/components/therapist/ProfileHeader";
 import { PersonalInformation } from "@/components/therapist/PersonalInformation";
 import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails";
 import { TherapistDocuments } from "@/components/therapist/TherapistDocuments";
-import { Shield, LogOut, Upload, HelpCircle } from "lucide-react";
+import { Shield, LogOut, Upload, HelpCircle, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import UploadLessons from "@/components/therapist/UploadLessons";
+import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 const TherapistMyProfile = () => {
   const { isAuthenticated, user, logout, loading: authLoading } = useAuth();
   const { therapistProfile, updateTherapistProfile, createTherapistProfile, loading } = useTherapistAuth();
+  const { preferences, updateSpeechDelayMode, updateAddMiniCelebration, updateCelebrationVideoId, updateUseAiTherapist } = useUserPreferences();
   const navigate = useNavigate();
   
   const [isEditing, setIsEditing] = useState(!therapistProfile);
@@ -214,6 +218,110 @@ const TherapistMyProfile = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* AI Therapy Preferences */}
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-foreground flex items-center">
+                <Settings className="w-5 h-5 mr-2" />
+                AI Therapy Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Speech Delay Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enable extra time for processing and responding during AI therapy sessions
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences?.speechDelayMode === 'yes'}
+                  onCheckedChange={(checked) => {
+                    // Toggle between 'yes' (enabled) and 'no' (disabled)
+                    // 'default' is treated as 'no' (disabled) for the toggle
+                    updateSpeechDelayMode(checked ? 'yes' : 'no');
+                  }}
+                />
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label>Add Mini Celebrations</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Add celebration after each correct answer to keep the child more motivated.
+                  </p>
+                </div>
+                <ToggleGroup
+                  type="single"
+                  value={preferences?.addMiniCelebration || 'default'}
+                  onValueChange={(value) => {
+                    // Radix ToggleGroup with type="single" allows deselection, which passes empty string
+                    // We need to handle this case and prevent deselection by keeping the current value
+                    if (value && (value === 'yes' || value === 'no' || value === 'default')) {
+                      updateAddMiniCelebration(value as 'yes' | 'no' | 'default');
+                    }
+                    // If value is empty/undefined (deselection), do nothing to keep current selection
+                  }}
+                  className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-1 gap-1"
+                >
+                  <ToggleGroupItem
+                    value="no"
+                    aria-label="No"
+                    className="data-[state=on]:bg-white data-[state=on]:text-gray-900 data-[state=on]:shadow-sm data-[state=off]:text-gray-600 rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-gray-900"
+                  >
+                    No
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="default"
+                    aria-label="Default"
+                    className="data-[state=on]:bg-white data-[state=on]:text-gray-900 data-[state=on]:shadow-sm data-[state=off]:text-gray-600 rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-gray-900"
+                  >
+                    Default
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="yes"
+                    aria-label="Yes"
+                    className="data-[state=on]:bg-white data-[state=on]:text-gray-900 data-[state=on]:shadow-sm data-[state=off]:text-gray-600 rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-gray-900"
+                  >
+                    Yes
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Use AI Therapist</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enable AI therapist features like voice interaction and automatic feedback
+                  </p>
+                </div>
+                <Switch
+                  checked={preferences?.useAiTherapist !== false}
+                  onCheckedChange={updateUseAiTherapist}
+                />
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-2">
+                <Label htmlFor="celebration-video-id">Celebration video id</Label>
+                <Input
+                  id="celebration-video-id"
+                  value={preferences?.celebrationVideoId || ""}
+                  onChange={(e) => updateCelebrationVideoId(e.target.value.trim() || null)}
+                  placeholder="Enter YouTube video ID"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Id of the youtube video to show after successfully completing a lesson. If not set, the video set by the lesson creator will be shown.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Account Security */}
           <Card className="bg-white border-slate-200 shadow-sm">

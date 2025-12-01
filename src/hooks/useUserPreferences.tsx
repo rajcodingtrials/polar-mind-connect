@@ -2,22 +2,31 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { useUserRole } from '@/hooks/useUserRole';
+
+type PreferenceState = 'yes' | 'no' | 'default';
 
 interface UserPreferences {
-  speechDelayMode: boolean;
-  addMiniCelebration: boolean;
+  speechDelayMode: PreferenceState;
+  addMiniCelebration: PreferenceState;
   celebrationVideoId: string | null;
+  useAiTherapist: boolean;
 }
 
 export const useUserPreferences = () => {
   const [preferences, setPreferences] = useState<UserPreferences>({
-    speechDelayMode: false,
-    addMiniCelebration: false,
+    speechDelayMode: 'default',
+    addMiniCelebration: 'default',
     celebrationVideoId: null,
+    useAiTherapist: true,
   });
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { role } = useUserRole();
   const { toast } = useToast();
+  
+  // Check if user is a therapist
+  const isTherapist = role === 'therapist';
 
   // Load preferences from database
   useEffect(() => {
@@ -30,18 +39,81 @@ export const useUserPreferences = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('speech_delay_mode, add_mini_celebration, celebration_video_id')
+          .select('speech_delay_mode, add_mini_celebration, celebration_video_id, use_ai_therapist')
           .eq('id', user.id)
           .single();
 
         if (error) {
           console.error('Error loading user preferences:', error);
         } else {
+          // Handle migration from boolean to three-state
+          // Default to 'default' if value is null, undefined, or not recognized
+          let speechDelayMode: PreferenceState = 'default';
+          if (data.speech_delay_mode === true || data.speech_delay_mode === 'yes') {
+            speechDelayMode = 'yes';
+          } else if (data.speech_delay_mode === false || data.speech_delay_mode === 'no') {
+            speechDelayMode = 'no';
+          } else if (data.speech_delay_mode === 'default' || data.speech_delay_mode === null || data.speech_delay_mode === undefined) {
+            speechDelayMode = 'default';
+          }
+          
+          let addMiniCelebration: PreferenceState = 'default';
+          if (data.add_mini_celebration === true || data.add_mini_celebration === 'yes') {
+            addMiniCelebration = 'yes';
+          } else if (data.add_mini_celebration === false || data.add_mini_celebration === 'no') {
+            addMiniCelebration = 'no';
+          } else if (data.add_mini_celebration === 'default' || data.add_mini_celebration === null || data.add_mini_celebration === undefined) {
+            addMiniCelebration = 'default';
+          }
+          
+          // For parents (non-therapists), always set useAiTherapist to true
+          // For therapists, use the value from database
+          const useAiTherapistValue = isTherapist 
+            ? (data.use_ai_therapist !== undefined ? data.use_ai_therapist : true)
+            : true;
+          
           setPreferences({
-            speechDelayMode: data.speech_delay_mode || false,
-            addMiniCelebration: data.add_mini_celebration || false,
+            speechDelayMode,
+            addMiniCelebration,
             celebrationVideoId: data.celebration_video_id || null,
+            useAiTherapist: useAiTherapistValue,
           });
+          
+          // For parents, ensure use_ai_therapist is always set to true in database
+          if (!isTherapist && data.use_ai_therapist !== true) {
+            supabase
+              .from('profiles')
+              .update({ use_ai_therapist: true })
+              .eq('id', user.id)
+              .then(({ error }) => {
+                if (error) console.error('Error setting use_ai_therapist to true for parent:', error);
+              });
+          }
+          
+          // If preferences were null/undefined, save 'default' to database
+          if (data.speech_delay_mode === null || data.speech_delay_mode === undefined || 
+              (data.speech_delay_mode !== 'yes' && data.speech_delay_mode !== 'no' && data.speech_delay_mode !== 'default' && typeof data.speech_delay_mode !== 'boolean')) {
+            // Save default value to database
+            supabase
+              .from('profiles')
+              .update({ speech_delay_mode: 'default' })
+              .eq('id', user.id)
+              .then(({ error }) => {
+                if (error) console.error('Error setting default speech_delay_mode:', error);
+              });
+          }
+          
+          if (data.add_mini_celebration === null || data.add_mini_celebration === undefined || 
+              (data.add_mini_celebration !== 'yes' && data.add_mini_celebration !== 'no' && data.add_mini_celebration !== 'default' && typeof data.add_mini_celebration !== 'boolean')) {
+            // Save default value to database
+            supabase
+              .from('profiles')
+              .update({ add_mini_celebration: 'default' })
+              .eq('id', user.id)
+              .then(({ error }) => {
+                if (error) console.error('Error setting default add_mini_celebration:', error);
+              });
+          }
         }
       } catch (err) {
         console.error('Failed to load user preferences:', err);
@@ -51,16 +123,16 @@ export const useUserPreferences = () => {
     };
 
     loadPreferences();
-  }, [user?.id]);
+  }, [user?.id, isTherapist]);
 
   // Update speech delay mode
-  const updateSpeechDelayMode = async (enabled: boolean) => {
+  const updateSpeechDelayMode = async (value: PreferenceState) => {
     if (!user?.id) return;
 
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ speech_delay_mode: enabled })
+        .update({ speech_delay_mode: value })
         .eq('id', user.id);
 
       if (error) {
@@ -75,12 +147,13 @@ export const useUserPreferences = () => {
 
       setPreferences(prev => ({
         ...prev,
-        speechDelayMode: enabled,
+        speechDelayMode: value,
       }));
 
+      const description = value === 'yes' ? 'enabled' : value === 'no' ? 'disabled' : 'set to default';
       toast({
         title: "Setting saved",
-        description: `Speech delay mode ${enabled ? 'enabled' : 'disabled'}`,
+        description: `Speech delay mode ${description}`,
       });
     } catch (err) {
       console.error('Failed to update speech delay mode:', err);
@@ -93,13 +166,13 @@ export const useUserPreferences = () => {
   };
 
   // Update add mini celebration preference
-  const updateAddMiniCelebration = async (enabled: boolean) => {
+  const updateAddMiniCelebration = async (value: PreferenceState) => {
     if (!user?.id) return;
 
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ add_mini_celebration: enabled })
+        .update({ add_mini_celebration: value })
         .eq('id', user.id);
 
       if (error) {
@@ -114,12 +187,13 @@ export const useUserPreferences = () => {
 
       setPreferences(prev => ({
         ...prev,
-        addMiniCelebration: enabled,
+        addMiniCelebration: value,
       }));
 
+      const description = value === 'yes' ? 'enabled' : value === 'no' ? 'disabled' : 'set to default';
       toast({
         title: "Setting saved",
-        description: `Mini celebrations ${enabled ? 'enabled' : 'disabled'}`,
+        description: `Mini celebrations ${description}`,
       });
     } catch (err) {
       console.error('Failed to update add mini celebration preference:', err);
@@ -207,11 +281,71 @@ export const useUserPreferences = () => {
     }
   };
 
+  // Update use AI therapist preference
+  // Only therapists can change this setting. Parents always have it set to true.
+  const updateUseAiTherapist = async (enabled: boolean) => {
+    if (!user?.id) return;
+    
+    // For parents, always set to true and don't allow changes
+    if (!isTherapist) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ use_ai_therapist: true })
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('Error setting use_ai_therapist to true for parent:', error);
+      }
+      
+      setPreferences(prev => ({
+        ...prev,
+        useAiTherapist: true,
+      }));
+      return;
+    }
+
+    // For therapists, allow changing the setting
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ use_ai_therapist: enabled })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating use AI therapist preference:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save AI therapist setting",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setPreferences(prev => ({
+        ...prev,
+        useAiTherapist: enabled,
+      }));
+
+      toast({
+        title: "Setting saved",
+        description: `AI therapist ${enabled ? 'enabled' : 'disabled'}`,
+      });
+    } catch (err) {
+      console.error('Failed to update use AI therapist preference:', err);
+      toast({
+        title: "Error",
+        description: "Failed to save AI therapist setting",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     preferences,
     loading,
     updateSpeechDelayMode,
     updateAddMiniCelebration,
     updateCelebrationVideoId,
+    updateUseAiTherapist,
   };
 };

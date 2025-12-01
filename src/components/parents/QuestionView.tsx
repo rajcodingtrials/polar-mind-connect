@@ -51,6 +51,7 @@ interface QuestionViewProps {
   showMicInput?: boolean;
   amplifyMic?: boolean;
   micGain?: number;
+  useAiTherapist?: boolean;
 }
 
 const QuestionView: React.FC<QuestionViewProps> = ({
@@ -70,7 +71,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
   comingFromCelebration = false,
   showMicInput = false,
   amplifyMic,
-  micGain
+  micGain,
+  useAiTherapist = true
 }) => {
   const [isWaitingForAnswer, setIsWaitingForAnswer] = useState(true);
   const [currentResponse, setCurrentResponse] = useState('');
@@ -99,6 +101,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isProcessingAfterAnswer, setIsProcessingAfterAnswer] = useState(false);
+  const [showSpeechAfterAnswerText, setShowSpeechAfterAnswerText] = useState(false);
   
   const questionReadInProgress = useRef(false);
   const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
@@ -237,6 +240,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
       setWaitingForVideoToComplete(false);
       setVideoAspectRatio(null);
       setIsProcessingAfterAnswer(false);
+      setShowSpeechAfterAnswerText(false);
       // Reset image/video URLs immediately when question changes to prevent showing old media
       setQuestionImageUrl(null);
       setQuestionVideoBeforeUrl(null);
@@ -274,8 +278,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
 
   // Read question aloud when component mounts or question changes
   useEffect(() => {
-    // Only call TTS if question_speech is available
-    if (shouldReadQuestion && !hasReadQuestion && ttsSettingsLoaded && !questionReadInProgress.current && question.question_speech) {
+    // Only call TTS if question_speech is available AND useAiTherapist is true
+    if (useAiTherapist && shouldReadQuestion && !hasReadQuestion && ttsSettingsLoaded && !questionReadInProgress.current && question.question_speech) {
       questionReadInProgress.current = true;
       setHasReadQuestion(true);
       
@@ -313,8 +317,11 @@ const QuestionView: React.FC<QuestionViewProps> = ({
       };
       
       readQuestion();
+    } else if (!useAiTherapist) {
+      // If AI therapist is disabled, mark as read immediately
+      setHasReadQuestion(true);
     }
-  }, [shouldReadQuestion, hasReadQuestion, ttsSettingsLoaded, question.question_speech, question.id, question.answer, question.answer_index, questionNumber, totalQuestions, onNextQuestion, onComplete]);
+  }, [useAiTherapist, shouldReadQuestion, hasReadQuestion, ttsSettingsLoaded, question.question_speech, question.id, question.answer, question.answer_index, questionNumber, totalQuestions, onNextQuestion, onComplete]);
 
   const handleVoiceRecording = async () => {
     if (isProcessingAnswer || !question.answer) return;
@@ -374,12 +381,15 @@ const QuestionView: React.FC<QuestionViewProps> = ({
     
     stopGlobalAudio();
     
+    // Convert three-state preference to boolean: 'yes' -> true, 'no' -> false, 'default' -> false
+    const speechDelayModeEnabled = preferences.speechDelayMode === 'yes';
+    
     const similarity = calculateSimilarity(userAnswerText, question.answer, {
-      speechDelayMode: preferences.speechDelayMode,
-      threshold: preferences.speechDelayMode ? 0.3 : 0.6
+      speechDelayMode: speechDelayModeEnabled,
+      threshold: speechDelayModeEnabled ? 0.3 : 0.6
     });
 
-    const acceptanceThreshold = preferences.speechDelayMode ? 0.3 : 0.7;
+    const acceptanceThreshold = speechDelayModeEnabled ? 0.3 : 0.7;
     
     if (similarity > acceptanceThreshold) {
       setIsCorrect(true);
@@ -436,8 +446,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
       }
     }
 
-    // Step 2: Play speech_after_answer TTS if it exists (while image is showing)
-    if (hasSpeechAfter) {
+    // Step 2: Play speech_after_answer TTS if it exists (while image is showing) - only in AI mode
+    if (hasSpeechAfter && useAiTherapist) {
       console.log('Step 2: Playing speech_after_answer:', question.speech_after_answer);
       try {
         const { data } = await callTTS(question.speech_after_answer, ttsSettings.voice, ttsSettings.speed);
@@ -482,7 +492,19 @@ const QuestionView: React.FC<QuestionViewProps> = ({
     }
   };
 
-  const handleCorrectAnswer = async (userAnswerText: string) => {
+  const handleCorrectAnswer = async (userAnswerText?: string) => {
+    // In non-AI mode, skip TTS and sound feedback
+    if (!useAiTherapist) {
+      setHasCalledCorrectAnswer(true);
+      setIsCorrect(true);
+      setShowFeedback(true);
+      setCurrentResponse('Correct!');
+      setIsWaitingForAnswer(false);
+      onCorrectAnswer();
+      return;
+    }
+
+    // AI mode: use TTS and sound feedback
     let feedbackForScreen = '';
     let hasPlayedTTS = false;
     
@@ -491,11 +513,12 @@ const QuestionView: React.FC<QuestionViewProps> = ({
       const { targetSound, confidence } = soundFeedbackManager.detectTargetSound(userAnswerText);
       
       if (targetSound && confidence > 0.6) {
+        const speechDelayModeEnabled = preferences.speechDelayMode === 'yes';
         const similarityScore = userAnswerText ? calculateSimilarity(userAnswerText, question.answer, {
-          speechDelayMode: preferences.speechDelayMode,
-          threshold: preferences.speechDelayMode ? 0.3 : 0.6
+          speechDelayMode: speechDelayModeEnabled,
+          threshold: speechDelayModeEnabled ? 0.3 : 0.6
         }) : 1.0;
-        const feedbackType = similarityScore >= 0.95 ? 'correct' : (preferences.speechDelayMode ? 'correct_speech_delay' : 'correct');
+        const feedbackType = similarityScore >= 0.95 ? 'correct' : (speechDelayModeEnabled ? 'correct_speech_delay' : 'correct');
         const feedback = await soundFeedbackManager.generateSoundFeedback({
           target_sound: question.answer,
           user_attempt: userAnswerText,
@@ -554,6 +577,31 @@ const QuestionView: React.FC<QuestionViewProps> = ({
   };
 
   const handleIncorrectAnswer = async (userAnswerText: string) => {
+    // In non-AI mode, skip TTS and sound feedback
+    if (!useAiTherapist) {
+      setIsCorrect(false);
+      const newRetryCount = retryCount + 1;
+      onRetryCountChange(newRetryCount);
+      setShowFeedback(true);
+      setCurrentResponse(`Incorrect. The answer is "${question.answer}".`);
+      
+      // After max retries, allow moving to next question
+      if (newRetryCount >= 2) {
+        setTimeout(() => {
+          setShowFeedback(false);
+          setIsWaitingForAnswer(false);
+          setIsProcessingAnswer(false);
+          onNextQuestion();
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          setShowFeedback(false);
+        }, 2000);
+      }
+      return;
+    }
+
+    // AI mode: use TTS and sound feedback
     let feedbackForScreen = '';
     
     if (userAnswerText && question.answer) {
@@ -653,30 +701,40 @@ const QuestionView: React.FC<QuestionViewProps> = ({
       setHasCalledCorrectAnswer(true);
       setIsProcessingAnswer(false);
       
-      try {
-        const { data } = await callTTS('Great job! That\'s correct!', ttsSettings.voice, ttsSettings.speed);
-        if (data?.audioContent) {
-          await playGlobalTTS(data.audioContent, 'Choice-Correct');
+      // Only use TTS if AI therapist is enabled
+      if (useAiTherapist) {
+        try {
+          const { data } = await callTTS('Great job! That\'s correct!', ttsSettings.voice, ttsSettings.speed);
+          if (data?.audioContent) {
+            await playGlobalTTS(data.audioContent, 'Choice-Correct');
+          }
+        } catch (e) {
+          console.error('TTS error:', e);
         }
-        
-        // Handle after-answer sequence: image -> speech -> video
+      }
+      
+      // Handle after-answer sequence: image -> speech -> video
+      // In non-AI mode, don't auto-advance for answer_index questions
+      if (useAiTherapist) {
         await handleAfterAnswerSequence(() => onCorrectAnswer(), () => onNextQuestion());
-      } catch (e) {
-        console.error('TTS error:', e);
-        // If TTS fails, still handle after-answer sequence
-        await handleAfterAnswerSequence(() => onCorrectAnswer(), () => onNextQuestion());
+      } else {
+        // In non-AI mode, just show feedback, wait for Next Question button
+        setIsWaitingForAnswer(false);
       }
     } else {
       setCurrentResponse('That\'s not quite right. Try again!');
       setShowFeedback(true);
       
-      try {
-        const { data } = await callTTS('That\'s not quite right. Try again!', ttsSettings.voice, ttsSettings.speed);
-        if (data?.audioContent) {
-          await playGlobalTTS(data.audioContent, 'Choice-Incorrect');
+      // Only use TTS if AI therapist is enabled
+      if (useAiTherapist) {
+        try {
+          const { data } = await callTTS('That\'s not quite right. Try again!', ttsSettings.voice, ttsSettings.speed);
+          if (data?.audioContent) {
+            await playGlobalTTS(data.audioContent, 'Choice-Incorrect');
+          }
+        } catch (e) {
+          console.error('TTS error:', e);
         }
-      } catch (e) {
-        console.error('TTS error:', e);
       }
       
       // Allow retry after feedback
@@ -685,6 +743,144 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         setIsProcessingAnswer(false);
         setSelectedChoiceIndex(null);
         setIsCorrect(null);
+      }, 2000);
+    }
+  };
+
+  // Handle manual answer buttons for non-AI mode
+  const handleManualAnswerCorrect = async () => {
+    setIsCorrect(true);
+    setHasCalledCorrectAnswer(true);
+    setIsWaitingForAnswer(false);
+    setShowFeedback(true);
+    setCurrentResponse('Correct!');
+    
+    // Show speech_after_answer text if it exists
+    if (question.speech_after_answer && question.speech_after_answer.trim() !== '') {
+      setShowSpeechAfterAnswerText(true);
+    }
+    
+    // Check if there are after-answer media to show (check raw field values, not loaded URLs)
+    const hasImageAfterField = question.image_after_answer && question.image_after_answer.trim() !== '';
+    const hasVideoAfterField = question.video_after_answer && question.video_after_answer.trim() !== '';
+    
+    setIsProcessingAfterAnswer(true);
+    
+    // Step 1: Show image_after_answer first if it exists
+    if (hasImageAfterField) {
+      let imageUrl = questionImageAfterUrl;
+      
+      // If URL not loaded yet, load it now
+      if (!imageUrl) {
+        console.log('Loading image_after_answer URL:', question.image_after_answer);
+        if (question.image_after_answer.startsWith('http')) {
+          imageUrl = question.image_after_answer;
+          setQuestionImageAfterUrl(imageUrl);
+        } else {
+          const { data } = supabase.storage
+            .from('question-images-v2')
+            .getPublicUrl(question.image_after_answer);
+          imageUrl = data?.publicUrl || null;
+          if (imageUrl) {
+            setQuestionImageAfterUrl(imageUrl);
+          }
+        }
+      }
+      
+      // Set showImageAfter to true so the image will display once URL is loaded
+      console.log('Setting showImageAfter to true for image_after_answer');
+      setShowImageAfter(true);
+      
+      if (imageUrl) {
+        console.log('Image URL already loaded, showing image_after_answer:', imageUrl);
+        // Wait a bit for the image to actually render before proceeding
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else {
+        // URL not loaded yet, but showImageAfter is set - the image will show when URL loads via useEffect
+        console.log('Image URL not loaded yet, will show when URL loads via useEffect');
+        // Wait a bit to allow useEffect to load the URL
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    
+    // Step 2: Show video_after_answer if it exists (video takes precedence over image)
+    if (hasVideoAfterField) {
+      // Load video URL if not already loaded
+      let videoUrl = questionVideoAfterUrl;
+      if (!videoUrl) {
+        console.log('Loading video_after_answer URL:', question.video_after_answer);
+        if (question.video_after_answer.startsWith('http')) {
+          videoUrl = question.video_after_answer;
+          setQuestionVideoAfterUrl(videoUrl);
+        } else {
+          const { data } = supabase.storage
+            .from('question-images-v2')
+            .getPublicUrl(question.video_after_answer);
+          videoUrl = data?.publicUrl || null;
+          if (videoUrl) {
+            setQuestionVideoAfterUrl(videoUrl);
+          }
+        }
+      }
+      
+      if (videoUrl) {
+        console.log('Showing video_after_answer:', videoUrl);
+        // Hide image if it was showing, since video takes precedence
+        if (hasImageAfterField && showImageAfter) {
+          setShowImageAfter(false);
+        }
+        setWaitingForVideoToComplete(true);
+        setTimeout(() => {
+          setShowVideoAfter(true);
+        }, 300);
+        // Video completion will be handled by the video onEnded handler
+        // The onEnded handler will call onCorrectAnswer() when video finishes
+        return; // Exit early, don't proceed to onCorrectAnswer()
+      } else {
+        // Video URL failed to load, but image might be showing
+        if (hasImageAfterField) {
+          // Image is showing or will show, wait for Next Question button
+          setIsProcessingAfterAnswer(false);
+          return; // Exit early, wait for Next Question button
+        } else {
+          // No media to show, proceed immediately
+          setIsProcessingAfterAnswer(false);
+          onCorrectAnswer();
+          return;
+        }
+      }
+    }
+    
+    // If we get here, either no video or video handling is done
+    if (hasImageAfterField) {
+      // Image exists (and no video), image stays visible
+      // Wait for user to click Next Question button
+      // The Next Question button will handle calling onCorrectAnswer()
+      setIsProcessingAfterAnswer(false);
+    } else {
+      // No image or video, proceed immediately to celebration/next question
+      setIsProcessingAfterAnswer(false);
+      onCorrectAnswer();
+    }
+  };
+
+  const handleManualAnswerWrong = () => {
+    setIsCorrect(false);
+    const newRetryCount = retryCount + 1;
+    onRetryCountChange(newRetryCount);
+    setShowFeedback(true);
+    setCurrentResponse('Incorrect. Try again!');
+    
+    // After max retries, allow moving to next question
+    if (newRetryCount >= 2) {
+      setTimeout(() => {
+        setShowFeedback(false);
+        setIsWaitingForAnswer(false);
+        onNextQuestion();
+      }, 2000);
+    } else {
+      setTimeout(() => {
+        setShowFeedback(false);
       }, 2000);
     }
   };
@@ -725,16 +921,29 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           {hasAnswerField && (
             <>
               <button
-                onClick={() => updateSpeechDelayMode(!preferences.speechDelayMode)}
+                onClick={() => {
+                  // Cycle through: default -> yes -> no -> default
+                  const current = preferences.speechDelayMode || 'default';
+                  const next = current === 'default' ? 'yes' : current === 'yes' ? 'no' : 'default';
+                  updateSpeechDelayMode(next);
+                }}
                 className={`flex items-center justify-center gap-2 px-3 sm:px-4 lg:px-5 py-2 rounded-full bg-gradient-to-r from-purple-200 to-blue-200 text-blue-800 font-semibold border border-blue-200 shadow-sm hover:bg-blue-100 transition text-sm sm:text-base whitespace-nowrap`}
-                title={preferences.speechDelayMode ? 'Speech Delay: ON' : 'Speech Delay: OFF'}
+                title={
+                  preferences.speechDelayMode === 'yes' ? 'Speech Delay: ON' : 
+                  preferences.speechDelayMode === 'no' ? 'Speech Delay: OFF' : 
+                  'Speech Delay: DEFAULT'
+                }
                 aria-label="Toggle Speech Delay Mode"
               >
                 <Clock className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 <span className="hidden sm:inline">Speech Delay</span>
                 <span className="sm:hidden">Delay</span>
-                <span className={`ml-1 sm:ml-2 px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${preferences.speechDelayMode ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                  {preferences.speechDelayMode ? 'ON' : 'OFF'}
+                <span className={`ml-1 sm:ml-2 px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 ${
+                  preferences.speechDelayMode === 'yes' ? 'bg-green-100 text-green-700' : 
+                  preferences.speechDelayMode === 'no' ? 'bg-red-100 text-red-700' : 
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {preferences.speechDelayMode === 'yes' ? 'ON' : preferences.speechDelayMode === 'no' ? 'OFF' : 'DEFAULT'}
                 </span>
               </button>
 
@@ -835,7 +1044,22 @@ const QuestionView: React.FC<QuestionViewProps> = ({
             : (questionVideoBeforeUrl || null);
           
           // Show image_after if answer is correct/max attempts and image exists (and no video_after)
-          if (showImageAfter && questionImageAfterUrl && !showVideoAfter) {
+          // Show if showImageAfter is true AND (questionImageAfterUrl exists OR question.image_after_answer field exists)
+          if (showImageAfter && (questionImageAfterUrl || (question.image_after_answer && question.image_after_answer.trim() !== '')) && !showVideoAfter) {
+            // If URL is not loaded yet, show a placeholder or wait for it to load
+            if (!questionImageAfterUrl) {
+              // URL is loading, show a placeholder or wait
+              return (
+                <div className="mb-4 sm:mb-6 lg:mb-8 animate-scale-in flex justify-center px-4">
+                  <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden w-full max-w-full">
+                    <div className={`w-full ${mediaHeight} flex items-center justify-center bg-gray-100`}>
+                      <p className="text-gray-500">Loading image...</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
             return (
               <div className="mb-4 sm:mb-6 lg:mb-8 animate-scale-in flex justify-center px-4">
                 <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden w-full max-w-full">
@@ -1037,8 +1261,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           );
         })()}
 
-        {/* Feedback Area */}
-        {showFeedback && currentResponse && (
+        {/* Feedback Area - Only show in AI mode */}
+        {useAiTherapist && showFeedback && currentResponse && (
           <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-4 border-green-200 rounded-3xl p-6 max-w-2xl mx-auto mb-8 animate-fade-in">
             <p className="text-lg text-center text-green-800 font-medium">
               {currentResponse}
@@ -1046,8 +1270,125 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           </div>
         )}
 
-        {/* Fixed Microphone Button */}
-        {hasAnswerField && isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
+        {/* Feedback Section - Only show in non-AI mode */}
+        {!useAiTherapist && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-4 border-blue-200 rounded-3xl p-6 max-w-4xl mx-auto mb-8 animate-fade-in">
+            <div className="space-y-4">
+              {/* Question Speech Text */}
+              {question.question_speech && question.question_speech.trim() !== '' && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-gray-600 mb-2">Question:</h3>
+                  <p className="text-lg text-gray-800 leading-relaxed">
+                    {question.question_speech}
+                  </p>
+                </div>
+              )}
+              
+              {/* Speech After Answer Text - Show after Answer Correct is clicked */}
+              {showSpeechAfterAnswerText && question.speech_after_answer && question.speech_after_answer.trim() !== '' && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-gray-600 mb-2">Feedback:</h3>
+                  <p className="text-lg text-gray-800 leading-relaxed">
+                    {question.speech_after_answer}
+                  </p>
+                </div>
+              )}
+              
+              {/* Answer Correct/Wrong Feedback */}
+              {showFeedback && currentResponse && (
+                <div className="mb-4">
+                  <p className={`text-lg text-center font-medium ${
+                    isCorrect ? 'text-green-800' : 'text-red-800'
+                  }`}>
+                    {currentResponse}
+                  </p>
+                </div>
+              )}
+              
+              {/* Manual Answer Buttons - Only show for questions with answer field */}
+              {hasAnswerField && isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
+                <div className="flex flex-wrap justify-center gap-4 pt-4">
+                  <Button
+                    onClick={handleManualAnswerCorrect}
+                    size="lg"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    ✓ Answer Correct
+                  </Button>
+                  <Button
+                    onClick={handleManualAnswerWrong}
+                    size="lg"
+                    className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-6 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    ✗ Answer Wrong
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowFeedback(false);
+                      setIsWaitingForAnswer(false);
+                      setIsProcessingAnswer(false);
+                      questionNumber >= totalQuestions ? onComplete() : onNextQuestion();
+                    }}
+                    size="lg"
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    {questionNumber >= totalQuestions ? 'Complete' : 'Next Question'}
+                  </Button>
+                </div>
+              )}
+              
+              {/* Next Question Button - Show after answer/feedback */}
+              {((hasCalledCorrectAnswer || showFeedback || showImageAfter) && !waitingForVideoToComplete) && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    onClick={() => {
+                      if (showImageAfter) {
+                        // If image is showing, hide it and proceed
+                        setShowImageAfter(false);
+                        setIsProcessingAfterAnswer(false);
+                        if (hasCalledCorrectAnswer && isCorrect) {
+                          onCorrectAnswer();
+                        } else {
+                          setShowFeedback(false);
+                          setIsWaitingForAnswer(false);
+                          setIsProcessingAnswer(false);
+                          setIsUserInteracting(false);
+                          onNextQuestion();
+                        }
+                      } else if (hasAnswerIndex && selectedChoiceIndex !== null) {
+                        // In non-AI mode with answer_index, wait for user to click Next Question
+                        setShowFeedback(false);
+                        setIsWaitingForAnswer(false);
+                        setIsProcessingAnswer(false);
+                        onNextQuestion();
+                      } else {
+                        // In non-AI mode, allow moving to next question
+                        setShowFeedback(false);
+                        setIsWaitingForAnswer(false);
+                        setIsProcessingAnswer(false);
+                        questionNumber >= totalQuestions ? onComplete() : onNextQuestion();
+                      }
+                    }}
+                    size="lg"
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-4 text-lg font-bold rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
+                    disabled={hasAnswerIndex && selectedChoiceIndex === null && !hasCalledCorrectAnswer}
+                  >
+                    {questionNumber >= totalQuestions ? 'Complete' : 'Next Question'}
+                  </Button>
+                </div>
+              )}
+              
+              {retryCount > 0 && (
+                <p className="text-sm text-purple-600 text-center pt-2">
+                  Attempt {retryCount + 1} of 2
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Fixed Microphone Button - Only show in AI mode */}
+        {useAiTherapist && hasAnswerField && isWaitingForAnswer && !showFeedback && !isProcessingAnswer && (
           <div className="text-center animate-fade-in">
             <div className="flex flex-col items-center">
               <AnimatedMicButton
@@ -1092,6 +1433,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           </div>
         )}
 
+
         {/* Processing State - Show when processing answer but no feedback yet */}
         {isProcessingAnswer && !showFeedback && (
           <div className="text-center animate-fade-in">
@@ -1109,8 +1451,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           </div>
         )}
 
-        {/* Navigation Buttons */}
-        {(hasCalledCorrectAnswer || showImageAfter) && !waitingForVideoToComplete && (
+        {/* Navigation Buttons - Only show in AI mode (non-AI mode buttons are in feedback section) */}
+        {(useAiTherapist && (hasCalledCorrectAnswer || showImageAfter)) && !waitingForVideoToComplete && (
           <div className="flex justify-center space-x-4 mt-8">
             <Button
               onClick={() => {
@@ -1128,7 +1470,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                     onNextQuestion();
                   }
                 } else {
-                  // Normal navigation
+                  // Normal navigation in AI mode
                   questionNumber >= totalQuestions ? onComplete() : onNextQuestion();
                 }
               }}

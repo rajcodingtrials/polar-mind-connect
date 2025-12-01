@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,7 +17,7 @@ import { User, Settings, Shield, LogOut } from "lucide-react";
 const UserProfileEditor = () => {
   const { user, logout } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
-  const { preferences, updateSpeechDelayMode, updateAddMiniCelebration, updateCelebrationVideoId } = useUserPreferences();
+  const { preferences, updateSpeechDelayMode, updateAddMiniCelebration, updateCelebrationVideoId, updateUseAiTherapist } = useUserPreferences();
   const navigate = useNavigate();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -196,24 +197,59 @@ const UserProfileEditor = () => {
               </p>
             </div>
             <Switch
-              checked={preferences?.speechDelayMode || false}
-              onCheckedChange={updateSpeechDelayMode}
+              checked={preferences?.speechDelayMode === 'yes'}
+              onCheckedChange={(checked) => {
+                // Toggle between 'yes' (enabled) and 'no' (disabled)
+                // 'default' is treated as 'no' (disabled) for the toggle
+                updateSpeechDelayMode(checked ? 'yes' : 'no');
+              }}
             />
           </div>
           
           <Separator />
           
-          <div className="flex items-center justify-between">
+          <div className="space-y-3">
             <div className="space-y-1">
               <Label>Add Mini Celebrations</Label>
               <p className="text-sm text-muted-foreground">
                 Add celebration after each correct answer to keep the child more motivated.
               </p>
             </div>
-            <Switch
-              checked={preferences?.addMiniCelebration || false}
-              onCheckedChange={updateAddMiniCelebration}
-            />
+            <ToggleGroup
+              type="single"
+              value={preferences?.addMiniCelebration || 'default'}
+              onValueChange={(value) => {
+                // Radix ToggleGroup with type="single" allows deselection, which passes empty string
+                // We need to handle this case and prevent deselection by keeping the current value
+                if (value && (value === 'yes' || value === 'no' || value === 'default')) {
+                  updateAddMiniCelebration(value as 'yes' | 'no' | 'default');
+                }
+                // If value is empty/undefined (deselection), do nothing to keep current selection
+              }}
+              className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-1 gap-1"
+            >
+              <ToggleGroupItem
+                value="no"
+                aria-label="No"
+                className="data-[state=on]:bg-white data-[state=on]:text-gray-900 data-[state=on]:shadow-sm data-[state=off]:text-gray-600 rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-gray-900"
+              >
+                No
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="default"
+                aria-label="Default"
+                className="data-[state=on]:bg-white data-[state=on]:text-gray-900 data-[state=on]:shadow-sm data-[state=off]:text-gray-600 rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-gray-900"
+              >
+                Default
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="yes"
+                aria-label="Yes"
+                className="data-[state=on]:bg-white data-[state=on]:text-gray-900 data-[state=on]:shadow-sm data-[state=off]:text-gray-600 rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-gray-900"
+              >
+                Yes
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
           
           <Separator />
