@@ -66,6 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
       "line_items[0][price_data][unit_amount]": amount.toString(),
       "line_items[0][price_data][product_data][name]": description,
       "line_items[0][quantity]": "1",
+      "allow_promotion_codes": "true",
     });
 
     if (customer_email) {

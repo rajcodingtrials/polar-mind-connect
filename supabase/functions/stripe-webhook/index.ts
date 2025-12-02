@@ -98,13 +98,51 @@ const handler = async (req: Request): Promise<Response> => {
         console.log("💳 Payment successful for session:", session.id);
         console.log("📋 Session metadata:", JSON.stringify(session.metadata));
 
-        // Update payment record
+        // Extract coupon/discount information
+        let couponData: Record<string, any> = {};
+        if (session.total_details?.amount_discount > 0) {
+          console.log("🎟️ Discount detected:", session.total_details.amount_discount);
+          couponData = {
+            coupon_used: true,
+            actual_discount_cents: session.total_details.amount_discount,
+          };
+          
+          // Extract coupon details from discounts array
+          if (session.discounts && session.discounts.length > 0) {
+            const discount = session.discounts[0];
+            console.log("🎟️ Discount details:", JSON.stringify(discount));
+            
+            if (discount.coupon) {
+              couponData.coupon_id = discount.coupon.id;
+              couponData.coupon_name = discount.coupon.name;
+              couponData.discount_percent = discount.coupon.percent_off;
+              couponData.discount_amount_cents = discount.coupon.amount_off;
+            }
+            if (discount.promotion_code) {
+              couponData.promotion_code = discount.promotion_code;
+            }
+          }
+          console.log("🎟️ Coupon data to store:", JSON.stringify(couponData));
+        }
+
+        // Fetch existing payment to merge metadata
+        const { data: existingPayment } = await supabase
+          .from("payments")
+          .select("metadata")
+          .eq("stripe_session_id", session.id)
+          .single();
+
+        const existingMetadata = existingPayment?.metadata || {};
+        const mergedMetadata = { ...existingMetadata, ...couponData };
+
+        // Update payment record with coupon data
         console.log("💾 Updating payment record...");
         const { error: paymentError } = await supabase
           .from("payments")
           .update({
             status: "completed",
             stripe_payment_intent_id: session.payment_intent,
+            metadata: mergedMetadata,
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_session_id", session.id);
@@ -112,7 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
         if (paymentError) {
           console.error("❌ Error updating payment:", paymentError);
         } else {
-          console.log("✅ Payment record updated successfully");
+          console.log("✅ Payment record updated successfully with coupon data");
         }
 
         // Update therapy session status and send confirmation emails
