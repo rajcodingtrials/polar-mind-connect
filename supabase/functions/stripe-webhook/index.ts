@@ -226,16 +226,17 @@ const handler = async (req: Request): Promise<Response> => {
                 console.error("❌ Zoom meeting creation failed:", zoomErr);
               }
 
-              // Send booking confirmation email to client
-              const clientEmail = sessionData.profiles?.email || session.customer_email || '';
-              const clientName = sessionData.profiles?.name || session.customer_email?.split('@')[0] || 'Client';
+              // Send booking confirmation email to client (using Polariz profile email only)
+              const clientEmail = sessionData.profiles?.email;
+              const clientName = sessionData.profiles?.name || 'Client';
               
               console.log("📧 Sending booking confirmation email to client...");
-              console.log("📧 Client email for confirmation:", clientEmail);
-              console.log("📧 Client name for confirmation:", clientName);
+              console.log("📧 Client email from profiles:", clientEmail);
+              console.log("📧 Client name from profiles:", clientName);
               
               if (!clientEmail) {
-                console.error("❌ No client email found - cannot send booking confirmation");
+                console.error("❌ No client email found in profiles table - cannot send booking confirmation");
+                console.error("❌ Client ID:", sessionData.client_id);
               } else {
                 try {
                   const { data: bookingEmailResult, error: bookingEmailError } = await supabase.functions.invoke('send-booking-confirmation', {
