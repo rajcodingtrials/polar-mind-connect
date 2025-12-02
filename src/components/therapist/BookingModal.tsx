@@ -232,67 +232,9 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
   };
 
   const handlePaymentSuccess = async () => {
-    try {
-      // Create Zoom meeting
-      const { data: zoomData, error: zoomError } = await supabase.functions.invoke('create-zoom-meeting', {
-        body: {
-          sessionId,
-          sessionDate: format(selectedDate, "yyyy-MM-dd"),
-          startTime: selectedTime,
-          durationMinutes: parseInt(duration),
-          therapistName: `${therapist.first_name} ${therapist.last_name}`,
-          clientName: user?.user_metadata?.name || user?.email || 'Client',
-          timezone: therapist.timezone || 'UTC',
-        }
-      });
-
-      if (zoomError) {
-        console.error("Error creating Zoom meeting:", zoomError);
-        toast({
-          title: "Warning",
-          description: "Session booked but Zoom meeting creation failed. Your therapist will send the meeting link separately.",
-          variant: "default",
-        });
-      } else {
-        console.log("Zoom meeting created:", zoomData);
-      }
-
-      // Send booking confirmation email to client
-      await supabase.functions.invoke('send-booking-confirmation', {
-        body: {
-          sessionId,
-          clientEmail: user?.email || '',
-          clientName: user?.user_metadata?.name || user?.email || '',
-          therapistName: `${therapist.first_name} ${therapist.last_name}`,
-          sessionDate: format(selectedDate, "yyyy-MM-dd"),
-          sessionTime: selectedTime,
-          duration: parseInt(duration),
-          sessionType,
-          price: sessionPrice,
-        }
-      });
-      
-      console.log("Booking confirmation email sent to client");
-
-      // Send notification email to therapist
-      await supabase.functions.invoke('send-therapist-notification', {
-        body: {
-          sessionId,
-          therapistId: therapist.id,
-          clientName: user?.user_metadata?.name || user?.email || 'New Client',
-          sessionDate: format(selectedDate, "yyyy-MM-dd"),
-          sessionTime: selectedTime,
-          duration: parseInt(duration),
-          sessionType,
-          amount: sessionPrice,
-          clientNotes: clientNotes,
-        }
-      });
-      
-      console.log("Therapist notification email sent");
-    } catch (error) {
-      console.error("Error sending booking emails:", error);
-    }
+    // Note: All post-payment automation (Zoom meeting, emails) is handled by the stripe-webhook
+    // to avoid duplicate calls since user is redirected away during payment
+    console.log("Payment successful - webhook will handle Zoom and email notifications");
     
     toast({
       title: "Booking Confirmed!",

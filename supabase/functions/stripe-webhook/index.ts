@@ -227,24 +227,39 @@ const handler = async (req: Request): Promise<Response> => {
               }
 
               // Send booking confirmation email to client
+              const clientEmail = sessionData.profiles?.email || session.customer_email || '';
+              const clientName = sessionData.profiles?.name || session.customer_email?.split('@')[0] || 'Client';
+              
               console.log("📧 Sending booking confirmation email to client...");
-              try {
-                await supabase.functions.invoke('send-booking-confirmation', {
-                  body: {
-                    sessionId: sessionId,
-                    clientEmail: sessionData.profiles?.email || '',
-                    clientName: sessionData.profiles?.name || sessionData.profiles?.email || '',
-                    therapistName: `${sessionData.therapists.first_name} ${sessionData.therapists.last_name}`,
-                    sessionDate: sessionData.session_date,
-                    sessionTime: sessionData.start_time,
-                    duration: sessionData.duration_minutes,
-                    sessionType: sessionData.session_type,
-                    price: sessionData.price_paid,
+              console.log("📧 Client email for confirmation:", clientEmail);
+              console.log("📧 Client name for confirmation:", clientName);
+              
+              if (!clientEmail) {
+                console.error("❌ No client email found - cannot send booking confirmation");
+              } else {
+                try {
+                  const { data: bookingEmailResult, error: bookingEmailError } = await supabase.functions.invoke('send-booking-confirmation', {
+                    body: {
+                      sessionId: sessionId,
+                      clientEmail: clientEmail,
+                      clientName: clientName,
+                      therapistName: `${sessionData.therapists.first_name} ${sessionData.therapists.last_name}`,
+                      sessionDate: sessionData.session_date,
+                      sessionTime: sessionData.start_time,
+                      duration: sessionData.duration_minutes,
+                      sessionType: sessionData.session_type,
+                      price: sessionData.price_paid,
+                    }
+                  });
+                  
+                  if (bookingEmailError) {
+                    console.error("❌ Error from send-booking-confirmation:", bookingEmailError);
+                  } else {
+                    console.log("✅ Booking confirmation email sent to client:", JSON.stringify(bookingEmailResult));
                   }
-                });
-                console.log("✅ Booking confirmation email sent to client");
-              } catch (emailErr) {
-                console.error("❌ Error sending client email:", emailErr);
+                } catch (emailErr) {
+                  console.error("❌ Exception sending client email:", emailErr);
+                }
               }
 
               // Send notification email to therapist
