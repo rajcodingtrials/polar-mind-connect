@@ -170,10 +170,6 @@ const handler = async (req: Request): Promise<Response> => {
                 last_name,
                 timezone,
                 email
-              ),
-              profiles:client_id (
-                email,
-                name
               )
             `)
             .eq("id", sessionId)
@@ -183,7 +179,20 @@ const handler = async (req: Request): Promise<Response> => {
             console.error("❌ Error fetching session:", fetchError);
           } else {
             console.log("✅ Session data fetched:", JSON.stringify(sessionData));
-            console.log("📧 Client email:", sessionData.profiles?.email);
+            
+            // Fetch client profile separately to ensure correct email
+            const { data: clientProfile, error: profileError } = await supabase
+              .from("profiles")
+              .select("id, email, name")
+              .eq("id", sessionData.client_id)
+              .single();
+            
+            if (profileError) {
+              console.error("❌ Error fetching client profile:", profileError);
+            }
+            
+            console.log("📧 Client profile fetched:", JSON.stringify(clientProfile));
+            console.log("📧 Client email:", clientProfile?.email);
             console.log("👨‍⚕️ Therapist email:", sessionData.therapists?.email);
             
             // Update session status
@@ -212,7 +221,7 @@ const handler = async (req: Request): Promise<Response> => {
                     startTime: sessionData.start_time,
                     durationMinutes: sessionData.duration_minutes,
                     therapistName: `${sessionData.therapists.first_name} ${sessionData.therapists.last_name}`,
-                    clientName: sessionData.profiles?.name || sessionData.profiles?.email || 'Client',
+                    clientName: clientProfile?.name || clientProfile?.email || 'Client',
                     timezone: sessionData.therapists.timezone || 'UTC',
                   }
                 });
@@ -227,8 +236,8 @@ const handler = async (req: Request): Promise<Response> => {
               }
 
               // Send booking confirmation email to client (using Polariz profile email only)
-              const clientEmail = sessionData.profiles?.email;
-              const clientName = sessionData.profiles?.name || 'Client';
+              const clientEmail = clientProfile?.email;
+              const clientName = clientProfile?.name || 'Client';
               
               console.log("📧 Sending booking confirmation email to client...");
               console.log("📧 Client email from profiles:", clientEmail);
@@ -270,7 +279,7 @@ const handler = async (req: Request): Promise<Response> => {
                   body: {
                     sessionId: sessionId,
                     therapistId: sessionData.therapists.id,
-                    clientName: sessionData.profiles?.name || sessionData.profiles?.email || 'New Client',
+                    clientName: clientProfile?.name || clientProfile?.email || 'New Client',
                     sessionDate: sessionData.session_date,
                     sessionTime: sessionData.start_time,
                     duration: sessionData.duration_minutes,
