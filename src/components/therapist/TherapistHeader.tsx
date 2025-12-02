@@ -1,8 +1,21 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, User as UserIcon, Sparkles, BookOpen } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useUserProfile } from "@/hooks/useUserProfile";
+
+// NavItem defined outside component to prevent recreation on each render
+const NavItem = ({ to, icon, label, isActive }: { to: string; icon: React.ReactNode; label: string; isActive?: boolean }) => (
+  <Link 
+    to={to} 
+    className={`flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-white/10 ${
+      isActive ? 'text-white' : ''
+    }`}
+  >
+    {icon}
+    <span className="text-xs">{label}</span>
+  </Link>
+);
 
 /**
  * TherapistHeader component displays the header bar for the therapist dashboard page.
@@ -25,21 +38,6 @@ const TherapistHeader = () => {
     }
     return <UserIcon className="h-5 w-5" />;
   }, [profile]);
-
-  // Helper for menu icons - memoized to prevent recreation
-  const NavItem = React.memo(({ to, icon, label, isActive }: { to: string; icon: React.ReactNode; label: string; isActive?: boolean }) => (
-    <Link 
-      to={to} 
-      className={`flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-white/10 ${
-        isActive ? 'text-white' : ''
-      }`}
-    >
-      {icon}
-      <span className="text-xs">{label}</span>
-    </Link>
-  ));
-
-  NavItem.displayName = 'NavItem';
 
   return (
     <header>
