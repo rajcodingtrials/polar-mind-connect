@@ -5,6 +5,7 @@ export interface QuestionType {
   name: string;
   display_string: string;
   description: string;
+  priority: number;
 }
 
 export const useQuestionTypes = () => {
@@ -18,7 +19,8 @@ export const useQuestionTypes = () => {
         setLoading(true);
         const { data, error: fetchError } = await supabase
           .from('question_types')
-          .select('name, display_string, description')
+          .select('name, display_string, description, priority')
+          .order('priority', { ascending: false })
           .order('name');
 
         if (fetchError) {

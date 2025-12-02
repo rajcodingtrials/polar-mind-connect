@@ -144,7 +144,19 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     { color: 'bg-rose-100 hover:bg-rose-200 border-rose-200', textColor: 'text-rose-800', icon: BookOpen },
   ];
 
-  const questionTypes = questionTypesData.map((qt, index) => {
+  // Sort question types by priority (descending) to ensure highest priority is shown first
+  // The hook already orders by priority, but we'll sort again here to be safe
+  const sortedQuestionTypes = [...questionTypesData].sort((a, b) => {
+    const priorityA = a.priority ?? 0;
+    const priorityB = b.priority ?? 0;
+    if (priorityA !== priorityB) {
+      return priorityB - priorityA; // Descending order (higher priority first)
+    }
+    // If priorities are equal, sort by name
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  const questionTypes = sortedQuestionTypes.map((qt, index) => {
     // Cycle through the 6 color styles using modulo
     const styleIndex = index % colorStyles.length;
     const config = colorStyles[styleIndex];

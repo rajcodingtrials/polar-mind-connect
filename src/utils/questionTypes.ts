@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 export type QuestionType = string;
 
 // Cache for question types to avoid repeated database calls
-let questionTypesCache: Array<{ name: string; display_string: string; description: string }> | null = null;
-let cachePromise: Promise<Array<{ name: string; display_string: string; description: string }>> | null = null;
+let questionTypesCache: Array<{ name: string; display_string: string; description: string; priority: number }> | null = null;
+let cachePromise: Promise<Array<{ name: string; display_string: string; description: string; priority: number }>> | null = null;
 
 /**
  * Get all valid question types from the database
@@ -25,7 +25,8 @@ export const getQuestionTypes = async (): Promise<QuestionType[]> => {
     try {
       const { data, error } = await supabase
         .from('question_types')
-        .select('name, display_string, description')
+        .select('name, display_string, description, priority')
+        .order('priority', { ascending: false })
         .order('name');
 
       if (error) {
