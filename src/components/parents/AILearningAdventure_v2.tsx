@@ -586,14 +586,15 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       }
       
       let data, activityError;
+      const existingRecord = existingData as any;
       
-      if (existingData) {
+      if (existingRecord) {
         // Update existing record
-        console.log('Updating existing lesson activity record:', existingData.id);
+        console.log('Updating existing lesson activity record:', existingRecord.id);
         const updateResult = await supabase
           .from('lesson_activity' as any)
           .update(upsertData)
-          .eq('id', existingData.id)
+          .eq('id', existingRecord.id)
           .select();
         data = updateResult.data;
         activityError = updateResult.error;

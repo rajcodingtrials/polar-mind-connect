@@ -1,8 +1,7 @@
 import React from 'react';
 import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
-import type { Database } from '@/integrations/supabase/types';
 
-type QuestionType = Database['public']['Enums']['question_type_enum'];
+type QuestionType = string;
 
 interface QuestionTypeConfig {
   value: QuestionType;

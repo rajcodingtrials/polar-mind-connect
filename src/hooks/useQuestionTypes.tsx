@@ -18,7 +18,7 @@ export const useQuestionTypes = () => {
       try {
         setLoading(true);
         const { data, error: fetchError } = await supabase
-          .from('question_types')
+          .from('question_types' as any)
           .select('name, display_string, description, priority')
           .order('priority', { ascending: false })
           .order('name');
@@ -29,7 +29,7 @@ export const useQuestionTypes = () => {
           // Fallback to empty array if fetch fails
           setQuestionTypes([]);
         } else {
-          setQuestionTypes(data || []);
+          setQuestionTypes((data as unknown as QuestionType[]) || []);
           setError(null);
         }
       } catch (err) {

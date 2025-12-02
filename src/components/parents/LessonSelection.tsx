@@ -51,6 +51,9 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
   const [internalSelectedQuestionType, setInternalSelectedQuestionType] = useState<QuestionType>(selectedQuestionType);
   const [availableQuestionTypes, setAvailableQuestionTypes] = useState<QuestionType[]>([]);
   const [questionTypesConfig, setQuestionTypesConfig] = useState<QuestionTypeConfig[]>([]);
+  
+  // Use the question types hook
+  const { questionTypes: questionTypesData } = useQuestionTypes();
 
   // Styles array - contains color, textColor (fontColor), icon, and activity colors
   const questionTypeStyles = [
@@ -261,7 +264,7 @@ const LessonSelection: React.FC<LessonSelectionProps> = ({
       const { data: lessonsData, error: lessonsError } = await supabase
         .from('lessons')
         .select('*')
-        .eq('question_type', internalSelectedQuestionType)
+        .eq('question_type', internalSelectedQuestionType as any)
         .eq('is_active', true)
         .order('name');
 
