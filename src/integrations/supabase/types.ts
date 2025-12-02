@@ -254,8 +254,9 @@ export type Database = {
           name: string
           num_reviews: number
           price: number
+          priority: number
           publish_to_marketplace: boolean
-          question_type: Database["public"]["Enums"]["question_type_enum"]
+          question_type: string
           reviews: string | null
           updated_at: string
           youtube_video_id: string | null
@@ -272,8 +273,9 @@ export type Database = {
           name: string
           num_reviews?: number
           price?: number
+          priority?: number
           publish_to_marketplace?: boolean
-          question_type: Database["public"]["Enums"]["question_type_enum"]
+          question_type: string
           reviews?: string | null
           updated_at?: string
           youtube_video_id?: string | null
@@ -290,8 +292,9 @@ export type Database = {
           name?: string
           num_reviews?: number
           price?: number
+          priority?: number
           publish_to_marketplace?: boolean
-          question_type?: Database["public"]["Enums"]["question_type_enum"]
+          question_type?: string
           reviews?: string | null
           updated_at?: string
           youtube_video_id?: string | null
@@ -384,36 +387,45 @@ export type Database = {
       }
       profiles: {
         Row: {
+          add_mini_celebration: string
           age: number | null
+          celebration_video_id: string | null
           created_at: string
           email: string | null
           id: string
           last_name: string | null
           name: string | null
-          speech_delay_mode: boolean
+          speech_delay_mode: string
           updated_at: string
+          use_ai_therapist: boolean
           username: string | null
         }
         Insert: {
+          add_mini_celebration?: string
           age?: number | null
+          celebration_video_id?: string | null
           created_at?: string
           email?: string | null
           id: string
           last_name?: string | null
           name?: string | null
-          speech_delay_mode?: boolean
+          speech_delay_mode?: string
           updated_at?: string
+          use_ai_therapist?: boolean
           username?: string | null
         }
         Update: {
+          add_mini_celebration?: string
           age?: number | null
+          celebration_video_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
           last_name?: string | null
           name?: string | null
-          speech_delay_mode?: boolean
+          speech_delay_mode?: string
           updated_at?: string
+          use_ai_therapist?: boolean
           username?: string | null
         }
         Relationships: []
@@ -487,6 +499,33 @@ export type Database = {
         }
         Relationships: []
       }
+      question_types: {
+        Row: {
+          created_at: string
+          description: string
+          display_string: string
+          name: string
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_string: string
+          name: string
+          priority?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_string?: string
+          name?: string
+          priority?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           answer: string
@@ -499,7 +538,7 @@ export type Database = {
           is_scene: boolean | null
           lesson_id: string | null
           question: string
-          question_type: Database["public"]["Enums"]["question_type_enum"]
+          question_type: string
           scene_image: string | null
           scene_narration: string | null
           sequence_number: number | null
@@ -516,7 +555,7 @@ export type Database = {
           is_scene?: boolean | null
           lesson_id?: string | null
           question: string
-          question_type?: Database["public"]["Enums"]["question_type_enum"]
+          question_type?: string
           scene_image?: string | null
           scene_narration?: string | null
           sequence_number?: number | null
@@ -533,7 +572,7 @@ export type Database = {
           is_scene?: boolean | null
           lesson_id?: string | null
           question?: string
-          question_type?: Database["public"]["Enums"]["question_type_enum"]
+          question_type?: string
           scene_image?: string | null
           scene_narration?: string | null
           sequence_number?: number | null
@@ -566,7 +605,7 @@ export type Database = {
           question_index: number | null
           question_speech: string | null
           question_text: string
-          question_type: Database["public"]["Enums"]["question_type_enum"]
+          question_type: string
           question_video: string
           speech_after_answer: string
           updated_at: string
@@ -588,7 +627,7 @@ export type Database = {
           question_index?: number | null
           question_speech?: string | null
           question_text: string
-          question_type: Database["public"]["Enums"]["question_type_enum"]
+          question_type: string
           question_video?: string
           speech_after_answer?: string
           updated_at?: string
@@ -610,7 +649,7 @@ export type Database = {
           question_index?: number | null
           question_speech?: string | null
           question_text?: string
-          question_type?: Database["public"]["Enums"]["question_type_enum"]
+          question_type?: string
           question_video?: string
           speech_after_answer?: string
           updated_at?: string
@@ -778,6 +817,7 @@ export type Database = {
           specializations: string[] | null
           timezone: string | null
           updated_at: string
+          use_ai_therapist: boolean
           user_id: string
           years_experience: number | null
         }
@@ -808,6 +848,7 @@ export type Database = {
           specializations?: string[] | null
           timezone?: string | null
           updated_at?: string
+          use_ai_therapist?: boolean
           user_id: string
           years_experience?: number | null
         }
@@ -838,6 +879,7 @@ export type Database = {
           specializations?: string[] | null
           timezone?: string | null
           updated_at?: string
+          use_ai_therapist?: boolean
           user_id?: string
           years_experience?: number | null
         }
