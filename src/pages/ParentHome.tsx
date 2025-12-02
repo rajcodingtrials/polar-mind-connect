@@ -116,13 +116,14 @@ const ParentHome: React.FC<ParentHomeProps> = ({ overrideUseAiTherapist }) => {
           .maybeSingle();
 
         if (!error && reviewData) {
+          const rd = reviewData as any;
           setExistingLessonReview({
-            overall_rating: reviewData.overall_rating || 0,
-            usefulness_rating: reviewData.usefulness_rating || 0,
-            communication_rating: reviewData.communication_rating || 0,
-            would_recommend: reviewData.would_recommend ?? true,
-            what_went_well: reviewData.what_went_well || '',
-            what_can_be_improved: reviewData.what_can_be_improved || '',
+            overall_rating: rd.overall_rating || 0,
+            usefulness_rating: rd.usefulness_rating || 0,
+            communication_rating: rd.communication_rating || 0,
+            would_recommend: rd.would_recommend ?? true,
+            what_went_well: rd.what_went_well || '',
+            what_can_be_improved: rd.what_can_be_improved || '',
           });
         } else {
           setExistingLessonReview(null);

@@ -98,8 +98,9 @@ export const useLessonActivity = (userId: string | null) => {
     }
 
     const isUpdate = !!existingReviewData;
-    const oldRating = existingReviewData?.overall_rating;
-    const activityId = existingReviewData?.id;
+    const existingData = existingReviewData as any;
+    const oldRating = existingData?.overall_rating;
+    const activityId = existingData?.id;
 
     let data;
     let error;
@@ -156,15 +157,16 @@ export const useLessonActivity = (userId: string | null) => {
       if (lessonFetchError) {
         console.error('Error fetching lesson data:', lessonFetchError);
       } else if (lessonData) {
+        const ld = lessonData as any;
         let reviewsArray: number[] = [];
         try {
-          if (lessonData.reviews) {
+          if (ld.reviews) {
             // Parse reviews as comma-separated string or JSON array
-            if (typeof lessonData.reviews === 'string') {
-              if (lessonData.reviews.startsWith('[')) {
-                reviewsArray = JSON.parse(lessonData.reviews);
+            if (typeof ld.reviews === 'string') {
+              if (ld.reviews.startsWith('[')) {
+                reviewsArray = JSON.parse(ld.reviews);
               } else {
-                reviewsArray = lessonData.reviews.split(',').map((r: string) => parseFloat(r.trim())).filter((r: number) => !isNaN(r));
+                reviewsArray = ld.reviews.split(',').map((r: string) => parseFloat(r.trim())).filter((r: number) => !isNaN(r));
               }
             }
           }
@@ -172,8 +174,8 @@ export const useLessonActivity = (userId: string | null) => {
           reviewsArray = [];
         }
 
-        let newNumReviews = lessonData.num_reviews || 0;
-        let newAverage = lessonData.average_review || 0;
+        let newNumReviews = ld.num_reviews || 0;
+        let newAverage = ld.average_review || 0;
 
         if (isUpdate && oldRating !== undefined) {
           // Update existing review: replace old rating with new one

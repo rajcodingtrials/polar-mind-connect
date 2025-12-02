@@ -127,7 +127,7 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
       const { data, error } = await supabase
         .from('lessons')
         .select('*')
-        .eq('question_type', activityType)
+        .eq('question_type', activityType as any)
         .eq('is_active', true)
         .order('name');
 
@@ -335,10 +335,10 @@ const QuestionUpload = ({ onQuestionsUploaded, clearTrigger }: QuestionUploadPro
             .insert({
               name: newLessonName.trim(),
               description: newLessonDescription.trim() || null,
-              question_type: selectedQuestionType,
+              question_type: selectedQuestionType as any,
               difficulty_level: newLessonDifficulty,
               is_active: true
-            })
+            } as any)
             .select()
             .single();
 

@@ -67,20 +67,22 @@ export const useUserPreferences = () => {
           // Handle migration from boolean to three-state
           // Default to 'default' if value is null, undefined, or not recognized
           let speechDelayMode: PreferenceState = 'default';
-          if (data.speech_delay_mode === true || data.speech_delay_mode === 'yes') {
+          const speechVal = data.speech_delay_mode as any;
+          if (speechVal === true || speechVal === 'yes') {
             speechDelayMode = 'yes';
-          } else if (data.speech_delay_mode === false || data.speech_delay_mode === 'no') {
+          } else if (speechVal === false || speechVal === 'no') {
             speechDelayMode = 'no';
-          } else if (data.speech_delay_mode === 'default' || data.speech_delay_mode === null || data.speech_delay_mode === undefined) {
+          } else if (speechVal === 'default' || speechVal === null || speechVal === undefined) {
             speechDelayMode = 'default';
           }
           
           let addMiniCelebration: PreferenceState = 'default';
-          if (data.add_mini_celebration === true || data.add_mini_celebration === 'yes') {
+          const celebrationVal = data.add_mini_celebration as any;
+          if (celebrationVal === true || celebrationVal === 'yes') {
             addMiniCelebration = 'yes';
-          } else if (data.add_mini_celebration === false || data.add_mini_celebration === 'no') {
+          } else if (celebrationVal === false || celebrationVal === 'no') {
             addMiniCelebration = 'no';
-          } else if (data.add_mini_celebration === 'default' || data.add_mini_celebration === null || data.add_mini_celebration === undefined) {
+          } else if (celebrationVal === 'default' || celebrationVal === null || celebrationVal === undefined) {
             addMiniCelebration = 'default';
           }
           
