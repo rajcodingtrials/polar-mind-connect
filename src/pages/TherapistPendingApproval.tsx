@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "../context/AuthContext";
@@ -16,19 +16,6 @@ const TherapistPendingApproval = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
-      {/* Minimal header with just logo - no navigation */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-border/50 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <img 
-              src="/lovable-uploads/polariz_icon_only_white.png" 
-              alt="Polariz Logo" 
-              className="h-8 w-8 bg-primary rounded-full p-1"
-            />
-            <span className="text-xl font-semibold text-foreground">Polariz</span>
-          </Link>
-        </div>
-      </header>
       <main className="flex-grow flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader className="text-center space-y-4">
