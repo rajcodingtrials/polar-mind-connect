@@ -58,7 +58,7 @@ const TherapistAuth = () => {
       } else {
         toast({
           title: "Account Created",
-          description: "Please check your email to verify your account. Once verified, you'll be redirected to your therapist dashboard.",
+          description: "Please check your email to verify your account. Once verified, your account will be reviewed by our team before you can access your dashboard.",
         });
       }
     } catch (error) {
