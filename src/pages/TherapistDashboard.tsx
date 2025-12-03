@@ -110,6 +110,13 @@ const TherapistDashboard = () => {
     }
   }, [user, navigate]);
 
+  // Redirect unverified therapists to pending approval page
+  useEffect(() => {
+    if (therapistProfile && !therapistProfile.is_verified) {
+      navigate("/therapist-pending-approval", { replace: true });
+    }
+  }, [therapistProfile, navigate]);
+
   // Auto-create minimal profile for new therapists with prefilled data from sign-up
   useEffect(() => {
     const initializeProfile = async () => {
