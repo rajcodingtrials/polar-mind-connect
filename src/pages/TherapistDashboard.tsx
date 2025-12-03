@@ -50,13 +50,6 @@ const TherapistDashboard = () => {
   
   const [isEditing, setIsEditing] = useState(!therapistProfile); // Start in edit mode if no profile
 
-  // Redirect unverified therapists to pending approval page
-  useEffect(() => {
-    if (!loading && therapistProfile && !therapistProfile.is_verified) {
-      navigate("/therapist-pending-approval", { replace: true });
-    }
-  }, [loading, therapistProfile, navigate]);
-
   // Helper functions for session management
   const formatSessionDateTime = (date: string, startTime: string) => {
     const sessionDate = new Date(`${date}T${startTime}`);

@@ -31,17 +31,13 @@ const AuthForm = () => {
           // Check if user is a therapist
           const { data: therapistData } = await supabase
             .from('therapists')
-            .select('id, is_verified')
+            .select('id')
             .eq('user_id', user.id)
             .maybeSingle();
           
-          // Redirect based on user type and verification status
+          // Redirect based on user type
           if (therapistData) {
-            if (therapistData.is_verified) {
-              navigate("/therapist-dashboard", { replace: true });
-            } else {
-              navigate("/therapist-pending-approval", { replace: true });
-            }
+            navigate("/therapist-dashboard", { replace: true });
           } else {
             navigate("/home", { replace: true });
           }

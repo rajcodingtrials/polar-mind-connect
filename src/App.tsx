@@ -18,7 +18,6 @@ import MeetTheTeam from "./pages/MeetTheTeam";
 import OurStory from "./pages/OurStory";
 import Admin from "./pages/Admin";
 import TherapistAuth from "./pages/TherapistAuth";
-import TherapistPendingApproval from "./pages/TherapistPendingApproval";
 import TherapistDashboard from "./pages/TherapistDashboard";
 import TherapistMyProfile from "./pages/TherapistMyProfile";
 import TherapistAIDemo from "./pages/TherapistAIDemo";
@@ -91,7 +90,6 @@ function App() {
               <Route path="/our-story" element={<OurStory />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/therapist-auth" element={<TherapistAuth />} />
-              <Route path="/therapist-pending-approval" element={<TherapistPendingApproval />} />
               <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
               <Route path="/therapist-my-profile" element={<TherapistMyProfile />} />
               <Route path="/therapist/try-ai" element={<TherapistAIDemo />} />

@@ -57,10 +57,9 @@ const TherapistAuth = () => {
         });
       } else {
         toast({
-          title: "Application Submitted!",
-          description: "Please check your email to verify your account. Our team will review your application and notify you once approved.",
+          title: "Account Created",
+          description: "Please check your email to verify your account. Once verified, you'll be redirected to your therapist dashboard.",
         });
-        navigate("/therapist-pending-approval");
       }
     } catch (error) {
       toast({
