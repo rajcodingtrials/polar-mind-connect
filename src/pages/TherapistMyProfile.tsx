@@ -13,7 +13,7 @@ import { ProfileHeader } from "@/components/therapist/ProfileHeader";
 import { PersonalInformation } from "@/components/therapist/PersonalInformation";
 import { ProfessionalDetails } from "@/components/therapist/ProfessionalDetails";
 import { TherapistDocuments } from "@/components/therapist/TherapistDocuments";
-import { Shield, LogOut, Upload, HelpCircle, Settings } from "lucide-react";
+import { Shield, LogOut, Upload, HelpCircle, Settings, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import UploadLessons from "@/components/therapist/UploadLessons";
@@ -23,6 +23,14 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const TherapistMyProfile = () => {
   const { isAuthenticated, user, logout, loading: authLoading } = useAuth();
@@ -54,6 +62,13 @@ const TherapistMyProfile = () => {
   const [questionTypeToDelete, setQuestionTypeToDelete] = useState("");
   const [isDeletingLesson, setIsDeletingLesson] = useState(false);
   const [isDeletingQuestionType, setIsDeletingQuestionType] = useState(false);
+  const [showDeleteSuccessDialog, setShowDeleteSuccessDialog] = useState(false);
+  const [deleteStats, setDeleteStats] = useState({
+    lessons: 0,
+    questions: 0,
+    images: 0,
+    videos: 0
+  });
 
   useEffect(() => {
     // Wait for auth to finish loading before checking authentication
@@ -168,6 +183,12 @@ const TherapistMyProfile = () => {
       const questionType = lessonData.question_type;
       const lessonName = lessonData.name;
 
+      // Count questions before deleting
+      const { count: questionsCount } = await supabase
+        .from('questions_v2')
+        .select('*', { count: 'exact', head: true })
+        .eq('lesson_id', lessonId);
+
       // Delete all questions for this lesson
       const { error: questionsError } = await supabase
         .from('questions_v2')
@@ -193,7 +214,9 @@ const TherapistMyProfile = () => {
       const sanitizedLessonName = lessonName.replace(/[^a-zA-Z0-9.-]/g, '_');
       const storagePath = `${sanitizedQuestionType}/${sanitizedLessonName}/`;
 
-      // Recursive function to delete all files in a directory
+      // Recursive function to delete all files in a directory and count images/videos
+      let imagesCount = 0;
+      let videosCount = 0;
       const deleteDirectoryRecursive = async (path: string): Promise<void> => {
         const { data: items, error: listError } = await supabase.storage
           .from('question-images-v2')
@@ -217,7 +240,13 @@ const TherapistMyProfile = () => {
         for (const item of items) {
           const itemPath = `${path}${item.name}`;
           if (item.id) {
-            // It's a file
+            // It's a file - count images and videos
+            const fileName = item.name.toLowerCase();
+            if (fileName.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/)) {
+              imagesCount++;
+            } else if (fileName.match(/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/)) {
+              videosCount++;
+            }
             filePaths.push(itemPath);
           } else {
             // It's a directory
@@ -248,7 +277,14 @@ const TherapistMyProfile = () => {
 
       await deleteDirectoryRecursive(storagePath);
 
-      toast.success(`Successfully deleted lesson "${lessonName}" and all associated questions`);
+      // Show success dialog with statistics
+      setDeleteStats({
+        lessons: 1,
+        questions: questionsCount || 0,
+        images: imagesCount,
+        videos: videosCount
+      });
+      setShowDeleteSuccessDialog(true);
       setLessonNameToDelete("");
     } catch (error) {
       console.error("Error deleting lesson:", error);
@@ -283,6 +319,13 @@ const TherapistMyProfile = () => {
       }
 
       const lessonIds = lessonsData.map(lesson => lesson.id);
+      const lessonsCount = lessonsData.length;
+
+      // Count questions before deleting
+      const { count: questionsCount } = await supabase
+        .from('questions_v2')
+        .select('*', { count: 'exact', head: true })
+        .in('lesson_id', lessonIds);
 
       // Delete all questions for these lessons
       const { error: questionsError } = await supabase
@@ -308,7 +351,9 @@ const TherapistMyProfile = () => {
       const sanitizedQuestionType = questionTypeToDelete.trim().replace(/[^a-zA-Z0-9.-]/g, '_');
       const storagePath = `${sanitizedQuestionType}/`;
 
-      // Recursive function to delete all files in a directory
+      // Recursive function to delete all files in a directory and count images/videos
+      let imagesCount = 0;
+      let videosCount = 0;
       const deleteDirectoryRecursive = async (path: string): Promise<void> => {
         const { data: items, error: listError } = await supabase.storage
           .from('question-images-v2')
@@ -332,7 +377,13 @@ const TherapistMyProfile = () => {
         for (const item of items) {
           const itemPath = `${path}${item.name}`;
           if (item.id) {
-            // It's a file
+            // It's a file - count images and videos
+            const fileName = item.name.toLowerCase();
+            if (fileName.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/)) {
+              imagesCount++;
+            } else if (fileName.match(/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/)) {
+              videosCount++;
+            }
             filePaths.push(itemPath);
           } else {
             // It's a directory
@@ -363,7 +414,14 @@ const TherapistMyProfile = () => {
 
       await deleteDirectoryRecursive(storagePath);
 
-      toast.success(`Successfully deleted question type "${questionTypeToDelete}" and all associated lessons`);
+      // Show success dialog with statistics
+      setDeleteStats({
+        lessons: lessonsCount,
+        questions: questionsCount || 0,
+        images: imagesCount,
+        videos: videosCount
+      });
+      setShowDeleteSuccessDialog(true);
       setQuestionTypeToDelete("");
     } catch (error) {
       console.error("Error deleting question type:", error);
@@ -667,6 +725,55 @@ const TherapistMyProfile = () => {
         open={showUploadDialog}
         onOpenChange={setShowUploadDialog}
       />
+
+      {/* Delete Success Dialog */}
+      <Dialog open={showDeleteSuccessDialog} onOpenChange={setShowDeleteSuccessDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle2 className="w-5 h-5" />
+              Deletion Successful
+            </DialogTitle>
+            <DialogDescription>
+              The deletion operation completed successfully
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-800 font-medium mb-3">
+                Successfully deleted the following items:
+              </p>
+              <div className="space-y-2 text-sm text-green-800">
+                <div className="flex justify-between">
+                  <span>Lessons:</span>
+                  <span className="font-semibold">{deleteStats.lessons}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Questions:</span>
+                  <span className="font-semibold">{deleteStats.questions}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Images from storage:</span>
+                  <span className="font-semibold">{deleteStats.images}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Videos from storage:</span>
+                  <span className="font-semibold">{deleteStats.videos}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              onClick={() => {
+                setShowDeleteSuccessDialog(false);
+              }}
+            >
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1040,10 +1040,10 @@ const QuestionView: React.FC<QuestionViewProps> = ({
             
             if (!hasChoices) {
               // Case 1: choices_image not present, question_image present
-              // Width at most 70% viewport, height at most 70% viewport
+              // Width at most 80% viewport, height at most 80% viewport
               return {
-                maxWidth: '70vw',
-                maxHeight: '70vh',
+                maxWidth: '80vw',
+                maxHeight: '80vh',
                 width: 'auto',
                 height: 'auto'
               };
@@ -1125,7 +1125,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
               containerStyle.aspectRatio = videoAspectRatio.toString();
               // Ensure max constraints are still respected
               if (!containerStyle.maxWidth && !hasChoices) {
-                containerStyle.maxWidth = '70vw';
+                containerStyle.maxWidth = '80vw';
               }
               containerStyle.width = '100%';
             }
@@ -1262,7 +1262,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           const choiceImageStyle = getChoiceImageStyle();
           
           return (
-            <div className="flex flex-row gap-2 sm:gap-4 mb-6 sm:mb-8 justify-center items-center flex-wrap md:flex-nowrap px-4">
+            <div className="flex flex-row gap-6 sm:gap-8 lg:gap-10 mb-6 sm:mb-8 justify-center items-center flex-wrap md:flex-nowrap px-4">
               {choiceImageUrls.map((imageUrl, index) => {
                 const isSelected = selectedChoiceIndex === index;
                 const isCorrectChoice = question.answer_index !== null && index === question.answer_index;
