@@ -427,7 +427,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
     // Check if image_after_answer exists in the question
     const hasImageAfterField = question.image_after_answer && question.image_after_answer.trim() !== '';
     const hasSpeechAfter = question.speech_after_answer && question.speech_after_answer.trim() !== '';
-    const hasVideoAfter = question.video_after_answer && question.video_after_answer.trim() !== '' && questionVideoAfterUrl;
+    const hasVideoAfterField = question.video_after_answer && question.video_after_answer.trim() !== '';
 
     setIsProcessingAfterAnswer(true);
 
@@ -477,17 +477,56 @@ const QuestionView: React.FC<QuestionViewProps> = ({
     }
 
     // Step 3: After TTS completes, show video_after_answer if it exists, otherwise handle image display
-    if (hasVideoAfter) {
-      console.log('Step 3: Showing video_after_answer:', questionVideoAfterUrl);
-      // Hide image if it was showing, since video takes precedence
-      if (hasImageAfterField && showImageAfter) {
-        setShowImageAfter(false);
+    if (hasVideoAfterField) {
+      // Load video URL if not already loaded
+      let videoUrl = questionVideoAfterUrl;
+      if (!videoUrl) {
+        console.log('Step 3: Loading video_after_answer URL:', question.video_after_answer);
+        if (question.video_after_answer.startsWith('http')) {
+          videoUrl = question.video_after_answer;
+          setQuestionVideoAfterUrl(videoUrl);
+        } else {
+          const { data } = supabase.storage
+            .from('question-images-v2')
+            .getPublicUrl(question.video_after_answer);
+          videoUrl = data?.publicUrl || null;
+          if (videoUrl) {
+            setQuestionVideoAfterUrl(videoUrl);
+          }
+        }
       }
-      setWaitingForVideoToComplete(true);
-      setTimeout(() => {
-        setShowVideoAfter(true);
-      }, 300);
-      // Video completion will be handled by the video onEnded handler
+      
+      if (videoUrl) {
+        console.log('Step 3: Showing video_after_answer:', videoUrl);
+        // Hide image if it was showing, since video takes precedence
+        if (hasImageAfterField && showImageAfter) {
+          setShowImageAfter(false);
+        }
+        setWaitingForVideoToComplete(true);
+        setTimeout(() => {
+          setShowVideoAfter(true);
+        }, 300);
+        // Video completion will be handled by the video onEnded handler
+      } else {
+        console.warn('Step 3: Failed to load video_after_answer URL');
+        // If video failed to load, fall through to image handling
+        if (hasImageAfterField && showImageAfter) {
+          console.log('Step 3: Falling back to image display (video failed to load)');
+          // Image stays visible with Next Question button
+          setTimeout(() => {
+            if (showImageAfter && !waitingForVideoToComplete) {
+              setShowImageAfter(false);
+              setIsProcessingAfterAnswer(false);
+              // Move to next question after 10 seconds
+              onNextQuestion();
+            }
+          }, 10000);
+        } else {
+          // No image or video, proceed immediately
+          setIsProcessingAfterAnswer(false);
+          onComplete();
+        }
+      }
     } else if (hasImageAfterField && showImageAfter) {
       // If image exists but no video, image stays visible with Next Question button
       // The button is already shown when showImageAfter is true
