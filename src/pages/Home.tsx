@@ -19,7 +19,8 @@ const Home = () => {
     );
   }
 
-  if (role === "therapist") {
+  // Treat users with role therapist or therapist_admin as a therapist
+  if (role === "therapist" || role === "therapist_admin") {
     return <TherapistDashboard />;
   }
 

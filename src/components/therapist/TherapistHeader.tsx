@@ -7,10 +7,11 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 // NavItem defined outside component to prevent recreation on each render
 const NavItem = ({ to, icon, label, isActive }: { to: string; icon: React.ReactNode; label: string; isActive?: boolean }) => (
   <Link 
-    to={to} 
+    to={to}
     className={`flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-white/10 ${
       isActive ? 'text-white' : ''
     }`}
+    style={{ pointerEvents: 'auto' }}
   >
     {icon}
     <span className="text-xs">{label}</span>
@@ -26,7 +27,12 @@ const TherapistHeader = () => {
   const { profile } = useUserProfile();
   const location = useLocation();
 
-  // Memoize the Me icon to prevent unnecessary re-renders
+  // Memoize icons to prevent recreation on each render
+  const homeIcon = useMemo(() => <Home className="h-4 w-4 sm:h-5 sm:w-5" />, []);
+  const sparklesIcon = useMemo(() => <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />, []);
+  const bookOpenIcon = useMemo(() => <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />, []);
+
+  // Memoize Me icon based on profile to prevent flickering
   const meIcon = useMemo(() => {
     if (profile && (profile as any).avatar_url) {
       return (
@@ -51,19 +57,19 @@ const TherapistHeader = () => {
         <nav className="flex items-center gap-2 sm:gap-3 lg:gap-4">
           <NavItem 
             to="/therapist-dashboard" 
-            icon={<Home className="h-4 w-4 sm:h-5 sm:w-5" />} 
+            icon={homeIcon} 
             label="Home"
             isActive={location.pathname === '/therapist-dashboard'}
           />
           <NavItem 
             to="/therapist/try-ai" 
-            icon={<Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />} 
+            icon={sparklesIcon} 
             label="Try AI"
             isActive={location.pathname === '/therapist/try-ai'}
           />
           <NavItem 
             to="/therapist/ai-lessons" 
-            icon={<BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />} 
+            icon={bookOpenIcon} 
             label="AI Lessons"
             isActive={location.pathname === '/therapist/ai-lessons'}
           />

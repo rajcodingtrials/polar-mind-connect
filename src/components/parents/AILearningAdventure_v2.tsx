@@ -90,6 +90,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   const [showLessonsPanel, setShowLessonsPanel] = useState(false);
   const [lessons, setLessons] = useState<any[]>([]);
   const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
+  const [questionTypesWithVerifiedLessons, setQuestionTypesWithVerifiedLessons] = useState<Set<string>>(new Set());
   
   const [adminSettings, setAdminSettings] = useState<{ skip_introduction: boolean; show_mic_input: boolean; amplify_mic: boolean; mic_gain: number } | null>(null);
   const [adminSettingsLoading, setAdminSettingsLoading] = useState(true);
@@ -103,6 +104,8 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  // Store filtered questions in a ref so they're available immediately when Skip is clicked
+  const filteredQuestionsRef = useRef<Question_v2[]>([]);
 
   // Load question types from database
   const { questionTypes: questionTypesData, loading: questionTypesLoading } = useQuestionTypes();
@@ -156,7 +159,12 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     return (a.name || '').localeCompare(b.name || '');
   });
 
-  const questionTypes = sortedQuestionTypes.map((qt, index) => {
+  // Filter question types to only show those with at least one verified lesson
+  const filteredQuestionTypes = sortedQuestionTypes.filter(qt => 
+    questionTypesWithVerifiedLessons.has(qt.name)
+  );
+
+  const questionTypes = filteredQuestionTypes.map((qt, index) => {
     // Cycle through the 6 color styles using modulo
     const styleIndex = index % colorStyles.length;
     const config = colorStyles[styleIndex];
@@ -351,6 +359,15 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
             validLessons = validLessons.filter(lesson => parentLessons.includes(lesson.id));
           }
           
+          // Track which question types have at least one verified lesson
+          const questionTypesWithLessons = new Set<string>();
+          for (const lesson of validLessons) {
+            if (lesson.question_type) {
+              questionTypesWithLessons.add(lesson.question_type);
+            }
+          }
+          setQuestionTypesWithVerifiedLessons(questionTypesWithLessons);
+          
           // Sort by priority (descending), then by name (ascending)
           validLessons.sort((a, b) => {
             const priorityA = a.priority ?? 0;
@@ -476,7 +493,15 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       (a.question_index || 0) - (b.question_index || 0)
     );
     
+    // Store in ref for immediate access when Skip is clicked
+    filteredQuestionsRef.current = filteredQuestions;
     setAvailableQuestions(filteredQuestions);
+    console.log('[handleDirectLessonSelect] Stored questions in ref and state', {
+      refLength: filteredQuestionsRef.current.length,
+      filteredLength: filteredQuestions.length,
+      lessonId,
+      questionType
+    });
     // Skip introduction if admin setting is enabled OR if user has disabled AI therapist
     console.log('[handleDirectLessonSelect] effectiveUseAiTherapist:', effectiveUseAiTherapist, 'adminSettings.skip_introduction:', adminSettings?.skip_introduction);
     if ((adminSettings && adminSettings.skip_introduction) || effectiveUseAiTherapist === false) {
@@ -484,7 +509,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       // Pass filteredQuestions directly to avoid race condition with state update
       handleStartQuestions(filteredQuestions);
     } else {
-      console.log('[handleDirectLessonSelect] Showing introduction screen');
+      console.log('[handleDirectLessonSelect] Showing introduction screen with', filteredQuestions.length, 'questions');
       setCurrentScreen('introduction');
     }
   };
@@ -520,7 +545,15 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       (a.question_index || 0) - (b.question_index || 0)
     );
     
+    // Store in ref for immediate access when Skip is clicked
+    filteredQuestionsRef.current = filteredQuestions;
     setAvailableQuestions(filteredQuestions);
+    console.log('[handleLessonSelect] Stored questions in ref and state', {
+      refLength: filteredQuestionsRef.current.length,
+      filteredLength: filteredQuestions.length,
+      lessonId,
+      questionType: selectedQuestionType
+    });
     // Skip introduction if admin setting is enabled OR if user has disabled AI therapist
     console.log('[handleLessonSelect] effectiveUseAiTherapist:', effectiveUseAiTherapist, 'adminSettings.skip_introduction:', adminSettings?.skip_introduction);
     if ((adminSettings && adminSettings.skip_introduction) || effectiveUseAiTherapist === false) {
@@ -530,10 +563,14 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     } else {
       // Ensure questions are available before showing introduction screen
       if (filteredQuestions.length > 0) {
-        console.log('[handleLessonSelect] Showing introduction screen');
+        console.log('[handleLessonSelect] Showing introduction screen with', filteredQuestions.length, 'questions');
         setCurrentScreen('introduction');
       } else {
-        console.error('No questions available for lesson:', lessonId);
+        console.error('No questions available for lesson:', lessonId, {
+          selectedQuestionType,
+          totalQuestions: questions.length,
+          parentLessons: parentLessons.length
+        });
       }
     }
   };
@@ -645,44 +682,82 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       console.log('handleStartQuestions: Skipping - selectedLessonId:', selectedLessonId, 'user?.id:', user?.id);
     }
     
-    // Use provided questions or fall back to availableQuestions from state
+    // Use provided questions, then fall back to ref (for Skip button), then state
     // Ensure questionsToStart is always an array (never undefined)
     let questionsToStart: Question_v2[] = [];
     
+    console.log('handleStartQuestions: Checking question sources', {
+      questionsToUseLength: questionsToUse?.length || 0,
+      refLength: filteredQuestionsRef.current?.length || 0,
+      availableQuestionsLength: availableQuestions?.length || 0,
+      selectedLessonId,
+      selectedQuestionType,
+      totalQuestions: questions?.length || 0
+    });
+    
     if (questionsToUse && Array.isArray(questionsToUse) && questionsToUse.length > 0) {
       questionsToStart = questionsToUse;
+      console.log('handleStartQuestions: Using provided questions:', questionsToStart.length);
+    } else if (filteredQuestionsRef.current && Array.isArray(filteredQuestionsRef.current) && filteredQuestionsRef.current.length > 0) {
+      // Use ref when Skip is clicked (before state is updated)
+      questionsToStart = filteredQuestionsRef.current;
+      console.log('handleStartQuestions: Using questions from ref:', questionsToStart.length);
     } else if (availableQuestions && Array.isArray(availableQuestions) && availableQuestions.length > 0) {
       questionsToStart = availableQuestions;
+      console.log('handleStartQuestions: Using questions from state:', questionsToStart.length);
     }
     
     // If no questions provided and availableQuestions is empty, try to filter questions again
     if (questionsToStart.length === 0) {
-      console.warn('handleStartQuestions: No questions provided, attempting to filter questions again', {
+      console.warn('handleStartQuestions: No questions from any source, attempting to filter questions again', {
         questionsToUse: questionsToUse?.length || 0,
-        availableQuestions: availableQuestions.length || 0,
+        refLength: filteredQuestionsRef.current?.length || 0,
+        availableQuestions: availableQuestions?.length || 0,
         selectedLessonId,
         selectedQuestionType,
         totalQuestions: questions?.length || 0,
-        parentLessons: parentLessons?.length || 0
+        parentLessons: parentLessons?.length || 0,
+        hasQuestions: !!questions,
+        isQuestionsArray: Array.isArray(questions)
       });
       
       // Try to filter questions again based on current state
       if (selectedQuestionType && questions && Array.isArray(questions) && questions.length > 0) {
         let filteredQuestions: Question_v2[] = [];
         
+        console.log('handleStartQuestions: Filtering questions with criteria', {
+          selectedLessonId,
+          selectedQuestionType,
+          totalQuestions: questions.length,
+          parentLessonsLength: parentLessons.length,
+          parentLessons: parentLessons
+        });
+        
         if (selectedLessonId) {
-          filteredQuestions = questions.filter(q => 
-            q && 
-            q.question_type === selectedQuestionType && 
-            q.lesson_id === selectedLessonId &&
-            (parentLessons.length === 0 || parentLessons.includes(selectedLessonId))
-          );
+          filteredQuestions = questions.filter(q => {
+            const matches = q && 
+              q.question_type === selectedQuestionType && 
+              q.lesson_id === selectedLessonId &&
+              (parentLessons.length === 0 || parentLessons.includes(selectedLessonId));
+            if (!matches && q) {
+              console.log('handleStartQuestions: Question filtered out', {
+                questionId: q.id,
+                questionType: q.question_type,
+                lessonId: q.lesson_id,
+                matchesType: q.question_type === selectedQuestionType,
+                matchesLesson: q.lesson_id === selectedLessonId,
+                parentLessonsCheck: parentLessons.length === 0 || parentLessons.includes(selectedLessonId)
+              });
+            }
+            return matches;
+          });
         } else {
-          filteredQuestions = questions.filter(q => 
-            q &&
-            q.question_type === selectedQuestionType &&
-            (parentLessons.length === 0 || !q.lesson_id || parentLessons.includes(q.lesson_id))
-          );
+          filteredQuestions = questions.filter(q => {
+            const matches = q &&
+              q.question_type === selectedQuestionType &&
+              (parentLessons.length === 0 || !q.lesson_id || parentLessons.includes(q.lesson_id));
+            return matches;
+          });
         }
         
         // Sort by question_index
@@ -694,12 +769,31 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
           filteredCount: filteredQuestions.length,
           selectedLessonId,
           selectedQuestionType,
-          totalQuestionsBeforeFilter: questions.length
+          totalQuestionsBeforeFilter: questions.length,
+          sampleQuestion: filteredQuestions[0] ? {
+            id: filteredQuestions[0].id,
+            question_type: filteredQuestions[0].question_type,
+            lesson_id: filteredQuestions[0].lesson_id
+          } : null
         });
         
         if (filteredQuestions.length > 0) {
           questionsToStart = filteredQuestions;
+          // Update both ref and state
+          filteredQuestionsRef.current = filteredQuestions;
           setAvailableQuestions(filteredQuestions);
+          console.log('handleStartQuestions: Successfully filtered and stored questions:', filteredQuestions.length);
+        } else {
+          console.error('handleStartQuestions: Filtering returned 0 questions', {
+            selectedLessonId,
+            selectedQuestionType,
+            totalQuestions: questions.length,
+            sampleQuestions: questions.slice(0, 3).map(q => ({
+              id: q.id,
+              question_type: q.question_type,
+              lesson_id: q.lesson_id
+            }))
+          });
         }
       } else {
         console.warn('handleStartQuestions: Cannot filter questions - missing required data', {
@@ -720,19 +814,49 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       questionsToStart = [];
     }
     
-    // If still no questions available, log error and return
+    // If still no questions available, log error and try one more time with detailed debugging
     if (questionsToStart.length === 0) {
       console.error('handleStartQuestions: No questions available to start after retry', {
         questionsToUse: questionsToUse?.length || 0,
+        refLength: filteredQuestionsRef.current?.length || 0,
         availableQuestions: availableQuestions?.length || 0,
         selectedLessonId,
         selectedQuestionType,
         totalQuestions: questions?.length || 0,
         parentLessons: parentLessons?.length || 0,
+        parentLessons: parentLessons,
         questionsToStartLength: questionsToStart.length,
-        isArray: Array.isArray(questionsToStart)
+        isArray: Array.isArray(questionsToStart),
+        sampleQuestions: questions?.slice(0, 5).map(q => ({
+          id: q.id,
+          question_type: q.question_type,
+          lesson_id: q.lesson_id
+        }))
       });
-      return;
+      
+      // Last resort: try to filter one more time with relaxed criteria (ignore parentLessons check if it's blocking)
+      if (selectedQuestionType && questions && Array.isArray(questions) && questions.length > 0 && selectedLessonId) {
+        console.log('handleStartQuestions: Last resort - filtering with relaxed criteria');
+        const relaxedFiltered = questions.filter(q => 
+          q && 
+          q.question_type === selectedQuestionType && 
+          q.lesson_id === selectedLessonId
+        );
+        
+        if (relaxedFiltered.length > 0) {
+          console.log('handleStartQuestions: Found questions with relaxed filter:', relaxedFiltered.length);
+          questionsToStart = [...relaxedFiltered].sort((a, b) => 
+            (a.question_index || 0) - (b.question_index || 0)
+          );
+          filteredQuestionsRef.current = questionsToStart;
+          setAvailableQuestions(questionsToStart);
+        } else {
+          console.error('handleStartQuestions: Even relaxed filter returned 0 questions');
+          return;
+        }
+      } else {
+        return;
+      }
     }
     
     // Start at first question (sorted by question_index)

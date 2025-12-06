@@ -25,8 +25,8 @@ export const useUserPreferences = () => {
   const { role } = useUserRole();
   const { toast } = useToast();
   
-  // Check if user is a therapist
-  const isTherapist = role === 'therapist';
+  // Check if user is a therapist (therapist or therapist_admin)
+  const isTherapist = role === 'therapist' || role === 'therapist_admin';
 
   // Load preferences from database
   useEffect(() => {

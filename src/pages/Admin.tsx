@@ -208,7 +208,9 @@ const Admin = () => {
     );
   }
 
-  if (role !== 'admin') {
+  // Check if user is admin (therapist_admin, parent_admin, or admin)
+  const isAdminUser = role === 'admin' || role === 'therapist_admin' || role === 'parent_admin';
+  if (!isAdminUser) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />

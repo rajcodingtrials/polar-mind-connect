@@ -39,13 +39,13 @@ const Index = () => {
         <main className="flex-grow h-full flex items-stretch justify-stretch min-h-0 w-full">
           <div className="flex flex-col md:flex-row w-full h-full bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 flex-grow">
 
-            {/* Left: AuthForm (30%) */}
-            <section className="w-full md:w-[30%] md:min-w-[420px] lg:w-[35%] flex items-center justify-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 min-h-[400px] md:min-h-0">
+            {/* Left: AuthForm (25%) */}
+            <section className="w-full md:w-[25%] md:min-w-[380px] lg:w-[28%] flex items-center justify-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 min-h-[400px] md:min-h-0">
               <AuthForm />
             </section>
 
-            {/* Right: Image with overlayed text (70%) */}
-            <section className="relative w-full md:w-[70%] lg:w-[65%] flex-grow flex items-center justify-center p-0 bg-black min-h-[300px] sm:min-h-[400px] md:min-h-0">
+            {/* Right: Image with overlayed text (75%) */}
+            <section className="relative w-full md:w-[75%] lg:w-[72%] flex-grow flex items-center justify-center p-0 bg-black min-h-[300px] sm:min-h-[400px] md:min-h-0">
               <img
                 src="/lovable-uploads/FrontPage1.jpg"
                 alt="Young girl with colorful alphabet letters emerging from her speech, representing AI-powered speech therapy for children"

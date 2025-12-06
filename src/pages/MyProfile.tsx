@@ -18,7 +18,8 @@ const MyProfile = () => {
     }
     
     // Redirect therapists to their dedicated profile page
-    if (!roleLoading && role === "therapist") {
+    // Treat users with role therapist or therapist_admin as a therapist
+    if (!roleLoading && (role === "therapist" || role === "therapist_admin")) {
       navigate("/therapist-my-profile", { replace: true });
     }
   }, [isAuthenticated, role, roleLoading, navigate]);
@@ -38,7 +39,8 @@ const MyProfile = () => {
   }
 
   // If therapist, don't render (will redirect)
-  if (role === "therapist") {
+  // Treat users with role therapist or therapist_admin as a therapist
+  if (role === "therapist" || role === "therapist_admin") {
     return null;
   }
 

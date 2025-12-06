@@ -20,11 +20,15 @@ import UploadLessons from "@/components/therapist/UploadLessons";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useUserRole } from "@/hooks/useUserRole";
+import { Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const TherapistMyProfile = () => {
   const { isAuthenticated, user, logout, loading: authLoading } = useAuth();
   const { therapistProfile, updateTherapistProfile, createTherapistProfile, loading } = useTherapistAuth();
   const { preferences, updateSpeechDelayMode, updateAddMiniCelebration, updateCelebrationVideoId, updateUseAiTherapist } = useUserPreferences();
+  const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   
   const [isEditing, setIsEditing] = useState(!therapistProfile);
@@ -46,6 +50,10 @@ const TherapistMyProfile = () => {
     avatar_url: '',
   });
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [lessonNameToDelete, setLessonNameToDelete] = useState("");
+  const [questionTypeToDelete, setQuestionTypeToDelete] = useState("");
+  const [isDeletingLesson, setIsDeletingLesson] = useState(false);
+  const [isDeletingQuestionType, setIsDeletingQuestionType] = useState(false);
 
   useEffect(() => {
     // Wait for auth to finish loading before checking authentication
@@ -128,6 +136,240 @@ const TherapistMyProfile = () => {
     } catch (error) {
       console.error("Error logging out:", error);
       toast.error("Failed to log out");
+    }
+  };
+
+  const handleDeleteLesson = async () => {
+    if (!lessonNameToDelete.trim()) {
+      toast.error("Please enter a lesson name");
+      return;
+    }
+
+    setIsDeletingLesson(true);
+    try {
+      // Find the lesson by name
+      const { data: lessonData, error: lessonError } = await supabase
+        .from('lessons_v2')
+        .select('id, name, question_type')
+        .ilike('name', lessonNameToDelete.trim())
+        .maybeSingle();
+
+      if (lessonError) {
+        throw new Error(`Error finding lesson: ${lessonError.message}`);
+      }
+
+      if (!lessonData) {
+        toast.error(`Lesson "${lessonNameToDelete}" not found`);
+        setIsDeletingLesson(false);
+        return;
+      }
+
+      const lessonId = lessonData.id;
+      const questionType = lessonData.question_type;
+      const lessonName = lessonData.name;
+
+      // Delete all questions for this lesson
+      const { error: questionsError } = await supabase
+        .from('questions_v2')
+        .delete()
+        .eq('lesson_id', lessonId);
+
+      if (questionsError) {
+        throw new Error(`Error deleting questions: ${questionsError.message}`);
+      }
+
+      // Delete the lesson from lessons_v2
+      const { error: lessonDeleteError } = await supabase
+        .from('lessons_v2')
+        .delete()
+        .eq('id', lessonId);
+
+      if (lessonDeleteError) {
+        throw new Error(`Error deleting lesson: ${lessonDeleteError.message}`);
+      }
+
+      // Delete the storage directory: question_type/lesson_name/
+      const sanitizedQuestionType = questionType.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const sanitizedLessonName = lessonName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storagePath = `${sanitizedQuestionType}/${sanitizedLessonName}/`;
+
+      // Recursive function to delete all files in a directory
+      const deleteDirectoryRecursive = async (path: string): Promise<void> => {
+        const { data: items, error: listError } = await supabase.storage
+          .from('question-images-v2')
+          .list(path, {
+            limit: 1000,
+            offset: 0
+          });
+
+        if (listError) {
+          console.warn(`Error listing files in ${path}: ${listError.message}`);
+          return;
+        }
+
+        if (!items || items.length === 0) {
+          return;
+        }
+
+        const filePaths: string[] = [];
+        const subdirectories: string[] = [];
+
+        for (const item of items) {
+          const itemPath = `${path}${item.name}`;
+          if (item.id) {
+            // It's a file
+            filePaths.push(itemPath);
+          } else {
+            // It's a directory
+            subdirectories.push(itemPath + '/');
+          }
+        }
+
+        // Delete files in batches
+        if (filePaths.length > 0) {
+          const batchSize = 100;
+          for (let i = 0; i < filePaths.length; i += batchSize) {
+            const batch = filePaths.slice(i, i + batchSize);
+            const { error: deleteError } = await supabase.storage
+              .from('question-images-v2')
+              .remove(batch);
+
+            if (deleteError) {
+              console.warn(`Error deleting batch of files: ${deleteError.message}`);
+            }
+          }
+        }
+
+        // Recursively delete subdirectories
+        for (const subdir of subdirectories) {
+          await deleteDirectoryRecursive(subdir);
+        }
+      };
+
+      await deleteDirectoryRecursive(storagePath);
+
+      toast.success(`Successfully deleted lesson "${lessonName}" and all associated questions`);
+      setLessonNameToDelete("");
+    } catch (error) {
+      console.error("Error deleting lesson:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete lesson");
+    } finally {
+      setIsDeletingLesson(false);
+    }
+  };
+
+  const handleDeleteQuestionType = async () => {
+    if (!questionTypeToDelete.trim()) {
+      toast.error("Please enter a question type name");
+      return;
+    }
+
+    setIsDeletingQuestionType(true);
+    try {
+      // Find all lessons with this question type
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from('lessons_v2')
+        .select('id, name, question_type')
+        .eq('question_type', questionTypeToDelete.trim());
+
+      if (lessonsError) {
+        throw new Error(`Error finding lessons: ${lessonsError.message}`);
+      }
+
+      if (!lessonsData || lessonsData.length === 0) {
+        toast.error(`No lessons found for question type "${questionTypeToDelete}"`);
+        setIsDeletingQuestionType(false);
+        return;
+      }
+
+      const lessonIds = lessonsData.map(lesson => lesson.id);
+
+      // Delete all questions for these lessons
+      const { error: questionsError } = await supabase
+        .from('questions_v2')
+        .delete()
+        .in('lesson_id', lessonIds);
+
+      if (questionsError) {
+        throw new Error(`Error deleting questions: ${questionsError.message}`);
+      }
+
+      // Delete all lessons with this question type
+      const { error: lessonsDeleteError } = await supabase
+        .from('lessons_v2')
+        .delete()
+        .eq('question_type', questionTypeToDelete.trim());
+
+      if (lessonsDeleteError) {
+        throw new Error(`Error deleting lessons: ${lessonsDeleteError.message}`);
+      }
+
+      // Delete the storage directory: question_type/
+      const sanitizedQuestionType = questionTypeToDelete.trim().replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storagePath = `${sanitizedQuestionType}/`;
+
+      // Recursive function to delete all files in a directory
+      const deleteDirectoryRecursive = async (path: string): Promise<void> => {
+        const { data: items, error: listError } = await supabase.storage
+          .from('question-images-v2')
+          .list(path, {
+            limit: 1000,
+            offset: 0
+          });
+
+        if (listError) {
+          console.warn(`Error listing files in ${path}: ${listError.message}`);
+          return;
+        }
+
+        if (!items || items.length === 0) {
+          return;
+        }
+
+        const filePaths: string[] = [];
+        const subdirectories: string[] = [];
+
+        for (const item of items) {
+          const itemPath = `${path}${item.name}`;
+          if (item.id) {
+            // It's a file
+            filePaths.push(itemPath);
+          } else {
+            // It's a directory
+            subdirectories.push(itemPath + '/');
+          }
+        }
+
+        // Delete files in batches
+        if (filePaths.length > 0) {
+          const batchSize = 100;
+          for (let i = 0; i < filePaths.length; i += batchSize) {
+            const batch = filePaths.slice(i, i + batchSize);
+            const { error: deleteError } = await supabase.storage
+              .from('question-images-v2')
+              .remove(batch);
+
+            if (deleteError) {
+              console.warn(`Error deleting batch of files: ${deleteError.message}`);
+            }
+          }
+        }
+
+        // Recursively delete subdirectories
+        for (const subdir of subdirectories) {
+          await deleteDirectoryRecursive(subdir);
+        }
+      };
+
+      await deleteDirectoryRecursive(storagePath);
+
+      toast.success(`Successfully deleted question type "${questionTypeToDelete}" and all associated lessons`);
+      setQuestionTypeToDelete("");
+    } catch (error) {
+      console.error("Error deleting question type:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete question type");
+    } finally {
+      setIsDeletingQuestionType(false);
     }
   };
 
@@ -214,6 +456,65 @@ const TherapistMyProfile = () => {
                     <HelpCircle className="h-4 w-4" />
                     Learn how to add new lessons
                   </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Delete Lessons Section - Only for therapist_admin or admin */}
+          {!roleLoading && (role === 'therapist_admin' || role === 'admin') && (
+            <Card className="bg-white border-red-600 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-foreground flex items-center text-red-600">
+                  <Trash2 className="w-5 h-5 mr-2" />
+                  Delete Lessons
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="lesson-name-delete">Lesson Name</Label>
+                  <Input
+                    id="lesson-name-delete"
+                    value={lessonNameToDelete}
+                    onChange={(e) => setLessonNameToDelete(e.target.value)}
+                    placeholder="Enter exact lesson name to delete"
+                    disabled={isDeletingLesson || isDeletingQuestionType}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    This will delete the lesson, all its questions, and the storage directory.
+                  </p>
+                  <Button
+                    onClick={handleDeleteLesson}
+                    disabled={isDeletingLesson || isDeletingQuestionType || !lessonNameToDelete.trim()}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeletingLesson ? "Deleting..." : "Delete Lesson"}
+                  </Button>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label htmlFor="question-type-delete">Question Type Name</Label>
+                  <Input
+                    id="question-type-delete"
+                    value={questionTypeToDelete}
+                    onChange={(e) => setQuestionTypeToDelete(e.target.value)}
+                    placeholder="Enter question type name to delete"
+                    disabled={isDeletingLesson || isDeletingQuestionType}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    This will delete all lessons of this question type, all their questions, and the storage directory.
+                  </p>
+                  <Button
+                    onClick={handleDeleteQuestionType}
+                    disabled={isDeletingLesson || isDeletingQuestionType || !questionTypeToDelete.trim()}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeletingQuestionType ? "Deleting..." : "Delete Question Type"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Constants } from '@/integrations/supabase/types';
 import { isValidQuestionTypeSync, initializeQuestionTypesCache, getQuestionTypesSync } from '@/utils/questionTypes';
 import { useQuestionTypes } from '@/hooks/useQuestionTypes';
+import { useUserRole } from '@/hooks/useUserRole';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ interface UploadLessonsProps {
 
 const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChange }) => {
   const { toast: uiToast } = useToast();
+  const { role } = useUserRole();
   const [directoryPath, setDirectoryPath] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -503,12 +505,14 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
           const lessonText = lessonData.lesson || null;
 
           // Create lesson record in lessons_v2
+          // Set is_verified to true if user is therapist_admin, false otherwise
+          const isVerified = role === 'therapist_admin';
           const lessonRecord = {
             name: lessonName,
             description: lessonData.description || null,
             question_type: questionType,
             level: lessonData.level || lessonData.difficulty_level || 'beginner',
-            is_verified: false,
+            is_verified: isVerified,
             youtube_video_id: lessonData.youtube_video_id || null,
             add_mini_celebration: lessonData.add_mini_celebration !== undefined ? lessonData.add_mini_celebration : true,
             priority: 0,
