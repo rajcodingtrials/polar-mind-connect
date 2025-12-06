@@ -1032,11 +1032,33 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         {/* Question Video (before) or Image */}
         {(() => {
           const hasChoices = choiceImageUrls.length > 0;
-          // Responsive heights: smaller on mobile, larger on desktop
-          // If both question_image and choices_image are present: 50vh on iPad+, otherwise 80vh
-          const mediaHeight = hasChoices 
-            ? 'h-[250px] sm:h-[300px] md:h-[50vh]' 
-            : 'h-[300px] sm:h-[400px] md:h-[500px] lg:h-[80vh]';
+          const hasQuestionImage = !!questionImageUrl;
+          
+          // Calculate question image style based on requirements
+          const getQuestionImageStyle = (): React.CSSProperties => {
+            if (!hasQuestionImage) return {};
+            
+            if (!hasChoices) {
+              // Case 1: choices_image not present, question_image present
+              // Width at most 70% viewport, height at most 70% viewport
+              return {
+                maxWidth: '70vw',
+                maxHeight: '70vh',
+                width: 'auto',
+                height: 'auto'
+              };
+            } else {
+              // Case 2: Both choices_image and question_image present
+              // Height at most 50% viewport
+              return {
+                maxHeight: '50vh',
+                width: 'auto',
+                height: 'auto'
+              };
+            }
+          };
+          
+          const questionImageStyle = getQuestionImageStyle();
           
           // Show video_after if answer is correct and video exists, otherwise show image_after if exists, otherwise show video_before if exists, otherwise show image
           const videoToShow = showVideoAfter && questionVideoAfterUrl 
@@ -1051,8 +1073,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
               // URL is loading, show a placeholder or wait
               return (
                 <div className="mb-4 sm:mb-6 lg:mb-8 animate-scale-in flex justify-center px-4">
-                  <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden w-full max-w-full">
-                    <div className={`w-full ${mediaHeight} flex items-center justify-center bg-gray-100`}>
+                  <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden">
+                    <div className="flex items-center justify-center bg-gray-100" style={{ ...questionImageStyle, minHeight: '200px' }}>
                       <p className="text-gray-500">Loading image...</p>
                     </div>
                   </div>
@@ -1062,11 +1084,12 @@ const QuestionView: React.FC<QuestionViewProps> = ({
             
             return (
               <div className="mb-4 sm:mb-6 lg:mb-8 animate-scale-in flex justify-center px-4">
-                <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden w-full max-w-full">
+                <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden">
                   <img
                     src={questionImageAfterUrl}
                     alt="Answer feedback image"
-                    className={`w-full object-contain rounded-2xl sm:rounded-3xl ${mediaHeight}`}
+                    className="object-contain rounded-2xl sm:rounded-3xl"
+                    style={questionImageStyle}
                     loading="lazy"
                     onError={(e) => {
                       console.error('Error loading image_after_answer:', questionImageAfterUrl);
@@ -1095,19 +1118,22 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           }
           
           if (videoToShow) {
-            // Calculate container style based on video aspect ratio
-            const containerStyle: React.CSSProperties = {};
+            // Calculate container style based on video aspect ratio and question image constraints
+            const containerStyle: React.CSSProperties = { ...questionImageStyle };
             if (videoAspectRatio) {
-              // Use aspect-ratio CSS property if available, otherwise use padding-bottom technique
+              // Use aspect-ratio CSS property to maintain video proportions
               containerStyle.aspectRatio = videoAspectRatio.toString();
-              containerStyle.maxWidth = '100%';
+              // Ensure max constraints are still respected
+              if (!containerStyle.maxWidth && !hasChoices) {
+                containerStyle.maxWidth = '70vw';
+              }
               containerStyle.width = '100%';
             }
             
             return (
               <div className="mb-4 sm:mb-6 lg:mb-8 animate-scale-in flex justify-center px-4">
                 <div 
-                  className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden w-full max-w-full"
+                  className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden"
                   style={containerStyle}
                 >
                   <video
@@ -1179,11 +1205,12 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           } else if (questionImageUrl) {
             return (
               <div className="mb-4 sm:mb-6 lg:mb-8 animate-scale-in flex justify-center px-4">
-                <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden w-full max-w-full">
+                <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden">
                   <img
                     src={questionImageUrl}
                     alt={question.description_text || `Question ${questionNumber} visual content for ${therapistName} therapy session`}
-                    className={`w-full object-contain rounded-2xl sm:rounded-3xl ${mediaHeight}`}
+                    className="object-contain rounded-2xl sm:rounded-3xl"
+                    style={questionImageStyle}
                     loading="lazy"
                     onError={(e) => {
                       console.error('Error loading question image:', questionImageUrl);
@@ -1209,11 +1236,30 @@ const QuestionView: React.FC<QuestionViewProps> = ({
         {/* Choices (if choices_image is present) */}
         {choiceImageUrls.length > 0 && (() => {
           const hasQuestionImage = !!questionImageUrl;
-          // Use viewport height percentages: 30vh when question_image exists, 80vh when only choices
-          // On mobile/tablet use fixed sizes, on iPad+ (md) use viewport heights
-          const imageSize = hasQuestionImage 
-            ? 'w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] md:w-auto md:h-[30vh]' 
-            : 'w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] md:w-auto md:h-[80vh]';
+          
+          // Calculate choice image style based on requirements
+          const getChoiceImageStyle = (): React.CSSProperties => {
+            if (hasQuestionImage) {
+              // Case 2: Both choices_image and question_image present
+              // Height at most 30% viewport
+              return {
+                maxHeight: '30vh',
+                width: 'auto',
+                height: 'auto'
+              };
+            } else {
+              // Case 3: choices_images present, question_image not present
+              // Each rectangle: width at most 40% viewport, height at most 70% viewport
+              return {
+                maxWidth: '40vw',
+                maxHeight: '70vh',
+                width: 'auto',
+                height: 'auto'
+              };
+            }
+          };
+          
+          const choiceImageStyle = getChoiceImageStyle();
           
           return (
             <div className="flex flex-row gap-2 sm:gap-4 mb-6 sm:mb-8 justify-center items-center flex-wrap md:flex-nowrap px-4">
@@ -1229,7 +1275,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                     onClick={() => isClickable && handleChoiceClick(index)}
                     disabled={isProcessingAnswer || hasCalledCorrectAnswer || !isClickable}
                     className={`
-                      relative p-4 rounded-xl border-4 transition-all duration-300 overflow-hidden flex-shrink
+                      relative p-4 rounded-xl border-4 transition-all duration-300 overflow-hidden flex-shrink-0
                       ${isSelected && isCorrectChoice ? 'border-green-500 bg-green-50' : ''}
                       ${isSelected && !isCorrectChoice ? 'border-red-500 bg-red-50' : ''}
                       ${!isSelected ? 'border-blue-200 bg-white hover:border-blue-400 hover:shadow-lg' : ''}
@@ -1240,10 +1286,12 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                     <img
                       src={imageUrl}
                       alt={`Choice ${index + 1}`}
-                      className={`
-                        ${imageSize} object-contain rounded-xl sm:rounded-2xl transition-transform duration-300
-                        ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group-hover:scale-125' : ''}
-                      `}
+                      className="object-contain rounded-xl sm:rounded-2xl transition-transform duration-300"
+                      style={choiceImageStyle}
+                      onError={(e) => {
+                        console.error('Error loading choice image:', imageUrl);
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   {showResult && (
                     <div className="absolute top-2 right-2 z-10">
