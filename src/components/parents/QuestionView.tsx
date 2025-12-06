@@ -116,13 +116,29 @@ const QuestionView: React.FC<QuestionViewProps> = ({
 
   // Parse choices_image (comma-separated URLs)
   useEffect(() => {
+    // Reset immediately when question changes to prevent flashing old images
+    setChoiceImageUrls([]);
+    
+    // Then load new choices if they exist
     if (question.choices_image) {
-      const urls = question.choices_image.split(',').map(url => url.trim()).filter(url => url);
-      setChoiceImageUrls(urls);
-    } else {
-      setChoiceImageUrls([]);
+      const rawUrls = question.choices_image.split(',').map(url => url.trim()).filter(url => url);
+      
+      // Convert storage paths to public URLs if needed
+      const processedUrls = rawUrls.map(url => {
+        // If it's already a full URL, use it directly
+        if (url.startsWith('http')) {
+          return url;
+        }
+        // Otherwise, get public URL from storage
+        const { data } = supabase.storage
+          .from('question-images-v2')
+          .getPublicUrl(url);
+        return data?.publicUrl || url;
+      });
+      
+      setChoiceImageUrls(processedUrls);
     }
-  }, [question.choices_image]);
+  }, [question.choices_image, question.id]);
 
   // Load question_image URL
   useEffect(() => {
@@ -246,6 +262,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
       setQuestionVideoBeforeUrl(null);
       setQuestionVideoAfterUrl(null);
       setQuestionImageAfterUrl(null);
+      // Note: choiceImageUrls is reset in its own useEffect to avoid race conditions
       
       if (!comingFromCelebration) {
         onRetryCountChange(0);

@@ -1010,6 +1010,11 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
                 <p className="text-sm sm:text-base lg:text-lg text-gray-600">
                   {showLessonsPanel ? 'Choose a lesson or practice all questions' : 'Click on an activity to see available lessons'}
                 </p>
+                {!showLessonsPanel && (
+                  <p className="text-sm sm:text-base lg:text-lg text-gray-600 mt-2">
+                    You have {lessons.length} lessons available to learn.
+                  </p>
+                )}
               </div>
               
               <div className="flex flex-col lg:flex-row max-w-7xl mx-auto gap-4 lg:gap-8 min-h-[500px]">
