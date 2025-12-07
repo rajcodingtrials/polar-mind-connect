@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useUserRole } from "../hooks/useUserRole";
 import { Home, Users, UserCircle, Book, Shield, User as UserIcon, LayoutDashboard, Store, Menu, X } from "lucide-react";
@@ -7,10 +7,20 @@ import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useUserProfile } from "../hooks/useUserProfile";
 
 const Header = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { isAdmin } = useUserRole();
   const { profile } = useUserProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user?.id) {
+      navigate(`/user-dashboard?userId=${user.id}`);
+    } else {
+      navigate('/user-dashboard');
+    }
+  };
 
   // Helper for menu icons
   const NavItem = ({ to, icon, label, children = null, onClick }: { to: string; icon: React.ReactNode; label: string; children?: React.ReactNode; onClick?: () => void }) => (
@@ -45,7 +55,14 @@ const Header = () => {
           )}
           {isAuthenticated && (
             <>
-              <NavItem to="/user-dashboard" icon={<LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5" />} label="Dashboard" />
+              <Link 
+                to="/user-dashboard" 
+                onClick={handleDashboardClick}
+                className="flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-white/10"
+              >
+                <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-xs">Dashboard</span>
+              </Link>
               <NavItem to="/consultation" icon={<Users className="h-4 w-4 sm:h-5 sm:w-5" />} label="Coaches" />
               <NavItem to="/lessons-marketplace" icon={<Store className="h-4 w-4 sm:h-5 sm:w-5" />} label="MarketPlace" />
               {isAdmin() && (
@@ -79,7 +96,17 @@ const Header = () => {
             )}
             {isAuthenticated && (
               <>
-                <NavItem to="/user-dashboard" icon={<LayoutDashboard className="h-5 w-5" />} label="Dashboard" onClick={() => setMobileMenuOpen(false)} />
+                <Link 
+                  to="/user-dashboard" 
+                  onClick={(e) => {
+                    handleDashboardClick(e);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex flex-col items-center gap-1 text-white hover:text-white/80 transition-colors font-medium text-sm px-2 sm:px-3 py-2 rounded-lg hover:bg-white/10"
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                  <span className="text-xs">Dashboard</span>
+                </Link>
                 <NavItem to="/consultation" icon={<Users className="h-5 w-5" />} label="Coaches" onClick={() => setMobileMenuOpen(false)} />
                 <NavItem to="/lessons-marketplace" icon={<Store className="h-5 w-5" />} label="MarketPlace" onClick={() => setMobileMenuOpen(false)} />
                 {isAdmin() && (

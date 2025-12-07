@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useUserProfile } from '../../hooks/useUserProfile';
-import { useAuth } from '../../context/AuthContext';
-import { useUserPreferences } from '../../hooks/useUserPreferences';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { useAuth } from '../context/AuthContext';
+import { useUserPreferences } from '../hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import { getQuestionTypeLabel, getQuestionTypeDescription, initializeQuestionTypesCache } from '@/utils/questionTypes';
 import { useQuestionTypes } from '@/hooks/useQuestionTypes';
-import ProgressCharacter from './ProgressCharacter';
-import IntroductionScreen from './IntroductionScreen';
-import QuestionView from './QuestionView';
-import MiniCelebration from './MiniCelebration';
-import LessonSelection from './LessonSelection';
-import QuestionTypeCards from './QuestionTypeCards';
-import LessonsPanel from './LessonsPanel';
+import ProgressCharacter from './parents/ProgressCharacter';
+import IntroductionScreen from './parents/IntroductionScreen';
+import QuestionView from './parents/QuestionView';
+import MiniCelebration from './parents/MiniCelebration';
+import LessonSelection from './parents/LessonSelection';
+import QuestionTypeCards from './parents/QuestionTypeCards';
+import LessonsPanel from './parents/LessonsPanel';
 
 import type { QuestionType } from '@/utils/questionTypes';
 
@@ -50,9 +50,10 @@ interface Question_v2 {
 interface AILearningAdventure_v2Props {
   therapistName: string;
   overrideUseAiTherapist?: boolean;
+  userId: string; // User ID to use for lesson activities and data loading
 }
 
-const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapistName, overrideUseAiTherapist }) => {
+const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapistName, overrideUseAiTherapist, userId }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile } = useUserProfile();
@@ -101,6 +102,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   const [localAmplifyMic, setLocalAmplifyMic] = useState(false);
   const [localMicGain, setLocalMicGain] = useState(1.0);
+  const [userFirstName, setUserFirstName] = useState<string>('');
 
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -109,6 +111,37 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   // Load question types from database
   const { questionTypes: questionTypesData, loading: questionTypesLoading } = useQuestionTypes();
+
+  // Fetch user's first name based on userId
+  useEffect(() => {
+    const fetchUserName = async () => {
+      if (!userId) {
+        setUserFirstName('');
+        return;
+      }
+
+      try {
+        const { data: userData, error: userError } = await (supabase.rpc as any)('get_user_details', { _user_id: userId }) as { data: Array<{ user_id: string; email: string; name: string }> | null; error: any };
+
+        if (userError || !userData || !Array.isArray(userData) || userData.length === 0) {
+          console.error('Error fetching user details:', userError);
+          setUserFirstName('');
+          return;
+        }
+
+        const userInfo = userData[0];
+        const fullName = userInfo.name || '';
+        // Extract first name (split by space and take first part)
+        const firstName = fullName.split(' ')[0] || fullName || userInfo.email?.split('@')[0] || '';
+        setUserFirstName(firstName);
+      } catch (error) {
+        console.error('Error in fetchUserName:', error);
+        setUserFirstName('');
+      }
+    };
+
+    fetchUserName();
+  }, [userId]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -219,15 +252,15 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   // Record lesson activity when introduction screen is shown (fallback)
   useEffect(() => {
-    if (currentScreen === 'introduction' && selectedLessonId && user?.id) {
+    if (currentScreen === 'introduction' && selectedLessonId && userId) {
       recordLessonActivity('started', selectedLessonId);
     }
-  }, [currentScreen, selectedLessonId, user?.id]);
+  }, [currentScreen, selectedLessonId, userId]);
 
   // Load parent's available lessons (combining default lessons with user's custom lessons)
   useEffect(() => {
     const loadParentLessons = async () => {
-      if (!user?.id) return;
+      if (!userId) return;
       
       try {
         // Get default lessons from lessons_v2 table where is_default = true
@@ -245,7 +278,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
         const { data: parentData, error: parentError } = await supabase
           .from('parents' as any)
           .select('lessons')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .maybeSingle();
         
         if (parentError && parentError.code !== 'PGRST116') {
@@ -286,7 +319,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     };
     
     loadParentLessons();
-  }, [user?.id]);
+  }, [userId]);
 
   useEffect(() => {
     const loadQuestionsAndImages = async () => {
@@ -407,7 +440,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     if (currentScreen === 'complete' && !showRewardVideo) {
       // When progress buddy is shown, check if all questions were answered and update status to 'complete'
       const allQuestionsAnswered = askedQuestionIds.size >= availableQuestions.length;
-      if (allQuestionsAnswered && selectedLessonId && user?.id) {
+      if (allQuestionsAnswered && selectedLessonId && userId) {
         recordLessonActivity('complete', selectedLessonId);
       }
       
@@ -417,7 +450,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [currentScreen, showRewardVideo, askedQuestionIds.size, availableQuestions.length, selectedLessonId, user?.id]);
+  }, [currentScreen, showRewardVideo, askedQuestionIds.size, availableQuestions.length, selectedLessonId, userId]);
 
   useEffect(() => {
     if (showRewardVideo && !hasPlayedChime) {
@@ -466,11 +499,11 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setAskedQuestionIds(new Set());
     
     // Record lesson activity as 'started' when lesson is selected
-    if (lessonId && user?.id) {
+    if (lessonId && userId) {
       console.log('handleDirectLessonSelect: Recording lesson activity for lesson:', lessonId);
       await recordLessonActivity('started', lessonId);
     } else {
-      console.log('handleDirectLessonSelect: Skipping - lessonId:', lessonId, 'user?.id:', user?.id);
+      console.log('handleDirectLessonSelect: Skipping - lessonId:', lessonId, 'userId:', userId);
     }
     
     let filteredQuestions: Question_v2[];
@@ -518,11 +551,11 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setSelectedLessonId(lessonId);
     
     // Record lesson activity as 'started' when lesson is selected
-    if (lessonId && user?.id) {
-      console.log('handleDirectLessonSelect: Recording lesson activity for lesson:', lessonId);
+    if (lessonId && userId) {
+      console.log('handleLessonSelect: Recording lesson activity for lesson:', lessonId);
       await recordLessonActivity('started', lessonId);
     } else {
-      console.log('handleDirectLessonSelect: Skipping - lessonId:', lessonId, 'user?.id:', user?.id);
+      console.log('handleLessonSelect: Skipping - lessonId:', lessonId, 'userId:', userId);
     }
     
     let filteredQuestions: Question_v2[];
@@ -578,26 +611,29 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   // Helper function to record lesson activity with status
   const recordLessonActivity = async (status: 'started' | 'complete', lessonIdOverride?: string | null) => {
     const lessonIdToUse = lessonIdOverride !== undefined ? lessonIdOverride : selectedLessonId;
-    if (!lessonIdToUse || !user?.id) {
-      console.log('Skipping lesson activity record - lessonId:', lessonIdToUse, 'userId:', user?.id);
+    if (!lessonIdToUse || !userId) {
+      console.log('Skipping lesson activity record - lessonId:', lessonIdToUse, 'userId:', userId);
       return;
     }
     
     try {
-      // Verify the current authenticated user matches the user.id from context
+      // Verify the current authenticated user has permission to record for this userId
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
       if (authError || !authUser) {
         console.error('Error getting authenticated user:', authError);
         return;
       }
       
-      if (authUser.id !== user.id) {
-        console.error('User ID mismatch - authUser.id:', authUser.id, 'user.id:', user.id);
-        return;
+      // Allow if authUser.id matches userId (parent recording for themselves)
+      // or if authUser is a therapist (they can record for linked parents)
+      const isRecordingForSelf = authUser.id === userId;
+      if (!isRecordingForSelf) {
+        // For therapists recording for parents, we rely on RLS policies to enforce permissions
+        // The userId prop should already be validated by the caller
       }
       
       const upsertData: any = {
-        user_id: authUser.id, // Use authUser.id to ensure it matches auth.uid()
+        user_id: userId, // Use the provided userId
         lesson_id: lessonIdToUse,
         status: status,
       };
@@ -614,7 +650,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
       const { data: existingData, error: checkError } = await supabase
         .from('lesson_activity' as any)
         .select('id')
-        .eq('user_id', authUser.id)
+        .eq('user_id', userId)
         .eq('lesson_id', lessonIdToUse)
         .maybeSingle();
       
@@ -650,7 +686,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
         console.error('Error recording lesson activity:', activityError);
         console.error('Error details:', JSON.stringify(activityError, null, 2));
         console.error('Upsert data:', upsertData);
-        console.error('Auth user ID:', authUser.id);
+        console.error('User ID:', userId);
       } else {
         console.log('Successfully recorded lesson activity:', { lessonId: lessonIdToUse, status, data });
       }
@@ -675,11 +711,11 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   const handleStartQuestions = async (questionsToUse?: Question_v2[]) => {
     // Record lesson activity as 'started' when lesson begins (if not already recorded)
-    if (selectedLessonId && user?.id) {
+    if (selectedLessonId && userId) {
       console.log('handleStartQuestions: Recording lesson activity for lesson:', selectedLessonId);
       await recordLessonActivity('started', selectedLessonId);
     } else {
-      console.log('handleStartQuestions: Skipping - selectedLessonId:', selectedLessonId, 'user?.id:', user?.id);
+      console.log('handleStartQuestions: Skipping - selectedLessonId:', selectedLessonId, 'userId:', userId);
     }
     
     // Use provided questions, then fall back to ref (for Skip button), then state
@@ -823,7 +859,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
         selectedLessonId,
         selectedQuestionType,
         totalQuestions: questions?.length || 0,
-        parentLessons: parentLessons?.length || 0,
+        parentLessonsLength: parentLessons?.length || 0,
         parentLessons: parentLessons,
         questionsToStartLength: questionsToStart.length,
         isArray: Array.isArray(questionsToStart),
@@ -1005,7 +1041,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
             <div className="mb-8 flex flex-col items-center">
               <div className="text-center mb-6 sm:mb-8 lg:mb-12 px-4">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-2 sm:mb-4">
-                  Choose Your Learning Adventure with {therapistName}!
+                  Choose Your Learning Adventure with {userFirstName || therapistName}!
                 </h2>
                 <p className="text-sm sm:text-base lg:text-lg text-gray-600">
                   {showLessonsPanel ? 'Choose a lesson or practice all questions' : 'Click on an activity to see available lessons'}

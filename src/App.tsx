@@ -23,8 +23,9 @@ import TherapistDashboard from "./pages/TherapistDashboard";
 import TherapistMyProfile from "./pages/TherapistMyProfile";
 import TherapistAIDemo from "./pages/TherapistAIDemo";
 import TherapistAILessons from "./pages/TherapistAILessons";
+import LinkedParents from "./pages/LinkedParents";
 import FindCoaches from "./pages/FindCoaches";
-import UserDashboard from "./pages/UserDashboard";
+import UserDashboardPage from "./pages/UserDashboardPage";
 import MyProfile from "./pages/MyProfile";
 import FooterDemo from "./pages/FooterDemo";
 import EmailTemplatePreview from "./pages/EmailTemplatePreview";
@@ -94,10 +95,11 @@ function App() {
               <Route path="/therapist-pending-approval" element={<TherapistPendingApproval />} />
               <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
               <Route path="/therapist-my-profile" element={<TherapistMyProfile />} />
+              <Route path="/therapist/learners" element={<LinkedParents />} />
               <Route path="/therapist/try-ai" element={<TherapistAIDemo />} />
               <Route path="/therapist/ai-lessons" element={<TherapistAILessons />} />
               <Route path="/consultation" element={<FindCoaches />} />
-              <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route path="/user-dashboard" element={<UserDashboardPage />} />
               <Route path="/my-profile" element={<MyProfile />} />
               <Route path="/footer-demo" element={<FooterDemo />} />
           <Route path="/email-preview" element={<EmailTemplatePreview />} />

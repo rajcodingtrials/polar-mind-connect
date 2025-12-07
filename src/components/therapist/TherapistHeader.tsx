@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, User as UserIcon, Sparkles, BookOpen } from "lucide-react";
+import { Home, User as UserIcon, Sparkles, BookOpen, Users } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
@@ -29,6 +29,7 @@ const TherapistHeader = () => {
 
   // Memoize icons to prevent recreation on each render
   const homeIcon = useMemo(() => <Home className="h-4 w-4 sm:h-5 sm:w-5" />, []);
+  const usersIcon = useMemo(() => <Users className="h-4 w-4 sm:h-5 sm:w-5" />, []);
   const sparklesIcon = useMemo(() => <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />, []);
   const bookOpenIcon = useMemo(() => <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />, []);
 
@@ -60,6 +61,12 @@ const TherapistHeader = () => {
             icon={homeIcon} 
             label="Home"
             isActive={location.pathname === '/therapist-dashboard'}
+          />
+          <NavItem 
+            to="/therapist/learners" 
+            icon={usersIcon} 
+            label="Parents"
+            isActive={location.pathname === '/therapist/learners'}
           />
           <NavItem 
             to="/therapist/try-ai" 

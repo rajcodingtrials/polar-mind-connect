@@ -35,11 +35,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const UserDashboard = () => {
+interface UserDashboardProps {
+  userId: string; // User ID to use for dashboard data
+}
+
+const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
-  const { upcomingSessions, completedSessions, sessionRatings, loading, submitRating, submitReview } = useClientSessions(user?.id || null);
-  const { lessonActivities, loading: lessonActivityLoading, submitReview: submitLessonReview } = useLessonActivity(user?.id || null);
+  const { upcomingSessions, completedSessions, sessionRatings, loading, submitRating, submitReview } = useClientSessions(userId || null);
+  const { lessonActivities, loading: lessonActivityLoading, submitReview: submitLessonReview } = useLessonActivity(userId || null);
   const [selectedSessionForRating, setSelectedSessionForRating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sessions' | 'ratings' | 'profile'>('dashboard');
   const [sessionHistoryExpanded, setSessionHistoryExpanded] = useState(false);
@@ -147,13 +151,13 @@ const UserDashboard = () => {
     });
 
     // Fetch existing review if it exists
-    if (user?.id) {
+    if (userId) {
       try {
         const { data: reviewData, error } = await supabase
           .from('lesson_activity' as any)
           .select('overall_rating, usefulness_rating, communication_rating, would_recommend, what_went_well, what_can_be_improved')
           .eq('lesson_id', activity.lesson_id)
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .maybeSingle();
 
         if (!error && reviewData) {
@@ -181,7 +185,7 @@ const UserDashboard = () => {
   };
 
   const handleSubmitLessonReview = async (review: LessonReview) => {
-    if (!selectedLessonForReview || !user?.id) return;
+    if (!selectedLessonForReview || !userId) return;
 
     try {
       await submitLessonReview(selectedLessonForReview.id, review);
@@ -224,13 +228,13 @@ const UserDashboard = () => {
     });
 
     // Fetch existing review if it exists
-    if (user?.id) {
+    if (userId) {
       try {
         const { data: reviewData, error } = await supabase
           .from('session_ratings')
           .select('overall_rating, usefulness_rating, communication_rating, would_recommend, what_went_well, what_can_be_improved')
           .eq('session_id', session.id)
-          .eq('client_id', user.id)
+          .eq('client_id', userId)
           .maybeSingle();
 
         if (!error && reviewData) {
@@ -257,7 +261,7 @@ const UserDashboard = () => {
   };
 
   const handleSubmitReview = async (review: SessionReview) => {
-    if (!selectedSessionForReview || !user?.id) return;
+    if (!selectedSessionForReview || !userId) return;
 
     try {
       await submitReview(selectedSessionForReview.id, review);

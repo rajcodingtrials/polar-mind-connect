@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Video, Calendar, Star, ChevronDown, ChevronUp } from "lucide-react";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import AffirmationCard from "@/components/parents/AffirmationCard";
-import AILearningAdventure_v2 from "@/components/parents/AILearningAdventure_v2";
+import AILearningAdventure_v2 from "@/components/AILearningAdventure_v2";
 import SessionReviewModal, { SessionReview } from "@/components/parents/SessionReviewModal";
 import LessonReviewModal, { LessonReview } from "@/components/parents/LessonReviewModal";
 import LessonActivityHistory from "@/components/parents/LessonActivityHistory";
@@ -503,6 +503,7 @@ const ParentHome: React.FC<ParentHomeProps> = ({ overrideUseAiTherapist }) => {
         <AILearningAdventure_v2 
           therapistName={selectedTherapist} 
           overrideUseAiTherapist={overrideUseAiTherapist}
+          userId={user?.id || ''}
         />
         <Footer />
       </div>
