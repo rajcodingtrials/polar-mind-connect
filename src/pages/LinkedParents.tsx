@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Link2, Unlink, Calendar, LayoutDashboard } from "lucide-react";
+import { Users, Link2, Unlink, Calendar, LayoutDashboard, CheckCircle2, XCircle } from "lucide-react";
 
 interface LinkedParent {
   id: string;
@@ -372,10 +372,11 @@ const LinkedParents = () => {
                         disabled={deactivatingAll || linkedParents.every(p => !p.is_active)}
                         className={
                           linkedParents.some(p => p.is_active)
-                            ? "!bg-red-600 hover:!bg-red-700 !text-white !border-red-600 hover:!text-white"
-                            : "!text-red-600 hover:!bg-red-600 hover:!text-white !border-red-600"
+                            ? "!bg-black hover:!bg-gray-800 !text-white !border-black hover:!text-white"
+                            : "!text-black hover:!bg-black hover:!text-white !border-black"
                         }
                       >
+                        <XCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5" />
                         {deactivatingAll ? "Deactivating..." : "Deactivate All"}
                       </Button>
                     )}
@@ -451,10 +452,11 @@ const LinkedParents = () => {
                                   variant="outline"
                                   size="sm"
                                   disabled
-                                  className="text-xs px-2 sm:px-3 flex-shrink-0 bg-green-600 text-white border-green-600"
+                                  className="text-xs px-2 sm:px-3 flex-shrink-0 bg-black text-white border-black"
                                 >
-                                  <span className="hidden sm:inline">Active</span>
-                                  <span className="sm:hidden">Active</span>
+                                  <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5" />
+                                  <span className="hidden sm:inline">Activated</span>
+                                  <span className="sm:hidden">Activated</span>
                                 </Button>
                               ) : (
                                 <Button
@@ -462,8 +464,9 @@ const LinkedParents = () => {
                                   size="sm"
                                   onClick={() => handleActivateParent(parent.id)}
                                   disabled={activating === parent.id || activating !== null}
-                                  className="text-xs px-2 sm:px-3 flex-shrink-0 !text-green-600 hover:!bg-green-600 hover:!text-white !border-green-600"
+                                  className="text-xs px-2 sm:px-3 flex-shrink-0 !text-black hover:!bg-black hover:!text-white !border-black"
                                 >
+                                  <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5" />
                                   {activating === parent.id ? "Activating..." : "Activate"}
                                 </Button>
                               )}
@@ -471,7 +474,7 @@ const LinkedParents = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleUnlinkParent(parent.id, parent.parent_user_id)}
-                                className="text-xs px-2 sm:px-3 flex-shrink-0 !bg-red-600 hover:!bg-red-700 !text-white !border-red-600 hover:!text-white"
+                                className="text-xs px-2 sm:px-3 flex-shrink-0 !bg-black hover:!bg-gray-800 !text-white !border-black hover:!text-white"
                               >
                                 <Unlink className="w-3 h-3 sm:mr-1.5" />
                                 <span className="hidden sm:inline">Unlink</span>
