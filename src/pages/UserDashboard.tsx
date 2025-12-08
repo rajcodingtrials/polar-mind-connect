@@ -3,7 +3,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useLessonActivity, LessonActivity } from "@/hooks/useLessonActivity";
+import { useUserRole } from "@/hooks/useUserRole";
 import Header from "@/components/Header";
+import TherapistHeader from "@/components/therapist/TherapistHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,8 +44,12 @@ interface UserDashboardProps {
 const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
+  const { isTherapist } = useUserRole();
   const { upcomingSessions, completedSessions, sessionRatings, loading, submitRating, submitReview } = useClientSessions(userId || null);
   const { lessonActivities, loading: lessonActivityLoading, submitReview: submitLessonReview } = useLessonActivity(userId || null);
+  
+  // Determine if we should show therapist header (therapist viewing someone else's dashboard)
+  const showTherapistHeader = isTherapist() && user?.id && userId && user.id !== userId;
   const [selectedSessionForRating, setSelectedSessionForRating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sessions' | 'ratings' | 'profile'>('dashboard');
   const [sessionHistoryExpanded, setSessionHistoryExpanded] = useState(false);
@@ -829,7 +835,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
-      <Header />
+      {showTherapistHeader ? <TherapistHeader /> : <Header />}
       
       {/* Main Content */}
       <main className="flex-1 overflow-auto">

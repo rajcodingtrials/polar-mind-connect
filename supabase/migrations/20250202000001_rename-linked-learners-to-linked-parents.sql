@@ -1,4 +1,9 @@
--- Rename linked_learners table to linked_parents
+-- This migration originally renamed linked_learners to linked_parents
+-- However, the first migration now creates linked_parents directly
+-- This migration is kept for historical purposes and to handle cases where
+-- the old linked_learners table might have existed before the first migration was updated
+
+-- Rename linked_learners table to linked_parents (if it exists from old migrations)
 ALTER TABLE IF EXISTS public.linked_learners RENAME TO linked_parents;
 
 -- Add is_active column to linked_parents table

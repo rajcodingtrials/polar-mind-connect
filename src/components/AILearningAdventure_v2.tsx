@@ -103,6 +103,8 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   const [localAmplifyMic, setLocalAmplifyMic] = useState(false);
   const [localMicGain, setLocalMicGain] = useState(1.0);
   const [userFirstName, setUserFirstName] = useState<string>('');
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [correctQuestionIndices, setCorrectQuestionIndices] = useState<Set<number>>(new Set());
 
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -498,9 +500,11 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setSessionQuestionCount(0);
     setAskedQuestionIds(new Set());
     
-    // Record lesson activity as 'started' when lesson is selected
+    // Create new activity session when lesson is selected
     if (lessonId && userId) {
-      console.log('handleDirectLessonSelect: Recording lesson activity for lesson:', lessonId);
+      console.log('handleDirectLessonSelect: Creating activity session for lesson:', lessonId);
+      await createActivitySession(lessonId);
+      // Also record lesson activity as 'started' when lesson is selected
       await recordLessonActivity('started', lessonId);
     } else {
       console.log('handleDirectLessonSelect: Skipping - lessonId:', lessonId, 'userId:', userId);
@@ -550,9 +554,11 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   const handleLessonSelect = async (lessonId: string | null) => {
     setSelectedLessonId(lessonId);
     
-    // Record lesson activity as 'started' when lesson is selected
+    // Create new activity session when lesson is selected
     if (lessonId && userId) {
-      console.log('handleLessonSelect: Recording lesson activity for lesson:', lessonId);
+      console.log('handleLessonSelect: Creating activity session for lesson:', lessonId);
+      await createActivitySession(lessonId);
+      // Also record lesson activity as 'started' when lesson is selected
       await recordLessonActivity('started', lessonId);
     } else {
       console.log('handleLessonSelect: Skipping - lessonId:', lessonId, 'userId:', userId);
@@ -605,6 +611,144 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
           parentLessons: parentLessons.length
         });
       }
+    }
+  };
+
+  // Helper function to create a new activity session
+  const createActivitySession = async (lessonId: string) => {
+    if (!userId || !lessonId) {
+      console.log('Skipping activity session creation - userId:', userId, 'lessonId:', lessonId);
+      return null;
+    }
+
+    try {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        console.error('Error getting authenticated user:', authError);
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from('activity_sessions' as any)
+        .insert({
+          user_id: userId,
+          lesson_id: lessonId,
+          start_time: new Date().toISOString(),
+          status: 'started',
+          num_questions_attempted: 0,
+          num_questions_correct: 0,
+          correct_question_index: '',
+        })
+        .select('session_id')
+        .single();
+
+      if (error) {
+        console.error('Error creating activity session:', error);
+        return null;
+      }
+
+      const sessionId = (data as any)?.session_id;
+      if (sessionId) {
+        setCurrentSessionId(sessionId);
+        setCorrectQuestionIndices(new Set());
+        console.log('Created activity session:', sessionId);
+        return sessionId;
+      }
+      return null;
+    } catch (error) {
+      console.error('Exception creating activity session:', error);
+      return null;
+    }
+  };
+
+  // Helper function to update activity session when a question is answered
+  const updateActivitySession = async (questionIndex: number, isCorrect: boolean) => {
+    if (!currentSessionId) {
+      console.log('No active session to update');
+      return;
+    }
+
+    try {
+      // Update correct question indices
+      let updatedIndices = new Set(correctQuestionIndices);
+      if (isCorrect) {
+        updatedIndices.add(questionIndex);
+      }
+      setCorrectQuestionIndices(updatedIndices);
+
+      // Get current session data
+      const { data: sessionData, error: fetchError } = await supabase
+        .from('activity_sessions' as any)
+        .select('num_questions_attempted, num_questions_correct')
+        .eq('session_id', currentSessionId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching session data:', fetchError);
+        return;
+      }
+
+      const currentAttempted = (sessionData as any)?.num_questions_attempted || 0;
+      const currentCorrect = (sessionData as any)?.num_questions_correct || 0;
+
+      const newAttempted = currentAttempted + 1;
+      const newCorrect = isCorrect ? currentCorrect + 1 : currentCorrect;
+
+      // Convert Set to comma-separated string
+      const correctIndicesString = Array.from(updatedIndices).sort((a, b) => a - b).join(',');
+
+      const { error: updateError } = await supabase
+        .from('activity_sessions' as any)
+        .update({
+          num_questions_attempted: newAttempted,
+          num_questions_correct: newCorrect,
+          correct_question_index: correctIndicesString,
+        })
+        .eq('session_id', currentSessionId);
+
+      if (updateError) {
+        console.error('Error updating activity session:', updateError);
+      } else {
+        console.log('Updated activity session:', {
+          sessionId: currentSessionId,
+          attempted: newAttempted,
+          correct: newCorrect,
+          correctIndices: correctIndicesString,
+        });
+      }
+    } catch (error) {
+      console.error('Exception updating activity session:', error);
+    }
+  };
+
+  // Helper function to complete activity session
+  const completeActivitySession = async () => {
+    if (!currentSessionId) {
+      console.log('No active session to complete');
+      return;
+    }
+
+    try {
+      const correctIndicesString = Array.from(correctQuestionIndices).sort((a, b) => a - b).join(',');
+
+      const { error } = await supabase
+        .from('activity_sessions' as any)
+        .update({
+          status: 'completed',
+          end_time: new Date().toISOString(),
+          correct_question_index: correctIndicesString,
+        })
+        .eq('session_id', currentSessionId);
+
+      if (error) {
+        console.error('Error completing activity session:', error);
+      } else {
+        console.log('Completed activity session:', currentSessionId);
+        setCurrentSessionId(null);
+        setCorrectQuestionIndices(new Set());
+      }
+    } catch (error) {
+      console.error('Exception completing activity session:', error);
     }
   };
 
@@ -913,9 +1057,14 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     }
   };
 
-  const handleCorrectAnswer = () => {
+  const handleCorrectAnswer = async () => {
     setCorrectAnswers(prev => prev + 1);
     setRetryCount(0);
+    
+    // Update activity session with correct answer
+    if (currentQuestion && currentQuestion.question_index !== null) {
+      await updateActivitySession(currentQuestion.question_index, true);
+    }
     
     // Check if mini celebration should be shown for the current question's lesson
     // Default to true if not set (for backward compatibility)
@@ -934,10 +1083,19 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   };
 
   const handleNextQuestion = async (shouldIncrement: boolean = true) => {
+    // Update activity session with attempted question (if not already correct)
+    if (currentQuestion && currentQuestion.question_index !== null && shouldIncrement) {
+      const isCorrect = correctQuestionIndices.has(currentQuestion.question_index);
+      if (!isCorrect) {
+        await updateActivitySession(currentQuestion.question_index, false);
+      }
+    }
+
     if (sessionQuestionCount >= maxQuestionsPerSession) {
       // Check if all questions in the lesson were answered
       const allQuestionsAnswered = askedQuestionIds.size >= availableQuestions.length;
       if (allQuestionsAnswered && selectedLessonId) {
+        await completeActivitySession();
         await recordLessonActivity('complete', selectedLessonId);
       }
       setCurrentScreen('complete');
@@ -949,6 +1107,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     if (remainingQuestions.length === 0) {
       // All questions in the lesson have been answered - mark as complete
       if (selectedLessonId) {
+        await completeActivitySession();
         await recordLessonActivity('complete', selectedLessonId);
       }
       setCurrentScreen('complete');
@@ -989,6 +1148,11 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   };
 
   const handleCompleteSession = async () => {
+    // Complete activity session if it exists
+    if (currentSessionId) {
+      await completeActivitySession();
+    }
+
     // Check if all questions were answered - if so, status should already be 'complete'
     // Otherwise, ensure status is set (it should be 'started' if not all questions were answered)
     const allQuestionsAnswered = askedQuestionIds.size >= availableQuestions.length;
@@ -1007,6 +1171,8 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setAvailableQuestions([]);
     setAskedQuestionIds(new Set());
     setSessionQuestionCount(0);
+    setCurrentSessionId(null);
+    setCorrectQuestionIndices(new Set());
   };
 
   const handleActivityClick = (questionType: QuestionType) => {
@@ -1134,6 +1300,10 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
               onNextQuestion={handleNextQuestion}
               onComplete={() => setCurrentScreen('complete')}
               onPickNewLesson={async () => {
+                // Complete current session if it exists
+                if (currentSessionId) {
+                  await completeActivitySession();
+                }
                 await recordLessonActivity('started');
                 setCurrentScreen('home');
                 setShowQuestionTypes(true);

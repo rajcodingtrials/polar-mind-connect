@@ -507,7 +507,7 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
           // Create lesson record in lessons_v2
           // Set is_verified to true if user is therapist_admin, false otherwise
           const isVerified = role === 'therapist_admin';
-          const lessonRecord = {
+          const lessonRecord: any = {
             name: lessonName,
             description: lessonData.description || null,
             question_type: questionType,
@@ -517,6 +517,16 @@ const UploadLessons: React.FC<UploadLessonsProps> = ({ userId, open, onOpenChang
             add_mini_celebration: lessonData.add_mini_celebration !== undefined ? lessonData.add_mini_celebration : true,
             priority: 0,
           };
+
+          // Include is_default if present in lesson.json
+          if (lessonData.is_default !== undefined) {
+            lessonRecord.is_default = lessonData.is_default;
+          }
+
+          // Include publish_to_marketplace if present in lesson.json
+          if (lessonData.publish_to_marketplace !== undefined) {
+            lessonRecord.publish_to_marketplace = lessonData.publish_to_marketplace;
+          }
 
           const { data: lessonInsertData, error: lessonError } = await supabase
             .from('lessons_v2' as any)
