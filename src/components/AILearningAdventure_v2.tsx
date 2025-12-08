@@ -5,18 +5,13 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import { useAuth } from '../context/AuthContext';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
-import type { Database } from '@/integrations/supabase/types';
-import { getQuestionTypeLabel, getQuestionTypeDescription, initializeQuestionTypesCache } from '@/utils/questionTypes';
-import { useQuestionTypes } from '@/hooks/useQuestionTypes';
 import ProgressCharacter from './parents/ProgressCharacter';
 import IntroductionScreen from './parents/IntroductionScreen';
 import QuestionView from './parents/QuestionView';
 import MiniCelebration from './parents/MiniCelebration';
 import LessonSelection from './parents/LessonSelection';
-import QuestionTypeCards from './parents/QuestionTypeCards';
-import LessonsPanel from './parents/LessonsPanel';
-
+import ShowAllQuestionTypesAndLessons from './ShowAllQuestionTypesAndLessons';
+import { initializeQuestionTypesCache } from '@/utils/questionTypes';
 import type { QuestionType } from '@/utils/questionTypes';
 
 interface Question_v2 {
@@ -87,11 +82,6 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const maxQuestionsPerSession = 6;
 
-  const [hoveredActivityType, setHoveredActivityType] = useState<QuestionType | null>(null);
-  const [showLessonsPanel, setShowLessonsPanel] = useState(false);
-  const [lessons, setLessons] = useState<any[]>([]);
-  const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
-  const [questionTypesWithVerifiedLessons, setQuestionTypesWithVerifiedLessons] = useState<Set<string>>(new Set());
   
   const [adminSettings, setAdminSettings] = useState<{ skip_introduction: boolean; show_mic_input: boolean; amplify_mic: boolean; mic_gain: number } | null>(null);
   const [adminSettingsLoading, setAdminSettingsLoading] = useState(true);
@@ -106,13 +96,8 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [correctQuestionIndices, setCorrectQuestionIndices] = useState<Set<number>>(new Set());
 
-  const cardsContainerRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   // Store filtered questions in a ref so they're available immediately when Skip is clicked
   const filteredQuestionsRef = useRef<Question_v2[]>([]);
-
-  // Load question types from database
-  const { questionTypes: questionTypesData, loading: questionTypesLoading } = useQuestionTypes();
 
   // Fetch user's first name based on userId
   useEffect(() => {
@@ -172,46 +157,6 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   const childName = profile?.name || profile?.username || 'friend';
 
-  // Define 6 reusable color styles that cycle for all question types
-  const colorStyles = [
-    { color: 'bg-blue-100 hover:bg-blue-200 border-blue-200', textColor: 'text-blue-800', icon: BookOpen },
-    { color: 'bg-amber-100 hover:bg-amber-200 border-amber-200', textColor: 'text-amber-800', icon: MessageCircle },
-    { color: 'bg-purple-100 hover:bg-purple-200 border-purple-200', textColor: 'text-purple-800', icon: User },
-    { color: 'bg-emerald-100 hover:bg-emerald-200 border-emerald-200', textColor: 'text-emerald-800', icon: Building },
-    { color: 'bg-orange-100 hover:bg-orange-200 border-orange-200', textColor: 'text-orange-800', icon: Heart },
-    { color: 'bg-rose-100 hover:bg-rose-200 border-rose-200', textColor: 'text-rose-800', icon: BookOpen },
-  ];
-
-  // Sort question types by priority (descending) to ensure highest priority is shown first
-  // The hook already orders by priority, but we'll sort again here to be safe
-  const sortedQuestionTypes = [...questionTypesData].sort((a, b) => {
-    const priorityA = a.priority ?? 0;
-    const priorityB = b.priority ?? 0;
-    if (priorityA !== priorityB) {
-      return priorityB - priorityA; // Descending order (higher priority first)
-    }
-    // If priorities are equal, sort by name
-    return (a.name || '').localeCompare(b.name || '');
-  });
-
-  // Filter question types to only show those with at least one verified lesson
-  const filteredQuestionTypes = sortedQuestionTypes.filter(qt => 
-    questionTypesWithVerifiedLessons.has(qt.name)
-  );
-
-  const questionTypes = filteredQuestionTypes.map((qt, index) => {
-    // Cycle through the 6 color styles using modulo
-    const styleIndex = index % colorStyles.length;
-    const config = colorStyles[styleIndex];
-    return {
-      value: qt.name as QuestionType,
-      label: qt.display_string,
-      description: qt.description,
-      color: config.color,
-      textColor: config.textColor,
-      icon: config.icon
-    };
-  });
 
   // Handle lesson retry from sessionStorage
   useEffect(() => {
@@ -323,8 +268,9 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     loadParentLessons();
   }, [userId]);
 
+  // Load questions (needed for filtering when lessons are selected)
   useEffect(() => {
-    const loadQuestionsAndImages = async () => {
+    const loadQuestions = async () => {
       try {
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions_v2' as any)
@@ -379,62 +325,12 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
           
           setQuestions(formattedQuestions);
         }
-
-        const { data: lessonsData, error: lessonsError } = await supabase
-          .from('lessons_v2' as any)
-          .select('id, name, description, question_type, level, is_verified, youtube_video_id, created_at, updated_at, num_reviews, average_review, priority')
-          .eq('is_verified', true);
-
-        if (!lessonsError && lessonsData) {
-          // Ensure all lessons have question_type field
-          let validLessons = (lessonsData as any[]).filter(lesson => lesson && lesson.question_type);
-          
-          // If user is a parent, filter lessons to only show those in their lessons list
-          if (parentLessons.length > 0) {
-            validLessons = validLessons.filter(lesson => parentLessons.includes(lesson.id));
-          }
-          
-          // Track which question types have at least one verified lesson
-          const questionTypesWithLessons = new Set<string>();
-          for (const lesson of validLessons) {
-            if (lesson.question_type) {
-              questionTypesWithLessons.add(lesson.question_type);
-            }
-          }
-          setQuestionTypesWithVerifiedLessons(questionTypesWithLessons);
-          
-          // Sort by priority (descending), then by name (ascending)
-          validLessons.sort((a, b) => {
-            const priorityA = a.priority ?? 0;
-            const priorityB = b.priority ?? 0;
-            if (priorityA !== priorityB) {
-              return priorityB - priorityA; // Descending order
-            }
-            // If priorities are equal, sort by name
-            return (a.name || '').localeCompare(b.name || '');
-          });
-          
-          setLessons(validLessons);
-          
-          const counts: Record<string, number> = {};
-          for (const lesson of validLessons) {
-            const { count, error: countError } = await supabase
-              .from('questions_v2' as any)
-              .select('*', { count: 'exact', head: true })
-              .eq('lesson_id', lesson.id);
-            
-            if (!countError) {
-              counts[lesson.id] = count || 0;
-            }
-          }
-          setQuestionCounts(counts);
-        }
       } catch (error) {
-        console.error('Error loading data from Supabase:', error);
+        console.error('Error loading questions from Supabase:', error);
       }
     };
 
-    loadQuestionsAndImages();
+    loadQuestions();
   }, [parentLessons]);
 
 
@@ -463,22 +359,6 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     }
   }, [showRewardVideo, hasPlayedChime]);
 
-  // Scroll selected card into view when panel opens
-  useEffect(() => {
-    if (showLessonsPanel && hoveredActivityType && cardsContainerRef.current) {
-      const selectedCard = cardRefs.current[hoveredActivityType];
-      if (selectedCard) {
-        // Use setTimeout to ensure DOM is updated
-        setTimeout(() => {
-          selectedCard.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
-          });
-        }, 100);
-      }
-    }
-  }, [showLessonsPanel, hoveredActivityType]);
 
   const handleQuestionTypeSelect = (questionType: QuestionType) => {
     setSelectedQuestionType(questionType);
@@ -1175,20 +1055,6 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setCorrectQuestionIndices(new Set());
   };
 
-  const handleActivityClick = (questionType: QuestionType) => {
-    if (hoveredActivityType === questionType && showLessonsPanel) {
-      setHoveredActivityType(null);
-      setShowLessonsPanel(false);
-    } else {
-      setHoveredActivityType(questionType);
-      setShowLessonsPanel(true);
-    }
-  };
-
-  const handleCloseLessons = () => {
-    setHoveredActivityType(null);
-    setShowLessonsPanel(false);
-  };
 
   const handleAmplifyMicChange = (enabled: boolean) => {
     setLocalAmplifyMic(enabled);
@@ -1204,51 +1070,14 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
         <div className="max-w-7xl mx-auto">
           {/* Enhanced Activity Selection Screen */}
           {showQuestionTypes && currentScreen === 'home' && (
-            <div className="mb-8 flex flex-col items-center">
-              <div className="text-center mb-6 sm:mb-8 lg:mb-12 px-4">
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-2 sm:mb-4">
-                  Choose Your Learning Adventure with {userFirstName || therapistName}!
-                </h2>
-                <p className="text-sm sm:text-base lg:text-lg text-gray-600">
-                  {showLessonsPanel ? 'Choose a lesson or practice all questions' : 'Click on an activity to see available lessons'}
-                </p>
-                {!showLessonsPanel && (
-                  <p className="text-sm sm:text-base lg:text-lg text-gray-600 mt-2">
-                    You have {lessons.length} lessons available to learn.
-                  </p>
-                )}
-              </div>
-              
-              <div className="flex flex-col lg:flex-row max-w-7xl mx-auto gap-4 lg:gap-8 min-h-[500px]">
-                {/* Activity Cards Section */}
-                <div 
-                  ref={cardsContainerRef}
-                  className={`transition-all duration-300 ease-out ${showLessonsPanel ? 'w-full lg:w-2/5' : 'w-full'} overflow-y-auto max-h-[calc(100vh-300px)]`}
-                >
-                  <QuestionTypeCards
-                    questionTypes={questionTypes}
-                    hoveredActivityType={hoveredActivityType}
-                    showLessonsPanel={showLessonsPanel}
-                    onActivityClick={handleActivityClick}
-                    cardRefs={cardRefs}
-                  />
-                </div>
-
-                {/* Lessons Panel */}
-                <div 
-                  className={`transition-all duration-800 ease-out overflow-hidden ${showLessonsPanel ? 'w-full lg:w-3/5 opacity-100' : 'w-0 opacity-0'}`}
-                >
-                  {showLessonsPanel && hoveredActivityType && (
-                    <LessonsPanel
-                      selectedType={questionTypes.find(t => t.value === hoveredActivityType) || null}
-                      lessons={lessons}
-                      questionCounts={questionCounts}
-                      onClose={handleCloseLessons}
-                      onLessonSelect={handleDirectLessonSelect}
-                    />
-                  )}
-                </div>
-              </div>
+            <>
+              <ShowAllQuestionTypesAndLessons
+                userId={userId}
+                parentLessons={parentLessons}
+                onLessonSelect={handleDirectLessonSelect}
+                therapistName={therapistName}
+                userFirstName={userFirstName}
+              />
               
               <div className="mt-6 sm:mt-8 text-center flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
                 <button
@@ -1265,7 +1094,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
                   <span className="sm:hidden">Marketplace</span>
                 </button>
               </div>
-            </div>
+            </>
           )}
 
           {/* Lesson Selection Screen */}

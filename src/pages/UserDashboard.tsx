@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useClientSessions } from "@/hooks/useClientSessions";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { useLessonActivity, LessonActivity } from "@/hooks/useLessonActivity";
+import { useLessonActivity } from "@/hooks/useLessonActivity";
 import { useUserRole } from "@/hooks/useUserRole";
 import Header from "@/components/Header";
 import TherapistHeader from "@/components/therapist/TherapistHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Clock, 
@@ -18,12 +20,12 @@ import {
   TrendingUp,
   Timer,
   Flame,
-  Award,
   Video,
   Calendar,
   ChevronDown,
   ChevronUp,
-  RotateCcw
+  RotateCcw,
+  User
 } from "lucide-react";
 import { format } from "date-fns";
 import SessionRatingModal from "@/components/parents/SessionRatingModal";
@@ -61,6 +63,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
   const [existingReview, setExistingReview] = useState<SessionReview | null>(null);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [selectedTherapistForBooking, setSelectedTherapistForBooking] = useState<any | null>(null);
+  const [childName, setChildName] = useState("");
+  const [speechSkill, setSpeechSkill] = useState<string>("");
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -407,73 +411,182 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
               </CardContent>
             </Card>
 
-            {/* Badges Section */}
+            {/* Personalize Section */}
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-slate-700 flex items-center">
-                  <Award className="w-5 h-5 mr-2" />
-                  Badges Earned
+                  <User className="w-5 h-5 mr-2" />
+                  Personalize
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Sample badges - replace with actual badge data */}
-                  <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 border border-yellow-200 hover:border-yellow-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                    <CardContent className="p-6">
-                      <div className="flex items-center">
-                        <div className="p-2 rounded-lg bg-yellow-100">
-                          <Award className="h-8 w-8 text-amber-600" />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-amber-700">First Session</p>
-                          <p className="text-2xl font-bold text-amber-900">✓</p>
-                          <p className="text-xs text-amber-600">Badge earned</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200 hover:border-blue-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                    <CardContent className="p-6">
-                      <div className="flex items-center">
-                        <div className="p-2 rounded-lg bg-blue-100">
-                          <Flame className="h-8 w-8 text-blue-600" />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-blue-700">5 Day Streak</p>
-                          <p className="text-2xl font-bold text-blue-900">✓</p>
-                          <p className="text-xs text-blue-600">Badge earned</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 hover:border-green-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                    <CardContent className="p-6">
-                      <div className="flex items-center">
-                        <div className="p-2 rounded-lg bg-green-100">
-                          <BookOpen className="h-8 w-8 text-green-600" />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-green-700">10 Sessions</p>
-                          <p className="text-2xl font-bold text-green-900">✓</p>
-                          <p className="text-xs text-green-600">Badge earned</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-gradient-to-br from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 border border-purple-200 hover:border-purple-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                    <CardContent className="p-6">
-                      <div className="flex items-center">
-                        <div className="p-2 rounded-lg bg-purple-100">
-                          <Star className="h-8 w-8 text-purple-600" />
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-purple-700">High Rating</p>
-                          <p className="text-2xl font-bold text-purple-900">✓</p>
-                          <p className="text-xs text-purple-600">Badge earned</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                <div className="space-y-6 max-w-2xl">
+                  <div className="space-y-2">
+                    <Label htmlFor="child-name" className="text-slate-700 font-medium">
+                      Child Name
+                    </Label>
+                    <Input
+                      id="child-name"
+                      type="text"
+                      placeholder="Enter child's name"
+                      value={childName}
+                      onChange={(e) => setChildName(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="speech-skill" className="text-slate-700 font-medium">
+                      Current Speech Skills
+                    </Label>
+                    <select
+                      id="speech-skill"
+                      value={speechSkill}
+                      onChange={(e) => setSpeechSkill(e.target.value)}
+                      className="w-full px-3 py-2 text-sm sm:text-base border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-white"
+                    >
+                      <option value="">Select speech skill level</option>
+                      <option value="non_verbal">Non verbal (no words)</option>
+                      <option value="pre_verbal">Pre verbal (up to 10 words)</option>
+                      <option value="verbal">Verbal (can make sentences)</option>
+                      <option value="conversational">Conversational (can communicate in paragraphs)</option>
+                    </select>
+                  </div>
+                  
+                  <Button
+                    onClick={async () => {
+                      if (!childName.trim()) {
+                        toast({
+                          title: "Error",
+                          description: "Please enter the child's name.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      if (!speechSkill) {
+                        toast({
+                          title: "Error",
+                          description: "Please select the current speech skill level.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      try {
+                        // Get all default lessons from lessons_v2 table
+                        const { data: defaultLessonsData, error: defaultError } = await supabase
+                          .from('lessons_v2' as any)
+                          .select('id')
+                          .eq('is_default', true)
+                          .eq('is_verified', true);
+
+                        if (defaultError) {
+                          console.error('Error fetching default lessons:', defaultError);
+                          toast({
+                            title: "Error",
+                            description: "Failed to fetch default lessons. Please try again.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+
+                        // Get user's lessons from parents table
+                        const { data: parentData, error: parentError } = await supabase
+                          .from('parents' as any)
+                          .select('lessons')
+                          .eq('user_id', userId)
+                          .maybeSingle();
+
+                        if (parentError && parentError.code !== 'PGRST116') {
+                          console.error('Error fetching parent lessons:', parentError);
+                          toast({
+                            title: "Error",
+                            description: "Failed to fetch your lessons. Please try again.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+
+                        // Extract default lesson IDs
+                        const defaultLessonIds: string[] = [];
+                        if (defaultLessonsData && Array.isArray(defaultLessonsData)) {
+                          for (const lesson of defaultLessonsData) {
+                            if (lesson?.id) {
+                              defaultLessonIds.push(lesson.id);
+                            }
+                          }
+                        }
+
+                        // Extract user's custom lesson IDs
+                        const userLessonIds: string[] = [];
+                        if (parentData) {
+                          try {
+                            const record = parentData as { lessons?: string | null };
+                            if (record && record.lessons && typeof record.lessons === 'string' && record.lessons.trim() !== '') {
+                              userLessonIds.push(...record.lessons.split(',').map(id => id.trim()).filter(id => id));
+                            }
+                          } catch (e) {
+                            console.error('Error parsing parent lessons:', e);
+                          }
+                        }
+
+                        // Combine and deduplicate lesson IDs
+                        const allLessonIds = [...new Set([...defaultLessonIds, ...userLessonIds])];
+
+                        if (allLessonIds.length === 0) {
+                          toast({
+                            title: "Error",
+                            description: "No lessons available to create a lesson plan. Please contact support.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+
+                        // Select 20 lessons at random (or all if less than 20)
+                        const selectedLessons = allLessonIds
+                          .sort(() => Math.random() - 0.5) // Shuffle array
+                          .slice(0, Math.min(20, allLessonIds.length));
+
+                        // Create comma-separated list
+                        const lessonPlanString = selectedLessons.join(',');
+
+                        // Update or insert the lesson_plan in parents table
+                        const { error: updateError } = await supabase
+                          .from('parents' as any)
+                          .upsert({
+                            user_id: userId,
+                            lesson_plan: lessonPlanString,
+                          }, {
+                            onConflict: 'user_id'
+                          });
+
+                        if (updateError) {
+                          console.error('Error saving lesson plan:', updateError);
+                          toast({
+                            title: "Error",
+                            description: "Failed to save lesson plan. Please try again.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+
+                        toast({
+                          title: "Success",
+                          description: `Personalized lesson plan created with ${selectedLessons.length} lessons!`,
+                        });
+                      } catch (error) {
+                        console.error('Error creating lesson plan:', error);
+                        toast({
+                          title: "Error",
+                          description: "An unexpected error occurred. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Create Personalized Lesson Plan
+                  </Button>
                 </div>
               </CardContent>
             </Card>

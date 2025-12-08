@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, User as UserIcon, Sparkles, BookOpen, Users } from "lucide-react";
+import { Home, User as UserIcon, Sparkles, BookOpen, Users, Store } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
@@ -32,6 +32,7 @@ const TherapistHeader = () => {
   const usersIcon = useMemo(() => <Users className="h-4 w-4 sm:h-5 sm:w-5" />, []);
   const sparklesIcon = useMemo(() => <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />, []);
   const bookOpenIcon = useMemo(() => <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />, []);
+  const storeIcon = useMemo(() => <Store className="h-4 w-4 sm:h-5 sm:w-5" />, []);
 
   // Memoize Me icon based on profile to prevent flickering
   const meIcon = useMemo(() => {
@@ -79,6 +80,12 @@ const TherapistHeader = () => {
             icon={bookOpenIcon} 
             label="AI Lessons"
             isActive={location.pathname === '/therapist/ai-lessons'}
+          />
+          <NavItem 
+            to="/lessons-marketplace" 
+            icon={storeIcon} 
+            label="MarketPlace"
+            isActive={location.pathname === '/lessons-marketplace'}
           />
           {/* 'Me' icon & avatar case */}
           <NavItem 

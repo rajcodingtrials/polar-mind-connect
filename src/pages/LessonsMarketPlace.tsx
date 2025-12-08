@@ -4,9 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, MessageCircle, Building, Heart, User, Search, ArrowLeft } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import Header from '@/components/Header';
+import TherapistHeader from '@/components/therapist/TherapistHeader';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useUserRole } from '@/hooks/useUserRole';
 import LessonPurchaseModal from '@/components/parents/LessonPurchaseModal';
 import { SEO } from '@/components/SEO';
 import { getQuestionTypeLabel, initializeQuestionTypesCache, type QuestionType } from '@/utils/questionTypes';
@@ -34,6 +36,7 @@ const LessonsMarketPlace: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isTherapist } = useUserRole();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [filteredLessons, setFilteredLessons] = useState<Lesson[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -302,7 +305,7 @@ const LessonsMarketPlace: React.FC = () => {
         noindex={!user}
       />
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
-        <Header />
+        {isTherapist() ? <TherapistHeader /> : <Header />}
         <main className="flex-grow container mx-auto px-4 py-10">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
