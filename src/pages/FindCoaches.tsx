@@ -110,57 +110,57 @@ const FindCoaches = () => {
         <Header />
         
         {/* Merged Section */}
-        <main className="container mx-auto px-4 py-10 lg:py-16">
+        <main className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 md:py-10 lg:py-16">
         <Card className="bg-white border-slate-200 shadow-sm max-w-7xl mx-auto">
-          <CardContent className="p-6 lg:p-8">
-            <div className="space-y-6">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
+            <div className="space-y-4 sm:space-y-6">
               {/* Title */}
               <div className="text-center">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-800 mb-4">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800 mb-3 sm:mb-4 px-2">
                   Find Your Perfect Speech Therapist
                 </h1>
               </div>
 
               {/* Description Text */}
-              <p className="text-lg sm:text-xl text-slate-700 max-w-4xl mx-auto leading-relaxed font-medium text-center">
+              <p className="text-base sm:text-lg md:text-xl text-slate-700 max-w-4xl mx-auto leading-relaxed font-medium text-center px-2">
                 Connect with verified, licensed speech therapists for personalized therapy sessions. 
                 Start your journey to better communication today.
               </p>
 
               {/* Trust Indicators */}
-              <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-6">
-                <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium text-slate-700">Verified Therapists</span>
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:gap-6">
+                <div className="flex items-center gap-2 sm:gap-3 bg-slate-50 px-3 sm:px-4 md:px-5 py-2 sm:py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
+                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                  <span className="text-xs sm:text-sm font-medium text-slate-700">Verified Therapists</span>
                 </div>
-                <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
-                  <Users className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-slate-700">{totalTherapists}+ Professionals</span>
+                <div className="flex items-center gap-2 sm:gap-3 bg-slate-50 px-3 sm:px-4 md:px-5 py-2 sm:py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                  <span className="text-xs sm:text-sm font-medium text-slate-700">{totalTherapists}+ Professionals</span>
                 </div>
-                <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
-                  <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
-                  <span className="text-sm font-medium text-slate-700">{averageRating.toFixed(1)} Average Rating</span>
+                <div className="flex items-center gap-2 sm:gap-3 bg-slate-50 px-3 sm:px-4 md:px-5 py-2 sm:py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
+                  <Star className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 fill-amber-500" />
+                  <span className="text-xs sm:text-sm font-medium text-slate-700">{averageRating.toFixed(1)} Average Rating</span>
                 </div>
-                <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
-                  <Clock className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-slate-700">24/7 Support</span>
+                <div className="flex items-center gap-2 sm:gap-3 bg-slate-50 px-3 sm:px-4 md:px-5 py-2 sm:py-3 rounded-full border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors duration-200">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                  <span className="text-xs sm:text-sm font-medium text-slate-700">24/7 Support</span>
                 </div>
               </div>
 
               {/* Search and Filters */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 pt-4">
-                <div className="relative group lg:col-span-2">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-all duration-300" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pt-4">
+                <div className="relative group sm:col-span-2 lg:col-span-2">
+                  <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-focus-within:text-blue-600 transition-all duration-300" />
                   <Input
                     placeholder="Search by name or specialty..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-12 bg-white border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all duration-300 rounded-xl shadow-sm hover:shadow-md focus:shadow-md"
+                    className="pl-10 sm:pl-12 h-10 sm:h-12 text-sm sm:text-base bg-white border-slate-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all duration-300 rounded-xl shadow-sm hover:shadow-md focus:shadow-md"
                   />
                 </div>
                 
                 <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
-                  <SelectTrigger className="h-12 bg-white border-slate-200 focus:border-blue-600 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                  <SelectTrigger className="h-10 sm:h-12 text-sm sm:text-base bg-white border-slate-200 focus:border-blue-600 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
                     <SelectValue placeholder="All Specializations" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-slate-200 rounded-xl shadow-lg">
@@ -172,7 +172,7 @@ const FindCoaches = () => {
                 </Select>
 
                 <Select value={priceRange} onValueChange={setPriceRange}>
-                  <SelectTrigger className="h-12 bg-white border-slate-200 focus:border-blue-600 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                  <SelectTrigger className="h-10 sm:h-12 text-sm sm:text-base bg-white border-slate-200 focus:border-blue-600 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
                     <SelectValue placeholder="All Price Ranges" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-slate-200 rounded-xl shadow-lg">
@@ -185,7 +185,7 @@ const FindCoaches = () => {
                 </Select>
 
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="h-12 bg-white border-slate-200 focus:border-blue-600 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 md:col-start-2 lg:col-start-auto">
+                  <SelectTrigger className="h-10 sm:h-12 text-sm sm:text-base bg-white border-slate-200 focus:border-blue-600 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 sm:col-start-1 lg:col-start-auto">
                     <SelectValue placeholder="Sort By" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-slate-200 rounded-xl shadow-lg">
@@ -201,7 +201,7 @@ const FindCoaches = () => {
         </Card>
       
         {/* Directory Section */}
-        <div id="therapist-directory" className="container mx-auto px-4 py-8">
+        <div id="therapist-directory" className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
           <TherapistDirectory 
             searchQuery={searchQuery}
             selectedSpecialization={selectedSpecialization}

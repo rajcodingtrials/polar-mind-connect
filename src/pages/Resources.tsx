@@ -15,10 +15,10 @@ const Resources = () => {
       />
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navigation />
-        <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Resources</h1>
-            <p className="text-lg text-gray-600">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">Resources</h1>
+            <p className="text-base sm:text-lg text-gray-600 px-2">
               Helpful resources will be available here...
             </p>
           </div>

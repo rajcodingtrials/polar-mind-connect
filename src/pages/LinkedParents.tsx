@@ -294,10 +294,10 @@ const LinkedParents = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <TherapistHeader />
-      <main className="flex-grow container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">My Linked Parents</h1>
-          <p className="text-slate-600">Manage your linked parents and connect with new ones</p>
+      <main className="flex-grow container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-6xl">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800 mb-2">My Linked Parents</h1>
+          <p className="text-sm sm:text-base text-slate-600">Manage your linked parents and connect with new ones</p>
         </div>
 
         {/* Link New Parent Section */}

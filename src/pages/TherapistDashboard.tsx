@@ -261,18 +261,18 @@ const TherapistDashboard = () => {
       {/* Header */}
       <TherapistHeader />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header Section */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-4xl sm:text-5xl font-bold text-slate-800 flex items-center justify-center gap-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800 flex items-center justify-center gap-2 flex-wrap px-2">
               {therapistProfile ? (
                 <>Welcome back, {therapistProfile.name}!</>
               ) : (
                 "Welcome! Complete your profile to get started"
               )}
             </h1>
-            <p className="text-muted-foreground text-base sm:text-lg">
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg mt-2 sm:mt-3 px-2">
               {therapistProfile 
                 ? "Manage your practice, schedule, and client sessions from your dashboard."
                 : "Fill in your professional details in the Profile tab to start accepting clients."}
@@ -289,7 +289,7 @@ const TherapistDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 border border-yellow-200 hover:border-yellow-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <CardContent className="p-6">
                   <div className="flex items-center">

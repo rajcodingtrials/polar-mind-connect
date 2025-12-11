@@ -306,23 +306,23 @@ const LessonsMarketPlace: React.FC = () => {
       />
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
         {isTherapist() ? <TherapistHeader /> : <Header />}
-        <main className="flex-grow container mx-auto px-4 py-10">
+        <main className="flex-grow container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 md:py-10">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
-            <div className="mb-6 sm:mb-8">
+            <div className="mb-4 sm:mb-6 md:mb-8">
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-3 sm:mb-4 transition-colors text-sm sm:text-base"
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-2 sm:mb-3 md:mb-4 transition-colors text-xs sm:text-sm md:text-base"
             >
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Back</span>
             </button>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Lessons Marketplace</h1>
-            <p className="text-sm sm:text-base lg:text-lg text-gray-600">Discover and explore lessons from our community</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 px-1">Lessons Marketplace</h1>
+            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 px-1">Discover and explore lessons from our community</p>
           </div>
 
           {/* Search and Filter Section */}
-          <div className="mb-6 sm:mb-8 space-y-4">
+          <div className="mb-4 sm:mb-6 md:mb-8 space-y-3 sm:space-y-4">
             {/* Search Bar */}
             <div className="relative max-w-2xl w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
@@ -331,15 +331,15 @@ const LessonsMarketPlace: React.FC = () => {
                 placeholder="Search lessons by name, description, or price..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
               />
             </div>
 
             {/* Filters Row */}
-            <div className="flex flex-col sm:flex-row gap-4 max-w-2xl">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-2xl">
               {/* Question Type Filter */}
               <div className="flex-1">
-                <label htmlFor="question-type-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="question-type-filter" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Question Type
                 </label>
                 <select
@@ -360,7 +360,7 @@ const LessonsMarketPlace: React.FC = () => {
               {/* Price Filters */}
               <div className="flex gap-2 sm:gap-3">
                 <div className="flex-1 min-w-[100px]">
-                  <label htmlFor="min-price" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="min-price" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Min Price
                   </label>
                   <input
@@ -375,7 +375,7 @@ const LessonsMarketPlace: React.FC = () => {
                   />
                 </div>
                 <div className="flex-1 min-w-[100px]">
-                  <label htmlFor="max-price" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="max-price" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                     Max Price
                   </label>
                   <input

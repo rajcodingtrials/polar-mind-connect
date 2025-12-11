@@ -513,29 +513,29 @@ const ParentHome: React.FC<ParentHomeProps> = ({ overrideUseAiTherapist }) => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50">
       <Header />
-      <main className="flex-grow container mx-auto px-4 py-10">
-        <div className="w-full space-y-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-slate-800 flex items-center justify-center gap-2 flex-wrap">
+      <main className="flex-grow container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 md:py-10">
+        <div className="w-full space-y-6 sm:space-y-8 text-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800 flex items-center justify-center gap-2 flex-wrap px-2">
             <span>Welcome, {profile?.name || profile?.username || "User"}!</span>
           </h1>
           <AffirmationCard />
           <Card className="bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200 shadow-sm">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 px-3 sm:px-4 md:px-6">
               <Tabs
                 value={activeTab}
                 onValueChange={(value) => setActiveTab(value as "ai" | "human")}
-                className="space-y-6"
+                className="space-y-4 sm:space-y-6"
               >
-                <TabsList className="grid grid-cols-2 gap-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-1.5">
+                <TabsList className="grid grid-cols-2 gap-2 sm:gap-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-1 sm:p-1.5">
                   <TabsTrigger
                     value="ai"
-                    className="rounded-xl text-sm sm:text-base font-medium border-2 border-transparent transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-100 data-[state=active]:to-indigo-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border-blue-200 data-[state=inactive]:bg-white/80 data-[state=inactive]:text-slate-600 data-[state=inactive]:hover:bg-gradient-to-r data-[state=inactive]:hover:from-blue-50 data-[state=inactive]:hover:to-indigo-50 data-[state=inactive]:hover:text-blue-600 hover:scale-[1.02]"
+                    className="rounded-xl text-xs sm:text-sm md:text-base font-medium border-2 border-transparent transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-100 data-[state=active]:to-indigo-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border-blue-200 data-[state=inactive]:bg-white/80 data-[state=inactive]:text-slate-600 data-[state=inactive]:hover:bg-gradient-to-r data-[state=inactive]:hover:from-blue-50 data-[state=inactive]:hover:to-indigo-50 data-[state=inactive]:hover:text-blue-600 hover:scale-[1.02]"
                   >
                     AI Therapy
                   </TabsTrigger>
                   <TabsTrigger
                     value="human"
-                    className="rounded-xl text-sm sm:text-base font-medium border-2 border-transparent transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-100 data-[state=active]:to-indigo-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border-blue-200 data-[state=inactive]:bg-white/80 data-[state=inactive]:text-slate-600 data-[state=inactive]:hover:bg-gradient-to-r data-[state=inactive]:hover:from-blue-50 data-[state=inactive]:hover:to-indigo-50 data-[state=inactive]:hover:text-blue-600 hover:scale-[1.02]"
+                    className="rounded-xl text-xs sm:text-sm md:text-base font-medium border-2 border-transparent transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-100 data-[state=active]:to-indigo-100 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border-blue-200 data-[state=inactive]:bg-white/80 data-[state=inactive]:text-slate-600 data-[state=inactive]:hover:bg-gradient-to-r data-[state=inactive]:hover:from-blue-50 data-[state=inactive]:hover:to-indigo-50 data-[state=inactive]:hover:text-blue-600 hover:scale-[1.02]"
                   >
                     Human Therapy
                   </TabsTrigger>
@@ -543,7 +543,7 @@ const ParentHome: React.FC<ParentHomeProps> = ({ overrideUseAiTherapist }) => {
                 <TabsContent value="ai">{renderAiTherapy}</TabsContent>
                 <TabsContent value="human">
                   {sessionsLoading ? (
-                    <div className="text-center py-12 text-slate-600">Loading your sessions...</div>
+                    <div className="text-center py-8 sm:py-12 text-sm sm:text-base text-slate-600">Loading your sessions...</div>
                   ) : (
                     renderHumanTherapy
                   )}
