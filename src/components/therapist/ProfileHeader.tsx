@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,12 @@ export const ProfileHeader = ({ therapistProfile, onAvatarUpdate }: ProfileHeade
   const { user } = useAuth();
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | undefined>(therapistProfile?.avatar_url);
+
+  // Update local avatar URL when therapistProfile prop changes
+  useEffect(() => {
+    setCurrentAvatarUrl(therapistProfile?.avatar_url);
+  }, [therapistProfile?.avatar_url]);
 
   const uploadPhoto = async (file: File) => {
     if (!therapistProfile?.id || !user?.id) return;
@@ -61,6 +67,8 @@ export const ProfileHeader = ({ therapistProfile, onAvatarUpdate }: ProfileHeade
 
       if (updateError) throw updateError;
 
+      // Update local state immediately for instant UI update
+      setCurrentAvatarUrl(avatarUrl);
       onAvatarUpdate?.(avatarUrl);
       
       toast({
@@ -111,7 +119,7 @@ export const ProfileHeader = ({ therapistProfile, onAvatarUpdate }: ProfileHeade
       <div className="relative">
       <Avatar className="h-48 w-48 border-4 border-white shadow-lg rounded-lg">
         <AvatarImage 
-          src={therapistProfile?.avatar_url} 
+          src={currentAvatarUrl || therapistProfile?.avatar_url} 
           alt="Profile photo" 
           className="object-cover"
         />

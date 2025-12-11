@@ -47,6 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
     }: TherapistNotificationRequest = await req.json();
 
     console.log('Processing therapist notification for session:', sessionId);
+    console.log('Client notes received:', clientNotes || '(none)');
 
     // Fetch therapist details
     const { data: therapist, error: therapistError } = await supabase
@@ -95,6 +96,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Prepare template variables
     const therapistName = therapist.name || `${therapist.first_name || ''} ${therapist.last_name || ''}`.trim() || 'Doctor';
+    // Ensure client_notes is a string (handle null/undefined)
+    const clientNotesString = clientNotes ? String(clientNotes).trim() : '';
     const templateVars = {
       therapist_name: therapistName,
       therapistName: therapistName,
@@ -108,8 +111,8 @@ const handler = async (req: Request): Promise<Response> => {
       session_type: sessionType,
       sessionType: sessionType,
       amount: amount.toFixed(2),
-      client_notes: clientNotes || '',
-      clientNotes: clientNotes || '',
+      client_notes: clientNotesString,
+      clientNotes: clientNotesString,
       meeting_link: session?.meeting_link || 'Will be provided shortly',
       zoom_meeting_id: session?.zoom_meeting_id || '',
       zoom_password: session?.zoom_password || ''
@@ -126,10 +129,13 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     // Handle conditional sections (client notes)
-    if (clientNotes && clientNotes.trim()) {
+    // Use clientNotesString to check if notes exist
+    if (clientNotesString) {
       emailContent = emailContent.replace(/{{#client_notes}}([\s\S]*?){{\/client_notes}}/g, '$1');
+      console.log('✅ Client notes section included in email');
     } else {
       emailContent = emailContent.replace(/{{#client_notes}}([\s\S]*?){{\/client_notes}}/g, '');
+      console.log('ℹ️ No client notes - conditional section removed');
     }
 
     console.log('Sending therapist notification to:', therapist.email);

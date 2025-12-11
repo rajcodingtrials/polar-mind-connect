@@ -99,8 +99,8 @@ export const useTherapistAuth = () => {
           name: profileData.name || '',
           bio: profileData.bio || null,
           specializations: profileData.specializations || [],
-          hourly_rate_30min: profileData.hourly_rate_30min || null,
-          hourly_rate_60min: profileData.hourly_rate_60min || null,
+          hourly_rate_30min: profileData.hourly_rate_30min ?? 10.00,
+          hourly_rate_60min: profileData.hourly_rate_60min ?? 20.00,
           avatar_url: profileData.avatar_url || null,
           years_experience: profileData.years_experience || 0,
           certification: profileData.certification || null,
@@ -108,7 +108,7 @@ export const useTherapistAuth = () => {
           languages: profileData.languages || null,
           timezone: profileData.timezone || 'UTC',
           is_verified: false,
-          is_active: true,
+          is_active: false,
         })
         .select()
         .single();

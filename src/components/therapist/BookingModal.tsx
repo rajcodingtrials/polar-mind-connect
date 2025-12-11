@@ -25,8 +25,8 @@ interface Therapist {
   id: string;
   first_name: string;
   last_name: string;
-  hourly_rate_30min: number;
-  hourly_rate_60min: number;
+  hourly_rate_30min: number | null;
+  hourly_rate_60min: number | null;
   timezone: string;
 }
 
@@ -63,7 +63,9 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [sessionId, setSessionId] = useState<string>();
 
-  const sessionPrice = duration === "30" ? therapist.hourly_rate_30min : therapist.hourly_rate_60min;
+  const sessionPrice = duration === "30" 
+    ? (therapist.hourly_rate_30min ?? 10) 
+    : (therapist.hourly_rate_60min ?? 20);
 
   // Fetch therapist's availability schedule
   useEffect(() => {
@@ -286,12 +288,12 @@ const BookingModal = ({ therapist, isOpen, onClose }: BookingModalProps) => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {therapist.hourly_rate_30min && (
-                  <SelectItem value="30">30 minutes - ${therapist.hourly_rate_30min}</SelectItem>
-                )}
-                {therapist.hourly_rate_60min && (
-                  <SelectItem value="60">60 minutes - ${therapist.hourly_rate_60min}</SelectItem>
-                )}
+                <SelectItem value="30">
+                  30 minutes - ${therapist.hourly_rate_30min ?? 10}
+                </SelectItem>
+                <SelectItem value="60">
+                  60 minutes - ${therapist.hourly_rate_60min ?? 20}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

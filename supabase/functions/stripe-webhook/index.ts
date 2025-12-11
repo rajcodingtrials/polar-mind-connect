@@ -159,11 +159,12 @@ const handler = async (req: Request): Promise<Response> => {
         
         if (sessionId) {
           console.log("📥 Fetching therapy session details...");
-          // Fetch session details
+          // Fetch session details (explicitly include client_notes)
           const { data: sessionData, error: fetchError } = await supabase
             .from("therapy_sessions")
             .select(`
               *,
+              client_notes,
               therapists (
                 id,
                 first_name,
@@ -274,6 +275,7 @@ const handler = async (req: Request): Promise<Response> => {
 
               // Send notification email to therapist
               console.log("📧 Sending notification email to therapist...");
+              console.log("📝 Client notes:", sessionData.client_notes || '(none)');
               try {
                 await supabase.functions.invoke('send-therapist-notification', {
                   body: {
@@ -285,7 +287,7 @@ const handler = async (req: Request): Promise<Response> => {
                     duration: sessionData.duration_minutes,
                     sessionType: sessionData.session_type,
                     amount: sessionData.price_paid,
-                    clientNotes: sessionData.client_notes,
+                    clientNotes: sessionData.client_notes || null,
                   }
                 });
                 console.log("✅ Therapist notification email sent");

@@ -26,6 +26,7 @@ import TherapistAILessons from "./pages/TherapistAILessons";
 import LinkedParents from "./pages/LinkedParents";
 import FindCoaches from "./pages/FindCoaches";
 import UserDashboardPage from "./pages/UserDashboardPage";
+import DashboardRedirect from "./pages/DashboardRedirect";
 import MyProfile from "./pages/MyProfile";
 import FooterDemo from "./pages/FooterDemo";
 import EmailTemplatePreview from "./pages/EmailTemplatePreview";
@@ -99,6 +100,7 @@ function App() {
               <Route path="/therapist/try-ai" element={<TherapistAIDemo />} />
               <Route path="/therapist/ai-lessons" element={<TherapistAILessons />} />
               <Route path="/consultation" element={<FindCoaches />} />
+              <Route path="/dashboard" element={<DashboardRedirect />} />
               <Route path="/user-dashboard" element={<UserDashboardPage />} />
               <Route path="/my-profile" element={<MyProfile />} />
               <Route path="/footer-demo" element={<FooterDemo />} />

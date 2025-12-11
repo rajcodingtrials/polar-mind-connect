@@ -454,9 +454,19 @@ const TherapistMyProfile = () => {
           <Card>
             <CardContent className="pt-6">
               <ProfileHeader 
-                therapistProfile={therapistProfile} 
+                therapistProfile={{
+                  ...therapistProfile,
+                  avatar_url: editedProfile?.avatar_url || therapistProfile?.avatar_url
+                }} 
                 onAvatarUpdate={(url) => {
+                  // Update editedProfile state immediately
                   setEditedProfile(prev => prev ? {...prev, avatar_url: url} : null);
+                  // Also update therapistProfile if it exists to keep them in sync
+                  if (therapistProfile) {
+                    // The ProfileHeader component already updates the database,
+                    // so we just need to update local state for immediate UI update
+                    // The merged profile above will handle the display
+                  }
                 }}
               />
             </CardContent>

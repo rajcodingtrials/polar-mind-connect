@@ -69,8 +69,8 @@ const TherapistDirectory = ({
       const { data, error } = await supabase
         .from("therapists")
         .select("*")
-        .eq("is_active", true);
-        // Removed .eq("is_verified", true) to show all active therapists
+        .eq("is_active", true)
+        .eq("is_verified", true);
 
       console.log("Therapists data:", data);
       if (error) {
