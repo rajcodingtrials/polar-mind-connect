@@ -52,6 +52,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
   
   // Determine if we should show therapist header (therapist viewing someone else's dashboard)
   const showTherapistHeader = isTherapist() && user?.id && userId && user.id !== userId;
+  const [currentTherapistId, setCurrentTherapistId] = useState<string | null>(null);
   const [selectedSessionForRating, setSelectedSessionForRating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sessions' | 'ratings' | 'profile'>('dashboard');
   const [sessionHistoryExpanded, setSessionHistoryExpanded] = useState(false);
@@ -76,6 +77,34 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
       setActiveTab(tab as 'dashboard' | 'sessions' | 'ratings' | 'profile');
     }
   }, [location.search]);
+
+  // Fetch current therapist ID when viewing a linked parent's dashboard
+  useEffect(() => {
+    const fetchTherapistId = async () => {
+      if (showTherapistHeader && user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('therapists' as any)
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (!error && data) {
+            setCurrentTherapistId(data.id);
+          } else {
+            setCurrentTherapistId(null);
+          }
+        } catch (error) {
+          console.error('Error fetching therapist ID:', error);
+          setCurrentTherapistId(null);
+        }
+      } else {
+        setCurrentTherapistId(null);
+      }
+    };
+
+    fetchTherapistId();
+  }, [showTherapistHeader, user?.id]);
 
   if (profileLoading || loading) {
     return (
@@ -141,8 +170,17 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
     };
   };
 
+  // Filter sessions to only show current therapist's sessions when viewing linked parent's dashboard
+  const filteredCompletedSessions = showTherapistHeader && currentTherapistId
+    ? completedSessions.filter(session => session.therapist_id === currentTherapistId)
+    : completedSessions;
+
+  const filteredUpcomingSessions = showTherapistHeader && currentTherapistId
+    ? upcomingSessions.filter(session => session.therapist_id === currentTherapistId)
+    : upcomingSessions;
+
   // Sort completed sessions: most recent first
-  const sortedCompletedSessions = [...completedSessions].sort((a, b) => {
+  const sortedCompletedSessions = [...filteredCompletedSessions].sort((a, b) => {
     const dateA = new Date(`${a.session_date}T${a.start_time}`);
     const dateB = new Date(`${b.session_date}T${b.start_time}`);
     return dateB.getTime() - dateA.getTime();
@@ -322,9 +360,9 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
     }
   };
 
-  // Calculate stats
-  const totalCompletedSessions = completedSessions.length;
-  const totalTimeMinutes = completedSessions.reduce((acc, session) => acc + (session.duration_minutes || 0), 0);
+  // Calculate stats (use filtered sessions when therapist is viewing)
+  const totalCompletedSessions = filteredCompletedSessions.length;
+  const totalTimeMinutes = filteredCompletedSessions.reduce((acc, session) => acc + (session.duration_minutes || 0), 0);
   const totalTimeHours = Math.round(totalTimeMinutes / 60 * 10) / 10;
   const streakDays = 5; // This would be calculated based on consecutive days
   const averageRating = sessionRatings.length > 0 
@@ -550,15 +588,29 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
                         // Create comma-separated list
                         const lessonPlanString = selectedLessons.join(',');
 
-                        // Update or insert the lesson_plan in parents table
-                        const { error: updateError } = await supabase
-                          .from('parents' as any)
-                          .upsert({
-                            user_id: userId,
-                            lesson_plan: lessonPlanString,
-                          }, {
-                            onConflict: 'user_id'
+                        // Check if current user is a therapist viewing someone else's dashboard
+                        const isTherapistUpdatingLinkedParent = showTherapistHeader && user?.id && userId && user.id !== userId;
+
+                        let updateError = null;
+                        if (isTherapistUpdatingLinkedParent) {
+                          // Use the database function for therapists updating linked parents
+                          const { error } = await (supabase.rpc as any)('update_parent_lesson_plan', {
+                            _parent_user_id: userId,
+                            _lesson_plan: lessonPlanString
                           });
+                          updateError = error;
+                        } else {
+                          // Direct table access for parents updating their own lesson plan
+                          const { error } = await supabase
+                            .from('parents' as any)
+                            .upsert({
+                              user_id: userId,
+                              lesson_plan: lessonPlanString,
+                            }, {
+                              onConflict: 'user_id'
+                            });
+                          updateError = error;
+                        }
 
                         if (updateError) {
                           console.error('Error saving lesson plan:', updateError);
@@ -616,7 +668,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
                   {/* Human Therapy Section */}
                   <div>
                     <h3 className="text-xl font-semibold text-slate-700 mb-4 px-4 text-left">Human Therapy</h3>
-                    {completedSessions.length === 0 ? (
+                    {filteredCompletedSessions.length === 0 ? (
                       <div className="text-center py-8 bg-white rounded-xl border-2 border-dashed border-gray-300">
                         <p className="text-slate-600">No completed sessions yet.</p>
                       </div>
@@ -738,11 +790,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
               <CardHeader>
                 <CardTitle className="text-slate-700 flex items-center">
                   <Clock className="w-5 h-5 mr-2" />
-                  Upcoming Sessions ({upcomingSessions.length})
+                  Upcoming Sessions ({filteredUpcomingSessions.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {upcomingSessions.length === 0 ? (
+                {filteredUpcomingSessions.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-slate-600 mb-4">No upcoming sessions scheduled.</p>
                     <Button onClick={() => window.location.href = '/consultation'}>
@@ -751,7 +803,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {upcomingSessions.map((session) => {
+                    {filteredUpcomingSessions.map((session) => {
                       const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                       const canJoin = isSessionJoinable(session.session_date, session.start_time);
                       const hasPassed = hasSessionPassed(session.session_date, session.end_time);
@@ -837,15 +889,15 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
               <CardHeader>
                 <CardTitle className="text-slate-700 flex items-center">
                   <FileText className="w-5 h-5 mr-2" />
-                  Session History ({completedSessions.length})
+                  Session History ({filteredCompletedSessions.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {completedSessions.length === 0 ? (
+                {filteredCompletedSessions.length === 0 ? (
                   <p className="text-center text-slate-600 py-8">No completed sessions yet.</p>
                 ) : (
                   <div className="space-y-4">
-                    {completedSessions.slice(0, 10).map((session) => {
+                    {filteredCompletedSessions.slice(0, 10).map((session) => {
                       const { date, time } = formatSessionDateTime(session.session_date, session.start_time);
                       const rating = getSessionRating(session.id);
                       return (
@@ -906,7 +958,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
               ) : (
                 <div className="space-y-4">
                   {sessionRatings.map((rating) => {
-                    const session = completedSessions.find(s => s.id === rating.session_id);
+                    const session = filteredCompletedSessions.find(s => s.id === rating.session_id);
                     return (
                       <div key={rating.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="flex items-center justify-between mb-2">

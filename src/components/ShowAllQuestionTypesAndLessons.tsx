@@ -3,6 +3,8 @@ import { BookOpen, MessageCircle, Building, Heart, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { initializeQuestionTypesCache } from '@/utils/questionTypes';
 import { useQuestionTypes } from '@/hooks/useQuestionTypes';
+import { useAuth } from '@/context/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import QuestionTypeCards from './parents/QuestionTypeCards';
 import LessonsPanel from './parents/LessonsPanel';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,6 +25,8 @@ const ShowAllQuestionTypesAndLessons: React.FC<ShowAllQuestionTypesAndLessonsPro
   therapistName,
   userFirstName,
 }) => {
+  const { user } = useAuth();
+  const { isTherapist } = useUserRole();
   const [selectedTab, setSelectedTab] = useState<'all-lessons' | 'lesson-plan'>('all-lessons');
   const [hoveredActivityType, setHoveredActivityType] = useState<QuestionType | null>(null);
   const [showLessonsPanel, setShowLessonsPanel] = useState(false);
@@ -33,6 +37,9 @@ const ShowAllQuestionTypesAndLessons: React.FC<ShowAllQuestionTypesAndLessonsPro
   
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  
+  // Check if current user is a therapist viewing a linked parent's dashboard
+  const isTherapistViewingLinkedParent = isTherapist() && user?.id && userId && user.id !== userId;
 
   // Load question types from database
   const { questionTypes: questionTypesData } = useQuestionTypes();
@@ -148,24 +155,39 @@ const ShowAllQuestionTypesAndLessons: React.FC<ShowAllQuestionTypesAndLessonsPro
           lessonIds = [...new Set([...defaultLessonIds, ...userLessonIds])];
         } else if (selectedTab === 'lesson-plan') {
           // Get lesson plan from parents table
-          const { data: parentData, error: parentError } = await supabase
-            .from('parents' as any)
-            .select('lesson_plan')
-            .eq('user_id', userId)
-            .maybeSingle();
+          // Use database function if therapist is viewing linked parent, otherwise direct table access
+          if (isTherapistViewingLinkedParent) {
+            // Use database function for therapists viewing linked parents
+            const { data: lessonPlanData, error: lessonPlanError } = await (supabase.rpc as any)('get_parent_lesson_plan', {
+              _parent_user_id: userId
+            });
 
-          if (parentError && parentError.code !== 'PGRST116') {
-            console.error('Error fetching lesson plan:', parentError);
-          }
+            if (lessonPlanError) {
+              console.error('Error fetching lesson plan via function:', lessonPlanError);
+            } else if (lessonPlanData && typeof lessonPlanData === 'string' && lessonPlanData.trim() !== '') {
+              lessonIds = lessonPlanData.split(',').map(id => id.trim()).filter(id => id);
+            }
+          } else {
+            // Direct table access for parents viewing their own lesson plan
+            const { data: parentData, error: parentError } = await supabase
+              .from('parents' as any)
+              .select('lesson_plan')
+              .eq('user_id', userId)
+              .maybeSingle();
 
-          if (parentData) {
-            try {
-              const record = parentData as { lesson_plan?: string | null };
-              if (record && record.lesson_plan && typeof record.lesson_plan === 'string' && record.lesson_plan.trim() !== '') {
-                lessonIds = record.lesson_plan.split(',').map(id => id.trim()).filter(id => id);
+            if (parentError && parentError.code !== 'PGRST116') {
+              console.error('Error fetching lesson plan:', parentError);
+            }
+
+            if (parentData) {
+              try {
+                const record = parentData as { lesson_plan?: string | null };
+                if (record && record.lesson_plan && typeof record.lesson_plan === 'string' && record.lesson_plan.trim() !== '') {
+                  lessonIds = record.lesson_plan.split(',').map(id => id.trim()).filter(id => id);
+                }
+              } catch (e) {
+                console.error('Error parsing lesson plan:', e);
               }
-            } catch (e) {
-              console.error('Error parsing lesson plan:', e);
             }
           }
         }
@@ -178,7 +200,7 @@ const ShowAllQuestionTypesAndLessons: React.FC<ShowAllQuestionTypesAndLessonsPro
     };
 
     loadAvailableLessonIds();
-  }, [userId, selectedTab]);
+  }, [userId, selectedTab, isTherapistViewingLinkedParent]);
 
   // Load lessons based on available lesson IDs
   useEffect(() => {
