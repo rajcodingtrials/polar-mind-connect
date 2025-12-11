@@ -144,13 +144,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = signOut;
 
   const resetPassword = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/reset-password`;
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
-    });
-    
-    return { error };
+    try {
+      // Call the Edge Function to send custom password reset email
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email },
+      });
+
+      if (error) {
+        console.error('Error calling send-password-reset function:', error);
+        // If the function doesn't exist or isn't deployed, fall back to default Supabase method
+        if (error.message?.includes('Failed to send a request') || error.message?.includes('Function not found')) {
+          console.log('Edge Function not available, falling back to default password reset');
+          const redirectUrl = `${window.location.origin}/reset-password`;
+          const { error: defaultError } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectUrl,
+          });
+          return { error: defaultError };
+        }
+        return { error };
+      }
+
+      // Return success (the function always returns success to prevent email enumeration)
+      return { error: null };
+    } catch (error: any) {
+      console.error('Error in resetPassword:', error);
+      // Fallback to default Supabase method if Edge Function fails
+      try {
+        console.log('Falling back to default password reset method');
+        const redirectUrl = `${window.location.origin}/reset-password`;
+        const { error: defaultError } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: redirectUrl,
+        });
+        return { error: defaultError };
+      } catch (fallbackError) {
+        return { error: fallbackError };
+      }
+    }
   };
 
   return (
