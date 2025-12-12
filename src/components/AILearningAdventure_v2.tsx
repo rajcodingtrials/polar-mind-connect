@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useAuth } from '../context/AuthContext';
 import { useUserPreferences } from '../hooks/useUserPreferences';
+import { useQuestionImagePreloader } from '../hooks/useQuestionImagePreloader';
 import { supabase } from '@/integrations/supabase/client';
 import ProgressCharacter from './parents/ProgressCharacter';
 import IntroductionScreen from './parents/IntroductionScreen';
@@ -98,6 +99,18 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   // Store filtered questions in a ref so they're available immediately when Skip is clicked
   const filteredQuestionsRef = useRef<Question_v2[]>([]);
+  
+  // Get current question index for preloading
+  const currentQuestionIndex = currentQuestion 
+    ? availableQuestions.findIndex(q => q.id === currentQuestion.id)
+    : -1;
+  
+  // Preload images for upcoming questions
+  const { preloadAllLessonImages } = useQuestionImagePreloader(
+    availableQuestions,
+    currentQuestionIndex,
+    3 // Preload next 3 questions
+  );
 
   // Fetch user's first name based on userId
   useEffect(() => {
@@ -413,6 +426,12 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     // Store in ref for immediate access when Skip is clicked
     filteredQuestionsRef.current = filteredQuestions;
     setAvailableQuestions(filteredQuestions);
+    
+    // Preload all images for the lesson
+    if (filteredQuestions.length > 0) {
+      preloadAllLessonImages(filteredQuestions);
+    }
+    
     console.log('[handleDirectLessonSelect] Stored questions in ref and state', {
       refLength: filteredQuestionsRef.current.length,
       filteredLength: filteredQuestions.length,
@@ -467,6 +486,12 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     // Store in ref for immediate access when Skip is clicked
     filteredQuestionsRef.current = filteredQuestions;
     setAvailableQuestions(filteredQuestions);
+    
+    // Preload all images for the lesson
+    if (filteredQuestions.length > 0) {
+      preloadAllLessonImages(filteredQuestions);
+    }
+    
     console.log('[handleLessonSelect] Stored questions in ref and state', {
       refLength: filteredQuestionsRef.current.length,
       filteredLength: filteredQuestions.length,
@@ -1203,9 +1228,10 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
                 </div>
               )}
               {showRewardVideo && (() => {
-                const selectedLesson = lessons.find((lesson: any) => lesson.id === selectedLessonId);
+                // Find the lesson from current question's lessonObj or from questions array
+                const selectedLesson = currentQuestion?.lessonObj || questions.find(q => q.lesson_id === selectedLessonId)?.lessonObj;
                 // Check user preference first, then fall back to lesson's video
-                const videoId = preferences?.celebrationVideoId || selectedLesson?.youtube_video_id;
+                const videoId = preferences?.celebrationVideoId || (selectedLesson as any)?.youtube_video_id;
                 if (videoId) {
                   return (
                     <div className="fade-in flex flex-col items-center">

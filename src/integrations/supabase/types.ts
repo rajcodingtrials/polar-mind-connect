@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_sessions: {
+        Row: {
+          correct_question_index: string | null
+          created_at: string
+          end_time: string | null
+          lesson_id: string
+          num_questions_attempted: number
+          num_questions_correct: number
+          session_id: string
+          start_time: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          correct_question_index?: string | null
+          created_at?: string
+          end_time?: string | null
+          lesson_id: string
+          num_questions_attempted?: number
+          num_questions_correct?: number
+          session_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          correct_question_index?: string | null
+          created_at?: string
+          end_time?: string | null
+          lesson_id?: string
+          num_questions_attempted?: number
+          num_questions_correct?: number
+          session_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_sessions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_settings: {
         Row: {
           amplify_mic: boolean
@@ -301,10 +351,87 @@ export type Database = {
         }
         Relationships: []
       }
+      linked_parents: {
+        Row: {
+          id: string
+          is_active: boolean
+          linked_at: string
+          linked_by_code: string | null
+          parent_user_id: string
+          therapist_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          linked_at?: string
+          linked_by_code?: string | null
+          parent_user_id: string
+          therapist_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          linked_at?: string
+          linked_by_code?: string | null
+          parent_user_id?: string
+          therapist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linked_parents_therapist_id_fkey"
+            columns: ["therapist_id"]
+            isOneToOne: false
+            referencedRelation: "therapists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parent_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          parent_user_id: string
+          used_at: string | null
+          used_by_therapist_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          parent_user_id: string
+          used_at?: string | null
+          used_by_therapist_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          parent_user_id?: string
+          used_at?: string | null
+          used_by_therapist_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_codes_used_by_therapist_id_fkey"
+            columns: ["used_by_therapist_id"]
+            isOneToOne: false
+            referencedRelation: "therapists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parents: {
         Row: {
           created_at: string
           id: string
+          lesson_plan: string | null
           lessons: string | null
           updated_at: string
           user_id: string
@@ -312,6 +439,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          lesson_plan?: string | null
           lessons?: string | null
           updated_at?: string
           user_id: string
@@ -319,6 +447,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          lesson_plan?: string | null
           lessons?: string | null
           updated_at?: string
           user_id?: string
@@ -1191,6 +1320,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_user_by_email: {
+        Args: { _email: string }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
+      generate_parent_code: { Args: never; Returns: string }
       get_booked_slots:
         | {
             Args: { _session_date: string; _therapist_id: string }
@@ -1207,6 +1344,18 @@ export type Database = {
             }[]
           }
       get_default_lessons: { Args: never; Returns: string }
+      get_parent_lesson_plan: {
+        Args: { _parent_user_id: string }
+        Returns: string
+      }
+      get_user_details: {
+        Args: { _user_id: string }
+        Returns: {
+          email: string
+          name: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1214,10 +1363,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_content_creator: { Args: { _user_id: string }; Returns: boolean }
+      is_parent: { Args: { _user_id: string }; Returns: boolean }
+      is_therapist: { Args: { _user_id: string }; Returns: boolean }
+      update_parent_lesson_plan: {
+        Args: { _lesson_plan: string; _parent_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "therapist"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "therapist"
+        | "therapist_admin"
+        | "parent"
+        | "parent_admin"
       question_type_enum:
         | "starter_words"
         | "first_words"
@@ -1353,7 +1516,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user", "therapist"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "therapist",
+        "therapist_admin",
+        "parent",
+        "parent_admin",
+      ],
       question_type_enum: [
         "starter_words",
         "first_words",
