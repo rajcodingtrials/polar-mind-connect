@@ -96,6 +96,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
   const [userFirstName, setUserFirstName] = useState<string>('');
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [correctQuestionIndices, setCorrectQuestionIndices] = useState<Set<number>>(new Set());
+  const [selectedLessonData, setSelectedLessonData] = useState<{ id: string; youtube_video_id?: string | null } | null>(null);
 
   // Store filtered questions in a ref so they're available immediately when Skip is clicked
   const filteredQuestionsRef = useRef<Question_v2[]>([]);
@@ -393,6 +394,36 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setSessionQuestionCount(0);
     setAskedQuestionIds(new Set());
     
+    // Fetch lesson data if lessonId is provided
+    if (lessonId) {
+      try {
+        const { data: lessonData, error: lessonError } = await supabase
+          .from('lessons_v2' as any)
+          .select('id, youtube_video_id')
+          .eq('id', lessonId)
+          .maybeSingle();
+        
+        if (!lessonError && lessonData) {
+          const lesson = lessonData as any;
+          if (lesson && typeof lesson === 'object' && lesson.id) {
+            setSelectedLessonData({
+              id: lesson.id as string,
+              youtube_video_id: lesson.youtube_video_id || null
+            });
+          } else {
+            setSelectedLessonData(null);
+          }
+        } else {
+          setSelectedLessonData(null);
+        }
+      } catch (error) {
+        console.error('Error fetching lesson data:', error);
+        setSelectedLessonData(null);
+      }
+    } else {
+      setSelectedLessonData(null);
+    }
+    
     // Create new activity session when lesson is selected
     if (lessonId && userId) {
       console.log('handleDirectLessonSelect: Creating activity session for lesson:', lessonId);
@@ -452,6 +483,36 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
 
   const handleLessonSelect = async (lessonId: string | null) => {
     setSelectedLessonId(lessonId);
+    
+    // Fetch lesson data if lessonId is provided
+    if (lessonId) {
+      try {
+        const { data: lessonData, error: lessonError } = await supabase
+          .from('lessons_v2' as any)
+          .select('id, youtube_video_id')
+          .eq('id', lessonId)
+          .maybeSingle();
+        
+        if (!lessonError && lessonData) {
+          const lesson = lessonData as any;
+          if (lesson && typeof lesson === 'object' && lesson.id) {
+            setSelectedLessonData({
+              id: lesson.id as string,
+              youtube_video_id: lesson.youtube_video_id || null
+            });
+          } else {
+            setSelectedLessonData(null);
+          }
+        } else {
+          setSelectedLessonData(null);
+        }
+      } catch (error) {
+        console.error('Error fetching lesson data:', error);
+        setSelectedLessonData(null);
+      }
+    } else {
+      setSelectedLessonData(null);
+    }
     
     // Create new activity session when lesson is selected
     if (lessonId && userId) {
@@ -1078,6 +1139,7 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
     setSessionQuestionCount(0);
     setCurrentSessionId(null);
     setCorrectQuestionIndices(new Set());
+    setSelectedLessonData(null);
   };
 
 
@@ -1228,10 +1290,8 @@ const AILearningAdventure_v2: React.FC<AILearningAdventure_v2Props> = ({ therapi
                 </div>
               )}
               {showRewardVideo && (() => {
-                // Find the lesson from current question's lessonObj or from questions array
-                const selectedLesson = currentQuestion?.lessonObj || questions.find(q => q.lesson_id === selectedLessonId)?.lessonObj;
                 // Check user preference first, then fall back to lesson's video
-                const videoId = preferences?.celebrationVideoId || (selectedLesson as any)?.youtube_video_id;
+                const videoId = preferences?.celebrationVideoId || selectedLessonData?.youtube_video_id;
                 if (videoId) {
                   return (
                     <div className="fade-in flex flex-col items-center">
