@@ -55,12 +55,12 @@ const UserProfileEditor = () => {
     
     try {
       setLoadingCodes(true);
-      const { data, error } = await supabase
-        .from('parent_codes')
+      const { data, error } = await (supabase
+        .from('parent_codes' as any)
         .select('id, code, created_at, expires_at')
         .eq('parent_user_id', user.id)
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as any);
 
       if (error) throw error;
       setActiveCodes(data || []);
@@ -79,8 +79,8 @@ const UserProfileEditor = () => {
       setGeneratingCode(true);
       
       // Call the database function to generate a unique code
-      const { data: codeData, error: codeError } = await supabase
-        .rpc('generate_parent_code');
+      const { data: codeData, error: codeError } = await (supabase
+        .rpc('generate_parent_code') as any);
 
       if (codeError) throw codeError;
 
@@ -88,8 +88,8 @@ const UserProfileEditor = () => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 
-      const { data, error } = await supabase
-        .from('parent_codes')
+      const { data, error } = await (supabase
+        .from('parent_codes' as any)
         .insert({
           parent_user_id: user.id,
           code: codeData,
@@ -97,7 +97,7 @@ const UserProfileEditor = () => {
           expires_at: expiresAt.toISOString(),
         })
         .select()
-        .single();
+        .single() as any);
 
       if (error) throw error;
 

@@ -83,14 +83,14 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
     const fetchTherapistId = async () => {
       if (showTherapistHeader && user?.id) {
         try {
-          const { data, error } = await supabase
+          const { data, error } = await (supabase
             .from('therapists' as any)
             .select('id')
             .eq('user_id', user.id)
-            .maybeSingle();
+            .maybeSingle() as any);
 
           if (!error && data) {
-            setCurrentTherapistId(data.id);
+            setCurrentTherapistId((data as any).id);
           } else {
             setCurrentTherapistId(null);
           }
@@ -172,11 +172,11 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
 
   // Filter sessions to only show current therapist's sessions when viewing linked parent's dashboard
   const filteredCompletedSessions = showTherapistHeader && currentTherapistId
-    ? completedSessions.filter(session => session.therapist_id === currentTherapistId)
+    ? completedSessions.filter(session => session.therapist?.id === currentTherapistId)
     : completedSessions;
 
   const filteredUpcomingSessions = showTherapistHeader && currentTherapistId
-    ? upcomingSessions.filter(session => session.therapist_id === currentTherapistId)
+    ? upcomingSessions.filter(session => session.therapist?.id === currentTherapistId)
     : upcomingSessions;
 
   // Sort completed sessions: most recent first
@@ -549,8 +549,8 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ userId }) => {
                         const defaultLessonIds: string[] = [];
                         if (defaultLessonsData && Array.isArray(defaultLessonsData)) {
                           for (const lesson of defaultLessonsData) {
-                            if (lesson?.id) {
-                              defaultLessonIds.push(lesson.id);
+                            if ((lesson as any)?.id) {
+                              defaultLessonIds.push((lesson as any).id);
                             }
                           }
                         }

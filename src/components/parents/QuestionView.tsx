@@ -13,6 +13,7 @@ import SoundFeedbackDisplay from './SoundFeedbackDisplay';
 import { soundFeedbackManager } from '@/utils/soundFeedback';
 import AnimatedMicButton from './AnimatedMicButton';
 import { Clock, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Question_v2 {
   id: string;
@@ -102,6 +103,8 @@ const QuestionView: React.FC<QuestionViewProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isProcessingAfterAnswer, setIsProcessingAfterAnswer] = useState(false);
   const [showSpeechAfterAnswerText, setShowSpeechAfterAnswerText] = useState(false);
+  const [questionImageLoaded, setQuestionImageLoaded] = useState(false);
+  const [choiceImagesLoaded, setChoiceImagesLoaded] = useState<Record<number, boolean>>({});
   
   const questionReadInProgress = useRef(false);
   const audioPlaybackRef = useRef<HTMLAudioElement | null>(null);
@@ -118,6 +121,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
   useEffect(() => {
     // Reset immediately when question changes to prevent flashing old images
     setChoiceImageUrls([]);
+    setChoiceImagesLoaded({});
     
     // Then load new choices if they exist
     if (question.choices_image) {
@@ -144,6 +148,7 @@ const QuestionView: React.FC<QuestionViewProps> = ({
   useEffect(() => {
     // Reset first to ensure clean state
     setQuestionImageUrl(null);
+    setQuestionImageLoaded(false);
     
     // Small delay to ensure reset has taken effect, then load new image
     const timer = setTimeout(() => {
@@ -1261,16 +1266,20 @@ const QuestionView: React.FC<QuestionViewProps> = ({
           } else if (questionImageUrl) {
             return (
               <div className="mb-4 sm:mb-6 lg:mb-8 animate-scale-in flex justify-center px-4">
-                <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden">
+                <div className="inline-block rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden relative">
+                  {!questionImageLoaded && (
+                    <Skeleton className="absolute inset-0 w-full h-full min-h-[200px] min-w-[200px]" />
+                  )}
                   <img
                     src={questionImageUrl}
                     alt={question.description_text || `Question ${questionNumber} visual content for ${therapistName} therapy session`}
-                    className="object-contain rounded-2xl sm:rounded-3xl"
+                    className={`object-contain rounded-2xl sm:rounded-3xl transition-opacity duration-300 ${questionImageLoaded ? 'opacity-100' : 'opacity-0'}`}
                     style={questionImageStyle}
-                    loading="lazy"
+                    onLoad={() => setQuestionImageLoaded(true)}
                     onError={(e) => {
                       console.error('Error loading question image:', questionImageUrl);
                       e.currentTarget.style.display = 'none';
+                      setQuestionImageLoaded(true);
                     }}
                   />
                 </div>
@@ -1339,14 +1348,19 @@ const QuestionView: React.FC<QuestionViewProps> = ({
                       ${isClickable && !isProcessingAnswer && !hasCalledCorrectAnswer ? 'group' : ''}
                     `}
                   >
+                    {!choiceImagesLoaded[index] && (
+                      <Skeleton className="absolute inset-0 w-full h-full min-h-[100px] min-w-[100px] rounded-xl" />
+                    )}
                     <img
                       src={imageUrl}
                       alt={`Choice ${index + 1}`}
-                      className="object-contain rounded-xl sm:rounded-2xl transition-transform duration-300"
+                      className={`object-contain rounded-xl sm:rounded-2xl transition-all duration-300 ${choiceImagesLoaded[index] ? 'opacity-100' : 'opacity-0'}`}
                       style={choiceImageStyle}
+                      onLoad={() => setChoiceImagesLoaded(prev => ({ ...prev, [index]: true }))}
                       onError={(e) => {
                         console.error('Error loading choice image:', imageUrl);
                         e.currentTarget.style.display = 'none';
+                        setChoiceImagesLoaded(prev => ({ ...prev, [index]: true }));
                       }}
                     />
                   {showResult && (
